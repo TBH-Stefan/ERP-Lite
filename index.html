@@ -245,9 +245,9 @@ const CONFIG={
 /* ========================================================== */
 const FILE='erp-daten.json';
 const T={
-  AN:{bez:'Angebot',b:'V',folge:['AB','AR','LS','RE','PR']},
+  AN:{bez:'Angebot',b:'V',folge:['AB','AR','LS','RE','PR','BE']},
   AB:{bez:'Auftragsbestätigung',b:'V',folge:['LS','AR','TR','RE','SR','PR','BE']},
-  PR:{bez:'Proformarechnung',b:'V',folge:[]},
+  PR:{bez:'Proformarechnung',b:'V',folge:['AB','LS','RE']},
   LS:{bez:'Lieferschein',b:'V',folge:['RE','SR']},
   AR:{bez:'Anzahlungsrechnung',b:'V',re:1,folge:['GS']},
   TR:{bez:'Teilrechnung',b:'V',re:1,folge:['GS']},
@@ -440,13 +440,13 @@ const AUTH={
   _p:null,
   tok(){try{return JSON.parse(lsGet('erp-tok')||'null')}catch(e){return null}},
   setTok(t){lsSet('erp-tok',t?JSON.stringify(t):null)},
-  async login(){
+  async login(extra=''){
     const c=odCfg();if(!c.clientId){alert('Client-ID fehlt (siehe Anleitung).');return}
     if(!window.isSecureContext||!crypto.subtle){alert('Die Anmeldung funktioniert nur über https:// (oder localhost).');return}
     const verifier=rnd(48),challenge=b64u(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))),state=rnd(16);
     sessionStorage.setItem('erp-pkce',JSON.stringify({verifier,state,hash:location.hash}));
-    const q=new URLSearchParams({client_id:c.clientId,response_type:'code',redirect_uri:redirectUri(),response_mode:'query',scope:SCOPES,code_challenge:challenge,code_challenge_method:'S256',state});
-    const hint=lsGet('erp-user');if(hint)q.set('login_hint',hint);else q.set('prompt','select_account');
+    const q=new URLSearchParams({client_id:c.clientId,response_type:'code',redirect_uri:redirectUri(),response_mode:'query',scope:SCOPES+extra,code_challenge:challenge,code_challenge_method:'S256',state});
+    const hint=lsGet('erp-user');if(hint)q.set('login_hint',hint);else q.set('prompt','select_account');if(extra)q.set('prompt','consent');
     location.href=`https://login.microsoftonline.com/${encodeURIComponent(c.tenant)}/oauth2/v2.0/authorize?${q}`;
   },
   async redirectVerarbeiten(){
@@ -464,7 +464,7 @@ const AUTH={
     if(!r.ok){alert('Anmeldung fehlgeschlagen:\n'+(j.error_description||j.error||r.status));return false}
     this.merke(j);return true;
   },
-  merke(j){
+  merke(j){lsSet('erp-tok-mail',null);
     this.setTok({access:j.access_token,refresh:j.refresh_token||this.tok()?.refresh,exp:Date.now()+((+j.expires_in||3600)-120)*1000});
     try{const id=JSON.parse(atob(j.id_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));if(id.preferred_username)lsSet('erp-user',id.preferred_username)}catch(e){}
   },
@@ -701,7 +701,7 @@ async function anhaengeHochladen(b,files,original=false,benennen=false){ // orig
   saveState('lade hoch …');
   try{
     for(const f0 of files){
-      const f=original?f0:await bildVerkleinern(f0),safe=f.name.replace(/[^\w.\-]+/g,'_').slice(-60),nm=benennen?anhangName(b,f0,files.indexOf(f0),files.length):null;
+      const f=original?f0:await bildVerkleinern(f0),safe=f.name.replace(/[^\w.\-]+/g,'_').slice(-60),nm=typeof benennen==='string'?benennen:benennen?anhangName(b,f0,files.indexOf(f0),files.length):null;
       const path=nm?`Belege/${b.typ}/${b.datum.slice(0,4)}/${nm}`:`Belege/${b.typ}/${b.datum.slice(0,4)}/${b.nr||'Entwurf-'+b.id}_${Date.now().toString(36)}_${safe}`;
       const a=await STORE.putFile(path,f);
       b.anhaenge.push({...a,datum:new Date().toISOString(),groesse:f.size});
@@ -1047,7 +1047,7 @@ V.belege=(bereich='V')=>{
     <select data-o="ui" data-f="${k}Typ">${opt('','alle Belegarten',typ)}${typen.map(t=>opt(t,T[t].bez,typ)).join('')}</select>
     <select data-o="ui" data-f="${k}St">${opt('','alle',st)}${opt('entwurf','Entwürfe',st)}${opt('offen','offen',st)}${opt('ueber','überfällig',st)}${opt('storno','storniert',st)}</select>
     <input data-o="ui" data-f="${k}Q" placeholder="Suche Nr, Name, Betreff" value="${esc(UI[k+'Q'])}" style="width:240px">
-    <span class="sp"></span>${bereich==='E'?'<label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>':''}
+    <span class="sp"></span>${bereich==='V'?'<button data-act="sammelre0">Rechnung aus Lieferscheinen …</button>':''}${bereich==='E'?'<label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>':''}
     <select data-act="neu">${opt('','+ Neuer Beleg …','')}${typen.filter(t=>t!=='GS').map(t=>opt(t,T[t].bez,'')).join('')}</select>
   </div>
   <div class="card" style="padding:0"><table>
@@ -1100,7 +1100,9 @@ V.beleg=id=>{
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
     ${b.fest?'':`<button class="p" data-act="fest">Festschreiben …</button>`}
     <button data-act="druck">PDF / Drucken</button>
-    ${b.fest&&!b.storno&&t.folge.length&&b.status!=='ersetzt'?`<select data-act="folge">${opt('','Folgebeleg …','')}${t.folge.map(f=>opt(f,T[f].bez,'')).join('')}</select>`:''}
+    ${!b.storno&&t.folge.length&&b.status!=='ersetzt'?`${['AN','AB','LS','PR'].includes(b.typ)?`<button data-act="folgere">→ Rechnung</button>`:''}<select data-act="folge" title="${b.fest?'':'Wird vorher festgeschrieben'}">${opt('','Folgebeleg …','')}${t.folge.map(f=>opt(f,T[f].bez,'')).join('')}</select>`:''}
+    ${b.typ==='LS'&&!b.storno?`<button data-act="sammelre">Sammelrechnung …</button>`:''}
+    <button data-act="senden" title="Als PDF per E-Mail versenden">✉ Senden …</button><button data-act="pdfdl" title="PDF-Datei speichern">PDF speichern</button>
     ${b.fest&&!b.storno&&b.typ==='AN'&&b.status!=='ersetzt'?`<button data-act="anrev">Revision</button><button data-act="anfolge">Folgeangebot</button><button data-act="anst" data-v="${b.status==='abgelehnt'?'':'abgelehnt'}">${b.status==='abgelehnt'?'wieder offen':'abgelehnt'}</button>`:''}
     ${b.fest&&!b.storno&&REOPEN.includes(b.typ)&&b.status!=='ersetzt'?`<button data-act="reopen">Bearbeiten</button>`:''}
     <button data-act="dup">Duplizieren</button>
@@ -1148,6 +1150,7 @@ V.beleg=id=>{
   const side=`${ohneP?'':`<div class="card"><h2>Summen</h2><div id="sumbox">${sumBox(b)}</div></div>`}
     ${V_&&!ohneP&&b.typ!=='GS'?`<div class="card"><h2>Kalkulation DB II</h2><div id="kalkbox">${kalkBox(b)}</div></div>`:''}
     <div class="card"><h2>Belegkette${b.auftragId&&V_?` · <a href="#/auftrag/${b.auftragId}">Auftrag</a>`:''}</h2><div class="chain">${kette.map(x=>`<a href="#/beleg/${x.id}" class="${x.id===b.id?'cur':''}">${T[x.typ].bez} ${esc(bNr(x))} · ${dAT(x.datum)} ${x.storno?'(storniert)':x.status==='ersetzt'?'(ersetzt)':''}</a>`).join('')}</div></div>
+    ${(b.versand||[]).length?`<div class="card"><h2>Versand</h2>${b.versand.map(v=>`<div style="margin-bottom:4px">✉ ${new Date(v.datum).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'})} an ${esc(v.an)}</div>`).join('')}</div>`:''}
     ${k?`<div class="card"><h2>${V_?'Kunde':'Lieferant'}</h2><div>${esc(k.nr)} · <a href="#/kontakt/${k.id}">${esc(k.name)}</a><br>${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.uid?'<br>UID '+esc(k.uid):''}</div></div>`:''}`;
   if(ans==='beides')return`${kopfbar}${scan}<div class="split"><div>${formHTML}${side}${extra}</div><div class="sticky">${blatt}</div></div>`;
   if(ans==='vorschau')return`${kopfbar}${scan}<div class="cols"><div>${blatt}${extra}</div><div>${side}</div></div>`;
@@ -1203,7 +1206,7 @@ function dialog({titel,html,ok='OK',check='',gefahr=false}){
 function formDialog({titel,felder,ok='Anlegen',breit=false}){
   return new Promise(res=>{
     const d=document.createElement('div');d.className='modal';
-    const fld=f=>`<label class="${f.cls||''}">${f.l}${f.pflicht?' *':''}${f.opts?`<select data-k="${f.k}">${f.opts.map(([v,t])=>opt(v,t,f.wert??'')).join('')}</select>`:f.typ==='checkbox'?`<br><input type="checkbox" data-k="${f.k}" ${f.wert?'checked':''}>`:`<input data-k="${f.k}" type="${f.typ||'text'}" ${f.typ==='number'?'step="any"':''} value="${esc(f.wert??'')}">`}</label>`;
+    const fld=f=>`<label class="${f.cls||''}">${f.l}${f.pflicht?' *':''}${f.opts?`<select data-k="${f.k}">${f.opts.map(([v,t])=>opt(v,t,f.wert??'')).join('')}</select>`:f.typ==='checkbox'?`<br><input type="checkbox" data-k="${f.k}" ${f.wert?'checked':''}>`:f.typ==='textarea'?`<textarea data-k="${f.k}" style="height:190px">${esc(f.wert??'')}</textarea>`:`<input data-k="${f.k}" type="${f.typ||'text'}" ${f.typ==='number'?'step="any"':''} value="${esc(f.wert??'')}">`}</label>`;
     const zeilen=[];let z=[];for(const f of felder){if(f.neu&&z.length){zeilen.push(z);z=[]}z.push(f)}if(z.length)zeilen.push(z);
     d.innerHTML=`<div class="mbox" style="${breit?'max-width:760px':''}"><h2>${titel}</h2>${zeilen.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('')}
       <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">${ok}</button></div></div>`;
@@ -1224,8 +1227,8 @@ async function kontaktPopup(typ,v={}){ // typ K | L
     {k:'uid',l:'UID-Nr.',wert:v.uid,neu:1},{k:'email',l:'E-Mail',wert:v.email},{k:'tel',l:'Telefon',wert:v.tel},
     {k:'zahlungsziel',l:'Zahlungsziel Tage',typ:'number',wert:s.zahlungsziel,neu:1,cls:'w05'}]});
   if(!o)return null;
-  if(DB.kontakte.some(k=>k.nr===o.nr&&k.typ===typ)){alert('Nummer '+o.nr+' ist bereits vergeben.');return null}
-  if(o.nr===nrV)s.knr[typ]=+nrV;
+  if(DB.kontakte.some(k=>k.nr===o.nr)){alert('Nummer '+o.nr+' ist bereits vergeben.');return null}
+  if(/^\d+$/.test(o.nr)&&+o.nr>(s.knr[typ]||0)&&+o.nr<(s.knr[typ]||0)+100000)s.knr[typ]=+o.nr; // nächste automatische Nummer folgt
   const k={id:uid(),typ,notiz:'',...o};DB.kontakte.push(k);log(typ==='K'?'Kunde angelegt':'Lieferant angelegt',k.name);return k;
 }
 async function artikelPopup(v={},lid=''){
@@ -1420,7 +1423,7 @@ V.kontakt=id=>{
   ${k.typ!=='K'?`<button data-act="kbel" data-t="BE" data-id="${k.id}">+ Bestellung</button><button data-act="kbel" data-t="ER" data-id="${k.id}">+ Eingangsrechnung</button>`:''}
   <button class="d" data-act="kdel" data-id="${k.id}">Löschen</button></div>
   <div class="card">
-  <div class="row"><label class="w05">Typ<select data-o="k" data-id="${k.id}" data-f="typ">${opt('K','Kunde',k.typ)}${opt('L','Lieferant',k.typ)}${opt('KL','Kunde + Lieferant',k.typ)}</select></label>${f('name','Name / Firma','w2')}${f('zusatz','Zusatz / z. H.')}</div>
+  <div class="row">${f('nr',k.typ==='L'?'Lieferanten-Nr.':k.typ==='KL'?'Kunden-/Lief.-Nr.':'Kunden-Nr.','w05')}<label class="w05">Typ<select data-o="k" data-id="${k.id}" data-f="typ">${opt('K','Kunde',k.typ)}${opt('L','Lieferant',k.typ)}${opt('KL','Kunde + Lieferant',k.typ)}</select></label>${f('name','Name / Firma','w2')}${f('zusatz','Zusatz / z. H.')}</div>
   <div class="row">${f('strasse','Straße','w2')}${f('plz','PLZ','w05')}${f('ort','Ort')}${f('land','Land','w05')}</div>
   <div class="row">${f('uid','UID-Nr.')}${f('email','E-Mail')}${f('tel','Telefon')}${f('zahlungsziel','Zahlungsziel Tage','w05','number')}</div>
   <div class="row"><label>Notiz<textarea data-o="k" data-id="${k.id}" data-f="notiz">${esc(k.notiz)}</textarea></label></div>
@@ -2319,6 +2322,7 @@ V.einstellungen=()=>{
   <p class="mut">Optional (kostenpflichtig): KI-Erkennung für Fotos durch Claude (Anthropic) – nur wenn hier ein Schlüssel eingetragen ist. Den API-Schlüssel erhalten Sie in der Anthropic Console (console.anthropic.com → API Keys). Er wird nur in diesem Browser gespeichert, nicht in der Datenbank – auf jedem Gerät einmal eintragen. Kosten ca. 1–3 Cent je Seite; das Bild wird zur Auswertung an Anthropic übertragen.</p>
   <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${lsGet('erp-ki-key')?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><span style="flex:2"></span></div></div>
   <div class="card"><h2>Kaufmännisch</h2><div class="row">
+    <label class="w05">Letzte Kunden-Nr.<input type="number" data-o="s" data-f="knr.K" value="${s.knr.K}" title="Nächster Kunde erhält diese Nummer + 1"></label><label class="w05">Letzte Lieferanten-Nr.<input type="number" data-o="s" data-f="knr.L" value="${s.knr.L}"></label>
     ${sf('zahlungsziel','Zahlungsziel Tage')}${sf('skonto','Skonto %')}${sf('skontoTage','Skonto Tage')}${sf('angebotGueltig','Angebot gültig Tage')}
     ${sf('zielDB2','Ziel-DB II %')}${sf('mgz','MGZ % auf Material')}${sf('abwGrenze','Prüfgrenze Abweichung %')}
     <label class="w05">USt-Besteuerung<select data-o="s" data-f="besteuerung">${opt('soll','Soll (vereinbarte Entgelte)',s.besteuerung)}${opt('ist','Ist (vereinnahmte Entgelte)',s.besteuerung)}</select></label>
@@ -2989,12 +2993,163 @@ function drucken(b){
   setTimeout(()=>{window.print();document.title=alt},50);
 }
 
+/* ---------- PDF-Erzeugung ohne Fremdbibliothek: Layout aus der Belegvorschau (Arial ≙ Helvetica) ---------- */
+const WINANSI={0x20AC:128,0x201A:130,0x201E:132,0x2026:133,0x2018:145,0x2019:146,0x201C:147,0x201D:148,0x2022:149,0x2013:150,0x2014:151,0x2122:153,0x160:138,0x161:154,0x17D:142,0x17E:158,0x2212:45,0xA0:32,0x202F:32,0x2009:32,0x2007:32};
+const pdfStr=t=>{let o='';for(const ch of t){const c=ch.codePointAt(0),w=c<128||(c>=160&&c<256&&!WINANSI[c])?c:WINANSI[c]??63;o+=w===40||w===41||w===92?'\\'+String.fromCharCode(w):w<32||w>126?'\\'+w.toString(8).padStart(3,'0'):String.fromCharCode(w)}return o};
+async function deflate(u8){const cs=new CompressionStream('deflate');const r=new Response(new Blob([u8]).stream().pipeThrough(cs));return new Uint8Array(await r.arrayBuffer())}
+async function pdfAusBeleg(b){
+  const PX=0.75,MX=56.69,MT=28.35,MB=49.04,PW=595.28,PH=841.89,HC=(PH-MT-MB)/PX; // px→pt, Ränder wie Druck
+  const box=document.createElement('div');box.style.cssText='position:fixed;left:-10000px;top:0;width:665px;background:#fff';box.className='pdfmess';
+  box.innerHTML=docHTML(b);box.querySelector('.ft')?.remove();document.body.appendChild(box);
+  await Promise.all([...box.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
+  const B=box.getBoundingClientRect(),X=v=>v-B.left,Y=v=>v-B.top,farbe=c=>{const m=String(c).match(/[\d.]+/g)||[0,0,0];return m.slice(0,3).map(v=>(+v/255).toFixed(3)).join(' ')};
+  const it=[],thead=[]; // Zeichenelemente in px relativ zum Belegkopf
+  for(const el of box.querySelectorAll('*')){const cs=getComputedStyle(el);if(cs.visibility==='hidden'||cs.display==='none')continue;const r=el.getBoundingClientRect();if(!r.width&&!r.height)continue;
+    const ziel=el.closest('table.p thead')?thead:it;
+    if(cs.backgroundColor&&!/rgba?\(0, 0, 0, 0\)|transparent|rgb\(255, 255, 255\)/.test(cs.backgroundColor))ziel.push({t:'rect',x:X(r.left),y:Y(r.top),w:r.width,h:r.height,c:farbe(cs.backgroundColor)});
+    for(const [s,x1,y1,x2,y2] of [['Top',r.left,r.top,r.right,r.top],['Bottom',r.left,r.bottom,r.right,r.bottom],['Left',r.left,r.top,r.left,r.bottom],['Right',r.right,r.top,r.right,r.bottom]]){
+      const w=parseFloat(cs['border'+s+'Width']);if(w>0&&cs['border'+s+'Style']!=='none'){const o=(s==='Top'||s==='Left'?1:-1)*w/2,v=s==='Top'||s==='Bottom';
+        ziel.push({t:'line',x1:X(x1),y1:Y(y1)+(v?o:0),x2:X(x2),y2:Y(y2)+(v?o:0),dx:v?0:o,w,c:farbe(cs['border'+s+'Color'])})}}
+    if(el.tagName==='IMG'&&el.naturalWidth)ziel.push({t:'img',el,x:X(r.left),y:Y(r.top),w:r.width,h:r.height})}
+  const tw=document.createTreeWalker(box,NodeFilter.SHOW_TEXT);let n;
+  while((n=tw.nextNode())){const txt=n.nodeValue;if(!txt.trim())continue;const pe=n.parentElement,cs=getComputedStyle(pe);if(cs.visibility==='hidden'||cs.display==='none')continue;
+    const fs=parseFloat(cs.fontSize),fett=+cs.fontWeight>=600||cs.fontWeight==='bold',kurs=cs.fontStyle==='italic',c=farbe(cs.color),ul=/underline/.test(cs.textDecorationLine||cs.textDecoration)||!!pe.closest('u');
+    const ziel=pe.closest('table.p thead')?thead:it,rg=document.createRange();let lauf=null;
+    const fertig=()=>{if(lauf&&lauf.s.trim()){lauf.s=lauf.s.replace(/\s+$/,'');ziel.push(lauf);if(ul)ziel.push({t:'line',x1:lauf.x,y1:lauf.y+fs*0.12,x2:lauf.x2,y2:lauf.y+fs*0.12,dx:0,w:Math.max(0.6,fs/14),c})}lauf=null};
+    for(const m of txt.matchAll(/\S+\s*/g)){rg.setStart(n,m.index);rg.setEnd(n,m.index+m[0].trimEnd().length);const r=rg.getClientRects()[0];if(!r)continue;
+      const base=Y(r.bottom)-r.height*0.19;
+      if(lauf&&Math.abs(lauf.y-base)<1)lauf.s+=m[0],lauf.x2=X(r.right);else{fertig();lauf={t:'text',x:X(r.left),x2:X(r.right),y:base,top:Y(r.top),s:m[0],fs,fett,kurs,c}}}
+    fertig()}
+  // Seitenumbrüche an Zeilen-/Blockgrenzen; Tabellenkopf auf Folgeseiten wiederholen
+  const brk=[...box.querySelectorAll('tr,.doc>div,.doc>table,.doc>h3,.lt,.txt,.sig')].map(e=>Y(e.getBoundingClientRect().bottom)).sort((a,c)=>a-c);
+  const tab=box.querySelector('table.p'),tR=tab?.getBoundingClientRect(),thR=tab?.querySelector('thead')?.getBoundingClientRect(),thH=thR?thR.height:0,thTop=thR?Y(thR.top):0;
+  const hoehe=Math.max(...[...it].map(x=>x.t==='text'?x.y+4:x.t==='line'?Math.max(x.y1,x.y2):x.y+x.h),0);
+  const seiten=[];let st=0;
+  while(st<hoehe-1&&seiten.length<50){const off=seiten.length&&tR&&st>Y(tR.top)&&st<Y(tR.bottom)?thH:0,cap=HC-off;
+    let en=brk.filter(y=>y>st+20&&y<=st+cap).pop();if(!en||st+cap>=hoehe)en=Math.min(st+cap,hoehe+1);seiten.push({st,en,off});st=en}
+  if(!seiten.length)seiten.push({st:0,en:hoehe+1,off:0});
+  const bilder=[],bildNr=new Map();
+  const pt=(x,y,s)=>[(MX+x*PX).toFixed(2),(PH-MT-(y-s.st+s.off)*PX).toFixed(2)];
+  const f=S().firma,fz=fussZeilen(f);
+  const strom=s=>{const o=[];const zeichne=(x,dy)=>{if(x.t==='rect'){const [a,bb]=pt(x.x,x.y+x.h+dy,s);o.push(`${x.c} rg ${a} ${bb} ${(x.w*PX).toFixed(2)} ${(x.h*PX).toFixed(2)} re f`)}
+      else if(x.t==='line'){const [a1,b1]=pt(x.x1+x.dx,x.y1+dy,s),[a2,b2]=pt(x.x2+x.dx,x.y2+dy,s);o.push(`${x.c} RG ${(x.w*PX).toFixed(2)} w ${a1} ${b1} m ${a2} ${b2} l S`)}
+      else if(x.t==='img'){if(!bildNr.has(x.el)){bildNr.set(x.el,bilder.length);bilder.push(x.el)}const [a,bb]=pt(x.x,x.y+x.h+dy,s);o.push(`q ${(x.w*PX).toFixed(2)} 0 0 ${(x.h*PX).toFixed(2)} ${a} ${bb} cm /Im${bildNr.get(x.el)} Do Q`)}
+      else{const [a,bb]=pt(x.x,x.y+dy,s);o.push(`BT /${x.fett?'F2':x.kurs?'F3':'F1'} ${(x.fs*PX).toFixed(2)} Tf ${x.c} rg ${a} ${bb} Td (${pdfStr(x.s)}) Tj ET`)}};
+    const drin=x=>{const y=x.t==='text'?x.top:x.t==='line'?Math.min(x.y1,x.y2):x.y;return y>=s.st-0.5&&y<s.en-0.5};
+    if(s.off)for(const x of thead)zeichne(x,s.st-s.off-thTop); // Tabellenkopf oben auf der Folgeseite
+    else for(const x of thead)if(drin(x))zeichne(x,0);
+    for(const x of it)if(drin(x))zeichne(x,0);
+    // Fußzeile und Seitenzahl wie im Druck
+    o.push(`0.502 0.439 0.302 RG 2.83 w 50.46 ${MB.toFixed(2)} m 542.30 ${MB.toFixed(2)} l S`);
+    fz.forEach((z,i)=>o.push(`BT /F1 7.5 Tf 0 0 0 rg ${(296.38-breite(z)/2).toFixed(2)} ${(MB-12.5-i*9.75).toFixed(2)} Td (${pdfStr(z)}) Tj ET`));
+    const sz=`Seite ${seiten.indexOf(s)+1} von ${seiten.length}`;o.push(`BT /F1 7.5 Tf 0 0 0 rg ${(552.76-breite(sz)).toFixed(2)} 14 Td (${sz}) Tj ET`);
+    return o};
+  const cv=document.createElement('canvas').getContext('2d');cv.font='10px Arial';const breite=t=>cv.measureText(t).width*0.75; // 7,5 pt = 10 px; Arial ≙ Helvetica
+  const strs=seiten.map(strom);
+  box.remove();
+  // PDF-Objekte schreiben
+  const enc=new TextEncoder(),teile=[],off=[];let len=0;const add=x=>{const u=typeof x==='string'?enc.encode(x):x;teile.push(u);len+=u.length};
+  const obj=(nr,inhalt,stream)=>{off[nr]=len;add(`${nr} 0 obj\n${inhalt}\n`);if(stream){add('stream\n');add(stream);add('\nendstream\n')}add('endobj\n')};
+  add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  const np=seiten.length,fontObj=3,img0=6,pg0=img0+bilder.length*2;
+  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2,`<< /Type /Pages /Count ${np} /Kids [${seiten.map((_,i)=>`${pg0+i*2} 0 R`).join(' ')}] >>`);
+  ['Helvetica','Helvetica-Bold','Helvetica-Oblique'].forEach((fn,i)=>obj(fontObj+i,`<< /Type /Font /Subtype /Type1 /BaseFont /${fn} /Encoding /WinAnsiEncoding >>`));
+  for(let i=0;i<bilder.length;i++){const im=bilder[i],w=im.naturalWidth,h=im.naturalHeight,c=document.createElement('canvas');c.width=w;c.height=h;const cx=c.getContext('2d');cx.drawImage(im,0,0);
+    const d=cx.getImageData(0,0,w,h).data,rgb=new Uint8Array(w*h*3),al=new Uint8Array(w*h);for(let p=0,q=0;p<w*h;p++){rgb[q++]=d[p*4];rgb[q++]=d[p*4+1];rgb[q++]=d[p*4+2];al[p]=d[p*4+3]}
+    const z1=await deflate(rgb),z2=await deflate(al);
+    obj(img0+i*2+1,`<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode /Length ${z2.length} >>`,z2);
+    obj(img0+i*2,`<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /SMask ${img0+i*2+1} 0 R /Length ${z1.length} >>`,z1)}
+  const res=`<< /Font << /F1 ${fontObj} 0 R /F2 ${fontObj+1} 0 R /F3 ${fontObj+2} 0 R >> /XObject << ${bilder.map((_,i)=>`/Im${i} ${img0+i*2} 0 R`).join(' ')} >> >>`;
+  for(let i=0;i<np;i++){const z=await deflate(enc.encode(strs[i].join('\n')));
+    obj(pg0+i*2,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources ${res} /Contents ${pg0+i*2+1} 0 R >>`);
+    obj(pg0+i*2+1,`<< /Filter /FlateDecode /Length ${z.length} >>`,z)}
+  const n0=pg0+np*2,xr=len;add(`xref\n0 ${n0}\n0000000000 65535 f \n`);for(let i=1;i<n0;i++)add(String(off[i]||0).padStart(10,'0')+' 00000 n \n');
+  add(`trailer\n<< /Size ${n0} /Root 1 0 R /Info << /Producer (ERP-Lite) /Title (${pdfStr(T[b.typ].bez+' '+bNr(b))}) >> >>\nstartxref\n${xr}\n%%EOF\n`);
+  return new Blob(teile,{type:'application/pdf'});
+}
+const pdfName=b=>`${T[b.typ].bez}-${bNr(b)}-${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_')+'.pdf';
+async function pdfHerunterladen(b){const bl=await pdfAusBeleg(b),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=pdfName(b);document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+
+/* ---------- Versand per E-Mail über Office 365 (Microsoft Graph, Mail.Send) ---------- */
+const MAILSCOPE='https://graph.microsoft.com/Mail.Send offline_access';
+async function mailToken(){
+  const t=AUTH.tok();if(!t?.refresh)return null;let m=null;try{m=JSON.parse(lsGet('erp-tok-mail')||'null')}catch(e){}
+  if(m&&Date.now()<m.exp)return m.access;
+  const c=odCfg(),r=await fetch(`https://login.microsoftonline.com/${encodeURIComponent(c.tenant)}/oauth2/v2.0/token`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({client_id:c.clientId,grant_type:'refresh_token',refresh_token:t.refresh,scope:MAILSCOPE})});
+  const j=await r.json().catch(()=>({}));if(!r.ok)return null;
+  if(j.refresh_token)AUTH.setTok({...t,refresh:j.refresh_token});lsSet('erp-tok-mail',JSON.stringify({access:j.access_token,exp:Date.now()+((+j.expires_in||3600)-120)*1000}));return j.access_token;
+}
+const b64aus=async bl=>{const u=new Uint8Array(await bl.arrayBuffer());let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)};
+function mailVorlage(b){const f=S().firma,t=T[b.typ],k=kontakt(b.kontaktId),offenB=t.re?offen(b):0;
+  const anr=t.b==='E'?'Sehr geehrte Damen und Herren':'Sehr geehrte Damen und Herren';
+  const satz={AN:'anbei erhalten Sie unser Angebot',AB:'anbei erhalten Sie unsere Auftragsbestätigung',LS:'anbei erhalten Sie den Lieferschein',PR:'anbei erhalten Sie die Proformarechnung',BE:'anbei erhalten Sie unsere Bestellung',GS:'anbei erhalten Sie die Gutschrift'}[b.typ]||`anbei erhalten Sie die ${t.bez}`;
+  return{betreff:`${t.bez} ${bNr(b)}${b.betreff?' – '+b.betreff:''} – ${f.name}`,
+    text:`${anr},\n\n${satz} ${bNr(b)}${b.betreff?' („'+b.betreff+'“)':''}.${t.re&&b.typ!=='GS'&&offenB>0?`\nZahlbar bis ${dAT(faellig(b))}: ${fmt(offenB)} €.`:''}\n\nFür Rückfragen stehen wir gerne zur Verfügung.\n\nMit freundlichen Grüßen\n${f.zeichner||S().bearbeiter||''}\n${f.name}${f.tel?'\nTel. '+f.tel:''}${f.mail?'\n'+f.mail:''}`,an:k?.email||''}}
+async function versenden(b){
+  if(!b.fest&&!confirm('Der Beleg ist noch nicht festgeschrieben (Ausdruck mit „ENTWURF“). Trotzdem versenden?'))return;
+  const v=mailVorlage(b),od=STORE.art==='od';
+  const o=await formDialog({titel:`${T[b.typ].bez} ${bNr(b)} per E-Mail senden`,ok:od?'Senden':'PDF speichern + E-Mail öffnen',breit:true,felder:[
+    {k:'an',l:'An (mehrere mit ; trennen)',wert:v.an,cls:'w2',pflicht:true},{k:'cc',l:'Cc',wert:''},
+    {k:'betreff',l:'Betreff',wert:v.betreff,neu:1,pflicht:true},{k:'text',l:'Nachricht',typ:'textarea',wert:v.text,neu:1},
+    {k:'kopie',l:'Kopie an mich',typ:'checkbox',wert:false,neu:1,cls:'w05'}]});
+  if(!o)return;
+  const an=o.an.split(/[;,]\s*/).filter(Boolean),cc=o.cc.split(/[;,]\s*/).filter(Boolean);
+  if(an.some(x=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x))){alert('Bitte gültige E-Mail-Adresse(n) angeben.');return}
+  saveState('PDF wird erstellt …');const pdf=await pdfAusBeleg(b),name=pdfName(b);
+  if(!od){pdfHerunterladen(b);location.href=`mailto:${an.join(';')}?${new URLSearchParams({cc:cc.join(';'),subject:o.betreff,body:o.text}).toString().replace(/\+/g,'%20')}`;
+    alert('Das PDF wurde gespeichert – bitte in der E-Mail anhängen.\n(Direkter Versand nur mit Office-365-Anmeldung.)');return}
+  saveState('wird gesendet …');
+  let tok=await mailToken();
+  if(!tok){if(confirm('Für den E-Mail-Versand ist eine einmalige Zustimmung (Berechtigung „E-Mails senden“) bei Microsoft nötig.\nJetzt anmelden und zustimmen?\n\nDanach bitte erneut auf „Senden“ klicken.'))AUTH.login(' Mail.Send');saveState('');return}
+  const html=esc(o.text).replace(/\n/g,'<br>');
+  const r=await fetch('https://graph.microsoft.com/v1.0/me/sendMail',{method:'POST',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+    body:JSON.stringify({message:{subject:o.betreff,body:{contentType:'HTML',content:`<div style="font-family:Arial,sans-serif;font-size:10pt">${html}</div>`},
+      toRecipients:an.map(a=>({emailAddress:{address:a}})),ccRecipients:cc.map(a=>({emailAddress:{address:a}})),bccRecipients:o.kopie&&lsGet('erp-user')?[{emailAddress:{address:lsGet('erp-user')}}]:[],
+      attachments:[{'@odata.type':'#microsoft.graph.fileAttachment',name,contentType:'application/pdf',contentBytes:await b64aus(pdf)}]},saveToSentItems:true})});
+  if(!r.ok){const j=await r.json().catch(()=>({}));saveState('');alert('Senden fehlgeschlagen:\n'+(j.error?.message||r.status));return}
+  (b.versand=b.versand||[]).push({datum:new Date().toISOString(),an:an.join('; '),cc:cc.join('; '),betreff:o.betreff,datei:name});
+  log('per E-Mail versendet',`${T[b.typ].bez} ${bNr(b)} an ${an.join(', ')}`);
+  const vn=name.replace(/\.pdf$/,'')+'_versendet'+((b.versand.length>1)?'_'+b.versand.length:'')+'.pdf';
+  try{await anhaengeHochladen(b,[new File([pdf],vn,{type:'application/pdf'})],true,vn)}catch(e){commit()}
+  saveState('');alert(`Gesendet an ${an.join(', ')}.\nDas versendete PDF liegt beim Beleg unter „Anhänge“.`);render();
+}
+
+/* ---------- Rechnung aus mehreren Lieferscheinen (Sammelrechnung) ---------- */
+function offeneLS(kid){return DB.belege.filter(x=>x.typ==='LS'&&x.fest&&!x.storno&&(!kid||x.kontaktId===kid)&&x.pos.some(p=>!isInfo(p)&&!p.kz&&(+p.menge||0)-kinderMenge(p.id,['RE','TR','SR'])>0.0001)).sort((a,c)=>a.datum.localeCompare(c.datum))}
+function sammelRechnung(kid0=''){
+  return new Promise(res=>{
+    const d=document.createElement('div');d.className='modal';const kunden=[...new Set(offeneLS().map(x=>x.kontaktId))].map(kontakt).filter(Boolean);
+    const zeich=kid=>{const L=offeneLS(kid);return L.length?L.map(x=>`<label class="chk" style="display:flex;margin:4px 0"><input type="checkbox" data-ls="${x.id}" checked> ${esc(bNr(x))} vom ${dAT(x.datum)}${x.betreff?' · '+esc(x.betreff):''} <span class="mut" style="margin-left:auto">${fmt(summen(x).netto)} €</span></label>`).join(''):'<p class="mut">Keine offenen Lieferscheine.</p>'};
+    d.innerHTML=`<div class="mbox" style="max-width:640px"><h2>Rechnung aus Lieferscheinen</h2>
+      <label>Kunde<select id="sr-k">${kunden.map(k=>opt(k.id,k.name,kid0||kunden[0]?.id)).join('')}</select></label><div id="sr-l" style="margin-top:8px;max-height:50vh;overflow:auto"></div>
+      <div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Rechnung erstellen</button></div></div>`;
+    document.body.appendChild(d);const sel=d.querySelector('#sr-k'),lst=d.querySelector('#sr-l');lst.innerHTML=kunden.length?zeich(sel.value):'<p class="mut">Keine offenen (festgeschriebenen, noch nicht verrechneten) Lieferscheine.</p>';
+    sel.onchange=()=>{lst.innerHTML=zeich(sel.value)};const fin=v=>{d.remove();res(v)};
+    d.querySelector('#m-no').onclick=()=>fin(null);
+    d.querySelector('#m-ok').onclick=()=>{const ids=[...lst.querySelectorAll('[data-ls]:checked')].map(e=>e.dataset.ls);if(!ids.length)return;fin(ids)};
+  }).then(ids=>{if(!ids)return;
+    const L=ids.map(beleg),k=kontakt(L[0].kontaktId),auf=[...new Set(L.map(x=>x.auftragId))];
+    const re=neuBeleg('RE',{kontaktId:k.id,auftragId:auf.length===1?auf[0]:'',betreff:L.length===1?L[0].betreff:[...new Set(L.map(x=>x.betreff).filter(Boolean))].join(' / '),
+      bezug:'Lieferschein'+(L.length>1?'e ':' ')+L.map(bNr).join(', '),vorgaengerId:L[0].id,zahlungsziel:k.zahlungsziel!==''&&k.zahlungsziel!=null?+k.zahlungsziel:S().zahlungsziel,
+      leistung:L.length>1?`${dAT(L[0].datum)} – ${dAT(L[L.length-1].datum)}`:dAT(L[0].leistung?isoAus(L[0].leistung)||L[0].datum:L[0].datum)});
+    for(const x of L){if(L.length>1)re.pos.push(neuPos({art:'T',text:`<b>Lieferschein ${bNr(x)} vom ${dAT(x.datum)}</b>`,menge:0}));
+      for(const p of x.pos){if(p.kz)continue;const m=isInfo(p)?+p.menge||0:r3((+p.menge||0)-kinderMenge(p.id,['RE','TR','SR']));if(!isInfo(p)&&m<=0)continue;re.pos.push(neuPos({...p,id:uid(),herkunftPosId:p.id,menge:m}))}}
+    log('Sammelrechnung',`aus ${L.map(bNr).join(', ')}`);persist();go('beleg/'+re.id)});
+}
+
 /* ---------- Event-Handling ---------- */
 const ACT={
   neu:el=>{if(!el.value)return;const b=neuBeleg(el.value);persist();go('beleg/'+b.id)},
   fest:()=>festschreiben(curBeleg()),
   druck:()=>drucken(curBeleg()),
-  folge:el=>{if(el.value)folgeGo(curBeleg(),el.value)},
+  folge:async el=>{const typ=el.value;if(!typ)return;el.value='';const b=curBeleg();
+    if(!b.fest){if(!confirm(`Für den Folgebeleg „${T[typ].bez}“ muss ${T[b.typ].bez} zuerst festgeschrieben werden.\nJetzt festschreiben?`))return;await festschreiben(b);if(!beleg(b.id)?.fest)return}
+    folgeGo(beleg(b.id),typ)},
+  folgere:el=>{el.value='RE';ACT.folge(el)},
+  sammelre:()=>sammelRechnung(curBeleg().kontaktId),sammelre0:()=>sammelRechnung(),
+  senden:()=>versenden(curBeleg()),pdfdl:()=>pdfHerunterladen(curBeleg()),
   storno:()=>stornieren(curBeleg()),
   dup:()=>duplizieren(curBeleg()),
   reopen:()=>{const b=curBeleg();if(!confirm('Beleg wieder bearbeiten? Die Nummer bleibt erhalten.'))return;b.fest=false;log('wieder geöffnet',`${T[b.typ].bez} ${b.nr}`);commit();render()},
@@ -3097,7 +3252,10 @@ document.addEventListener('change',e=>{
     case'ui':UI[d.f]=v;render();return;
     case'lbsel':{const s=UI.lbSel||(UI.lbSel=[]),i=s.indexOf(d.k);if(el.checked&&i<0)s.push(d.k);if(!el.checked&&i>=0)s.splice(i,1);const z=document.querySelector('.lbsel b');if(z)z.textContent=s.length;const bt=document.querySelector('[data-act=lbins]');if(bt)bt.disabled=!(s.length&&UI.lbZiel);return}
     case'path':{const[c,id]=d.r.split('|'),o=ROOT[c](id);if(!o)return;if(c==='lv')lvBieterPreisInit(o,d.f);setP(o,d.f,d.t==='n'?num(v):el.type==='checkbox'?el.checked:v);persist();renderErhalten();return}
-    case'k':{const k=kontakt(d.id);k[d.f]=nv;break}
+    case'k':{const k=kontakt(d.id);
+      if(d.f==='nr'){const n=String(nv).trim();if(!n||DB.kontakte.some(x=>x!==k&&x.nr===n)){alert(n?`Nummer ${n} ist bereits vergeben.`:'Nummer darf nicht leer sein.');render();return}
+        log('Kontakt-Nr. geändert',`${k.nr} → ${n} ${k.name}`);k.nr=n;const t=k.typ==='L'?'L':'K';if(/^\d+$/.test(n)&&+n>(S().knr[t]||0)&&+n<(S().knr[t]||0)+100000)S().knr[t]=+n;persist();render();return}
+      k[d.f]=nv;break}
     case'a':{const a=artikel(d.id);if(d.f==='einheitenStr'){a.einheiten=String(v).split(/[;,]/).map(x=>x.split('=')).filter(x=>x.length===2&&x[0].trim()&&num(x[1])>0).map(([e,f])=>({e:e.trim(),f:num(f)}));for(const x of a.einheiten)if(!S().einheiten.includes(x.e))S().einheiten.push(x.e)}else a[d.f]=nv;if(['nr','bez','aktiv'].includes(d.f))artDatalist();if(['lager','einheitenStr'].includes(d.f)){persist();render();return}break}
     case'al':artikel(d.id).lieferanten[+d.i][d.f]=v;break;
     case's':if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()];o[pth[0]]=nv}break;

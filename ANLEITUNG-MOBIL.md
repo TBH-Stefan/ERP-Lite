@@ -15,7 +15,8 @@ Das Repository ist öffentlich, enthält aber **nur den Programmcode**, keine Da
 2. Name: `ERP-Lite` · Kontotypen: *Nur Konten in diesem Organisationsverzeichnis*.
 3. Umleitungs-URI: Plattform **Single-Page-Anwendung (SPA)**, Adresse aus Schritt 1.4 (genau so, mit `/` am Ende) → *Registrieren*.
 4. Auf der Übersichtsseite kopieren: **Anwendungs-ID (Client)** und **Verzeichnis-ID (Mandant)**.
-5. *API-Berechtigungen → Berechtigung hinzufügen → Microsoft Graph → Delegierte Berechtigungen*: `Files.ReadWrite`, `offline_access`, `openid`, `profile` (`User.Read` ist schon da) → *Administratorzustimmung erteilen*.
+5. *API-Berechtigungen → Berechtigung hinzufügen → Microsoft Graph → Delegierte Berechtigungen*: `Files.ReadWrite`, `offline_access`, `openid`, `profile`, `Mail.Send` (für den Belegversand per E-Mail; `User.Read` ist schon da) → *Administratorzustimmung erteilen*.
+   Wurde die App schon früher registriert: `Mail.Send` nachträglich hinzufügen. Beim ersten Versand fragt das Programm sonst nach der Zustimmung.
 
 ## 3. IDs eintragen
 In `index.html` ganz oben im Block `CONFIG` die beiden IDs eintragen, Datei erneut auf GitHub hochladen (ersetzen).
@@ -40,6 +41,7 @@ Alternativ beim ersten Start in die Felder des Startbildschirms eingeben (dann p
 
 ## Sicherheit
 - Die Berechtigung `Files.ReadWrite` erlaubt der App Zugriff auf das OneDrive des angemeldeten Benutzers; sie schreibt nur in den Ordner `ERP-Lite`.
+- Die Berechtigung `Mail.Send` erlaubt das Senden von Belegen als PDF im Namen des angemeldeten Benutzers (erscheint in „Gesendete Elemente“). Sie wird erst beim ersten Versand angefragt.
 - Die Anmeldung gilt im Browser des Geräts → **Bildschirmsperre am Handy** verwenden. MFA/Richtlinien des Mandanten gelten automatisch.
 - Abmelden: *Export & Sicherung → Abmelden*.
 

@@ -19,6 +19,9 @@ Anwender: Stefan Horvath. Sprache in Code-Kommentaren, Oberfläche und Antworten
 - Abgleich zwischen Geräten: `merge3()` (3-Wege je Datensatz).
 - Belege einlesen: `belegScan()` → `belegLokal()` (E-Rechnung, PDF-Text, Texterkennung; KI nur mit Schlüssel) → `textBeleg()` → Abgleich `scanBox()`/`scanUebernehmen()`. Originale unverändert über `anhaengeHochladen(…,true)`.
 - Popups für Neuanlage: `formDialog()`, `kontaktPopup()`, `artikelPopup()`.
+- PDF ohne Bibliothek: `pdfAusBeleg()` misst die Belegvorschau (`docHTML`) aus und schreibt Helvetica-Text, Linien, Logo; Umbruch an Zeilengrenzen, Tabellenkopf wiederholt. Versand: `versenden()` über Graph `/me/sendMail` (Scope Mail.Send, eigener Token `mailToken()`); ohne O365: PDF speichern + mailto.
+- Sammelrechnung aus Lieferscheinen: `sammelRechnung()`. Folgebeleg aus Entwurf: vorher `festschreiben()`.
+- Papierkorb/Rückgängig: `wegwerfen()`, `wiederherstellen()`.
 
 ## Regeln für Änderungen
 - Bestehende Funktionen gezielt ändern, nicht die Datei neu schreiben. Stil des umgebenden Codes übernehmen (kompakt, deutsche Bezeichner).

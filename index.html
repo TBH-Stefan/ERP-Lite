@@ -968,8 +968,7 @@ V.dash=()=>{
   ${!S().firma.name?'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>':''}
   <div class="quick">
     <a class="btn" href="#/zeiten">⏱ Zeit erfassen</a>
-    ${STORE.art==='cache'?'':`<label class="btn">📷 Eingangsrechnung<input type="file" id="erfoto" accept="image/*,application/pdf" multiple hidden></label>`}
-    <label class="btn">📷 Lieferschein scannen<input type="file" id="lsscan" accept="image/*,application/pdf" multiple hidden></label>
+    <label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>
     <button data-act="qneu" data-t="AN">+ Angebot</button>
     <button data-act="qneu" data-t="LS">+ Lieferschein</button>
     <button data-act="qneu" data-t="RE">+ Rechnung</button>
@@ -1007,7 +1006,7 @@ V.belege=(bereich='V')=>{
     <select data-o="ui" data-f="${k}Typ">${opt('','alle Belegarten',typ)}${typen.map(t=>opt(t,T[t].bez,typ)).join('')}</select>
     <select data-o="ui" data-f="${k}St">${opt('','alle',st)}${opt('entwurf','Entwürfe',st)}${opt('offen','offen',st)}${opt('ueber','überfällig',st)}${opt('storno','storniert',st)}</select>
     <input data-o="ui" data-f="${k}Q" placeholder="Suche Nr, Name, Betreff" value="${esc(UI[k+'Q'])}" style="width:240px">
-    <span class="sp"></span>${bereich==='E'?'<label class="btn">📷 Lieferschein scannen<input type="file" id="lsscan" accept="image/*,application/pdf" multiple hidden></label>':''}
+    <span class="sp"></span>${bereich==='E'?'<label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>':''}
     <select data-act="neu">${opt('','+ Neuer Beleg …','')}${typen.filter(t=>t!=='GS').map(t=>opt(t,T[t].bez,'')).join('')}</select>
   </div>
   <div class="card" style="padding:0"><table>
@@ -1054,7 +1053,7 @@ V.beleg=id=>{
     </tr>`}).join('');
   const kette=DB.belege.filter(x=>b.auftragId?x.auftragId===b.auftragId:(x.id===b.id||x.vorgaengerId===b.id||x.id===b.vorgaengerId)).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
   const auftragOpts=()=>opt('','– kein Auftrag (Lager/Gemeinkosten) –',b.auftragId)+auftragsListe().map(a=>opt(a.id,auftragLabel(a.id),b.auftragId)).join('');
-  const k=kontakt(b.kontaktId),scan=b.typ==='WE'?scanBox(b):'';
+  const k=kontakt(b.kontaktId),scan=['WE','ER'].includes(b.typ)?scanBox(b):'';
   const ans=ansicht();
   const kopfbar=`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
@@ -2208,8 +2207,9 @@ V.einstellungen=()=>{
   <div class="row">${ff('bank','Bank')}${ff('iban','IBAN','w2')}${ff('bic','BIC')}<label>Bearbeiter<input data-o="s" data-f="bearbeiter" value="${esc(s.bearbeiter)}"></label></div>
   <div class="row">${ff('zeichner','Unterzeichner (z. B. Horvath Stefan, BSc.)','w2')}${ff('zeichnerFkt','Funktion')}<label class="w2">Untertitel (nur bei eigenem Logo)<textarea data-o="s" data-f="firma.slogan" style="height:44px">${esc(f.slogan)}</textarea></label></div>
   <div class="row"><label>Logo (PNG/JPG/SVG, max. 300 kB; leer = TBH-Briefkopf)<input type="file" id="logo" accept="image/*"></label><img src="${f.logo||KOPF_TBH}" style="max-height:50px">${f.logo?`<button data-act="logodel">Logo entfernen</button>`:''}<span style="flex:2"></span></div></div>
-  <div class="card"><h2>KI-Belegerkennung (Lieferscheine)</h2>
-  <p class="mut" style="margin-top:0">Gescannte Lieferscheine werden von Claude (Anthropic) ausgelesen. Den API-Schlüssel erhalten Sie in der Anthropic Console (console.anthropic.com → API Keys). Er wird nur in diesem Browser gespeichert, nicht in der Datenbank – auf jedem Gerät einmal eintragen. Kosten ca. 1–3 Cent je Seite; das Bild wird zur Auswertung an Anthropic übertragen.</p>
+  <div class="card"><h2>Belege einlesen</h2>
+  <p style="margin-top:0">Kostenlos und ohne Internetdienst werden gelesen: <b>E-Rechnungen</b> (ZUGFeRD/Factur-X, XRechnung, ebInterface) und <b>PDFs mit Textebene</b> (z. B. PDF aus der E-Mail des Lieferanten). Fotos und eingescannte Papierbelege enthalten keinen Text – Positionen dann manuell erfassen.</p>
+  <p class="mut">Optional (kostenpflichtig): KI-Erkennung für Fotos durch Claude (Anthropic) – nur wenn hier ein Schlüssel eingetragen ist. Den API-Schlüssel erhalten Sie in der Anthropic Console (console.anthropic.com → API Keys). Er wird nur in diesem Browser gespeichert, nicht in der Datenbank – auf jedem Gerät einmal eintragen. Kosten ca. 1–3 Cent je Seite; das Bild wird zur Auswertung an Anthropic übertragen.</p>
   <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${lsGet('erp-ki-key')?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><span style="flex:2"></span></div></div>
   <div class="card"><h2>Kaufmännisch</h2><div class="row">
     ${sf('zahlungsziel','Zahlungsziel Tage')}${sf('skonto','Skonto %')}${sf('skontoTage','Skonto Tage')}${sf('angebotGueltig','Angebot gültig Tage')}
@@ -2228,7 +2228,239 @@ V.einstellungen=()=>{
   </tbody></table></div>`;
 };
 
-/* ---------- Lieferschein-Scan (KI-Erkennung) ---------- */
+/* ---------- Belege kostenlos auslesen: PDF-Textebene und E-Rechnung (ohne Fremdbibliothek) ---------- */
+async function inflate(u8){ // FlateDecode; toleriert Restbytes nach dem Datenende
+  for(const fmt of ['deflate','deflate-raw']){
+    try{
+      const ds=new DecompressionStream(fmt),w=ds.writable.getWriter(),r=ds.readable.getReader(),parts=[];let n=0;
+      w.write(fmt==='deflate'?u8:u8.subarray(2)).catch(()=>{});w.close().catch(()=>{});
+      try{for(;;){const {done,value}=await r.read();if(done)break;parts.push(value);n+=value.length}}catch(e){}
+      if(n){const o=new Uint8Array(n);let p=0;for(const x of parts){o.set(x,p);p+=x.length}return o}
+    }catch(e){}
+  }
+  return null;
+}
+const latin1=u8=>{let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return s};
+const CP1252={128:'€',130:'‚',132:'„',133:'…',145:'‘',146:'’',147:'“',148:'”',150:'–',151:'—',153:'™',138:'Š',154:'š',142:'Ž',158:'ž',149:'•'};
+const GLYPH={Euro:'€',adieresis:'ä',odieresis:'ö',udieresis:'ü',Adieresis:'Ä',Odieresis:'Ö',Udieresis:'Ü',germandbls:'ß',endash:'–',emdash:'—',bullet:'•',quotedblbase:'„',quotedblleft:'“',quotedblright:'”',quoteright:'’',twosuperior:'²',threesuperior:'³',degree:'°',multiply:'×',section:'§'};
+const hexU=h=>{if(h.length<=2)return h?String.fromCharCode(parseInt(h,16)):'';let s='';for(let i=0;i+4<=h.length;i+=4)s+=String.fromCharCode(parseInt(h.slice(i,i+4),16));return s};
+const mmul=(m,n)=>[m[0]*n[0]+m[1]*n[2],m[0]*n[1]+m[1]*n[3],m[2]*n[0]+m[3]*n[2],m[2]*n[1]+m[3]*n[3],m[4]*n[0]+m[5]*n[2]+n[4],m[4]*n[1]+m[5]*n[3]+n[5]];
+async function pdfLesen(buf){
+  const u8=new Uint8Array(buf),s=latin1(u8),O={},re=/(\d+)\s+(\d+)\s+obj\b/g;let m;
+  while((m=re.exec(s))){ // alle Objekte; Streams über „stream … endstream“
+    const a=m.index+m[0].length,e1=s.indexOf('endobj',a),si=s.indexOf('stream',a);let end=e1<0?s.length:e1;
+    if(si>=0&&(e1<0||si<e1)&&s[si-1]!=='d'){
+      let ds=si+6;if(s[ds]==='\r')ds++;if(s[ds]==='\n')ds++;
+      const de=s.indexOf('endstream',ds);end=de<0?s.length:de;
+      O[m[1]]={d:s.slice(a,si),raw:u8.subarray(ds,end)};const e2=s.indexOf('endobj',end);if(e2>0)end=e2;
+    }else O[m[1]]={d:s.slice(a,end)};
+    re.lastIndex=end;
+  }
+  const val=(d,key)=>{if(!d)return null;const i=d.search(new RegExp('/'+key+'(?![A-Za-z0-9])'));if(i<0)return null;let j=i+key.length+1;while(/\s/.test(d[j]))j++;
+    if(d.startsWith('<<',j)){let k=j,dep=0;for(;k<d.length;k++){if(d.startsWith('<<',k)){dep++;k++}else if(d.startsWith('>>',k)){dep--;k++;if(!dep)break}}return d.slice(j,k+1)}
+    if(d[j]==='['){let k=j,dep=0;for(;k<d.length;k++){if(d[k]==='[')dep++;else if(d[k]===']'&&!--dep)break}return d.slice(j,k+1)}
+    const r=d.slice(j).match(/^(\d+)\s+\d+\s+R/);if(r)return{ref:r[1]};const t=d.slice(j).match(/^\/?[^\s\/<>\[\]()]+/);return t?t[0]:null};
+  const deref=v=>v&&v.ref?(O[v.ref]?.d??null):v,refs=t=>[...String(t||'').matchAll(/(\d+)\s+\d+\s+R/g)].map(x=>x[1]);
+  const stream=async n=>{const o=O[n];if(!o?.raw)return null;if(o.dec!==undefined)return o.dec;const f=val(o.d,'Filter');
+    o.dec=!f?o.raw:/^\/?FlateDecode$|\[\s*\/FlateDecode\s*\]/.test(typeof f==='string'?f:'')?await inflate(o.raw):null;return o.dec};
+  for(const n of Object.keys(O))if(/\/Type\s*\/ObjStm/.test(O[n].d)){ // komprimierte Objektströme
+    const t=await stream(n);if(!t)continue;const tx=latin1(t),first=+val(O[n].d,'First'),hd=tx.slice(0,first).trim().split(/\s+/).map(Number);
+    for(let i=0;i<hd.length;i+=2){const st=first+hd[i+1],en=i+3<hd.length?first+hd[i+3]:tx.length;if(!O[hd[i]])O[hd[i]]={d:tx.slice(st,en)}}
+  }
+  let xml='';
+  for(const n of Object.keys(O))if(/\/EmbeddedFile/.test(O[n].d)&&O[n].raw){const t=await stream(n);if(!t)continue;const x=new TextDecoder().decode(t);if(/CrossIndustryInvoice|<(\w+:)?Invoice\b|ebinterface/i.test(x)){xml=x;break}}
+  const FC={};
+  const font=async n=>{if(FC[n])return FC[n];const d=O[n]?.d||'',f={m:null,len:1,w:{},dw:0,enc:{}};FC[n]=f;
+    const tu=val(d,'ToUnicode');
+    if(tu?.ref){const t=await stream(tu.ref);if(t){const c=latin1(t),m={};const cs=c.match(/begincodespacerange\s*<([0-9a-fA-F]+)>/);if(cs)f.len=cs[1].length/2;
+      for(const b of c.matchAll(/beginbfchar([\s\S]*?)endbfchar/g))for(const x of b[1].matchAll(/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]*)>/g))m[parseInt(x[1],16)]=hexU(x[2]);
+      for(const b of c.matchAll(/beginbfrange([\s\S]*?)endbfrange/g))for(const x of b[1].matchAll(/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*(<[0-9a-fA-F]*>|\[[^\]]*\])/g)){const lo=parseInt(x[1],16),hi=parseInt(x[2],16);
+        if(x[3][0]==='['){const arr=[...x[3].matchAll(/<([0-9a-fA-F]*)>/g)].map(y=>hexU(y[1]));for(let c2=lo;c2<=hi;c2++)m[c2]=arr[c2-lo]||''}
+        else{const h=x[3].slice(1,-1),pre=h.slice(0,-4),bv=parseInt(h.slice(-4)||'0',16);for(let c2=lo;c2<=hi&&c2-lo<65536;c2++)m[c2]=hexU(pre+(bv+c2-lo).toString(16).padStart(4,'0'))}}
+      f.m=m}}
+    if(/\/Subtype\s*\/Type0/.test(d)){f.len=2;const df=deref(val(d,'DescendantFonts')),dd=deref({ref:refs(df)[0]})||'';f.dw=+val(dd,'DW')||1000;
+      const W=deref(val(dd,'W'));if(W){const tk=W.trim().slice(1,-1).replace(/[\[\]]/g,x=>' '+x+' ').trim().split(/\s+/);for(let i=0;i<tk.length;){const c0=+tk[i++];
+        if(tk[i]==='['){i++;let c2=c0;while(tk[i]!==']'&&i<tk.length)f.w[c2++]=+tk[i++];i++}else{const c1=+tk[i++],wv=+tk[i++];for(let c2=c0;c2<=c1&&c2-c0<65536;c2++)f.w[c2]=wv}}}}
+    else{f.dw=500;const fc=+val(d,'FirstChar')||0,W=deref(val(d,'Widths'));if(W)W.replace(/[\[\]]/g,' ').trim().split(/\s+/).forEach((x,i)=>f.w[fc+i]=+x);
+      const en=deref(val(d,'Encoding'));const df=en&&val(en,'Differences');if(df){let c2=0;for(const t of df.replace(/[\[\]]/g,' ').match(/\/[^\s\/]+|\d+/g)||[]){if(t[0]==='/'){const g=t.slice(1);f.enc[c2++]=GLYPH[g]||(g.length===1?g:/^uni[0-9A-F]{4}$/.test(g)?String.fromCharCode(parseInt(g.slice(3),16)):'')}else c2=+t}}}
+    return f};
+  const pages=[],walk=(n,res,seen=new Set())=>{if(seen.has(n))return;seen.add(n);const d=O[n]?.d;if(!d)return;const r=val(d,'Resources')??res;
+    if(/\/Type\s*\/Pages/.test(d)){for(const k of refs(val(d,'Kids')))walk(k,r,seen)}else if(/\/Type\s*\/Page\b/.test(d))pages.push({n,res:r})};
+  for(const n of Object.keys(O))if(/\/Type\s*\/Pages/.test(O[n].d)&&!/\/Parent\s/.test(O[n].d))walk(n,null);
+  const zeilen=[];
+  for(const pg of pages){
+    const d=O[pg.n].d,cont=val(d,'Contents'),parts=cont?.ref?[cont.ref]:refs(cont);let cs='';
+    for(const p of parts){const t=await stream(p);if(t)cs+=latin1(t)+'\n';else{const arr=deref({ref:p});if(arr&&arr.trim().startsWith('['))for(const q of refs(arr)){const t2=await stream(q);if(t2)cs+=latin1(t2)+'\n'}}}
+    const fd=deref(val(deref(pg.res),'Font'))||'',fmap={};for(const x of fd.matchAll(/\/([^\s\/<>\[\]]+)\s+(\d+)\s+\d+\s+R/g))fmap[x[1]]=x[2];
+    const pcs=[];let ctm=[1,0,0,1,0,0],st=[],tm=[1,0,0,1,0,0],tlm=tm,F=null,fs=10,tc=0,tw=0,th=1,tl=0,ops=[],i=0;
+    const show=async bytes=>{if(!F)return;const f=await font(F);let t='',adv=0;
+      for(let k=0;k+f.len<=bytes.length;k+=f.len){const c=f.len===2?(bytes.charCodeAt(k)<<8)|bytes.charCodeAt(k+1):bytes.charCodeAt(k);
+        t+=f.m?.[c]??f.enc[c]??(f.len===2?'':CP1252[c]||String.fromCharCode(c));adv+=((f.w[c]??f.dw)/1000*fs+tc+(f.len===1&&c===32?tw:0))*th}
+      const M=mmul(tm,ctm),sx=Math.hypot(M[0],M[1]),sy=Math.hypot(M[2],M[3]);
+      if(t.trim())pcs.push({x:M[4],y:M[5],x2:M[4]+adv*sx,fs:Math.max(1,fs*sy),t});tm=mmul([1,0,0,1,adv,0],tm)};
+    const str=()=>{let o='',dep=1;i++;for(;i<cs.length;i++){const ch=cs[i];if(ch==='\\'){const nx=cs[++i];const E={n:'\n',r:'\r',t:'\t',b:'\b',f:'\f'};
+        if(E[nx])o+=E[nx];else if(/[0-7]/.test(nx)){let oc=nx;while(oc.length<3&&/[0-7]/.test(cs[i+1]))oc+=cs[++i];o+=String.fromCharCode(parseInt(oc,8))}else if(nx==='\r'){if(cs[i+1]==='\n')i++}else if(nx!=='\n')o+=nx}
+      else if(ch==='('){dep++;o+=ch}else if(ch===')'){if(!--dep){i++;break}o+=ch}else o+=ch}return o};
+    while(i<cs.length){const ch=cs[i];
+      if(/\s/.test(ch)){i++;continue}
+      if(ch==='%'){while(i<cs.length&&cs[i]!=='\n'&&cs[i]!=='\r')i++;continue}
+      if(ch==='('){ops.push({s:str()});continue}
+      if(ch==='<'&&cs[i+1]!=='<'){const e=cs.indexOf('>',i);const h=cs.slice(i+1,e).replace(/\s/g,'');ops.push({s:(h.length%2?h+'0':h).replace(/../g,x=>String.fromCharCode(parseInt(x,16)))});i=e+1;continue}
+      if(ch==='['){ops.push('[');i++;continue}
+      if(ch===']'){const a=[];while(ops.length&&ops[ops.length-1]!=='[')a.unshift(ops.pop());ops.pop();ops.push({a});i++;continue}
+      if(cs.startsWith('<<',i)||cs.startsWith('>>',i)){i+=2;continue}
+      if(ch==='/'){const mm=cs.slice(i).match(/^\/[^\s\/<>\[\]()%{}]*/)[0];ops.push(mm);i+=mm.length;continue}
+      const mm=cs.slice(i,i+40).match(/^[^\s\/<>\[\]()%{}]+/);if(!mm){i++;continue}const tok=mm[0];i+=tok.length;
+      if(/^[+\-]?(\d+\.?\d*|\.\d+)$/.test(tok)){ops.push(+tok);continue}
+      const nm=k=>ops.slice(-k).map(Number);
+      switch(tok){
+        case'q':st.push(ctm);break;case'Q':ctm=st.pop()||ctm;break;case'cm':ctm=mmul(nm(6),ctm);break;
+        case'BT':tm=tlm=[1,0,0,1,0,0];break;case'Tf':F=fmap[String(ops[ops.length-2]).slice(1)];fs=+ops[ops.length-1]||fs;break;
+        case'Td':tlm=tm=mmul([1,0,0,1,...nm(2)],tlm);break;case'TD':{const [x,y]=nm(2);tl=-y;tlm=tm=mmul([1,0,0,1,x,y],tlm);break}
+        case'Tm':tlm=tm=nm(6);break;case'T*':tlm=tm=mmul([1,0,0,1,0,-tl],tlm);break;case'TL':tl=nm(1)[0];break;
+        case'Tc':tc=nm(1)[0];break;case'Tw':tw=nm(1)[0];break;case'Tz':th=nm(1)[0]/100;break;
+        case'Tj':if(ops.length&&ops[ops.length-1].s!=null)await show(ops[ops.length-1].s);break;
+        case"'":tlm=tm=mmul([1,0,0,1,0,-tl],tlm);if(ops[ops.length-1]?.s!=null)await show(ops[ops.length-1].s);break;
+        case'"':tw=+ops[ops.length-3];tc=+ops[ops.length-2];tlm=tm=mmul([1,0,0,1,0,-tl],tlm);if(ops[ops.length-1]?.s!=null)await show(ops[ops.length-1].s);break;
+        case'TJ':{const a=ops[ops.length-1]?.a||[];for(const el of a){if(el?.s!=null)await show(el.s);else if(typeof el==='number')tm=mmul([1,0,0,1,-el/1000*fs*th,0],tm)}break}
+        case'BI':{const e=cs.indexOf('EI',cs.indexOf('ID',i));i=e<0?cs.length:e+2;break}
+      }
+      ops=[];
+    }
+    // Zeilen bilden: gleiche Grundlinie, nach x sortiert; große Lücken trennen Zellen
+    pcs.sort((a,b)=>b.y-a.y||a.x-b.x);const ls=[];
+    for(const p of pcs){const l=ls.find(z=>Math.abs(z.y-p.y)<Math.min(z.fs,p.fs)*0.45);if(l){l.p.push(p);l.fs=Math.max(l.fs,p.fs)}else ls.push({y:p.y,fs:p.fs,p:[p]})}
+    ls.sort((a,b)=>b.y-a.y);
+    for(const l of ls){l.p.sort((a,b)=>a.x-b.x);const cells=[];
+      for(const p of l.p){const c=cells[cells.length-1],gap=c?p.x-c.x2:1e9;
+        if(c&&gap<p.fs*0.45){c.t+=(gap>p.fs*0.15&&!/\s$/.test(c.t)&&!/^\s/.test(p.t)?' ':'')+p.t;c.x2=Math.max(c.x2,p.x2)}else cells.push({x:p.x,x2:p.x2,t:p.t})}
+      for(const c of cells)c.t=c.t.replace(/\s+/g,' ').trim();
+      const cz=cells.filter(c=>c.t);if(cz.length)zeilen.push({y:l.y,fs:l.fs,cells:cz,text:cz.map(c=>c.t).join('  ')})}
+  }
+  return{zeilen,xml};
+}
+/* Zahlen im deutschen Format: 1.234,56 · 4.750,- · 12,5 */
+const zahlDE=s=>{s=String(s||'').replace(/[€\s]/g,'').replace(/,-+$/,'');if(!/^-?[\d.,]+-?$/.test(s)||!/\d/.test(s))return null;const neg=/^-|-$/.test(s);s=s.replace(/-/g,'');
+  if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');const n=parseFloat(s);return isNaN(n)?null:neg?-n:n};
+const EINH=/^(stk|stück|st|pa|pkg|pck|set|m|lfm|m2|m²|m3|m³|kg|g|l|h|std|rolle|rol|krt|ve|paar|psch|pausch|pauschal|tag|km|ring|bund|ktn|sack|eimer)\.?$/i;
+const DATUM=/(\d{1,2})\.\s?(\d{1,2})\.\s?(\d{2,4})/;
+const isoAus=t=>{const m=String(t||'').match(DATUM);if(!m)return'';let j=+m[3];if(j<100)j+=2000;return`${j}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`};
+function textBeleg(Z,art){
+  const all=Z.map(z=>z.text).join('\n'),eigen=normN(S().firma.uid);
+  const feld=(lab,ok=v=>v)=>{for(let i=0;i<Z.length;i++){const cs=Z[i].cells;for(let j=0;j<cs.length;j++){const m=cs[j].t.match(lab);if(!m)continue;
+    let v=cs[j].t.slice(m.index+m[0].length).replace(/^[\s:.#]+/,'').trim();if(v&&ok(v))return ok(v);
+    if(cs[j+1]&&ok(cs[j+1].t))return ok(cs[j+1].t);
+    const nx=Z[i+1]?.cells.find(c=>c.x<cs[j].x2+20&&c.x2>cs[j].x-20);if(nx&&ok(nx.t))return ok(nx.t)}}return''};
+  const nrOk=v=>{const m=v.match(/^[A-Z]{0,4}[\-\/ ]?[\w\-\/\.]*\d[\w\-\/\.]*/i);return m&&!DATUM.test(m[0])?m[0].replace(/[.,;]$/,''):''};
+  const d={art,quelle:'PDF-Text',lieferant:{name:'',uid:'',strasse:'',plz:'',ort:''},lieferscheinNr:'',datum:'',bestellNr:'',lieferadresse:'',positionen:[],rohtext:all.slice(0,20000)};
+  d.lieferscheinNr=feld(art==='ER'?/rechnungs?[\s\-]*(nr\.?|nummer|no\.?)|rechnung\s*(nr\.?|nummer)?\s*:|faktura[\s\-]*(nr\.?|nummer)/i:/lieferschein[\s\-]*(nr\.?|nummer|no\.?)|lieferschein\s*:|ls[\s\-]*nr\.?/i,nrOk)||feld(/beleg[\s\-]*(nr\.?|nummer)|dokument[\s\-]*(nr\.?|nummer)|^nr\.?\s*:|^nummer\s*:/i,nrOk);
+  d.datum=isoAus(feld(/(rechnungs|liefer|lieferschein|beleg)?datum/i,v=>DATUM.test(v)?v:''))||isoAus(all);
+  d.bestellNr=feld(/(ihre\s+)?(bestell(ung|nummer|nr\.?)?|kommission|komm\.|bestellzeichen|auftrags?[\s\-]*(nr\.?|nummer)|ihr zeichen)/i,nrOk);
+  for(let i=0;i<Z.length;i++){const c=Z[i].cells.find(c=>/(liefer(adresse|anschrift|ort)|lieferung an|baustelle|warenempfänger|versandadresse)/i.test(c.t));if(!c)continue;
+    const rest=c.t.replace(/.*?(liefer(adresse|anschrift|ort)|lieferung an|baustelle|warenempfänger|versandadresse)\s*:?\s*/i,'').trim(),z=[rest];
+    for(let k=1;k<=3&&Z[i+k];k++){if(Z[i+k-1].y-Z[i+k].y>Z[i+k].fs*1.8)break;const n=Z[i+k].cells.find(x=>Math.abs(x.x-c.x)<30);if(n)z.push(n.t)}d.lieferadresse=z.filter(Boolean).join(', ').slice(0,160);break}
+  const uids=[...all.matchAll(/\b(AT\s?U\s?\d{8}|DE\s?\d{9})\b/g)].map(x=>x[1].replace(/\s/g,'')).filter(x=>x!==eigen);d.lieferant.uid=uids[0]||'';
+  const k=(d.lieferant.uid&&DB.kontakte.find(k=>k.typ!=='K'&&normN(k.uid)===normN(d.lieferant.uid)))||DB.kontakte.find(k=>k.typ!=='K'&&normF(k.name).length>2&&normF(all).includes(normF(k.name)));
+  if(k)d.lieferant.name=k.name;else{const top=Z.slice(0,12).map(z=>z.cells[0].t).find(t=>/\b(gmbh|ges\.?m\.?b\.?h|kg|ag|og|e\.u\.|co)\b/i.test(t)&&!normF(t).includes(normF(S().firma.name||'#')));d.lieferant.name=top||''}
+  // Positionstabelle über Kopfzeile erkennen
+  const KOL=[['pos',/^(pos\.?|position|lfd\.?\s*nr\.?|nr\.?)$/i],['artnr',/art(ikel)?[\s.\-]*nr|artikelnummer|material(nr|nummer)?|^artikel$|^art\.?$|bestellnummer|best\.?-?nr/i],['bez',/bezeichnung|beschreibung|artikeltext|leistung|^text$/i],
+    ['menge',/^(menge|anzahl|liefermenge|geliefert|lief\.?\s*menge|stück|qty)/i],['einheit',/^(einheit|einh\.?|me|eh|vpe)$/i],['ep',/einzelpreis|e-?preis|^ep\b|preis\s*\/|^preis\b|netto-?preis/i],['gp',/gesamt(preis|betrag)?|^betrag|^summe|^gp\b|^wert|positionswert/i],['rabatt',/rabatt|^rab/i],['ust',/^(ust|mwst|steuer)/i]];
+  const kind=t=>KOL.find(([,r])=>r.test(t.trim()))?.[0];
+  let H=null;const END=/^(summe|zwischensumme|gesamt|netto|übertrag|rabatt|zahlungs|mwst|ust|umsatzsteuer|endbetrag|rechnungsbetrag|seite\s+\d)/i;
+  for(const z of Z){
+    const ks=z.cells.map(c=>kind(c.t)),uniq=new Set(ks.filter(Boolean));
+    if(uniq.size>=3&&uniq.has('menge')&&(uniq.has('bez')||uniq.has('artnr'))){H=z.cells.map((c,j)=>({k:ks[j],c:(c.x+c.x2)/2,x:c.x,x2:c.x2})).filter(h=>h.k);continue}
+    if(!H)continue;
+    if(END.test(z.cells[0].t)||END.test(z.text)&&z.cells.length<=3){H=null;continue}
+    const row={};
+    for(const c of z.cells){const cc=(c.x+c.x2)/2;let best=H[0],bd=1e9;for(const h of H){const dd=Math.min(Math.abs(cc-h.c),Math.abs(c.x-h.x),Math.abs(c.x2-h.x2));if(dd<bd){bd=dd;best=h}}
+      let k2=best.k;const num=zahlDE(c.t);
+      if(['menge','ep','gp','pos','rabatt','ust'].includes(k2)&&num==null){const mm=c.t.match(/^([\d.,]+)\s*([A-Za-zäöüÄÖÜ²³]+\.?)$/);if(k2==='menge'&&mm&&zahlDE(mm[1])!=null){row.menge=zahlDE(mm[1]);row.einheit=mm[2];continue}
+        k2=EINH.test(c.t)?'einheit':/^\d+([.,]\d+)?\s*%$/.test(c.t)?k2:'bez'}
+      row[k2]=row[k2]&&k2==='bez'?row[k2]+' '+c.t:(row[k2]&&k2==='artnr'?row[k2]+' '+c.t:c.t)}
+    const menge=typeof row.menge==='number'?row.menge:zahlDE(row.menge);
+    if(menge==null||!(row.bez||row.artnr)){const last=d.positionen[d.positionen.length-1];if(last&&row.bez&&!row.menge&&!row.ep&&!row.gp)last.bez=(last.bez+' '+row.bez).slice(0,300);continue}
+    let ep=zahlDE(row.ep),gp=zahlDE(row.gp);if(ep==null&&gp!=null&&menge)ep=Math.round(gp/menge*10000)/10000;
+    let artNr=row.artnr||'',bez=row.bez||'';if(!bez){bez=artNr;artNr=''}
+    if(!artNr){const mm=bez.match(/^([A-Z0-9][A-Z0-9\-\.\/]{3,})\s+(.{3,})$/i);if(mm&&/\d/.test(mm[1])&&!/^\d{1,3}$/.test(mm[1])){artNr=mm[1];bez=mm[2]}}
+    d.positionen.push({artNr,ean:'',bez,menge,einheit:(row.einheit||'').replace(/\.$/,''),ep:ep||0,gp:gp||0,ust:zahlDE(String(row.ust||'').replace('%',''))||0});
+  }
+  // Ersatz ohne Tabellenkopf: „Menge Einheit Bezeichnung … Preis“ bzw. „Bezeichnung … Menge Einheit … Preis“
+  if(!d.positionen.length)for(const z of Z){const t=z.text;let m=t.match(/^(?:\d{1,3}\.?\s+)?(?:([A-Z0-9][A-Z0-9\-\.\/]{3,})\s+)?(.+?)\s+(\d+(?:[.,]\d+)?)\s+(Stk|Stück|St|m|lfm|PA|Pkg|Set|kg|l|h|Std|m²|m2|Rolle|Krt|VE)\.?(?:\s+(.*))?$/i);
+    if(!m||END.test(t))continue;const nums=(m[5]||'').split(/\s+/).map(zahlDE).filter(x=>x!=null);const menge=zahlDE(m[3]);
+    d.positionen.push({artNr:m[1]&&/\d/.test(m[1])?m[1]:'',ean:'',bez:(m[1]&&!/\d/.test(m[1])?m[1]+' ':'')+m[2],menge,einheit:m[4],ep:nums.length?(nums.length>1&&menge?Math.round(nums[nums.length-1]/menge*10000)/10000:nums[0]):0,gp:nums.length>1?nums[nums.length-1]:0,ust:0})}
+  if(art==='ER'){ // Summen und Zahlungsbedingungen
+    const letzte=t=>{const n=t.split(/\s+/).map(zahlDE).filter(x=>x!=null);return n.length?n[n.length-1]:null};
+    for(const z of Z){const t=z.text;
+      if(d.netto==null&&/^(summe\s*netto|netto(betrag|summe|wert)?|zwischensumme|warenwert|gesamt\s*netto)\b/i.test(z.cells[0].t))d.netto=letzte(t);
+      const um=t.match(/(?:(\d{1,2})(?:[.,]0+)?\s?%\s*(?:ust|mwst|umsatzsteuer|mehrwertsteuer))|(?:(?:ust|mwst|umsatzsteuer|mehrwertsteuer)[^\d%]{0,12}(\d{1,2})(?:[.,]0+)?\s?%)/i);
+      if(um&&letzte(t)!=null){(d.steuern=d.steuern||[]).push({satz:+(um[1]||um[2]),betrag:letzte(t)})}
+      if(/(gesamtbetrag|rechnungsbetrag|bruttobetrag|endbetrag|zu zahlen|zahlbetrag|gesamt\s*brutto|summe\s*brutto|total)/i.test(t)&&letzte(t)!=null)d.brutto=letzte(t)}
+    const fb=all.match(/zahlbar\s+(?:bis|am|spätestens)\s*(?:zum\s*)?(\d{1,2}\.\s?\d{1,2}\.\s?\d{2,4})/i);if(fb)d.faellig=isoAus(fb[1]);
+    const zt=all.match(/(\d{1,3})\s*tage?\s*(?:netto|ohne abzug|rein netto)/i)||all.match(/zahlungsziel[^\d]{0,15}(\d{1,3})\s*tag/i);if(zt)d.ziel=+zt[1];
+    const sk=all.match(/(\d{1,2}(?:,\d+)?)\s*%\s*skonto[^\d]{0,30}(\d{1,3})\s*tag/i)||all.match(/(\d{1,3})\s*tage?[^\d%]{0,20}(\d{1,2}(?:,\d+)?)\s*%\s*skonto/i);
+    if(sk){const a=zahlDE(sk[1]),b=zahlDE(sk[2]);if(/%\s*skonto/i.test(sk[0].slice(0,sk[0].indexOf(sk[2]))))d.skonto={satz:a,tage:b};else d.skonto={satz:b,tage:a}}
+    d.lsRefs=[...all.matchAll(/lieferschein[\s\-]*(?:nr\.?|nummer)?\s*[:.]?\s*([A-Z0-9][\w\-\/]*\d[\w\-\/]*)/gi)].map(x=>x[1]);
+  }
+  return d;
+}
+/* E-Rechnung: ZUGFeRD/Factur-X (CII), XRechnung/PEPPOL (UBL), ebInterface (AT) */
+const UNIT={C62:'Stk',H87:'Stk',EA:'Stk',XPP:'Stk',PCE:'Stk',MTR:'m',MTK:'m²',MTQ:'m³',KGM:'kg',GRM:'g',LTR:'l',HUR:'h',DAY:'Tag',SET:'Set',PR:'Paar',KMT:'km',LS:'PA',XPK:'Pkg',PK:'Pkg',RO:'Rolle',XRO:'Rolle',CT:'Krt',XCT:'Krt'};
+function xmlBeleg(txt){
+  const doc=new DOMParser().parseFromString(txt.replace(/^\uFEFF/,''),'application/xml');if(doc.getElementsByTagName('parsererror').length)return null;
+  const r=doc.documentElement,ln=r.localName,eb=/ebinterface/i.test(r.namespaceURI||'');
+  const kids=(e,n)=>e?[...e.children].filter(c=>c.localName===n):[];
+  const q=(e,p)=>{let c=[e];for(const s of p.split('/')){c=c.flatMap(x=>kids(x,s));if(!c.length)return null}return c[0]};
+  const tx=(e,p)=>(e&&q(e,p)?.textContent||'').trim(),n=s=>{const v=parseFloat(String(s).replace(',','.'));return isNaN(v)?0:v};
+  const ep4=(gp,m,p)=>m&&gp?Math.round(gp/m*10000)/10000:p;
+  const d={lieferant:{},positionen:[],steuern:[]};
+  if(ln==='CrossIndustryInvoice'){
+    const tt=q(r,'SupplyChainTradeTransaction'),ag=q(tt,'ApplicableHeaderTradeAgreement'),dl=q(tt,'ApplicableHeaderTradeDelivery'),se=q(tt,'ApplicableHeaderTradeSettlement'),sp=q(ag,'SellerTradeParty'),ms=q(se,'SpecifiedTradeSettlementHeaderMonetarySummation');
+    const cd=v=>/^\d{8}$/.test(v)?`${v.slice(0,4)}-${v.slice(4,6)}-${v.slice(6)}`:'';
+    Object.assign(d,{art:'ER',quelle:'E-Rechnung (ZUGFeRD/Factur-X)',lieferscheinNr:tx(r,'ExchangedDocument/ID'),datum:cd(tx(r,'ExchangedDocument/IssueDateTime/DateTimeString')),bestellNr:tx(ag,'BuyerOrderReferencedDocument/IssuerAssignedID'),
+      lieferant:{name:tx(sp,'Name'),uid:kids(sp,'SpecifiedTaxRegistration').map(c=>tx(c,'ID')).find(x=>/^[A-Z]{2}/.test(x))||'',strasse:tx(sp,'PostalTradeAddress/LineOne'),plz:tx(sp,'PostalTradeAddress/PostcodeCode'),ort:tx(sp,'PostalTradeAddress/CityName')},
+      lieferadresse:[tx(dl,'ShipToTradeParty/Name'),tx(dl,'ShipToTradeParty/PostalTradeAddress/LineOne'),(tx(dl,'ShipToTradeParty/PostalTradeAddress/PostcodeCode')+' '+tx(dl,'ShipToTradeParty/PostalTradeAddress/CityName')).trim()].filter(Boolean).join(', '),
+      lsRefs:[tx(dl,'DespatchAdviceReferencedDocument/IssuerAssignedID')].filter(Boolean),
+      netto:n(tx(ms,'TaxBasisTotalAmount')),brutto:n(tx(ms,'GrandTotalAmount')),faellig:cd(tx(se,'SpecifiedTradePaymentTerms/DueDateDateTime/DateTimeString')),
+      steuern:kids(se,'ApplicableTradeTax').map(t=>({satz:n(tx(t,'RateApplicablePercent')),betrag:n(tx(t,'CalculatedAmount'))})),
+      positionen:kids(tt,'IncludedSupplyChainTradeLineItem').map(li=>{const qe=q(li,'SpecifiedLineTradeDelivery/BilledQuantity'),m=n(qe?.textContent),gp=n(tx(li,'SpecifiedLineTradeSettlement/SpecifiedTradeSettlementLineMonetarySummation/LineTotalAmount'));
+        const pr=n(tx(li,'SpecifiedLineTradeAgreement/NetPriceProductTradePrice/ChargeAmount'))/(n(tx(li,'SpecifiedLineTradeAgreement/NetPriceProductTradePrice/BasisQuantity'))||1);
+        return{artNr:tx(li,'SpecifiedTradeProduct/SellerAssignedID'),ean:tx(li,'SpecifiedTradeProduct/GlobalID'),bez:tx(li,'SpecifiedTradeProduct/Name'),menge:m,einheit:UNIT[qe?.getAttribute('unitCode')]||qe?.getAttribute('unitCode')||'',ep:ep4(gp,m,pr),gp,ust:n(tx(li,'SpecifiedLineTradeSettlement/ApplicableTradeTax/RateApplicablePercent'))}})});
+  }else if(eb){
+    const bi=q(r,'Biller'),dv=q(r,'Delivery/Address');
+    Object.assign(d,{art:'ER',quelle:'E-Rechnung (ebInterface)',lieferscheinNr:tx(r,'InvoiceNumber'),datum:tx(r,'InvoiceDate'),bestellNr:tx(r,'InvoiceRecipient/OrderReference/OrderID'),
+      lieferant:{name:tx(bi,'Address/Name'),uid:tx(bi,'VATIdentificationNumber'),strasse:tx(bi,'Address/Street'),plz:tx(bi,'Address/ZIP'),ort:tx(bi,'Address/Town')},
+      lieferadresse:dv?[tx(dv,'Name'),tx(dv,'Street'),(tx(dv,'ZIP')+' '+tx(dv,'Town')).trim()].filter(Boolean).join(', '):'',
+      brutto:n(tx(r,'TotalGrossAmount')),faellig:tx(r,'PaymentConditions/DueDate'),
+      positionen:[...r.getElementsByTagNameNS('*','ListLineItem')].map(li=>{const qe=q(li,'Quantity'),m=n(qe?.textContent),gp=n(tx(li,'LineItemAmount')),up=q(li,'UnitPrice');
+        return{artNr:kids(li,'ArticleNumber').map(a=>a.textContent.trim())[0]||'',ean:'',bez:kids(li,'Description').map(a=>a.textContent.trim()).join(' '),menge:m,einheit:UNIT[qe?.getAttribute('Unit')]||qe?.getAttribute('Unit')||'',ep:ep4(gp,m,n(up?.textContent)/(n(up?.getAttribute('BaseQuantity'))||1)),gp,ust:n(tx(li,'TaxItem/TaxPercent')||tx(li,'VATRate'))}})});
+    d.netto=r2(sum(d.positionen,p=>p.gp));
+  }else if(['Invoice','CreditNote','DespatchAdvice'].includes(ln)){
+    const sp=q(r,'AccountingSupplierParty/Party')||q(r,'DespatchSupplierParty/Party'),lm=q(r,'LegalMonetaryTotal'),dla=q(r,'Delivery/DeliveryLocation/Address')||q(r,'Shipment/Delivery/DeliveryAddress');
+    const ls=ln==='DespatchAdvice';
+    Object.assign(d,{art:ls?'WE':'ER',quelle:ls?'Lieferavis (UBL)':'E-Rechnung (XRechnung/UBL)',lieferscheinNr:tx(r,'ID'),datum:tx(r,'IssueDate'),bestellNr:tx(r,'OrderReference/ID'),
+      lieferant:{name:tx(sp,'PartyName/Name')||tx(sp,'PartyLegalEntity/RegistrationName'),uid:tx(sp,'PartyTaxScheme/CompanyID'),strasse:tx(sp,'PostalAddress/StreetName'),plz:tx(sp,'PostalAddress/PostalZone'),ort:tx(sp,'PostalAddress/CityName')},
+      lieferadresse:dla?[tx(dla,'StreetName'),(tx(dla,'PostalZone')+' '+tx(dla,'CityName')).trim()].filter(Boolean).join(', '):'',lsRefs:kids(r,'DespatchDocumentReference').map(x=>tx(x,'ID')),
+      netto:n(tx(lm,'TaxExclusiveAmount')),brutto:n(tx(lm,'TaxInclusiveAmount')),faellig:tx(r,'DueDate')||tx(r,'PaymentMeans/PaymentDueDate'),
+      steuern:kids(q(r,'TaxTotal'),'TaxSubtotal').map(t=>({satz:n(tx(t,'TaxCategory/Percent')),betrag:n(tx(t,'TaxAmount'))})),
+      positionen:[...kids(r,'InvoiceLine'),...kids(r,'CreditNoteLine'),...kids(r,'DespatchLine')].map(li=>{const qe=q(li,'InvoicedQuantity')||q(li,'CreditedQuantity')||q(li,'DeliveredQuantity'),m=n(qe?.textContent),gp=n(tx(li,'LineExtensionAmount'));
+        return{artNr:tx(li,'Item/SellersItemIdentification/ID'),ean:tx(li,'Item/StandardItemIdentification/ID'),bez:tx(li,'Item/Name')||tx(li,'Item/Description'),menge:m,einheit:UNIT[qe?.getAttribute('unitCode')]||qe?.getAttribute('unitCode')||'',ep:ep4(gp,m,n(tx(li,'Price/PriceAmount'))/(n(tx(li,'Price/BaseQuantity'))||1)),gp,ust:n(tx(li,'Item/ClassifiedTaxCategory/Percent'))}})});
+    if(ln==='CreditNote')d.gutschrift=true;
+  }else return null;
+  if(!d.positionen.length&&!d.lieferscheinNr)return null;
+  return d;
+}
+async function belegLokal(files,typ){
+  const Z=[];
+  for(const f of files){
+    const buf=await f.arrayBuffer();
+    if(/xml/.test(f.type)||/\.xml$/i.test(f.name)){const d=xmlBeleg(new TextDecoder().decode(buf));if(d)return d;continue}
+    if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){const p=await pdfLesen(buf);if(p.xml){const d=xmlBeleg(p.xml);if(d)return d}Z.push(...p.zeilen)}
+  }
+  return Z.length>3&&Z.map(z=>z.text).join('').length>40?textBeleg(Z,typ):null;
+}
+
+/* ---------- Beleg-Scan: Abgleich und Übernahme (optional KI für Fotos) ---------- */
 // API-Schlüssel nur im Browser des Geräts (localStorage), nicht in erp-daten.json
 const KI_URL='https://api.anthropic.com/v1/messages',KI_MODELL='claude-opus-5-5';
 const LS_SCHEMA={type:'object',additionalProperties:false,required:['lieferant','lieferscheinNr','datum','bestellNr','lieferadresse','positionen'],properties:{
@@ -2279,7 +2511,8 @@ function artikelFinden(z,lid){
   if(en&&(a=akt.find(a=>normN(a.ean)===en||lf(a).some(l=>normN(l.artNr)===en))))return{a,wie:'EAN'};
   const w=new Set(normT(z.bez).split(' ').filter(x=>x.length>1));if(!w.size)return null;
   let best=null,bs=0;
-  for(const x of akt){const aw=normT(x.bez).split(' ').filter(y=>y.length>1);if(!aw.length)continue;const s=aw.filter(y=>w.has(y)).length/Math.max(aw.length,w.size);if(s>bs){bs=s;best=x}}
+  for(const x of akt){const aw=[...new Set(normT(x.bez).split(' ').filter(y=>y.length>1))];if(!aw.length)continue;const h=aw.filter(y=>w.has(y)).length;if(h<2&&!(aw.length===1&&w.size<=2))continue;
+    const s=0.7*h/aw.length+0.3*h/w.size;if(s>bs){bs=s;best=x}} // Artikelwörter im Text gefunden (Zusatzangaben des Lieferanten zählen weniger)
   return best&&bs>=0.6?{a:best,wie:`Bezeichnung ${Math.round(bs*100)} %`}:null;
 }
 const scanFak=(z,a)=>+(a?.einheiten||[]).find(e=>normT(e.e)===normT(z.einheit))?.f||1;
@@ -2300,39 +2533,52 @@ function scanKopf(b){
   if(/^\d{4}-\d{2}-\d{2}$/.test(d.datum||''))b.datum=d.datum;
   const k=lieferantFinden(l);if(k)b.kontaktId=k.id;
   if(d.bestellNr){b.bezug='Bestellung '+d.bestellNr;const be=DB.belege.find(x=>x.typ==='BE'&&!x.storno&&x.nr&&normN(x.nr)===normN(d.bestellNr));if(be){b.vorgaengerId=be.id;if(be.auftragId)b.auftragId=be.auftragId}}
-  if(d.lieferadresse){b.betreff=b.betreff||'Lieferung an '+d.lieferadresse;b.lagerBuchen=false}
+  if(d.lieferadresse&&b.typ==='WE'){b.betreff=b.betreff||'Lieferung an '+d.lieferadresse;b.lagerBuchen=false}
+  if(b.typ==='ER'){
+    if(d.faellig&&/^\d{4}-\d{2}-\d{2}$/.test(d.faellig))b.zahlungsziel=Math.max(0,Math.round((new Date(d.faellig)-new Date(b.datum))/864e5));else if(d.ziel)b.zahlungsziel=d.ziel;
+    if(d.skonto?.satz){b.skonto=d.skonto.satz;b.skontoTage=d.skonto.tage||0}
+    const we=(d.lsRefs||[]).map(r=>DB.belege.find(x=>x.typ==='WE'&&!x.storno&&x.fremdNr&&normN(x.fremdNr)===normN(r)&&(!b.kontaktId||x.kontaktId===b.kontaktId))).find(Boolean);
+    if(we){b.vorgaengerId=we.id;b.auftragId=we.auftragId||b.auftragId;b.bezug=`Lieferschein ${we.fremdNr}`}
+  }
   b.scan.wahl=(d.positionen||[]).map(z=>{const f=artikelFinden(z,b.kontaktId);return{modus:f?'zu':'neu',artId:f?.a.id||'',wie:f?.wie||'',menge:+z.menge||0,an:{},lager:b.lagerBuchen!==false}});
 }
-async function lsScan(files){
+async function belegScan(files,typ){
   if(!files.length)return;
-  const b=neuBeleg('WE',{kopf:'',fuss:'',lagerBuchen:true});SCANFILES[b.id]=files;
-  log('Lieferschein-Scan',`${files.length} Datei(en)`);go('beleg/'+b.id);
+  const b=neuBeleg(typ,{kopf:'',fuss:'',...(typ==='WE'?{lagerBuchen:true}:{})});SCANFILES[b.id]=files;
+  log(typ==='WE'?'Lieferschein einlesen':'Rechnung einlesen',`${files.length} Datei(en)`);go('beleg/'+b.id);
   if(STORE.art!=='cache')await anhaengeHochladen(b,files);
   await scanStart(b);
 }
 async function scanStart(b){
-  const key=lsGet('erp-ki-key'),files=SCANFILES[b.id];
-  if(!key){b.scan={status:'fehler',fehler:'Kein API-Schlüssel hinterlegt – unter Einstellungen → KI-Belegerkennung eintragen. Positionen können auch manuell erfasst werden.'};persist();render();return}
+  const key=lsGet('erp-ki-key'),files=SCANFILES[b.id];if(!files)return;
   b.scan={status:'läuft'};render();
-  try{b.scan={status:'offen',daten:await kiLieferschein(files,key)};scanKopf(b)}catch(e){b.scan={status:'fehler',fehler:e.message}}
+  try{
+    let d=await belegLokal(files,b.typ); // kostenlos: E-Rechnung bzw. PDF-Textebene
+    if(!d&&key){d=await kiLieferschein(files,key);d.quelle='KI (Claude)'}
+    if(!d)throw new Error('Kein lesbarer Text gefunden (Foto oder eingescanntes PDF). Positionen bitte manuell erfassen. Tipp: Das PDF aus der E-Mail des Lieferanten bzw. eine E-Rechnung (XML) wird kostenlos ausgelesen.');
+    b.scan={status:'offen',daten:d};scanKopf(b)}catch(e){b.scan={status:'fehler',fehler:e.message}}
   commit();if(curBeleg()?.id===b.id)render();
 }
 function scanBox(b){
   const s=b.scan;if(!s||s.status==='übernommen')return'';
-  if(s.status==='läuft')return`<div class="card"><h2>📷 Lieferschein wird gelesen …</h2><p class="mut" style="margin:0">Die KI wertet den Scan aus, das dauert meist 10–60 Sekunden.</p></div>`;
-  if(s.status==='fehler')return`<div class="card"><h2>📷 Lieferschein-Erkennung</h2><p class="err" style="margin-top:0">${esc(s.fehler)}</p><div class="bar">${SCANFILES[b.id]?'<button data-act="scanneu">Erneut versuchen</button>':''}<button data-act="scanweg">Ausblenden</button></div></div>`;
+  if(s.status==='läuft')return`<div class="card"><h2>📷 Beleg wird gelesen …</h2><p class="mut" style="margin:0">Bitte warten.</p></div>`;
+  if(s.status==='fehler')return`<div class="card"><h2>📷 Beleg auslesen</h2><p class="err" style="margin-top:0">${esc(s.fehler)}</p><div class="bar">${SCANFILES[b.id]?'<button data-act="scanneu">Erneut versuchen</button>':''}<button data-act="scanweg">Ausblenden</button></div></div>`;
   const d=s.daten,lid=b.kontaktId,l=d.lieferant||{};
   const rows=(d.positionen||[]).map((z,i)=>{const w=s.wahl[i],a=w.modus==='zu'?artikel(w.artId):null,df=a?scanDiffs(z,a,lid):[];
     return`<tr><td>${esc(z.artNr)}${z.ean?`<br><span class="mut">EAN ${esc(z.ean)}</span>`:''}</td><td>${esc(z.bez)}</td>
-    <td style="width:80px"><input type="number" step="any" data-sc="${i}" data-k="menge" value="${w.menge}"></td><td>${esc(z.einheit)}</td><td class="n">${+z.ep?fmt(z.ep):''}</td>
+    <td style="width:80px"><input type="number" step="any" data-sc="${i}" data-k="menge" value="${w.menge}"></td><td>${esc(z.einheit)}</td><td class="n">${+z.ep?fmtQ(z.ep):''}</td>
     <td style="min-width:240px"><select data-sc="${i}" data-k="modus">${opt('zu','Artikelstamm',w.modus)}${opt('neu','neuer Artikel',w.modus)}${opt('frei','ohne Artikel',w.modus)}</select>
       ${w.modus==='zu'?`<input list="dl-art" data-sc="${i}" data-k="art" value="${a?esc(a.nr+' – '+a.bez):''}" placeholder="Artikel suchen …" style="margin-top:4px">${a?`<div class="mut" style="font-size:12px">${w.wie?'erkannt über '+esc(w.wie):'manuell gewählt'}</div>`:'<div class="err" style="font-size:12px">kein Artikel gewählt</div>'}`:''}
       ${w.modus==='neu'?`<label class="chk" style="margin:4px 0 0;font-size:13px"><input type="checkbox" data-sc="${i}" data-k="lager" ${w.lager?'checked':''}> Lagerartikel</label>`:''}</td>
     <td>${df.map(([key,txt,def])=>`<label class="chk" style="margin:0 0 2px;font-size:13px"><input type="checkbox" data-sc="${i}" data-k="an-${key}" ${(w.an[key]??def)?'checked':''}> ${txt}</label>`).join('')||(a?'<span class="okc">✓ stimmt überein</span>':'')}</td></tr>`}).join('');
-  return`<div class="card"><h2>📷 Lieferschein-Abgleich</h2>
-  <p style="margin-top:0">Lieferant laut Scan: <b>${esc(l.name||'–')}</b>${l.uid?' · UID '+esc(l.uid):''} · LS-Nr. ${esc(d.lieferscheinNr||'–')} · ${d.datum?dAT(d.datum):''}${d.bestellNr?' · Bestellung '+esc(d.bestellNr):''}${d.lieferadresse?`<br>Lieferadresse: <b>${esc(d.lieferadresse)}</b>`:''}</p>
+  const sumPos=r2(sum(d.positionen||[],z=>(+z.gp)||(+z.menge||0)*(+z.ep||0))),abw=d.netto&&(d.positionen||[]).length&&Math.abs(sumPos-d.netto)>0.05;
+  return`<div class="card"><h2>📷 ${b.typ==='ER'?'Rechnungs':'Lieferschein'}-Abgleich <span class="tag ${/E-Rechnung|Lieferavis/.test(d.quelle||'')?'ok':'warn'}">${esc(d.quelle||'KI')}</span></h2>
+  ${d.quelle==='PDF-Text'?'<div class="hint">Aus dem PDF-Text gelesen – Zuordnung der Spalten bitte prüfen.</div>':''}
+  ${b.typ==='ER'&&(d.netto||d.brutto)?`<p>Laut Rechnung: netto <b>${fmt(d.netto||0)} €</b>${(d.steuern||[]).map(t=>` · USt ${fmtQ(t.satz)} % ${fmt(t.betrag)} €`).join('')} · brutto <b>${fmt(d.brutto||0)} €</b>${d.faellig?' · fällig '+dAT(d.faellig):''}${d.skonto?` · ${fmtQ(d.skonto.satz)} % Skonto ${d.skonto.tage} Tage`:''}${abw?`<br><span class="err">Summe der erkannten Positionen ${fmt(sumPos)} € weicht vom Nettobetrag ab – Positionen prüfen.</span>`:''}</p>`:''}
+  <p style="margin-top:0">Lieferant laut Beleg: <b>${esc(l.name||'–')}</b>${l.uid?' · UID '+esc(l.uid):''} · Nr. ${esc(d.lieferscheinNr||'–')} · ${d.datum?dAT(d.datum):''}${d.bestellNr?' · Bestellung '+esc(d.bestellNr):''}${d.lieferadresse?`<br>Lieferadresse: <b>${esc(d.lieferadresse)}</b>`:''}</p>
   ${lid?'':`<div class="hint">Lieferant nicht im Stamm gefunden. <button data-act="scanlief">„${esc(l.name||'Lieferant')}“ als Lieferant anlegen</button> oder oben auswählen.</div>`}
-  <div style="overflow-x:auto"><table><thead><tr><th>Art.-Nr.</th><th>Bezeichnung laut Lieferschein</th><th>Menge</th><th>Einh.</th><th class="n">EP</th><th>Zuordnung</th><th>Änderungen im Artikelstamm</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="mut">Keine Positionen erkannt.</td></tr>'}</tbody></table></div>
+  <div style="overflow-x:auto"><table><thead><tr><th>Art.-Nr.</th><th>Bezeichnung laut Beleg</th><th>Menge</th><th>Einh.</th><th class="n">EP</th><th>Zuordnung</th><th>Änderungen im Artikelstamm</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="mut">Keine Positionen erkannt.</td></tr>'}</tbody></table></div>
+  ${d.rohtext?`<details style="margin-top:6px"><summary class="mut">Gelesener Text anzeigen</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:300px;overflow:auto">${esc(d.rohtext)}</pre></details>`:''}
   <div class="bar" style="margin-top:8px"><button class="p" data-act="scanok">Prüfen und übernehmen …</button><button data-act="scanweg">Verwerfen</button><span class="mut">Angehakte Änderungen werden nach Rückfrage in den Artikelstamm geschrieben.</span></div></div>`;
 }
 function scanSet(el){
@@ -2349,8 +2595,14 @@ function scanUebernehmen(b){
   const s=b.scan,d=s.daten,lid=b.kontaktId,zl=d.positionen||[];
   if(zl.some((z,i)=>s.wahl[i].modus==='zu'&&!artikel(s.wahl[i].artId))){alert('Bitte bei allen Zeilen „Artikelstamm“ einen Artikel wählen oder „neuer Artikel“ / „ohne Artikel“ einstellen.');return}
   const plan=zl.map((z,i)=>{const w=s.wahl[i],a=w.modus==='zu'?artikel(w.artId):null;return{z,w,a,df:scanDiffs(z,a,lid).filter(([k,,def])=>w.an[k]??def)}});
+  if(!plan.length&&b.typ==='ER'&&d.netto){if(!confirm('Keine Positionen erkannt. Nettobetrag je Steuersatz als Position übernehmen?'))return;
+    const st=(d.steuern||[]).filter(t=>t.betrag);const ts=st.length?st:[{satz:S().steuer.find(x=>x.code===S().stdSteuer)?.satz||20,betrag:r2(d.brutto-d.netto)}];
+    for(const t of ts)b.pos.push(neuPos({art:'W',bez:`Lt. Rechnung ${d.lieferscheinNr||''}`.trim(),menge:1,einheit:'PA',ep:t.satz?r2(t.betrag*100/t.satz):r2(d.netto),steuer:S().steuer.find(x=>+x.satz===+t.satz&&!x.hinweis)?.code||S().stdSteuer}));
+    if(ts.length===1)b.pos[b.pos.length-1].ep=r2(d.netto);
+    b.scan={status:'übernommen',datum:isoD()};log('Rechnung übernommen',d.lieferscheinNr||'');commit();render();return}
   const neu=plan.filter(x=>x.w.modus==='neu'),aend=plan.flatMap(x=>x.df.map(([,t])=>`• ${x.a.nr}: ${t.replace(/<[^>]+>/g,'').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')}`));
-  if(!confirm(`Lieferschein übernehmen?\n\n${plan.length} Position(en) in den Wareneingang\n${neu.length} neue(r) Artikel\n${aend.length} Änderung(en) im Artikelstamm${aend.length?':\n'+aend.join('\n'):''}`))return;
+  if(!confirm(`${b.typ==='ER'?'Rechnung':'Lieferschein'} übernehmen?\n\n${plan.length} Position(en) in ${b.typ==='ER'?'die Eingangsrechnung':'den Wareneingang'}\n${neu.length} neue(r) Artikel\n${aend.length} Änderung(en) im Artikelstamm${aend.length?':\n'+aend.join('\n'):''}`))return;
+  const we=b.typ==='ER'?beleg(b.vorgaengerId):null,genutzt=new Set();
   for(const x of plan){
     let {z,w,a}=x;const fak=scanFak(z,a);
     for(const [k] of x.df){
@@ -2365,10 +2617,11 @@ function scanUebernehmen(b){
       a={id:uid(),nr,bez:z.bez,text:'',art:'W',einheit:eh,einheiten:[],ek:r2(+z.ep||0),vk:0,steuer:S().stdSteuer,lager:!!w.lager,minBestand:0,lieferanten:lid?[{kontaktId:lid,artNr:z.artNr||''}]:[],aktiv:true,ean:z.ean||''};
       DB.artikel.push(a);if(!S().einheiten.includes(eh))S().einheiten.push(eh);
     }
-    const ep=+z.ep||r2((+a?.ek||0)*fak);
-    b.pos.push(neuPos({art:'W',artikelId:a?.id||'',nr:a?.nr||z.artNr||'',bez:a?.bez||z.bez,menge:+w.menge||0,einheit:z.einheit||a?.einheit||'Stk',faktor:fak,ep,ek:ep}));
+    const ep=+z.ep||r2((+a?.ek||0)*fak),stc=+z.ust?S().steuer.find(x=>+x.satz===+z.ust&&!x.hinweis)?.code:'';
+    const vp=a&&we?we.pos.find(q=>q.artikelId===a.id&&!genutzt.has(q.id)):null;if(vp)genutzt.add(vp.id);
+    b.pos.push(neuPos({art:'W',artikelId:a?.id||'',nr:a?.nr||z.artNr||'',bez:a?.bez||z.bez,menge:+w.menge||0,einheit:z.einheit||a?.einheit||'Stk',faktor:fak,ep,ek:ep,steuer:stc||(a?.steuer)||S().stdSteuer,herkunftPosId:vp?.id||''}));
   }
-  log('Lieferschein übernommen',`${d.lieferscheinNr||''}: ${plan.length} Pos., ${neu.length} neue Artikel, ${aend.length} Änderungen`);
+  log(b.typ==='ER'?'Rechnung übernommen':'Lieferschein übernommen',`${d.lieferscheinNr||''}: ${plan.length} Pos., ${neu.length} neue Artikel, ${aend.length} Änderungen`);
   b.scan={status:'übernommen',datum:isoD()};artDatalist();commit();render();
 }
 /* Wareneingänge, die an Kunden weiterzuverrechnen sind (auf Auftrag oder direkt auf Baustelle geliefert) */
@@ -2562,11 +2815,10 @@ document.addEventListener('change',e=>{
   if(el.id==='logo')return logoUpload(el);
   if(el.id==='imp')return importJSON(el);
   if(el.id==='lbimp')return lbImport(el);
-  if(el.id==='lsscan'){const f=[...el.files];el.value='';lsScan(f);return}
+  if(el.id==='lsscan'||el.id==='erfoto'){const f=[...el.files];el.value='';belegScan(f,el.id==='lsscan'?'WE':'ER');return}
   if(el.id==='kikey'){lsSet('erp-ki-key',el.value.trim()||null);render();return}
   if(d.sc!==undefined)return scanSet(el);
   if(el.id==='att'){const b=curBeleg();if(b)anhaengeHochladen(b,[...el.files]);return}
-  if(el.id==='erfoto'){const files=[...el.files];if(!files.length)return;const b=neuBeleg('ER',{kopf:'',fuss:''});go('beleg/'+b.id);anhaengeHochladen(b,files);return}
   const v=el.type==='checkbox'?el.checked:el.value,nv=el.type==='number'?num(v):v;
   if(d.p!==undefined){const b=curBeleg();if(!b||b.fest)return;onPos(b,+d.p,d.f,v);persist();return}
   if(d.h){const b=curBeleg();if(!b||b.fest)return;onHead(b,d.h,el.type==='number'?num(v):v);persist();return}

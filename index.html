@@ -95,6 +95,7 @@ table{border-collapse:collapse;width:100%}
 th,td{padding:5px 7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 th{font-size:12px;color:var(--mut);font-weight:600;background:#fafbfc;white-space:nowrap}
 td.n,th.n{text-align:right;white-space:nowrap}
+.kpi.click{cursor:pointer}.kpi.click:hover{border-color:var(--acc);background:var(--acc2)}.card h2>a:first-child{color:inherit;text-decoration:none}.card h2>a:hover{color:var(--acc)}
 tr.click{cursor:pointer}tr.click:hover td{background:var(--acc2)}
 tfoot td{font-weight:600;border-top:2px solid var(--line)}
 input,select,textarea{font:inherit;padding:5px 7px;border:1px solid #cdd2da;border-radius:5px;background:#fff;color:inherit;width:100%}
@@ -202,7 +203,7 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
 .doc .tot td{border:0;padding:3px 4px;text-align:right}
 .doc .tot td:first-child{padding-right:8mm}
 .doc .tot tr.b td{font-weight:700;padding-top:4px}
-.doc .tot tr.g td{color:#1d3929;border-bottom:1.5px solid #1d3929}
+.doc .tot tr.g td{color:#000;border-bottom:1.5px solid #000}
 .doc .txt{white-space:pre-wrap;margin:3mm 0}
 .doc .sig{break-inside:avoid;margin:30mm 0 0 auto;width:75mm;text-align:center;line-height:2.2;font-size:9pt}
 .doc .ft{position:fixed;bottom:0;left:-2.2mm;right:4.7mm;font:7.5pt/1.3 Arial,Helvetica,sans-serif;color:#000;border-top:1mm solid #80704d;padding-top:1mm;text-align:center}
@@ -1054,6 +1055,8 @@ window.addEventListener('hashchange',async()=>{
 function renderFocus(sel){render();const e=$(sel);if(e){e.focus();e.select?.()}}
 
 /* ---------- Überblick ---------- */
+// Überblick → zugehörige Liste mit gesetztem Filter (Verkauf/Einkauf)
+function zuListe(bereich,typ='',st=''){const k=bereich==='V'?'v':'e';UI[k+'Typ']=typ;UI[k+'St']=st;UI[k+'Q']='';if(location.hash==='#/belege/'+bereich)render();else nav('belege/'+bereich)}
 V.dash=()=>{
   const heute=isoD(),j=heute.slice(0,4);
   const reV=DB.belege.filter(b=>RE_V.includes(b.typ)&&b.fest&&!b.storno);
@@ -1077,19 +1080,19 @@ V.dash=()=>{
     <button data-act="qneu" data-t="RE">+ Rechnung</button>
   </div>
   <div class="grid">
-    <div class="kpi">Umsatz netto ${j}<b>${fmt(ums)} €</b></div>
-    <div class="kpi">DB II Aufträge ${j}<b>${fmt(db)} € ${u2?dbTag(db/u2):''}</b></div>
-    <div class="kpi">Offene Forderungen<b>${fmt(ford)} €</b><span class="${ueber.length?'err':'mut'}">${ueber.length} überfällig</span></div>
-    <div class="kpi">Offene Verbindlichkeiten<b>${fmt(verb)} €</b></div>
+    <div class="kpi click" onclick="nav('auswertung')" title="Auswertungen">Umsatz netto ${j}<b>${fmt(ums)} €</b></div>
+    <div class="kpi click" onclick="nav('auftraege')" title="Aufträge &amp; DB II">DB II Aufträge ${j}<b>${fmt(db)} € ${u2?dbTag(db/u2):''}</b></div>
+    <div class="kpi click" onclick="zuListe('V','','offenRe')" title="Offene Rechnungen im Verkauf">Offene Forderungen<b>${fmt(ford)} €</b><span class="${ueber.length?'err':'mut'}" ${ueber.length?`onclick="event.stopPropagation();zuListe('V','','ueber')" title="Überfällige Rechnungen" style="text-decoration:underline"`:''}>${ueber.length} überfällig</span></div>
+    <div class="kpi click" onclick="zuListe('E','','offenRe')" title="Offene Rechnungen im Einkauf">Offene Verbindlichkeiten<b>${fmt(verb)} €</b></div>
     <div class="kpi click" onclick="nav('verrechnung')">Noch zu verrechnen (EK)<b>${fmt(sum(wv,x=>x.offen*(+x.p.ep||+x.p.ek||0)))} €</b><span class="mut">${new Set(wv.map(x=>x.b.id)).size} Wareneingänge</span></div>
-    <div class="kpi">Offene Angebote<b>${fmt(sum(ang,b=>summen(b).netto))} €</b><span class="mut">${ang.length} Stück</span></div>
+    <div class="kpi click" onclick="zuListe('V','AN','offen')" title="Offene Angebote im Verkauf">Offene Angebote<b>${fmt(sum(ang,b=>summen(b).netto))} €</b><span class="mut">${ang.length} Stück</span></div>
   </div>
   <div class="cols" style="grid-template-columns:1fr 1fr">
-    <div class="card"><h2>Überfällige Ausgangsrechnungen</h2>${liste(ueber,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${b.nr}</td><td>${esc(kName(b.kontaktId))}</td><td>fällig ${dAT(faellig(b))}</td><td class="n">${fmt(offen(b))}</td></tr>`)}</div>
-    <div class="card"><h2>Eingangsrechnungen fällig (7 Tage)</h2>${liste(erUe,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${esc(b.fremdNr)}</td><td>${esc(kName(b.kontaktId))}</td><td>${dAT(faellig(b))}</td><td class="n">${fmt(offen(b))}</td></tr>`)}</div>
-    <div class="card"><h2>Unter Mindestbestand</h2>${liste(min,a=>`<tr class="click" onclick="nav('artikel/${a.id}')"><td>${esc(a.nr)}</td><td>${esc(a.bez)}</td><td class="n">${fmtQ(bestand(a.id).menge)} / ${fmtQ(a.minBestand)} ${esc(a.einheit)}</td></tr>`)}</div>
-    <div class="card"><h2>Offene Bestellungen</h2>${liste(beOffen,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${b.nr}</td><td>${esc(kName(b.kontaktId))}</td><td>${b.liefertermin?dAT(b.liefertermin):''}</td><td>${statusTag(b)}</td></tr>`)}</div>
-    <div class="card"><h2>Entwürfe</h2>${liste(entw,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${T[b.typ].bez}</td><td>${esc(kName(b.kontaktId))}</td><td>${esc(b.betreff)}</td><td>${dAT(b.datum)}</td></tr>`)}</div>
+    <div class="card"><h2><a href="javascript:void 0" onclick="zuListe('V','','ueber')" title="Alle anzeigen">Überfällige Ausgangsrechnungen →</a></h2>${liste(ueber,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${b.nr}</td><td>${esc(kName(b.kontaktId))}</td><td>fällig ${dAT(faellig(b))}</td><td class="n">${fmt(offen(b))}</td></tr>`)}</div>
+    <div class="card"><h2><a href="javascript:void 0" onclick="zuListe('E','ER','offenRe')" title="Alle anzeigen">Eingangsrechnungen fällig (7 Tage) →</a></h2>${liste(erUe,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${esc(b.fremdNr)}</td><td>${esc(kName(b.kontaktId))}</td><td>${dAT(faellig(b))}</td><td class="n">${fmt(offen(b))}</td></tr>`)}</div>
+    <div class="card"><h2><a href="javascript:void 0" onclick="nav('lager')" title="Alle anzeigen">Unter Mindestbestand →</a></h2>${liste(min,a=>`<tr class="click" onclick="nav('artikel/${a.id}')"><td>${esc(a.nr)}</td><td>${esc(a.bez)}</td><td class="n">${fmtQ(bestand(a.id).menge)} / ${fmtQ(a.minBestand)} ${esc(a.einheit)}</td></tr>`)}</div>
+    <div class="card"><h2><a href="javascript:void 0" onclick="zuListe('E','BE','offen')" title="Alle anzeigen">Offene Bestellungen →</a></h2>${liste(beOffen,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${b.nr}</td><td>${esc(kName(b.kontaktId))}</td><td>${b.liefertermin?dAT(b.liefertermin):''}</td><td>${statusTag(b)}</td></tr>`)}</div>
+    <div class="card"><h2>Entwürfe <a href="javascript:void 0" onclick="zuListe('V','','entwurf')" style="font-weight:400;font-size:13px">Verkauf →</a> <a href="javascript:void 0" onclick="zuListe('E','','entwurf')" style="font-weight:400;font-size:13px">Einkauf →</a></h2>${liste(entw,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${T[b.typ].bez}</td><td>${esc(kName(b.kontaktId))}</td><td>${esc(b.betreff)}</td><td>${dAT(b.datum)}</td></tr>`)}</div>
   </div>`;
 };
 
@@ -1109,6 +1112,7 @@ V.belege=(bereich='V')=>{
   let L=DB.belege.filter(b=>T[b.typ].b===bereich&&(!typ||b.typ===typ));
   if(st==='entwurf')L=L.filter(b=>!b.fest&&!b.storno);
   if(st==='offen')L=L.filter(b=>b.fest&&!b.storno&&(T[b.typ].re?Math.abs(offen(b))>0.005:b.typ==='AN'?!b.status:['AB','BE'].includes(b.typ)?erledigung(b)<0.9999:false));
+  if(st==='offenRe')L=L.filter(b=>T[b.typ].re&&b.fest&&!b.storno&&Math.abs(offen(b))>0.005);
   if(st==='ueber')L=L.filter(b=>T[b.typ].re&&offen(b)>0.005&&faellig(b)<heute);
   if(st==='storno')L=L.filter(b=>b.storno);
   if(q)L=L.filter(b=>[b.nr,b.betreff,b.fremdNr,kName(b.kontaktId)].join(' ').toLowerCase().includes(q));
@@ -1119,7 +1123,7 @@ V.belege=(bereich='V')=>{
   return`<h1>${bereich==='V'?'Verkauf':'Einkauf'}</h1>
   <div class="bar">
     <select data-o="ui" data-f="${k}Typ">${opt('','alle Belegarten',typ)}${typen.map(t=>opt(t,T[t].bez,typ)).join('')}</select>
-    <select data-o="ui" data-f="${k}St">${opt('','alle',st)}${opt('entwurf','Entwürfe',st)}${opt('offen','offen',st)}${opt('ueber','überfällig',st)}${opt('storno','storniert',st)}</select>
+    <select data-o="ui" data-f="${k}St">${opt('','alle',st)}${opt('entwurf','Entwürfe',st)}${opt('offen','offen',st)}${opt('offenRe','offene Rechnungen',st)}${opt('ueber','überfällig',st)}${opt('storno','storniert',st)}</select>
     <input data-o="ui" data-f="${k}Q" placeholder="Suche Nr, Name, Betreff" value="${esc(UI[k+'Q'])}" style="width:240px">
     <span class="sp"></span>${bereich==='V'?'<button data-act="sammelre0">Rechnung aus Lieferscheinen …</button>':''}${bereich==='E'?'<label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>':''}
     <select data-act="neu">${opt('','+ Neuer Beleg …','')}${typen.filter(t=>t!=='GS').map(t=>opt(t,T[t].bez,'')).join('')}</select>
@@ -1390,7 +1394,7 @@ function sumBox(b){
   ${s.steuern.map(x=>`<dt>${esc(x.bez)} auf ${fmt(x.basis)}</dt><dd>${fmt(x.betrag)}</dd>`).join('')}
   <dt class="tot">Summe brutto</dt><dd class="tot">${fmt(s.brutto)}</dd>
   ${s.abz.map(a=>`<dt>abzgl. ${T[a.typ].bez} ${esc(a.nr)}</dt><dd>−${fmt(a.brutto)}</dd>`).join('')}
-  ${s.abz.length?`<dt class="tot">Zu zahlen</dt><dd class="tot">${fmt(s.zahlbar)}</dd>`:''}
+  ${s.abz.length?`<dt class="tot">Zu zahlender Betrag</dt><dd class="tot">${fmt(s.zahlbar)}</dd>`:''}
   ${s.opt?`<dt class="mut">Optionen/Alternativen (nicht in Summe)</dt><dd class="mut">${fmt(s.opt)}</dd>`:''}
   ${T[b.typ].re&&b.fest?`<dt>Offen</dt><dd><b>${fmt(offen(b))}</b></dd>`:''}</dl>`;
 }
@@ -3267,7 +3271,7 @@ function docHTML(b,edit=false){
   ${s.steuern.map(x=>`<tr><td>${x.satz?`zzgl. Umsatzsteuer ${fmtQ(x.satz)} %${mehrSt?' auf '+fmt(x.basis):''}`:esc(x.bez)+' '+fmt(x.basis)}</td><td class="n">${fmt(x.betrag)} €</td></tr>`).join('')}
   <tr class="b g"><td>Gesamtbetrag</td><td class="n">${fmt(s.brutto)} €</td></tr>
   ${s.abz.map(a=>`<tr><td>abzgl. ${T[a.typ].bez} ${esc(a.nr)} vom ${dAT(a.datum)}<br><span style="font-size:8pt">netto ${fmt(a.netto)}, USt ${fmt(sum(a.steuern,x=>x.betrag))}</span></td><td class="n">−${fmt(a.brutto)} €</td></tr>`).join('')}
-  ${s.abz.length?`<tr class="b"><td>Zu zahlen</td><td class="n">${fmt(s.zahlbar)} €</td></tr>`:''}</table>`}
+  ${s.abz.length?`<tr class="b"><td>Zu zahlender Betrag</td><td class="n">${fmt(s.zahlbar)} €</td></tr>`:''}</table>`}
   ${hinweise.map(h=>`<div class="txt"><b>${esc(h)}</b></div>`).join('')}
   ${nebn.length&&!ohneP?`<div style="margin-top:6mm"><b>Optionale Positionen / Alternativen</b> (nicht in der Gesamtsumme enthalten)</div><table class="p"><thead>${th}</thead><tbody>${tr(nebn)}</tbody></table>`:''}
   ${zb?`<div class="txt">${zb}</div>`:''}

@@ -84,6 +84,7 @@ Ausweis: DB II € und % vom Umsatz, Aufschlag % auf HK, Fehlbetrag zum Ziel.
 
 ## 8. Druck / PDF
 - Druckansicht je Beleg, Logo, Firmendaten, Pflichtangaben; LS und WE ohne Preise.
+- Summenblock: „Gesamtbetrag“ schwarz; nach Abzug von Teil-/Anzahlungsrechnungen „Zu zahlender Betrag“.
 - **Papierformat einstellbar** (Einstellungen → Firma): A4 (Standard), A5, US-Letter – gilt für Druck, PDF und Vorschau (Layout im A4-Maß, auf das Format skaliert).
 - **Mehrseitig:** Reicht eine Seite nicht, wird eine weitere angehängt; jede Seite mit Fußzeile und „Seite x von y“, Tabellenkopf wiederholt. Die Vorschau zeigt die Seiten einzeln mit Seitenrand, Fußzeile und Seitenzahl (ab Bildschirmbreite 760 px).
 - **Seitenumbruch nie innerhalb einer Position:** Bezeichnung und Langtext bleiben zusammen; Gruppen- und Tabellenkopf stehen nie allein am Seitenende; Summenblock und Unterschrift werden nicht getrennt. Nur eine einzelne Position, die länger als eine ganze Seite ist, wird geteilt.
@@ -175,3 +176,6 @@ Struktur nach Grundaufbau der ÖNORM B 2061 – Zeilen frei anpassbar; Abgleich 
 2. Speicherort: privater bzw. Firmen-OneDrive des Kleinunternehmens, nicht der eines Dienstgebers.
 3. ~~Briefpapier-Vorlagen einarbeiten~~ erledigt 07.10.2026 (Briefkopf 1:1 aus Vorlage, Fußzeile mit Firmendaten).
 4. Optional später: PDF automatisch in den Datenordner ablegen, Mahnwesen mit Mahnstufen, Mehrbenutzer (dann Server/Datenbank).
+
+## Überblick – Verweise
+- Jede Kennzahl und jede Liste im Überblick führt zu den zugehörigen Unterlagen: Offene Forderungen → Verkauf, Filter „offene Rechnungen“ („überfällig“ → Filter „überfällig“); Offene Verbindlichkeiten → Einkauf, „offene Rechnungen“; Offene Angebote → Verkauf, Angebote offen; Umsatz → Auswertungen; DB II → Aufträge; Noch zu verrechnen → Zu verrechnen; Listen-Überschriften (Überfällige Ausgangsrechnungen, Eingangsrechnungen fällig, Unter Mindestbestand, Offene Bestellungen, Entwürfe Verkauf/Einkauf) → gefilterte Liste; einzelne Zeilen → Beleg bzw. Artikel.

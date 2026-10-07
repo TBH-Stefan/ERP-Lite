@@ -2240,11 +2240,46 @@ async function inflate(u8){ // FlateDecode; toleriert Restbytes nach dem Datenen
   }
   return null;
 }
+function a85(u){const t=latin1(u).replace(/\s/g,'').replace(/^<~/,'').replace(/~>[\s\S]*$/,''),o=[];let g=[];
+  const blk=(g,n)=>{let v=0;for(const x of g)v=v*85+x;o.push(...[v>>>24&255,v>>>16&255,v>>>8&255,v&255].slice(0,n))};
+  for(const ch of t){if(ch==='z'&&!g.length){o.push(0,0,0,0);continue}g.push(ch.charCodeAt(0)-33);if(g.length===5){blk(g,4);g=[]}}
+  if(g.length){const n=g.length;while(g.length<5)g.push(84);blk(g,n-1)}return Uint8Array.from(o)}
+function lzw(u){const out=[];let dict,bits,prev,cur=0,nb=0;const reset=()=>{dict=[];for(let i=0;i<258;i++)dict.push(i<256?[i]:null);bits=9;prev=null};reset();
+  for(let i=0;i<u.length;i++){cur=((cur&0xffff)<<8)|u[i];nb+=8;
+    while(nb>=bits){const code=(cur>>(nb-bits))&((1<<bits)-1);nb-=bits;if(code===256){reset();continue}if(code===257)return Uint8Array.from(out);
+      let e=dict[code];if(!e){if(!prev)continue;e=prev.concat(prev[0])}for(const b of e)out.push(b);if(prev)dict.push(prev.concat(e[0]));prev=e;
+      if(dict.length>=(1<<bits)-1&&bits<12)bits++}}
+  return Uint8Array.from(out)}
 const latin1=u8=>{let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return s};
 const CP1252={128:'€',130:'‚',132:'„',133:'…',145:'‘',146:'’',147:'“',148:'”',150:'–',151:'—',153:'™',138:'Š',154:'š',142:'Ž',158:'ž',149:'•'};
 const GLYPH={Euro:'€',adieresis:'ä',odieresis:'ö',udieresis:'ü',Adieresis:'Ä',Odieresis:'Ö',Udieresis:'Ü',germandbls:'ß',endash:'–',emdash:'—',bullet:'•',quotedblbase:'„',quotedblleft:'“',quotedblright:'”',quoteright:'’',twosuperior:'²',threesuperior:'³',degree:'°',multiply:'×',section:'§'};
 const hexU=h=>{if(h.length<=2)return h?String.fromCharCode(parseInt(h,16)):'';let s='';for(let i=0;i+4<=h.length;i+=4)s+=String.fromCharCode(parseInt(h.slice(i,i+4),16));return s};
 const mmul=(m,n)=>[m[0]*n[0]+m[1]*n[2],m[0]*n[1]+m[1]*n[3],m[2]*n[0]+m[3]*n[2],m[2]*n[1]+m[3]*n[3],m[4]*n[0]+m[5]*n[2]+n[4],m[4]*n[1]+m[5]*n[3]+n[5]];
+/* Geschützte PDFs (Standard-Sicherheit, leeres Öffnungskennwort): RC4 / AES-128 / AES-256 */
+function md5(u8){
+  const K=new Int32Array(64),S=[7,12,17,22,5,9,14,20,4,11,16,23,6,10,15,21];for(let i=0;i<64;i++)K[i]=Math.floor(Math.abs(Math.sin(i+1))*2**32);
+  const n=u8.length,len=((n+8>>6)+1)*64,m=new Uint8Array(len);m.set(u8);m[n]=0x80;const dv=new DataView(m.buffer);dv.setUint32(len-8,n*8>>>0,true);dv.setUint32(len-4,Math.floor(n/2**29),true);
+  let a0=0x67452301,b0=0xefcdab89|0,c0=0x98badcfe|0,d0=0x10325476;
+  for(let o=0;o<len;o+=64){let A=a0,B=b0,C=c0,D=d0;
+    for(let i=0;i<64;i++){let F,g;if(i<16){F=(B&C)|(~B&D);g=i}else if(i<32){F=(D&B)|(~D&C);g=(5*i+1)%16}else if(i<48){F=B^C^D;g=(3*i+5)%16}else{F=C^(B|~D);g=7*i%16}
+      F=(F+A+K[i]+dv.getInt32(o+g*4,true))|0;A=D;D=C;C=B;const sh=S[(i>>4)*4+i%4];B=(B+((F<<sh)|(F>>>(32-sh))))|0}
+    a0=(a0+A)|0;b0=(b0+B)|0;c0=(c0+C)|0;d0=(d0+D)|0}
+  const r=new Uint8Array(16),rv=new DataView(r.buffer);[a0,b0,c0,d0].forEach((x,i)=>rv.setInt32(i*4,x,true));return r;
+}
+function rc4(k,d){const S=new Uint8Array(256).map((_,i)=>i);for(let i=0,j=0;i<256;i++){j=(j+S[i]+k[i%k.length])&255;[S[i],S[j]]=[S[j],S[i]]}
+  const o=new Uint8Array(d.length);for(let n=0,i=0,j=0;n<d.length;n++){i=(i+1)&255;j=(j+S[i])&255;[S[i],S[j]]=[S[j],S[i]];o[n]=d[n]^S[(S[i]+S[j])&255]}return o}
+const cat=(...a)=>{const o=new Uint8Array(a.reduce((s,x)=>s+x.length,0));let p=0;for(const x of a){o.set(x,p);p+=x.length}return o};
+async function aesCBC(key,iv,data,enc,ohnePad){const k=await crypto.subtle.importKey('raw',key,'AES-CBC',false,[enc?'encrypt':'decrypt']);
+  if(enc){const r=new Uint8Array(await crypto.subtle.encrypt({name:'AES-CBC',iv},k,data));return ohnePad?r.subarray(0,data.length):r}
+  if(ohnePad){const last=data.subarray(data.length-16),ke=await crypto.subtle.importKey('raw',key,'AES-CBC',false,['encrypt']);
+    const ext=new Uint8Array(await crypto.subtle.encrypt({name:'AES-CBC',iv:last},ke,new Uint8Array(16).fill(16))).subarray(0,16);data=cat(data,ext)}
+  return new Uint8Array(await crypto.subtle.decrypt({name:'AES-CBC',iv},k,data))}
+async function hash2B(pw,salt,ud){ // ISO 32000-2, Algorithmus 2.B (R6)
+  let K=new Uint8Array(await crypto.subtle.digest('SHA-256',cat(pw,salt,ud))),E=null;
+  for(let r=0;r<64||E[E.length-1]>r-32;r++){const one=cat(pw,K,ud),K1=new Uint8Array(one.length*64);for(let i=0;i<64;i++)K1.set(one,i*one.length);
+    E=await aesCBC(K.subarray(0,16),K.subarray(16,32),K1,true,true);let sm=0;for(let i=0;i<16;i++)sm+=E[i];
+    K=new Uint8Array(await crypto.subtle.digest(['SHA-256','SHA-384','SHA-512'][sm%3],E))}
+  return K.subarray(0,32)}
 async function pdfLesen(buf){
   const u8=new Uint8Array(buf),s=latin1(u8),O={},re=/(\d+)\s+(\d+)\s+obj\b/g;let m;
   while((m=re.exec(s))){ // alle Objekte; Streams über „stream … endstream“
@@ -2252,7 +2287,7 @@ async function pdfLesen(buf){
     if(si>=0&&(e1<0||si<e1)&&s[si-1]!=='d'){
       let ds=si+6;if(s[ds]==='\r')ds++;if(s[ds]==='\n')ds++;
       const de=s.indexOf('endstream',ds);end=de<0?s.length:de;
-      O[m[1]]={d:s.slice(a,si),raw:u8.subarray(ds,end)};const e2=s.indexOf('endobj',end);if(e2>0)end=e2;
+      O[m[1]]={d:s.slice(a,si),raw:u8.subarray(ds,end),g:+m[2]};const e2=s.indexOf('endobj',end);if(e2>0)end=e2;
     }else O[m[1]]={d:s.slice(a,end)};
     re.lastIndex=end;
   }
@@ -2261,8 +2296,32 @@ async function pdfLesen(buf){
     if(d[j]==='['){let k=j,dep=0;for(;k<d.length;k++){if(d[k]==='[')dep++;else if(d[k]===']'&&!--dep)break}return d.slice(j,k+1)}
     const r=d.slice(j).match(/^(\d+)\s+\d+\s+R/);if(r)return{ref:r[1]};const t=d.slice(j).match(/^\/?[^\s\/<>\[\]()]+/);return t?t[0]:null};
   const deref=v=>v&&v.ref?(O[v.ref]?.d??null):v,refs=t=>[...String(t||'').matchAll(/(\d+)\s+\d+\s+R/g)].map(x=>x[1]);
-  const stream=async n=>{const o=O[n];if(!o?.raw)return null;if(o.dec!==undefined)return o.dec;const f=val(o.d,'Filter');
-    o.dec=!f?o.raw:/^\/?FlateDecode$|\[\s*\/FlateDecode\s*\]/.test(typeof f==='string'?f:'')?await inflate(o.raw):null;return o.dec};
+  const bytesStr=t=>{t=String(t||'').trim();if(t[0]==='<')return Uint8Array.from((t.slice(1,-1).replace(/\s/g,'').match(/../g)||[]).map(h=>parseInt(h,16)));
+    const o=[];for(let i=1;i<t.length-1;i++){let c=t[i];if(c==='\\'){c=t[++i];const E={n:10,r:13,t:9,b:8,f:12};if(E[c]!=null)o.push(E[c]);else if(/[0-7]/.test(c)){let oc=c;while(oc.length<3&&/[0-7]/.test(t[i+1]))oc+=t[++i];o.push(parseInt(oc,8)&255)}else if(c!=='\n'&&c!=='\r')o.push(c.charCodeAt(0))}else o.push(c.charCodeAt(0))}return Uint8Array.from(o)};
+  const strVal=(d,key)=>{const i=d.search(new RegExp('/'+key+'\\s*[(<]'));if(i<0)return null;let j=d.indexOf(d.slice(i).match(/[(<]/)[0],i);
+    if(d[j]==='<'){return bytesStr(d.slice(j,d.indexOf('>',j)+1))}let k=j+1,dep=1;for(;k<d.length&&dep;k++){if(d[k]==='\\')k++;else if(d[k]==='(')dep++;else if(d[k]===')')dep--}return bytesStr(d.slice(j,k))};
+  let crypt=null;const em=s.match(/\/Encrypt\s+(\d+)\s+\d+\s+R/);
+  if(em&&O[em[1]]){const ed=O[em[1]].d,V=+val(ed,'V')||0,R=+val(ed,'R')||2,P=+val(ed,'P')|0,Ov=strVal(ed,'O'),Uv=strVal(ed,'U'),cfm=(ed.match(/\/CFM\s*\/(\w+)/)||[])[1]||'';
+    try{
+      if(V>=5){const pw=new Uint8Array(0);let key;
+        key=R>=6?await hash2B(pw,Uv.subarray(40,48),pw):new Uint8Array(await crypto.subtle.digest('SHA-256',cat(pw,Uv.subarray(40,48))));
+        crypt={aes:true,v5:true,key:await aesCBC(key,new Uint8Array(16),strVal(ed,'UE'),false,true)}}
+      else{const PAD=Uint8Array.from('28BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE6453697A'.match(/../g).map(h=>parseInt(h,16)));
+        const id=(s.match(/\/ID\s*\[\s*<([0-9a-fA-F]+)>/)||[])[1]||'',idb=Uint8Array.from((id.match(/../g)||[]).map(h=>parseInt(h,16)));
+        const n=R===2?5:(+val(ed,'Length')||128)/8,pb=new Uint8Array(4);new DataView(pb.buffer).setInt32(0,P,true);
+        let h=md5(cat(PAD,Ov.subarray(0,32),pb,idb,R>=4&&/\/EncryptMetadata\s+false/.test(ed)?Uint8Array.of(255,255,255,255):new Uint8Array(0)));
+        if(R>=3)for(let i=0;i<50;i++)h=md5(h.subarray(0,n));
+        crypt={aes:V===4&&/AESV2/.test(cfm),key:h.subarray(0,n),skip:em[1]}}
+    }catch(e){crypt={fehler:true}}}
+  const entschl=async(n,raw)=>{if(!crypt||crypt.fehler||n===crypt.skip||/\/Type\s*\/XRef/.test(O[n].d))return raw;
+    let k=crypt.key;if(!crypt.v5){const b=new Uint8Array(5);b[0]=n&255;b[1]=n>>8&255;b[2]=n>>16&255;b[3]=O[n].g&255;b[4]=O[n].g>>8&255;
+      k=md5(cat(k,b,crypt.aes?Uint8Array.of(0x73,0x41,0x6c,0x54):new Uint8Array(0))).subarray(0,Math.min(16,crypt.key.length+5))}
+    if(!crypt.aes)return rc4(k,raw);try{return await aesCBC(k,raw.subarray(0,16),raw.subarray(16,16+((raw.length-16)>>4<<4)),false)}catch(e){return null}};
+  const stream=async n=>{const o=O[n];if(!o?.raw)return null;if(o.dec!==undefined)return o.dec;const f=val(o.d,'Filter'),raw=await entschl(n,o.raw);if(!raw)return o.dec=null;
+    let dt=raw; // Filterkette in Reihenfolge anwenden
+    for(const fl of (typeof f==='string'?f:'').match(/\w+/g)||[]){if(!dt)break;
+      dt=fl==='FlateDecode'||fl==='Fl'?await inflate(dt):fl==='ASCII85Decode'||fl==='A85'?a85(dt):fl==='LZWDecode'||fl==='LZW'?lzw(dt):fl==='ASCIIHexDecode'||fl==='AHx'?Uint8Array.from((latin1(dt).replace(/[^0-9a-fA-F]/g,'').match(/../g)||[]).map(h=>parseInt(h,16))):null}
+    o.dec=dt;return o.dec};
   for(const n of Object.keys(O))if(/\/Type\s*\/ObjStm/.test(O[n].d)){ // komprimierte Objektströme
     const t=await stream(n);if(!t)continue;const tx=latin1(t),first=+val(O[n].d,'First'),hd=tx.slice(0,first).trim().split(/\s+/).map(Number);
     for(let i=0;i<hd.length;i+=2){const st=first+hd[i+1],en=i+3<hd.length?first+hd[i+3]:tx.length;if(!O[hd[i]])O[hd[i]]={d:tx.slice(st,en)}}
@@ -2291,8 +2350,11 @@ async function pdfLesen(buf){
   for(const pg of pages){
     const d=O[pg.n].d,cont=val(d,'Contents'),parts=cont?.ref?[cont.ref]:refs(cont);let cs='';
     for(const p of parts){const t=await stream(p);if(t)cs+=latin1(t)+'\n';else{const arr=deref({ref:p});if(arr&&arr.trim().startsWith('['))for(const q of refs(arr)){const t2=await stream(q);if(t2)cs+=latin1(t2)+'\n'}}}
-    const fd=deref(val(deref(pg.res),'Font'))||'',fmap={};for(const x of fd.matchAll(/\/([^\s\/<>\[\]]+)\s+(\d+)\s+\d+\s+R/g))fmap[x[1]]=x[2];
-    const pcs=[];let ctm=[1,0,0,1,0,0],st=[],tm=[1,0,0,1,0,0],tlm=tm,F=null,fs=10,tc=0,tw=0,th=1,tl=0,ops=[],i=0;
+    const pcs=[];
+    const lauf=async(cs,res,ctm0,tiefe)=>{
+    const namen=k=>{const dd=deref(val(deref(res),k))||'',m={};for(const x of dd.matchAll(/\/([^\s\/<>\[\]]+)\s+(\d+)\s+\d+\s+R/g))m[x[1]]=x[2];return m};
+    const fmap=namen('Font'),xmap=namen('XObject');
+    let ctm=ctm0,st=[],tm=[1,0,0,1,0,0],tlm=tm,F=null,fs=10,tc=0,tw=0,th=1,tl=0,ops=[],i=0;
     const show=async bytes=>{if(!F)return;const f=await font(F);let t='',adv=0;
       for(let k=0;k+f.len<=bytes.length;k+=f.len){const c=f.len===2?(bytes.charCodeAt(k)<<8)|bytes.charCodeAt(k+1):bytes.charCodeAt(k);
         t+=f.m?.[c]??f.enc[c]??(f.len===2?'':CP1252[c]||String.fromCharCode(c));adv+=((f.w[c]??f.dw)/1000*fs+tc+(f.len===1&&c===32?tw:0))*th}
@@ -2324,9 +2386,13 @@ async function pdfLesen(buf){
         case'"':tw=+ops[ops.length-3];tc=+ops[ops.length-2];tlm=tm=mmul([1,0,0,1,0,-tl],tlm);if(ops[ops.length-1]?.s!=null)await show(ops[ops.length-1].s);break;
         case'TJ':{const a=ops[ops.length-1]?.a||[];for(const el of a){if(el?.s!=null)await show(el.s);else if(typeof el==='number')tm=mmul([1,0,0,1,-el/1000*fs*th,0],tm)}break}
         case'BI':{const e=cs.indexOf('EI',cs.indexOf('ID',i));i=e<0?cs.length:e+2;break}
+        case'Do':{const xn=xmap[String(ops[ops.length-1]).slice(1)],xo=O[xn];if(tiefe<6&&xo&&/\/Subtype\s*\/Form/.test(xo.d)){const t=await stream(xn);
+          if(t){const mx=val(xo.d,'Matrix'),mt=mx?mx.replace(/[\[\]]/g,' ').trim().split(/\s+/).map(Number):[1,0,0,1,0,0];await lauf(latin1(t),val(xo.d,'Resources')??res,mmul(mt.length===6?mt:[1,0,0,1,0,0],ctm),tiefe+1)}}break}
       }
       ops=[];
     }
+    };
+    await lauf(cs,pg.res,[1,0,0,1,0,0],0);
     // Zeilen bilden: gleiche Grundlinie, nach x sortiert; große Lücken trennen Zellen
     pcs.sort((a,b)=>b.y-a.y||a.x-b.x);const ls=[];
     for(const p of pcs){const l=ls.find(z=>Math.abs(z.y-p.y)<Math.min(z.fs,p.fs)*0.45);if(l){l.p.push(p);l.fs=Math.max(l.fs,p.fs)}else ls.push({y:p.y,fs:p.fs,p:[p]})}
@@ -2337,7 +2403,7 @@ async function pdfLesen(buf){
       for(const c of cells)c.t=c.t.replace(/\s+/g,' ').trim();
       const cz=cells.filter(c=>c.t);if(cz.length)zeilen.push({y:l.y,fs:l.fs,cells:cz,text:cz.map(c=>c.t).join('  ')})}
   }
-  return{zeilen,xml};
+  return{zeilen,xml,verschl:!!crypt,cfehler:!!crypt?.fehler};
 }
 /* Zahlen im deutschen Format: 1.234,56 · 4.750,- · 12,5 */
 const zahlDE=s=>{s=String(s||'').replace(/[€\s]/g,'').replace(/,-+$/,'');if(!/^-?[\d.,]+-?$/.test(s)||!/\d/.test(s))return null;const neg=/^-|-$/.test(s);s=s.replace(/-/g,'');

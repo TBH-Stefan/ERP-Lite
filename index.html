@@ -1431,7 +1431,7 @@ V.kontakt=id=>{
 };
 
 /* ---------- Artikel ---------- */
-function artikelListe(){const q=UI.aQ.toLowerCase();return DB.artikel.filter(a=>!q||[a.nr,a.bez,a.ean,...(a.lieferanten||[]).map(l=>l.artNr)].join(' ').toLowerCase().includes(q)).sort((a,c)=>String(a.nr).localeCompare(String(c.nr)))}
+function artikelListe(){const q=UI.aQ.toLowerCase(),alle=lsGet('erp-aInaktiv')==='1';return DB.artikel.filter(a=>(alle||a.aktiv!==false)&&(!q||[a.nr,a.bez,a.ean,...(a.lieferanten||[]).map(l=>l.artNr)].join(' ').toLowerCase().includes(q))).sort((a,c)=>String(a.nr).localeCompare(String(c.nr)))}
 // Löschen (auch mehrere): verwendete Artikel bleiben, Rest in den Papierkorb
 function artikelLoeschen(ids){
   const L=ids.map(artikel).filter(Boolean);if(!L.length)return false;
@@ -1448,8 +1448,9 @@ function artikelLoeschen(ids){
 }
 V.artikel=id=>{
   if(id)return artikelEdit(id);
-  const L=artikelListe(),sel=new Set((UI.aSel=UI.aSel.filter(id=>artikel(id))));
-  return`<h1>Artikel &amp; Leistungen</h1><div class="bar"><input data-o="ui" data-f="aQ" placeholder="Suche (auch Lief.-Art.-Nr.)" value="${esc(UI.aQ)}" style="width:260px"><span class="sp"></span>
+  const L=artikelListe(),sichtbar=new Set(L.map(a=>a.id)),sel=new Set((UI.aSel=UI.aSel.filter(id=>sichtbar.has(id)))),nInaktiv=DB.artikel.filter(a=>a.aktiv===false).length;
+  return`<h1>Artikel &amp; Leistungen</h1><div class="bar"><input data-o="ui" data-f="aQ" placeholder="Suche (auch Lief.-Art.-Nr.)" value="${esc(UI.aQ)}" style="width:260px">
+    <label class="chk" style="margin:0"><input type="checkbox" data-act="ainakt" ${lsGet('erp-aInaktiv')==='1'?'checked':''}> deaktivierte anzeigen${nInaktiv?` (${nInaktiv})`:''}</label><span class="sp"></span>
     ${sel.size?`<span><b>${sel.size}</b> ausgewählt</span><button data-act="amakt" data-v="0">Deaktivieren</button><button data-act="amakt" data-v="1">Aktivieren</button><button class="d" data-act="amdel">Löschen …</button>`:''}<button class="p" data-act="anew">+ Artikel</button></div>
   <div class="card" style="padding:0"><table><thead><tr><th style="width:28px"><input type="checkbox" data-act="aselall" title="Alle (gefilterten) auswählen" ${L.length&&L.every(a=>sel.has(a.id))?'checked':''}></th><th>Nr</th><th>Bezeichnung</th><th>Art</th><th>Einh.</th><th class="n">EK</th><th class="n">VK</th><th>Lager</th><th class="n">Bestand</th></tr></thead><tbody>
   ${L.map(a=>`<tr class="click" onclick="nav('artikel/${a.id}')" style="${a.aktiv===false?'opacity:.5':''}"><td onclick="event.stopPropagation()"><input type="checkbox" data-asel="${a.id}" ${sel.has(a.id)?'checked':''}></td><td>${esc(a.nr)}</td><td>${esc(a.bez)}</td><td>${ART[a.art]}</td><td>${esc(a.einheit)}</td><td class="n">${fmt(a.ek)}</td><td class="n">${fmt(a.vk)}</td><td>${a.lager?'✓':''}</td><td class="n">${a.lager?fmtQ(bestand(a.id).menge):''}</td></tr>`).join('')||'<tr><td colspan="9" class="mut">Keine Artikel. Positionen können auch frei erfasst und mit „+A“ als Artikel gespeichert werden.</td></tr>'}
@@ -3032,6 +3033,7 @@ const ACT={
   kbel:el=>{const b=neuBeleg(el.dataset.t,{kontaktId:el.dataset.id,zahlungsziel:+kontakt(el.dataset.id).zahlungsziel||S().zahlungsziel});persist();go('beleg/'+b.id)},
   anew:()=>{const s=S(),nr=String(++s.anr).padStart(5,'0');const a={id:uid(),nr,bez:'',text:'',art:'W',einheit:'Stk',einheiten:[],ek:0,vk:0,steuer:s.stdSteuer,lager:false,minBestand:0,lieferanten:[],aktiv:true};DB.artikel.push(a);persist();go('artikel/'+a.id)},
   adel:el=>{if(artikelLoeschen([el.dataset.id]))go('artikel')},
+  ainakt:el=>{lsSet('erp-aInaktiv',el.checked?'1':null);render()},
   aselall:el=>{UI.aSel=el.checked?artikelListe().map(a=>a.id):[];render()},
   amdel:()=>{if(artikelLoeschen(UI.aSel))UI.aSel=UI.aSel.filter(id=>artikel(id));render()},
   amakt:el=>{const ak=el.dataset.v==='1',L=UI.aSel.map(artikel).filter(a=>a&&(a.aktiv!==false)!==ak);if(!L.length)return;

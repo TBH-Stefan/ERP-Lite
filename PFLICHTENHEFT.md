@@ -148,6 +148,7 @@ Struktur nach Grundaufbau der ÖNORM B 2061 – Zeilen frei anpassbar; Abgleich 
 - **Neuanlage im Popup:** Kunde/Lieferant direkt aus der Belegauswahl („+ Neuer …“), Lieferant aus dem Scan vorbelegt, Artikel aus einer Position („+A“).
 - Logo „TBH ERP-Lite“ führt zum Überblick.
 - **Artikel-Übersicht:** Mehrfachauswahl (einzeln, „alle“ des Filters) mit Löschen, Deaktivieren, Aktivieren. Artikel in festgeschriebenen Belegen oder mit Lagerbewegung werden nicht gelöscht, sondern auf Wunsch deaktiviert (Meldung nennt den Beleg); nur in Entwürfen verwendete Artikel sind löschbar – die Entwurfspositionen behalten den Text, beim Wiederherstellen wird neu verknüpft.
+- Deaktivierte Artikel sind in der Übersicht ausgeblendet; Schalter „deaktivierte anzeigen (Anzahl)“, Einstellung je Gerät.
 - **Live-Suche** in allen Suchfeldern (Verkauf, Einkauf, Kontakte, Artikel, LV-Bausteine, LB-Katalog) beim Tippen.
 - **Papierkorb / Rückgängig:** Gelöschte Artikel, Kontakte, Belegentwürfe und Zeiteinträge kommen in den Papierkorb (Export & Sicherung) und sind wiederherstellbar; direkt nach dem Löschen Hinweis mit „Rückgängig“ (15 s). Endgültiges Löschen nur ausdrücklich. Alle Schritte im Protokoll. Festgeschriebene Belege werden nie gelöscht (nur Storno).
 

@@ -86,7 +86,7 @@ Ausweis: DB II € und % vom Umsatz, Aufschlag % auf HK, Fehlbetrag zum Ziel.
 - Druckansicht je Beleg, Logo, Firmendaten, Pflichtangaben; LS und WE ohne Preise.
 - Summenblock: „Gesamtbetrag“ schwarz; nach Abzug von Teil-/Anzahlungsrechnungen „Zu zahlender Betrag“.
 - **Papierformat einstellbar** (Einstellungen → Firma): A4 (Standard), A5, US-Letter – gilt für Druck, PDF und Vorschau (Layout im A4-Maß, auf das Format skaliert).
-- **Mehrseitig:** Reicht eine Seite nicht, wird eine weitere angehängt; jede Seite mit Fußzeile und „Seite x von y“, Tabellenkopf wiederholt. Die Vorschau zeigt die Seiten einzeln mit Seitenrand, Fußzeile und Seitenzahl (ab Bildschirmbreite 760 px).
+- **Mehrseitig:** Reicht eine Seite nicht, wird eine weitere angehängt; jede Seite mit Fußzeile und „Seite x von y“, Tabellenkopf wiederholt. Die Vorschau zeigt die Seiten einzeln mit Seitenrand, Fußzeile und Seitenzahl – auch am Handy: dort wird das Blatt in Originalaufteilung (A4, gleiche Umbrüche wie Druck/PDF) auf Bildschirmbreite verkleinert.
 - **Seitenumbruch nie innerhalb einer Position:** Bezeichnung und Langtext bleiben zusammen; Gruppen- und Tabellenkopf stehen nie allein am Seitenende; Summenblock und Unterschrift werden nicht getrennt. Nur eine einzelne Position, die länger als eine ganze Seite ist, wird geteilt.
 - PDF über „Drucken → Als PDF speichern“; Dateiname wird vorbelegt (Belegart Nr Kunde).
 - Kopf-/Fußtexte je Belegart in den Einstellungen.

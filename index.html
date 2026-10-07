@@ -166,13 +166,6 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
   table.pos td.gp{text-align:left;padding-top:2px!important}
   table.pos textarea{height:44px}
   table.pos button.s{padding:6px 12px;font-size:14px}
-  .blatt{padding:14px 12px;min-height:0}
-  .blatt .doc .hd{height:auto;margin:6mm 0 5mm;text-align:right}.blatt .doc .kopf{position:static;width:34mm}.blatt .doc .logo{position:static;margin-left:auto;width:auto;text-align:right}.blatt .doc .logo img{margin:0 0 0 auto;height:16mm}
-  .blatt .doc .adr{flex-direction:column;gap:8px;margin-bottom:5mm}
-  .blatt .doc .to{width:auto}
-  .blatt .doc .info{text-align:left;padding-top:0}
-  .blatt .doc .tot{width:100%}
-  .blatt .doc .sig{margin-top:8mm}
 }
 #print{display:none}
 .pgw,.pgw>*>tr>td{border:0;padding:0;width:100%;border-collapse:collapse}.pgw .pgf{height:16mm}
@@ -3343,8 +3336,10 @@ function papierCSS(){const P=papier(),m=x=>(x*P.k).toFixed(2)+'mm';
 const MMPX=96/25.4;
 function vorschauSeiten(){
   for(const bl of document.querySelectorAll('.blatt')){
-    bl.querySelectorAll('.pgsp').forEach(e=>e.remove());bl.classList.remove('seiten');
-    if(window.innerWidth<760||!bl.offsetWidth)continue;
+    bl.querySelectorAll('.pgsp').forEach(e=>e.remove());bl.classList.remove('seiten');bl.style.zoom='';bl.style.width='';
+    if(!bl.offsetWidth)continue;
+    // Handy/schmale Spalte: Blatt in voller A4-Breite aufbauen und danach verkleinert anzeigen (wie gedruckt)
+    const m=$('#main'),ms=m?getComputedStyle(m):null,av=Math.min(bl.parentElement.clientWidth,m?m.clientWidth-parseFloat(ms.paddingLeft)-parseFloat(ms.paddingRight):1e9),eng=av<Math.round(210*MMPX);if(eng)bl.style.width='210mm';
     bl.classList.add('seiten');
     const doc=bl.querySelector('.doc')||bl,H=papier().hc*MMPX,fz=bl.querySelector('.ft')?fussZeilen(S().firma):[];
     const band=(fill,letzte)=>`<div style="height:${Math.max(0,fill).toFixed(1)}px"></div><div class="pgband"><div class="pf${fz.length?' l':''}">${fz.map(esc).join('<br>')}</div><span class="pz"></span>${letzte?'':'<div class="gap"></div><div class="pt"></div>'}</div>`;
@@ -3363,7 +3358,8 @@ function vorschauSeiten(){
       else{sp=document.createElement('div');sp.className='pgsp';sp.innerHTML=band(fill);el.before(sp)}
       start=sp.getBoundingClientRect().bottom-t0();n++;i=j-1}
     const ende=document.createElement('div');ende.className='pgsp';ende.innerHTML=band(start+H-(doc.getBoundingClientRect().bottom-t0()),true);doc.appendChild(ende);
-    bl.querySelectorAll('.pz').forEach((z,i)=>z.textContent=`Seite ${i+1} von ${n}`);bl.dataset.seiten=n}
+    bl.querySelectorAll('.pz').forEach((z,i)=>z.textContent=`Seite ${i+1} von ${n}`);bl.dataset.seiten=n;
+    if(eng)bl.style.zoom=(av/bl.offsetWidth).toFixed(4)}
 }
 window.addEventListener('resize',()=>{clearTimeout(vorschauSeiten.t);vorschauSeiten.t=setTimeout(vorschauSeiten,200)});
 function drucken(b){

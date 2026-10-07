@@ -1216,13 +1216,15 @@ function dialog({titel,html,ok='OK',check='',gefahr=false}){
 function formDialog({titel,felder,ok='Anlegen',breit=false}){
   return new Promise(res=>{
     const d=document.createElement('div');d.className='modal';
-    const fld=f=>`<label class="${f.cls||''}">${f.l}${f.pflicht?' *':''}${f.opts?`<select data-k="${f.k}">${f.opts.map(([v,t])=>opt(v,t,f.wert??'')).join('')}</select>`:f.typ==='checkbox'?`<br><input type="checkbox" data-k="${f.k}" ${f.wert?'checked':''}>`:f.typ==='textarea'?`<textarea data-k="${f.k}" style="height:190px">${esc(f.wert??'')}</textarea>`:`<input data-k="${f.k}" type="${f.typ||'text'}" ${f.typ==='number'?'step="any"':''} value="${esc(f.wert??'')}">`}</label>`;
+    const fld=f=>f.typ==='kette'?`<label class="${f.cls||''}">${f.l}<div data-k="${f.k}" data-wert="${esc(f.wert||'')}">${ketteHTML(f.baum,f.wert||'','data-fk="1"')}</div></label>`:`<label class="${f.cls||''}">${f.l}${f.pflicht?' *':''}${f.opts?`<select data-k="${f.k}">${f.opts.map(([v,t])=>opt(v,t,f.wert??'')).join('')}</select>`:f.typ==='checkbox'?`<br><input type="checkbox" data-k="${f.k}" ${f.wert?'checked':''}>`:f.typ==='textarea'?`<textarea data-k="${f.k}" style="height:190px">${esc(f.wert??'')}</textarea>`:`<input data-k="${f.k}" type="${f.typ||'text'}" ${f.typ==='number'?'step="any"':''} value="${esc(f.wert??'')}">`}</label>`;
     const zeilen=[];let z=[];for(const f of felder){if(f.neu&&z.length){zeilen.push(z);z=[]}z.push(f)}if(z.length)zeilen.push(z);
     d.innerHTML=`<div class="mbox" style="${breit?'max-width:760px':''}"><h2>${titel}</h2>${zeilen.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('')}
       <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">${ok}</button></div></div>`;
     document.body.appendChild(d);setTimeout(()=>d.querySelector('input,select')?.focus(),0);
     const fin=v=>{d.remove();document.removeEventListener('keydown',kd);res(v)};
-    const lesen=()=>{const o={};for(const f of felder){const e=d.querySelector(`[data-k="${f.k}"]`);o[f.k]=f.typ==='checkbox'?e.checked:f.typ==='number'?num(e.value):e.value.trim()}return o};
+    d.addEventListener('change',async e=>{const t=e.target;if(!t.dataset.kette)return;const box=t.closest('[data-k]'),v=await ketteWert(t);if(v!==null)box.dataset.wert=v;
+      const f=felder.find(x=>x.k===box.dataset.k);box.innerHTML=ketteHTML(f.baum,box.dataset.wert,'data-fk="1"')});
+    const lesen=()=>{const o={};for(const f of felder){const e=d.querySelector(`[data-k="${f.k}"]`);o[f.k]=f.typ==='kette'?e.dataset.wert:f.typ==='checkbox'?e.checked:f.typ==='number'?num(e.value):e.value.trim()}return o};
     const okf=()=>{const o=lesen(),fehlt=felder.find(f=>f.pflicht&&!o[f.k]);if(fehlt){d.querySelector('#m-err').textContent=`Bitte „${fehlt.l}“ ausfüllen.`;return}fin(o)};
     const kd=e=>{if(e.key==='Escape')fin(null);if(e.key==='Enter'&&e.target.tagName==='INPUT')okf()};document.addEventListener('keydown',kd);
     d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#m-ok').onclick=okf;
@@ -1252,15 +1254,15 @@ async function artikelPopup(v={},lid=''){
   const o=await formDialog({titel:'Neuer Artikel',breit:true,felder:[
     {k:'nr',l:'Artikel-Nr. (eigene)',wert:v.nr||nrV,cls:'w05',pflicht:true},{k:'bez',l:'Bezeichnung',wert:v.bez,cls:'w2',pflicht:true},
     {k:'art',l:'Art',wert:v.art||'W',opts:['W','L','F'].map(x=>[x,ART[x]]),cls:'w05'},
-    {k:'gruppe',l:'Artikelgruppe',wert:v.gruppe||(UI.aGr&&UI.aGr!=='__ohne'?UI.aGr:''),opts:[['','– keine –'],...grListe()],cls:'w05'},
+    {k:'gruppe',l:'Artikelgruppe',typ:'kette',baum:'gr',wert:v.gruppe||(UI.aGr&&UI.aGr!=='__ohne'?UI.aGr:''),neu:1,cls:'w2'},
     {k:'einheit',l:'Einheit',wert:v.einheit||'Stk',opts:s.einheiten.map(e=>[e,e]),neu:1,cls:'w05'},{k:'ek',l:'EK netto',typ:'number',wert:v.ek||0,cls:'w05'},{k:'vk',l:'VK netto',typ:'number',wert:v.vk||0,cls:'w05'},
-    {k:'lager',l:'Lagerartikel',typ:'checkbox',wert:!!v.lager,cls:'w05'},
+    {k:'lager',l:'Lagerartikel',typ:'checkbox',wert:!!v.lager,cls:'w05'},{k:'lagerplatz',l:'Lagerplatz',typ:'kette',baum:'lp',wert:v.lagerplatz||'',neu:1,cls:'w2'},
     {k:'lid',l:'Lieferant',wert:lid,opts:[['','–'],...lief.map(k=>[k.id,k.name])],neu:1},{k:'artNr',l:'Art.-Nr. beim Lieferanten',wert:v.artNr},
     {k:'lp',l:'Listenpreis',typ:'number',wert:v.lp||'',cls:'w05'},{k:'rabatt',l:'Rabatt %',typ:'number',wert:v.rabatt||'',cls:'w05'}]});
   if(!o)return null;
   if(DB.artikel.some(a=>a.nr===o.nr)){alert('Artikel-Nr. '+o.nr+' existiert bereits.');return null}
   if(o.nr===nrV)s.anr++;
-  const a={id:uid(),nr:o.nr,bez:o.bez,gruppe:o.gruppe||'',text:v.text||'',art:o.art,einheit:o.einheit,einheiten:[],ek:r2(o.ek),vk:r2(o.vk),steuer:v.steuer||s.stdSteuer,lager:o.lager,minBestand:0,
+  const a={id:uid(),nr:o.nr,bez:o.bez,gruppe:o.gruppe||'',lagerplatz:o.lagerplatz||'',text:v.text||'',art:o.art,einheit:o.einheit,einheiten:[],ek:r2(o.ek),vk:r2(o.vk),steuer:v.steuer||s.stdSteuer,lager:o.lager,minBestand:0,
     lieferanten:o.lid?[{kontaktId:o.lid,artNr:o.artNr,lp:o.lp||0,rabatt:o.rabatt||0,ek:r2(o.ek),stand:isoD()}]:[],aktiv:true};
   DB.artikel.push(a);artDatalist();log('Artikel angelegt',a.nr+' '+a.bez);return a;
 }
@@ -1503,13 +1505,13 @@ function artikelEdit(id){
   const bs=bestand(a.id);
   return`<div class="bar"><h1 style="margin:0">${esc(a.nr)} ${esc(a.bez)}</h1><span class="sp"></span><button class="d" data-act="adel" data-id="${a.id}">Löschen</button></div>
   <div class="card">
-  <div class="row">${f('nr','Artikel-Nr.','w05')}${f('bez','Bezeichnung','w2')}<label class="w05">Artikelgruppe<select data-o="a" data-id="${a.id}" data-f="gruppe">${grOpts(a.gruppe)}${a.gruppe&&grG(a.gruppe)?opt('__sub',`+ Untergruppe von „${grG(a.gruppe).bez}“ …`,''):''}${opt('__neu','+ neue Hauptgruppe …','')}</select></label><label class="w05">Art<select data-o="a" data-id="${a.id}" data-f="art">${['W','L','F'].map(k=>opt(k,ART[k],a.art)).join('')}</select></label><label class="w05">aktiv<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="aktiv" ${a.aktiv!==false?'checked':''}></label></div>
+  <div class="row">${f('nr','Artikel-Nr.','w05')}${f('bez','Bezeichnung','w2')}<label class="w2">Artikelgruppe${ketteHTML('gr',a.gruppe,`data-aid="${a.id}"`)}</label><label class="w05">Art<select data-o="a" data-id="${a.id}" data-f="art">${['W','L','F'].map(k=>opt(k,ART[k],a.art)).join('')}</select></label><label class="w05">aktiv<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="aktiv" ${a.aktiv!==false?'checked':''}></label></div>
   <div class="row"><label>Langtext<textarea data-o="a" data-id="${a.id}" data-f="text">${esc(a.text)}</textarea></label></div>
   <div class="row"><label class="w05">Basiseinheit<select data-o="a" data-id="${a.id}" data-f="einheit">${S().einheiten.map(e=>opt(e,e,a.einheit)).join('')}</select></label>
     <label>Weitere Einheiten (z. B. Krt=10; Rolle=100)<input data-o="a" data-id="${a.id}" data-f="einheitenStr" value="${esc((a.einheiten||[]).map(x=>x.e+'='+x.f).join('; '))}"></label>
     ${f('ek','EK je Basiseinheit','w05','number')}${f('vk','VK je Basiseinheit','w05','number')}
     <label class="w05">USt<select data-o="a" data-id="${a.id}" data-f="steuer">${S().steuer.map(s=>opt(s.code,s.bez,a.steuer)).join('')}</select></label></div>
-  <div class="row"><label class="w05">Lagerartikel<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="lager" ${a.lager?'checked':''}></label><label class="w05">Lagerplatz<select data-o="a" data-id="${a.id}" data-f="lagerplatz">${lpOpts(a.lagerplatz)}${opt('__lp','Lagerplätze verwalten …','')}</select></label>${a.lager?f('minBestand','Mindestbestand','w05','number')+`<label class="w05">Bestand<input disabled value="${fmtQ(bs.menge)} ${esc(a.einheit)}"></label><label class="w05">Ø-EK<input disabled value="${fmt(avgEK(a.id))}"></label><label class="w05">Lagerwert<input disabled value="${fmt(bs.wert)}"></label>`:'<span style="flex:4"></span>'}</div>
+  <div class="row"><label class="w05">Lagerartikel<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="lager" ${a.lager?'checked':''}></label><label class="w2">Lagerplatz${ketteHTML('lp',a.lagerplatz,`data-aid="${a.id}"`)}</label>${a.lager?f('minBestand','Mindestbestand','w05','number')+`<label class="w05">Bestand<input disabled value="${fmtQ(bs.menge)} ${esc(a.einheit)}"></label><label class="w05">Ø-EK<input disabled value="${fmt(avgEK(a.id))}"></label><label class="w05">Lagerwert<input disabled value="${fmt(bs.wert)}"></label>`:'<span style="flex:4"></span>'}</div>
   </div>
   <div class="card"><h2>Lieferanten</h2><table><thead><tr><th>Lieferant</th><th>Art.-Nr. beim Lieferanten</th><th class="n">Listenpreis</th><th class="n">Rabatt %</th><th class="n">Netto-EK</th><th>Stand</th><th></th></tr></thead><tbody>
   ${(a.lieferanten||[]).map((l,i)=>{const fi=(fl,w)=>`<td style="width:${w}px"><input type="number" step="any" data-o="al" data-id="${a.id}" data-i="${i}" data-f="${fl}" value="${l[fl]??''}"></td>`;
@@ -2434,6 +2436,15 @@ function baumDialog(B){
   d.querySelector('#m-ok').onclick=()=>{d.remove();commit();render()};
 }
 const gruppenDialog=()=>baumDialog(GR);
+function ketteHTML(k,wert,attr=''){
+  const B=k==='lp'?LP:GR,ids=[];let g=B.G(wert),n=0;while(g&&n++<50){ids.unshift(g.id);g=B.G(g.parent)}
+  const sel=[];let par='';
+  for(let i=0;i<=ids.length;i++){const kids=B.kinder(par),v=ids[i]||'';if(i&&!kids.length&&!v){sel.push(`<select data-kette="${k}" data-par="${par}" ${attr} style="width:auto;max-width:170px">${opt('','– Unterebene …',v)}${opt('__neu','+ neue Unterebene …','')}</select>`);break}
+    sel.push(`<select data-kette="${k}" data-par="${par}" ${attr} style="width:auto;max-width:200px">${opt('',i?'– (keine Unterebene) –':(k==='lp'?'– kein Lagerplatz –':'– keine Gruppe –'),v)}${kids.map(x=>opt(x.id,x.bez,v)).join('')}${opt('__neu',i?'+ neue Unterebene …':(k==='lp'?'+ neues Lager …':'+ neue Hauptgruppe …'),'')}</select>`);
+    if(!v)break;par=v}
+  return`<span class="kette" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">${sel.join('<span class="mut">›</span>')}</span>`;
+}
+async function ketteWert(el){const B=el.dataset.kette==='lp'?LP:GR,par=el.dataset.par||'';if(el.value==='__neu')return(await knotenNeu(B,par))||null;return el.value||par}
 const lfNamen=a=>(a.lieferanten||[]).map(l=>kName(l.kontaktId)).filter(x=>x&&x!=='–').join(', ');
 const lfNr=a=>(a.lieferanten||[]).map(l=>l.artNr).filter(Boolean).join(', ');
 const lf1=a=>(a.lieferanten||[]).find(l=>+l.lp>0)||(a.lieferanten||[])[0]||{};
@@ -3321,7 +3332,7 @@ const ACT={
   knew:async el=>{const k=await kontaktPopup(el.dataset.t);if(k){commit();go('kontakt/'+k.id)}},
   kdel:el=>{const id=el.dataset.id;if(DB.belege.some(b=>b.kontaktId===id)){alert('Kontakt hat Belege und kann nicht gelöscht werden.');return}if(!confirm('Kontakt löschen?'))return;wegwerfen('kontakte',[kontakt(id)]);go('kontakte')},
   kbel:el=>{const b=neuBeleg(el.dataset.t,{kontaktId:el.dataset.id,zahlungsziel:+kontakt(el.dataset.id).zahlungsziel||S().zahlungsziel});persist();go('beleg/'+b.id)},
-  anew:()=>{const s=S(),nr=String(++s.anr).padStart(5,'0');const a={id:uid(),nr,bez:'',gruppe:UI.aGr&&UI.aGr!=='__ohne'?UI.aGr:'',text:'',art:'W',einheit:'Stk',einheiten:[],ek:0,vk:0,steuer:s.stdSteuer,lager:false,minBestand:0,lieferanten:[],aktiv:true};DB.artikel.push(a);persist();go('artikel/'+a.id)},
+  anew:async()=>{const a=await artikelPopup({});if(a){commit();go('artikel/'+a.id)}},
   adel:el=>{if(artikelLoeschen([el.dataset.id]))go('artikel')},
   agrp:()=>gruppenDialog(),lpverw:()=>baumDialog(LP),lpmx:async()=>{if(await lagerMatrix(LP)){commit();render()}},
   amgr:async el=>{let g=el.value;el.value='';if(!g)return;if(g==='__neu'){g=await gruppeNeu();if(!g){render();return}}if(g==='__keine')g='';
@@ -3383,6 +3394,7 @@ document.addEventListener('change',e=>{
   if(['lsscan','erfoto','bescan'].includes(el.id)){const f=[...el.files];el.value='';belegScan(f,{lsscan:'WE',erfoto:'ER',bescan:'BE'}[el.id]);return}
   if(el.id==='kikey'){lsSet('erp-ki-key',el.value.trim()||null);render();return}
   if(d.sc!==undefined)return scanSet(el);
+  if(d.kette!==undefined){if(d.fk)return;const a=artikel(d.aid);if(!a)return;ketteWert(el).then(v=>{if(v!==null){const B=d.kette==='lp'?LP:GR;a[B.c.feld]=v;log(B.c.name+' zugeordnet',`${a.nr} → ${B.pfad(v)||'keine'}`);persist()}render()});return}
   if(d.lpa!==undefined){const a=artikel(d.lpa);a.lagerplatz=el.value;log('Lagerplatz zugeordnet',`${a.nr} → ${LP.pfad(el.value)||'keiner'}`);commit();return}
   if(d.asel!==undefined){UI.aSel=el.checked?[...new Set([...UI.aSel,d.asel])]:UI.aSel.filter(x=>x!==d.asel);render();return}
   if(el.id==='att'){const b=curBeleg();if(b)anhaengeHochladen(b,[...el.files]);return}

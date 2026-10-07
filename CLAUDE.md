@@ -23,7 +23,7 @@ Anwender: Stefan Horvath. Sprache in Code-Kommentaren, Oberfläche und Antworten
 - Sammelrechnung aus Lieferscheinen: `sammelRechnung()`. Folgebeleg aus Entwurf: vorher `festschreiben()`.
 - Papierkorb/Rückgängig: `wegwerfen()`, `wiederherstellen()`.
 - Listen über `tabelle(id,cols,rows,…)` mit Spaltenauswahl (`S().spalten`, `spaltenDialog()`); neue Spalten dort als `{k,l,f,n,std}` ergänzen.
-- Bäume über `baum(k)` → `GR` (Artikelgruppen, `S().artgruppen`, Artikelfeld `gruppe`) und `LP` (Lagerplätze, `S().lagerplaetze`, Feld `lagerplatz`), Knoten {id,bez,parent}; Verwaltung `baumDialog(B)`, Matrix `lagerMatrix()`, Filter `UI.aGr`/`UI.lgP`.
+- Bäume über `baum(k)` → `GR` (Artikelgruppen, `S().artgruppen`, Artikelfeld `gruppe`) und `LP` (Lagerplätze, `S().lagerplaetze`, Feld `lagerplatz`), Knoten {id,bez,parent}; Verwaltung `baumDialog(B)`, verkettete Auswahl `ketteHTML(k,wert,attr)`/`ketteWert(el)` (auch `formDialog`-Feldtyp `kette`), Matrix `lagerMatrix()`, Filter `UI.aGr`/`UI.lgP`.
 - Kontakte: `kontaktPopup(typ,vorbelegung,kontakt)` (neu/bearbeiten, Pflichtfelder), `kontaktFehlt()`, `konditionenUebernehmen()`.
 
 ## Regeln für Änderungen

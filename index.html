@@ -1093,10 +1093,10 @@ V.beleg=id=>{
       <td data-l="Menge" style="width:78px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="menge" value="${p.menge}" ${dis}></td>
       <td data-l="Einheit" style="width:72px"><select data-p="${i}" data-f="einheit" ${dis}>${einhOpts(p)}</select></td>
       ${ohneP?'':`
-      ${zLS?`<td data-l="EP Lohn" style="width:86px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="epL" value="${p.epL??''}" ${dis}></td><td data-l="EP Sonst." style="width:86px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="epS" value="${p.epS??''}" ${dis}></td>`:''}
-      <td data-l="EP netto" style="width:92px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="ep" value="${p.ep}" ${dis||zLS?'disabled':''}></td>
+      ${zLS?`<td data-l="Lohn" style="width:86px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="epL" value="${p.epL??''}" ${dis}></td><td data-l="Sonstiges" style="width:86px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="epS" value="${p.epS??''}" ${dis}></td>`:''}
+      <td data-l="${zLS?'PP':'EP netto'}" style="width:92px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="ep" value="${p.ep}" ${dis||zLS?'disabled':''}></td>
       ${zRab?`<td data-l="Rabatt %" style="width:58px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="rabatt" value="${p.rabatt||''}" ${dis} placeholder="%"></td>`:''}
-      <td class="n gp" data-l="GP netto" id="gp${i}" style="width:90px;padding-top:7px">${pausch?`<span class="mut" title="im Gruppenpreis enthalten">(${fmt(posGP(p))})</span>`:fmt(posGP(p))}</td>
+      <td class="n gp" data-l="${zLS?'GP':'GP netto'}" id="gp${i}" style="width:90px;padding-top:7px">${pausch?`<span class="mut" title="im Gruppenpreis enthalten">(${fmt(posGP(p))})</span>`:fmt(posGP(p))}</td>
       <td data-l="USt" style="width:96px"><select data-p="${i}" data-f="steuer" ${dis}>${steuerOpts(p.steuer)}</select></td>
       <td data-l="EK" style="width:84px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="ek" value="${p.ek}" ${dis} title="Einstandspreis je Einheit"></td>`}
       <td data-l="Kz" style="width:74px">${kzSel(i,p)}</td>${akt}
@@ -1148,7 +1148,7 @@ V.beleg=id=>{
       ${ohneP?'':`<label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optRabatt" ${zRab?'checked':''} ${dis||b.pos.some(p=>+p.rabatt)?'disabled':''}> Rabatt</label>
       <label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optLS" ${zLS?'checked':''} ${dis}> Lohn / Sonstiges</label>`}
       <label class="chk" style="margin:0;font-size:13px" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''} ${dis}> Langtext drucken</label></div>
-    <table class="pos"><thead><tr><th></th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>EP Lohn</th><th>EP Sonst.</th>':''}<th>EP netto</th>${zRab?'<th>Rab. %</th>':''}<th class="n">GP netto</th><th>USt</th><th title="Einstandspreis je Einheit">EK</th>`}<th>Kz</th><th></th></tr></thead>
+    <table class="pos"><thead><tr><th></th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonstiges</th>':''}<th>${zLS?'PP':'EP netto'}</th>${zRab?'<th>Rab. %</th>':''}<th class="n">${zLS?'GP':'GP netto'}</th><th>USt</th><th title="Einstandspreis je Einheit">EK</th>`}<th>Kz</th><th></th></tr></thead>
     <tbody>${rows||`<tr><td colspan="14" class="mut">Noch keine Positionen.</td></tr>`}</tbody></table>
     ${b.fest?'':`<div class="bar" style="margin:8px 0 0"><button data-act="padd" data-art="G">+ Gruppe</button><button data-act="padd" data-art="W">+ Ware</button><button data-act="padd" data-art="L">+ Leistung</button><button data-act="padd" data-art="F">+ Fremdleistung</button><button data-act="padd" data-art="T">+ Text</button>${V_?`<button data-act="pzeit">+ Stunden aus Zeiterfassung</button>`:''}</div>`}
   </div>`;
@@ -1895,7 +1895,7 @@ function lvDocHTML(lv,modus){
     else{const pr=posPreis(lv,it);rows+=`<tr><td>${oz[it.id]}${it.art?' '+it.art:''}</td><td><b>${esc(it.kurz)}</b>${it.art?` <i>(${POSART[it.art]}position)</i>`:''}${it.lb?`<div class="lt">${lbHTML(it)}</div>`:it.lang?`<div class="lt">${rt(it.lang)}</div>`:''}</td><td class="n">${fmtQ(it.menge)}</td><td>${esc(it.einheit)}</td>
       <td class="n">${preise?fmt(pr.l):leer?'……….':''}</td><td class="n">${preise?fmt(pr.s):leer?'……….':''}</td><td class="n">${preise?fmt(pr.ep):''}</td><td class="n">${preise?(it.art?'n. i. S.':fmt(r2((+it.menge||0)*pr.ep))):leer?'……….':''}</td></tr>`}
   }
-  return`<div class="doc">${kopf}<table class="p"><thead><tr><th>OZ</th><th>Leistung</th><th class="n">Menge</th><th>Einh.</th><th class="n">EP Lohn</th><th class="n">EP Sonst.</th><th class="n">EP</th><th class="n">GP</th></tr></thead><tbody>${rows}</tbody></table>
+  return`<div class="doc">${kopf}<table class="p"><thead><tr><th>OZ</th><th>Leistung</th><th class="n">Menge</th><th>Einh.</th><th class="n">Lohn</th><th class="n">Sonstiges</th><th class="n">PP</th><th class="n">GP</th></tr></thead><tbody>${rows}</tbody></table>
   ${preise?`<table class="tot">${lv.items.filter(i=>i.typ==='LG').map(g=>`<tr><td>${oz[g.id]} ${esc(g.titel)}</td><td class="n">${fmt(sm.lg[g.id])}</td></tr>`).join('')}<tr class="b"><td>Summe netto</td><td class="n">${fmt(sm.gesamt)} €</td></tr>${+lv.nachlass?`<tr><td>Nachlass ${fmtQ(lv.nachlass)} %</td><td class="n">−${fmt(sm.gesamt*lv.nachlass/100)} €</td></tr><tr class="b"><td>Summe nach Nachlass</td><td class="n">${fmt(sm.gesamt*(1-lv.nachlass/100))} €</td></tr>`:''}</table>`:''}
   ${leer?'<div class="txt" style="margin-top:12mm">Gesamtpreis netto: ______________________ €\n\nNachlass: ________ %\n\n\n______________________________\nOrt, Datum, firmenmäßige Zeichnung des Bieters</div>':''}</div>`;
 }
@@ -3016,7 +3016,7 @@ function docHTML(b,edit=false){
   // Zeilen inkl. Gruppensummen (bei Gruppen ohne Pauschalpreis und mit Einzelpreisen)
   const tr=liste=>{let o='',g=null;const ende=()=>{if(g&&!ohneP&&!(+g.pauschal>0)&&!g.ohneEP)o+=`<tr class="gsum"><td></td><td colspan="${ncol-2}">Summe ${pnr[g.id]} ${esc(g.bez)}</td><td class="n">${fmt(gi.sumG[g.id])}</td></tr>`};
     for(const p of liste){if(p.art==='G'){ende();g=p}o+=zeile(p)}ende();return o};
-  const th=`<tr><th>Pos</th><th>Bezeichnung</th><th>Menge</th><th>Einheit</th>${ohneP?'':`${ls?'<th class="n">EP Lohn</th><th class="n">EP Sonst.</th>':''}<th class="n">Einzelpreis</th>${rab?'<th class="n">Rabatt %</th>':''}${mehrSt?'<th class="n">USt</th>':''}<th class="n">Gesamtpreis</th>`}</tr>`;
+  const th=`<tr><th>Pos</th><th>Bezeichnung</th><th>Menge</th><th>Einheit</th>${ohneP?'':`${ls?'<th class="n">Lohn</th><th class="n">Sonstiges</th>':''}<th class="n">${ls?'PP':'Einzelpreis'}</th>${rab?'<th class="n">Rabatt %</th>':''}${mehrSt?'<th class="n">USt</th>':''}<th class="n">${ls?'GP':'Gesamtpreis'}</th>`}</tr>`;
   const hinweise=[...new Set(s.steuern.map(x=>steuerDef(x.code).hinweis).filter(Boolean))];
   const nrTxt=b.nr||(edit?vorschlagNr(b)+' (Vorschlag)':'ENTWURF');
   const mitLeistung=(t.re&&t.b==='V')||b.typ==='LS';

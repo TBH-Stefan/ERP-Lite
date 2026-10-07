@@ -133,9 +133,15 @@ Struktur nach Grundaufbau der ÖNORM B 2061 – Zeilen frei anpassbar; Abgleich 
 - Periodensperre nach UVA-Abgabe.
 - Grenzen: kein UGB-Jahresabschluss; Abschreibung, Rückstellungen, Abgrenzungen, Inventur, Ertragsteuern als manuelle Abschlussbuchungen; Personenkonten (Debitoren/Kreditoren) über die offenen Posten der Belege.
 
-## 15. Offene Punkte
+## 15. Lieferschein-Scan und Weiterverrechnung (Stand 07.10.2026)
+- **Scan:** „📷 Lieferschein scannen“ (Überblick, Einkauf) legt einen Wareneingang an, hängt Foto/PDF an und lässt ihn von Claude (Anthropic, Modell `claude-opus-5-5`) auslesen: Lieferant, LS-Nr., Datum, Bestell-Nr., abweichende Lieferadresse, Positionen (Lief.-Art.-Nr., EAN, Bezeichnung, Menge, Einheit, EP). API-Schlüssel je Gerät in den Einstellungen (nur Browser-Speicher, nicht in `erp-daten.json`).
+- **Abgleich Artikelstamm:** Zuordnung über Lieferanten-Art.-Nr., Art.-Nr./EAN, sonst Bezeichnung (≥ 60 % Wortübereinstimmung); je Zeile änderbar (anderer Artikel, neuer Artikel, ohne Artikel). Abweichungen (EK, Einheit, Bezeichnung, Lieferanten-Art.-Nr.) und fehlender Lieferant am Artikel werden angezeigt und nur angehakt und nach Rückfrage übernommen.
+- **Lager:** Schalter „Ins Lager einbuchen“ je Wareneingang; bei abweichender Lieferadresse (Baustelle) automatisch aus. Ohne Einbuchung keine Lagerbuchung, auch nicht später über Eingangs- oder Ausgangsrechnung.
+- **Zu verrechnen:** Übersicht der Wareneingänge auf Aufträge bzw. mit Direktlieferung, die noch nicht per Lieferschein/Rechnung (Positionsbezug) an den Kunden weiterverrechnet sind; „→ Rechnung erstellen“ legt einen Rechnungsentwurf für den Auftragskunden an (VK aus Artikelstamm, sonst EK); „nicht verrechnen“ nimmt einen Wareneingang heraus. Kennzahl im Überblick.
+
+## 16. Offene Punkte
 - **ÖNORM A 2063 (Import/Export)**: benötigt das gültige XML-Schema bzw. Beispieldateien (.onlv) – noch nicht umgesetzt.
 1. Bilanz vs. Einnahmen-Ausgaben-Rechnung klären (Rechtsform?).
 2. Speicherort: privater bzw. Firmen-OneDrive des Kleinunternehmens, nicht der eines Dienstgebers.
-3. Briefpapier-Vorlagen einarbeiten (Layout `docHTML` in `index.html`).
+3. ~~Briefpapier-Vorlagen einarbeiten~~ erledigt 07.10.2026 (Briefkopf 1:1 aus Vorlage, Fußzeile mit Firmendaten).
 4. Optional später: PDF automatisch in den Datenordner ablegen, Mahnwesen mit Mahnstufen, Mehrbenutzer (dann Server/Datenbank).

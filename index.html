@@ -206,6 +206,7 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
     <div class="grp">Vorgänge</div>
     <a href="#/belege/V" data-n="belege/V">Verkauf</a>
     <a href="#/belege/E" data-n="belege/E">Einkauf</a>
+    <a href="#/verrechnung" data-n="verrechnung">Zu verrechnen</a>
     <a href="#/auftraege" data-n="auftraege">Aufträge &amp; DB II</a>
     <a href="#/zeiten" data-n="zeiten">Zeiterfassung</a>
     <div class="grp">Stammdaten</div>
@@ -290,7 +291,7 @@ const OHNE_PREIS=['LS','WE'];
 const REOPEN=['AN','AB','BE','PR'];
 
 let DB=null,saveT=null,pending=false,lastBackupDay=null,HIST=null;
-const UI={vTyp:'',vSt:'',vQ:'',eTyp:'',eSt:'',eQ:'',jahr:String(new Date().getFullYear()),kQ:'',aQ:''};
+const UI={vTyp:'',vSt:'',vQ:'',eTyp:'',eSt:'',eQ:'',jahr:String(new Date().getFullYear()),kQ:'',aQ:'',wvAlle:false};
 
 /* ---------- Hilfsfunktionen ---------- */
 const $=s=>document.querySelector(s);
@@ -767,12 +768,14 @@ function bereitsGebucht(p,via,pm){
   let cur=pm[p.herkunftPosId]?.p,n=0;
   while(cur&&n++<20){
     const info=pm[cur.id];if(info.b.typ===via)return true;
+    if(info.b.typ==='WE'&&info.b.lagerBuchen===false)return true; // nie im Lager gewesen
     if(DB.belege.some(x=>x.typ===via&&!x.storno&&x.pos.some(q=>q.herkunftPosId===cur.id)))return true;
     cur=pm[cur.herkunftPosId]?.p;
   }
   return false;
 }
 function lagerBeiFest(b){
+  if(b.typ==='WE'&&b.lagerBuchen===false)return; // Direktlieferung auf Baustelle
   const kand=b.pos.filter(p=>!isInfo(p)&&!p.kz&&artikel(p.artikelId)?.lager);
   if(!kand.length)return;
   let dir=0,list=kand;
@@ -959,13 +962,14 @@ V.dash=()=>{
   const nk=auf.map(a=>nachkalk(a.id)),db=sum(nk,x=>x.db2),u2=sum(nk,x=>x.uN);
   const min=DB.artikel.filter(a=>a.lager&&a.aktiv!==false&&+a.minBestand>0&&bestand(a.id).menge<+a.minBestand);
   const beOffen=DB.belege.filter(b=>b.typ==='BE'&&b.fest&&!b.storno&&erledigung(b)<0.9999);
-  const entw=DB.belege.filter(b=>!b.fest&&!b.storno);
+  const entw=DB.belege.filter(b=>!b.fest&&!b.storno),wv=zuVerrechnen().filter(x=>x.offen>0);
   const liste=(arr,f)=>arr.length?`<table>${arr.map(f).join('')}</table>`:'<p class="mut">keine</p>';
   return`<h1>Überblick ${j}</h1>
   ${!S().firma.name?'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>':''}
   <div class="quick">
     <a class="btn" href="#/zeiten">⏱ Zeit erfassen</a>
     ${STORE.art==='cache'?'':`<label class="btn">📷 Eingangsrechnung<input type="file" id="erfoto" accept="image/*,application/pdf" multiple hidden></label>`}
+    <label class="btn">📷 Lieferschein scannen<input type="file" id="lsscan" accept="image/*,application/pdf" multiple hidden></label>
     <button data-act="qneu" data-t="AN">+ Angebot</button>
     <button data-act="qneu" data-t="LS">+ Lieferschein</button>
     <button data-act="qneu" data-t="RE">+ Rechnung</button>
@@ -975,6 +979,7 @@ V.dash=()=>{
     <div class="kpi">DB II Aufträge ${j}<b>${fmt(db)} € ${u2?dbTag(db/u2):''}</b></div>
     <div class="kpi">Offene Forderungen<b>${fmt(ford)} €</b><span class="${ueber.length?'err':'mut'}">${ueber.length} überfällig</span></div>
     <div class="kpi">Offene Verbindlichkeiten<b>${fmt(verb)} €</b></div>
+    <div class="kpi click" onclick="nav('verrechnung')">Noch zu verrechnen (EK)<b>${fmt(sum(wv,x=>x.offen*(+x.p.ep||+x.p.ek||0)))} €</b><span class="mut">${new Set(wv.map(x=>x.b.id)).size} Wareneingänge</span></div>
     <div class="kpi">Offene Angebote<b>${fmt(sum(ang,b=>summen(b).netto))} €</b><span class="mut">${ang.length} Stück</span></div>
   </div>
   <div class="cols" style="grid-template-columns:1fr 1fr">
@@ -1002,7 +1007,7 @@ V.belege=(bereich='V')=>{
     <select data-o="ui" data-f="${k}Typ">${opt('','alle Belegarten',typ)}${typen.map(t=>opt(t,T[t].bez,typ)).join('')}</select>
     <select data-o="ui" data-f="${k}St">${opt('','alle',st)}${opt('entwurf','Entwürfe',st)}${opt('offen','offen',st)}${opt('ueber','überfällig',st)}${opt('storno','storniert',st)}</select>
     <input data-o="ui" data-f="${k}Q" placeholder="Suche Nr, Name, Betreff" value="${esc(UI[k+'Q'])}" style="width:240px">
-    <span class="sp"></span>
+    <span class="sp"></span>${bereich==='E'?'<label class="btn">📷 Lieferschein scannen<input type="file" id="lsscan" accept="image/*,application/pdf" multiple hidden></label>':''}
     <select data-act="neu">${opt('','+ Neuer Beleg …','')}${typen.filter(t=>t!=='GS').map(t=>opt(t,T[t].bez,'')).join('')}</select>
   </div>
   <div class="card" style="padding:0"><table>
@@ -1049,7 +1054,7 @@ V.beleg=id=>{
     </tr>`}).join('');
   const kette=DB.belege.filter(x=>b.auftragId?x.auftragId===b.auftragId:(x.id===b.id||x.vorgaengerId===b.id||x.id===b.vorgaengerId)).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
   const auftragOpts=()=>opt('','– kein Auftrag (Lager/Gemeinkosten) –',b.auftragId)+auftragsListe().map(a=>opt(a.id,auftragLabel(a.id),b.auftragId)).join('');
-  const k=kontakt(b.kontaktId);
+  const k=kontakt(b.kontaktId),scan=b.typ==='WE'?scanBox(b):'';
   const ans=ansicht();
   const kopfbar=`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
@@ -1079,6 +1084,7 @@ V.beleg=id=>{
       ${(t.re&&V_)||b.typ==='LS'?`<label>Liefer-/Leistungsdatum<input data-h="leistung" value="${esc(b.leistung)}" ${dis} placeholder="TT.MM.JJJJ oder Zeitraum"></label>`:''}
     </div>
     ${!V_?`<div class="row"><label>Auftrag (für Nachkalkulation)<select data-h="auftragId" ${dis}>${auftragOpts()}</select></label></div>`:''}
+    ${b.typ==='WE'?`<div class="row"><label class="chk"><input type="checkbox" data-h="lagerBuchen" ${b.lagerBuchen!==false?'checked':''} ${dis}> Ins Lager einbuchen (abwählen bei Direktlieferung auf die Baustelle)</label><label class="chk"><input type="checkbox" data-h="verrechnen" ${b.verrechnen!==false?'checked':''}> An Kunden weiterverrechnen (Auftrag oder Direktlieferung)</label></div>`:''}
     ${!ohneP?`<div class="row">
       <label class="w05">Zahlungsziel Tage<input type="number" data-h="zahlungsziel" value="${b.zahlungsziel}" ${dis}></label>
       <label class="w05">Skonto %<input type="number" step="any" data-h="skonto" value="${b.skonto}" ${dis}></label>
@@ -1103,9 +1109,9 @@ V.beleg=id=>{
     ${V_&&!ohneP&&b.typ!=='GS'?`<div class="card"><h2>Kalkulation DB II</h2><div id="kalkbox">${kalkBox(b)}</div></div>`:''}
     <div class="card"><h2>Belegkette${b.auftragId&&V_?` · <a href="#/auftrag/${b.auftragId}">Auftrag</a>`:''}</h2><div class="chain">${kette.map(x=>`<a href="#/beleg/${x.id}" class="${x.id===b.id?'cur':''}">${T[x.typ].bez} ${esc(bNr(x))} · ${dAT(x.datum)} ${x.storno?'(storniert)':x.status==='ersetzt'?'(ersetzt)':''}</a>`).join('')}</div></div>
     ${k?`<div class="card"><h2>${V_?'Kunde':'Lieferant'}</h2><div>${esc(k.nr)} · <a href="#/kontakt/${k.id}">${esc(k.name)}</a><br>${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.uid?'<br>UID '+esc(k.uid):''}</div></div>`:''}`;
-  if(ans==='beides')return`${kopfbar}<div class="split"><div>${formHTML}${side}${extra}</div><div class="sticky">${blatt}</div></div>`;
-  if(ans==='vorschau')return`${kopfbar}<div class="cols"><div>${blatt}${extra}</div><div>${side}</div></div>`;
-  return`${kopfbar}<div class="cols"><div>${formHTML}${extra}</div><div>${side}</div></div>`;
+  if(ans==='beides')return`${kopfbar}${scan}<div class="split"><div>${formHTML}${side}${extra}</div><div class="sticky">${blatt}</div></div>`;
+  if(ans==='vorschau')return`${kopfbar}${scan}<div class="cols"><div>${blatt}${extra}</div><div>${side}</div></div>`;
+  return`${kopfbar}${scan}<div class="cols"><div>${formHTML}${extra}</div><div>${side}</div></div>`;
 };
 function ansicht(){const m=lsGet('erp-ansicht')||'form';return m==='beides'&&window.innerWidth<1000?'form':m}
 function vorschlagNr(b){
@@ -2202,6 +2208,9 @@ V.einstellungen=()=>{
   <div class="row">${ff('bank','Bank')}${ff('iban','IBAN','w2')}${ff('bic','BIC')}<label>Bearbeiter<input data-o="s" data-f="bearbeiter" value="${esc(s.bearbeiter)}"></label></div>
   <div class="row">${ff('zeichner','Unterzeichner (z. B. Horvath Stefan, BSc.)','w2')}${ff('zeichnerFkt','Funktion')}<label class="w2">Untertitel (nur bei eigenem Logo)<textarea data-o="s" data-f="firma.slogan" style="height:44px">${esc(f.slogan)}</textarea></label></div>
   <div class="row"><label>Logo (PNG/JPG/SVG, max. 300 kB; leer = TBH-Briefkopf)<input type="file" id="logo" accept="image/*"></label><img src="${f.logo||KOPF_TBH}" style="max-height:50px">${f.logo?`<button data-act="logodel">Logo entfernen</button>`:''}<span style="flex:2"></span></div></div>
+  <div class="card"><h2>KI-Belegerkennung (Lieferscheine)</h2>
+  <p class="mut" style="margin-top:0">Gescannte Lieferscheine werden von Claude (Anthropic) ausgelesen. Den API-Schlüssel erhalten Sie in der Anthropic Console (console.anthropic.com → API Keys). Er wird nur in diesem Browser gespeichert, nicht in der Datenbank – auf jedem Gerät einmal eintragen. Kosten ca. 1–3 Cent je Seite; das Bild wird zur Auswertung an Anthropic übertragen.</p>
+  <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${lsGet('erp-ki-key')?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><span style="flex:2"></span></div></div>
   <div class="card"><h2>Kaufmännisch</h2><div class="row">
     ${sf('zahlungsziel','Zahlungsziel Tage')}${sf('skonto','Skonto %')}${sf('skontoTage','Skonto Tage')}${sf('angebotGueltig','Angebot gültig Tage')}
     ${sf('zielDB2','Ziel-DB II %')}${sf('mgz','MGZ % auf Material')}${sf('abwGrenze','Prüfgrenze Abweichung %')}
@@ -2218,6 +2227,179 @@ V.einstellungen=()=>{
   ${Object.keys(T).map(t=>`<tr><td>${T[t].bez}</td><td style="width:80px"><input data-o="nk" data-t="${t}" data-f="prefix" value="${esc(s.nk[t].prefix)}"></td><td style="width:90px"><input type="number" data-o="nk" data-t="${t}" data-f="z" value="${s.nk[t].zaehler[j]||0}"></td><td><textarea data-o="tx" data-t="${t}" data-f="kopf">${esc(s.texte[t].kopf)}</textarea></td><td><textarea data-o="tx" data-t="${t}" data-f="fuss">${esc(s.texte[t].fuss)}</textarea></td></tr>`).join('')}
   </tbody></table></div>`;
 };
+
+/* ---------- Lieferschein-Scan (KI-Erkennung) ---------- */
+// API-Schlüssel nur im Browser des Geräts (localStorage), nicht in erp-daten.json
+const KI_URL='https://api.anthropic.com/v1/messages',KI_MODELL='claude-opus-5-5';
+const LS_SCHEMA={type:'object',additionalProperties:false,required:['lieferant','lieferscheinNr','datum','bestellNr','lieferadresse','positionen'],properties:{
+  lieferant:{type:'object',additionalProperties:false,required:['name','uid','strasse','plz','ort'],properties:{name:{type:'string'},uid:{type:'string'},strasse:{type:'string'},plz:{type:'string'},ort:{type:'string'}}},
+  lieferscheinNr:{type:'string'},datum:{type:'string',description:'JJJJ-MM-TT'},bestellNr:{type:'string'},lieferadresse:{type:'string',description:'abweichende Liefer-/Baustellenadresse, sonst leer'},
+  positionen:{type:'array',items:{type:'object',additionalProperties:false,required:['artNr','ean','bez','menge','einheit','ep'],properties:{artNr:{type:'string'},ean:{type:'string'},bez:{type:'string'},menge:{type:'number'},einheit:{type:'string'},ep:{type:'number',description:'Einzelpreis netto je Einheit, 0 wenn nicht angegeben'}}}}}};
+const SCANFILES={}; // Dateien der laufenden Sitzung (für „Erneut versuchen“)
+const normT=s=>String(s||'').toLowerCase().replace(/[^a-z0-9äöüß]+/g,' ').trim();
+const normN=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+const normF=s=>normT(s).replace(/\b(gmbh|ges m b h|gesmbh|co|kg|ag|og|e u|eu|und)\b/g,' ').replace(/\s+/g,' ').trim();
+async function kiBlock(f0){
+  let f=await bildVerkleinern(f0);
+  if(f.type.startsWith('image/')&&!['image/jpeg','image/png','image/webp','image/gif'].includes(f.type)){
+    try{const img=await createImageBitmap(f),c=document.createElement('canvas');c.width=img.width;c.height=img.height;c.getContext('2d').drawImage(img,0,0);
+      f=new File([await new Promise(r=>c.toBlob(r,'image/jpeg',0.85))],'scan.jpg',{type:'image/jpeg'})}catch(e){throw new Error('Bildformat nicht lesbar: '+f.type)}}
+  const data=await new Promise((ok,err)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=()=>err(r.error);r.readAsDataURL(f)});
+  if(f.type==='application/pdf')return{type:'document',source:{type:'base64',media_type:'application/pdf',data}};
+  if(!f.type.startsWith('image/'))throw new Error('Nur Fotos oder PDF: '+f.name);
+  return{type:'image',source:{type:'base64',media_type:f.type,data}};
+}
+async function kiLieferschein(files,key){
+  const bl=[];for(const f of files)bl.push(await kiBlock(f));
+  const txt=`Das ist ein Lieferschein an ${S().firma.name||'uns'} (Empfänger). Lies ihn vollständig aus:
+- lieferant: der Absender/Lieferant (nicht der Empfänger), mit UID-Nr. falls angegeben
+- lieferscheinNr, datum (JJJJ-MM-TT), bestellNr (Bestell-, Kommissions- oder Auftragsnummer des Empfängers), lieferadresse (nur wenn an eine abweichende Adresse/Baustelle geliefert wurde)
+- positionen: jede gelieferte Ware mit Artikelnummer des Lieferanten, EAN falls vorhanden, Bezeichnung, gelieferter Menge (bei Bestellt/Geliefert die gelieferte), Einheit wie gedruckt, Einzelpreis netto falls angegeben.
+Rückstände, Text- und Summenzeilen sind keine Positionen. Fehlende Werte als leere Zeichenkette bzw. 0.`;
+  let r;
+  try{r=await fetch(KI_URL,{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-beta':'server-side-fallback-2026-07-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:KI_MODELL,max_tokens:16000,fallbacks:'default',output_config:{effort:'medium',format:{type:'json_schema',schema:LS_SCHEMA}},messages:[{role:'user',content:[...bl,{type:'text',text:txt}]}]})})}
+  catch(e){throw new Error('Keine Verbindung zum KI-Dienst ('+e.message+').')}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(r.status===401?'API-Schlüssel ungültig (Einstellungen prüfen).':(j.error?.message||'Fehler '+r.status));
+  if(j.stop_reason==='refusal')throw new Error('Die KI hat die Auswertung abgelehnt.');
+  if(j.stop_reason==='max_tokens')throw new Error('Zu viele Positionen für einen Durchgang – bitte seitenweise scannen.');
+  const t=(j.content||[]).find(c=>c.type==='text');if(!t)throw new Error('Keine Antwort erhalten.');
+  return JSON.parse(t.text);
+}
+function lieferantFinden(l){
+  const ks=DB.kontakte.filter(k=>k.typ!=='K'),u=normN(l.uid),n=normF(l.name);
+  return(u&&ks.find(k=>normN(k.uid)===u))||(n&&ks.find(k=>{const m=normF(k.name);return m&&(m===n||m.includes(n)||n.includes(m))}))||null;
+}
+function artikelFinden(z,lid){
+  const an=normN(z.artNr),en=normN(z.ean),akt=DB.artikel.filter(a=>a.aktiv!==false),lf=a=>a.lieferanten||[];
+  let a;
+  if(an&&(a=akt.find(a=>lf(a).some(l=>l.kontaktId===lid&&normN(l.artNr)===an))))return{a,wie:'Lief.-Art.-Nr.'};
+  if(an&&(a=akt.find(a=>lf(a).some(l=>normN(l.artNr)===an)||normN(a.nr)===an||normN(a.ean)===an)))return{a,wie:'Art.-Nr.'};
+  if(en&&(a=akt.find(a=>normN(a.ean)===en||lf(a).some(l=>normN(l.artNr)===en))))return{a,wie:'EAN'};
+  const w=new Set(normT(z.bez).split(' ').filter(x=>x.length>1));if(!w.size)return null;
+  let best=null,bs=0;
+  for(const x of akt){const aw=normT(x.bez).split(' ').filter(y=>y.length>1);if(!aw.length)continue;const s=aw.filter(y=>w.has(y)).length/Math.max(aw.length,w.size);if(s>bs){bs=s;best=x}}
+  return best&&bs>=0.6?{a:best,wie:`Bezeichnung ${Math.round(bs*100)} %`}:null;
+}
+const scanFak=(z,a)=>+(a?.einheiten||[]).find(e=>normT(e.e)===normT(z.einheit))?.f||1;
+// Abweichungen erkannte Zeile ↔ Artikelstamm: [Schlüssel, Text, standardmäßig übernehmen]
+function scanDiffs(z,a,lid){
+  if(!a)return[];
+  const d=[],lf=lid?(a.lieferanten||[]).find(l=>l.kontaktId===lid):null,k=kontakt(lid),epB=+z.ep>0?r2(z.ep/scanFak(z,a)):0;
+  if(epB&&Math.abs(epB-(+a.ek||0))>0.005)d.push(['ek',`EK ${fmt(a.ek)} → ${fmt(epB)} € je ${esc(a.einheit)}`,true]);
+  if(z.einheit&&normT(z.einheit)!==normT(a.einheit)&&scanFak(z,a)===1)d.push(['einheit',`Einheit ${esc(a.einheit)} → ${esc(z.einheit)}`,false]);
+  if(z.bez&&normT(z.bez)!==normT(a.bez))d.push(['bez',`Bezeichnung → „${esc(z.bez)}“`,false]);
+  if(k&&!lf)d.push(['lief',`Lieferant ${esc(k.name)} ergänzen${z.artNr?' (Art.-Nr. '+esc(z.artNr)+')':''}`,true]);
+  else if(lf&&z.artNr&&normN(lf.artNr)!==normN(z.artNr))d.push(['lartnr',`Lief.-Art.-Nr. ${esc(lf.artNr||'–')} → ${esc(z.artNr)}`,true]);
+  return d;
+}
+function scanKopf(b){
+  const d=b.scan.daten,l=d.lieferant||{};
+  if(d.lieferscheinNr)b.fremdNr=d.lieferscheinNr;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(d.datum||''))b.datum=d.datum;
+  const k=lieferantFinden(l);if(k)b.kontaktId=k.id;
+  if(d.bestellNr){b.bezug='Bestellung '+d.bestellNr;const be=DB.belege.find(x=>x.typ==='BE'&&!x.storno&&x.nr&&normN(x.nr)===normN(d.bestellNr));if(be){b.vorgaengerId=be.id;if(be.auftragId)b.auftragId=be.auftragId}}
+  if(d.lieferadresse){b.betreff=b.betreff||'Lieferung an '+d.lieferadresse;b.lagerBuchen=false}
+  b.scan.wahl=(d.positionen||[]).map(z=>{const f=artikelFinden(z,b.kontaktId);return{modus:f?'zu':'neu',artId:f?.a.id||'',wie:f?.wie||'',menge:+z.menge||0,an:{},lager:b.lagerBuchen!==false}});
+}
+async function lsScan(files){
+  if(!files.length)return;
+  const b=neuBeleg('WE',{kopf:'',fuss:'',lagerBuchen:true});SCANFILES[b.id]=files;
+  log('Lieferschein-Scan',`${files.length} Datei(en)`);go('beleg/'+b.id);
+  if(STORE.art!=='cache')await anhaengeHochladen(b,files);
+  await scanStart(b);
+}
+async function scanStart(b){
+  const key=lsGet('erp-ki-key'),files=SCANFILES[b.id];
+  if(!key){b.scan={status:'fehler',fehler:'Kein API-Schlüssel hinterlegt – unter Einstellungen → KI-Belegerkennung eintragen. Positionen können auch manuell erfasst werden.'};persist();render();return}
+  b.scan={status:'läuft'};render();
+  try{b.scan={status:'offen',daten:await kiLieferschein(files,key)};scanKopf(b)}catch(e){b.scan={status:'fehler',fehler:e.message}}
+  commit();if(curBeleg()?.id===b.id)render();
+}
+function scanBox(b){
+  const s=b.scan;if(!s||s.status==='übernommen')return'';
+  if(s.status==='läuft')return`<div class="card"><h2>📷 Lieferschein wird gelesen …</h2><p class="mut" style="margin:0">Die KI wertet den Scan aus, das dauert meist 10–60 Sekunden.</p></div>`;
+  if(s.status==='fehler')return`<div class="card"><h2>📷 Lieferschein-Erkennung</h2><p class="err" style="margin-top:0">${esc(s.fehler)}</p><div class="bar">${SCANFILES[b.id]?'<button data-act="scanneu">Erneut versuchen</button>':''}<button data-act="scanweg">Ausblenden</button></div></div>`;
+  const d=s.daten,lid=b.kontaktId,l=d.lieferant||{};
+  const rows=(d.positionen||[]).map((z,i)=>{const w=s.wahl[i],a=w.modus==='zu'?artikel(w.artId):null,df=a?scanDiffs(z,a,lid):[];
+    return`<tr><td>${esc(z.artNr)}${z.ean?`<br><span class="mut">EAN ${esc(z.ean)}</span>`:''}</td><td>${esc(z.bez)}</td>
+    <td style="width:80px"><input type="number" step="any" data-sc="${i}" data-k="menge" value="${w.menge}"></td><td>${esc(z.einheit)}</td><td class="n">${+z.ep?fmt(z.ep):''}</td>
+    <td style="min-width:240px"><select data-sc="${i}" data-k="modus">${opt('zu','Artikelstamm',w.modus)}${opt('neu','neuer Artikel',w.modus)}${opt('frei','ohne Artikel',w.modus)}</select>
+      ${w.modus==='zu'?`<input list="dl-art" data-sc="${i}" data-k="art" value="${a?esc(a.nr+' – '+a.bez):''}" placeholder="Artikel suchen …" style="margin-top:4px">${a?`<div class="mut" style="font-size:12px">${w.wie?'erkannt über '+esc(w.wie):'manuell gewählt'}</div>`:'<div class="err" style="font-size:12px">kein Artikel gewählt</div>'}`:''}
+      ${w.modus==='neu'?`<label class="chk" style="margin:4px 0 0;font-size:13px"><input type="checkbox" data-sc="${i}" data-k="lager" ${w.lager?'checked':''}> Lagerartikel</label>`:''}</td>
+    <td>${df.map(([key,txt,def])=>`<label class="chk" style="margin:0 0 2px;font-size:13px"><input type="checkbox" data-sc="${i}" data-k="an-${key}" ${(w.an[key]??def)?'checked':''}> ${txt}</label>`).join('')||(a?'<span class="okc">✓ stimmt überein</span>':'')}</td></tr>`}).join('');
+  return`<div class="card"><h2>📷 Lieferschein-Abgleich</h2>
+  <p style="margin-top:0">Lieferant laut Scan: <b>${esc(l.name||'–')}</b>${l.uid?' · UID '+esc(l.uid):''} · LS-Nr. ${esc(d.lieferscheinNr||'–')} · ${d.datum?dAT(d.datum):''}${d.bestellNr?' · Bestellung '+esc(d.bestellNr):''}${d.lieferadresse?`<br>Lieferadresse: <b>${esc(d.lieferadresse)}</b>`:''}</p>
+  ${lid?'':`<div class="hint">Lieferant nicht im Stamm gefunden. <button data-act="scanlief">„${esc(l.name||'Lieferant')}“ als Lieferant anlegen</button> oder oben auswählen.</div>`}
+  <div style="overflow-x:auto"><table><thead><tr><th>Art.-Nr.</th><th>Bezeichnung laut Lieferschein</th><th>Menge</th><th>Einh.</th><th class="n">EP</th><th>Zuordnung</th><th>Änderungen im Artikelstamm</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="mut">Keine Positionen erkannt.</td></tr>'}</tbody></table></div>
+  <div class="bar" style="margin-top:8px"><button class="p" data-act="scanok">Prüfen und übernehmen …</button><button data-act="scanweg">Verwerfen</button><span class="mut">Angehakte Änderungen werden nach Rückfrage in den Artikelstamm geschrieben.</span></div></div>`;
+}
+function scanSet(el){
+  const b=curBeleg(),w=b?.scan?.wahl?.[+el.dataset.sc],k=el.dataset.k;if(!w||b.fest)return;
+  if(k==='art'){const a=DB.artikel.find(a=>a.nr===el.value.split(' – ')[0].trim());w.artId=a?.id||'';w.wie='';w.an={}}
+  else if(k==='menge')w.menge=num(el.value);
+  else if(k.startsWith('an-'))w.an[k.slice(3)]=el.checked;
+  else if(k==='modus'){w.modus=el.value;w.an={}}
+  else w[k]=el.type==='checkbox'?el.checked:el.value;
+  persist();render();
+}
+function scanUebernehmen(b){
+  if(b.fest||b.scan?.status!=='offen')return;
+  const s=b.scan,d=s.daten,lid=b.kontaktId,zl=d.positionen||[];
+  if(zl.some((z,i)=>s.wahl[i].modus==='zu'&&!artikel(s.wahl[i].artId))){alert('Bitte bei allen Zeilen „Artikelstamm“ einen Artikel wählen oder „neuer Artikel“ / „ohne Artikel“ einstellen.');return}
+  const plan=zl.map((z,i)=>{const w=s.wahl[i],a=w.modus==='zu'?artikel(w.artId):null;return{z,w,a,df:scanDiffs(z,a,lid).filter(([k,,def])=>w.an[k]??def)}});
+  const neu=plan.filter(x=>x.w.modus==='neu'),aend=plan.flatMap(x=>x.df.map(([,t])=>`• ${x.a.nr}: ${t.replace(/<[^>]+>/g,'').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')}`));
+  if(!confirm(`Lieferschein übernehmen?\n\n${plan.length} Position(en) in den Wareneingang\n${neu.length} neue(r) Artikel\n${aend.length} Änderung(en) im Artikelstamm${aend.length?':\n'+aend.join('\n'):''}`))return;
+  for(const x of plan){
+    let {z,w,a}=x;const fak=scanFak(z,a);
+    for(const [k] of x.df){
+      if(k==='ek')a.ek=r2(z.ep/fak);
+      if(k==='einheit'){a.einheit=z.einheit;if(!S().einheiten.includes(z.einheit))S().einheiten.push(z.einheit)}
+      if(k==='bez')a.bez=z.bez;
+      if(k==='lief')(a.lieferanten=a.lieferanten||[]).push({kontaktId:lid,artNr:z.artNr||''});
+      if(k==='lartnr')a.lieferanten.find(l=>l.kontaktId===lid).artNr=z.artNr;
+    }
+    if(w.modus==='neu'){
+      const nr=String(++S().anr).padStart(5,'0'),eh=z.einheit||'Stk';
+      a={id:uid(),nr,bez:z.bez,text:'',art:'W',einheit:eh,einheiten:[],ek:r2(+z.ep||0),vk:0,steuer:S().stdSteuer,lager:!!w.lager,minBestand:0,lieferanten:lid?[{kontaktId:lid,artNr:z.artNr||''}]:[],aktiv:true,ean:z.ean||''};
+      DB.artikel.push(a);if(!S().einheiten.includes(eh))S().einheiten.push(eh);
+    }
+    const ep=+z.ep||r2((+a?.ek||0)*fak);
+    b.pos.push(neuPos({art:'W',artikelId:a?.id||'',nr:a?.nr||z.artNr||'',bez:a?.bez||z.bez,menge:+w.menge||0,einheit:z.einheit||a?.einheit||'Stk',faktor:fak,ep,ek:ep}));
+  }
+  log('Lieferschein übernommen',`${d.lieferscheinNr||''}: ${plan.length} Pos., ${neu.length} neue Artikel, ${aend.length} Änderungen`);
+  b.scan={status:'übernommen',datum:isoD()};artDatalist();commit();render();
+}
+/* Wareneingänge, die an Kunden weiterzuverrechnen sind (auf Auftrag oder direkt auf Baustelle geliefert) */
+function zuVerrechnen(){
+  const out=[];
+  for(const b of DB.belege){
+    if(b.typ!=='WE'||b.storno||b.verrechnen===false||(!b.auftragId&&b.lagerBuchen!==false))continue;
+    for(const p of b.pos){if(isInfo(p))continue;const m=+p.menge||0,v=r3(kinderMenge(p.id,['LS','RE','TR','SR']));out.push({b,p,m,v,offen:r3(Math.max(0,m-v))})}
+  }
+  return out;
+}
+V.verrechnung=()=>{
+  const alle=UI.wvAlle,L=zuVerrechnen().filter(x=>alle||x.offen>0),gr={};
+  for(const x of L)(gr[x.b.auftragId||'']=gr[x.b.auftragId||'']||[]).push(x);
+  const wert=x=>r2(x.offen*(+x.p.ep||+x.p.ek||0));
+  return`<h1>Zu verrechnen</h1>
+  <p class="mut" style="margin-top:0">Wareneingänge auf Aufträge oder mit Direktlieferung auf die Baustelle, die noch nicht per Lieferschein oder Rechnung an den Kunden weiterverrechnet sind.</p>
+  <div class="bar"><label class="chk" style="margin:0"><input type="checkbox" data-o="ui" data-f="wvAlle" ${alle?'checked':''}> auch bereits verrechnete anzeigen</label><span class="sp"></span><b>Offen gesamt (EK): ${fmt(sum(L,wert))} €</b></div>
+  ${Object.entries(gr).map(([aid,xs])=>`<div class="card" style="padding:8px"><div class="bar" style="margin:0 0 6px"><h2 style="margin:0">${aid?esc(auftragLabel(aid)):'Ohne Auftrag (Direktlieferung)'}</h2><span class="sp"></span>
+    ${aid?`<button class="p" data-act="wvre" data-a="${aid}" ${xs.some(x=>x.offen>0)?'':'disabled'}>→ Rechnung erstellen</button>`:'<span class="mut">Für die Rechnung bitte im Wareneingang einen Auftrag wählen.</span>'}</div>
+    <table><thead><tr><th>Datum</th><th>Lieferant · LS-Nr.</th><th>Artikel</th><th class="n">Menge</th><th class="n">verrechnet</th><th class="n">offen</th><th class="n">EK-Wert offen</th><th></th></tr></thead><tbody>
+    ${xs.map(x=>`<tr><td>${dAT(x.b.datum)}${x.b.fest?'':' '+tag('Entwurf')}</td><td><a href="#/beleg/${x.b.id}">${esc(kName(x.b.kontaktId))} · ${esc(x.b.fremdNr||bNr(x.b))}</a></td><td>${esc(x.p.nr)} ${esc(x.p.bez)}</td><td class="n">${fmtQ(x.m)} ${esc(x.p.einheit)}</td><td class="n">${fmtQ(x.v)}</td><td class="n">${x.offen?`<b>${fmtQ(x.offen)}</b>`:tag('erledigt','ok')}</td><td class="n">${fmt(wert(x))}</td><td><button class="s" data-act="wvnein" data-id="${x.b.id}" title="Wareneingang nicht weiterverrechnen">nicht verrechnen</button></td></tr>`).join('')}</tbody></table></div>`).join('')||'<div class="card"><p class="mut" style="margin:0">Nichts offen.</p></div>'}`;
+};
+function wvRechnung(aid){
+  const xs=zuVerrechnen().filter(x=>x.b.auftragId===aid&&x.offen>0);if(!xs.length)return;
+  const a=beleg(aid)||DB.belege.find(x=>x.auftragId===aid&&T[x.typ].b==='V'),k=kontakt(a?.kontaktId);
+  const re=neuBeleg('RE',{auftragId:aid,kontaktId:a?.kontaktId||'',betreff:a?.betreff||'',zahlungsziel:k&&k.zahlungsziel!==''?+k.zahlungsziel:S().zahlungsziel});
+  for(const {p,offen} of xs){const art=artikel(p.artikelId),ek=+p.ep||+p.ek||0;
+    re.pos.push(neuPos({art:'W',artikelId:p.artikelId,nr:p.nr,bez:p.bez,text:p.text,menge:offen,einheit:p.einheit,faktor:+p.faktor||1,ep:art?.vk?r2(art.vk*(+p.faktor||1)):ek,ek,steuer:art?.steuer||S().stdSteuer,herkunftPosId:p.id}))}
+  log('Weiterverrechnung',`${xs.length} Pos. aus Wareneingängen → Rechnungsentwurf`);persist();go('beleg/'+re.id);
+}
 
 /* ---------- Druck ---------- */
 // Firmenlogo TBH (Standard, falls in den Einstellungen kein eigenes Logo hochgeladen ist)
@@ -2330,6 +2512,12 @@ const ACT={
   abe:el=>{const b=neuBeleg('BE',{auftragId:el.dataset.id,betreff:'Projekt: '+(beleg(el.dataset.id)?.betreff||'')});persist();go('beleg/'+b.id)},
   aer:el=>{const b=neuBeleg('ER',{auftragId:el.dataset.id,kopf:'',fuss:''});persist();go('beleg/'+b.id)},
   zabr:el=>zeitenAbrechnen(el.dataset.id),
+  scanok:()=>scanUebernehmen(curBeleg()),scanneu:()=>scanStart(curBeleg()),
+  scanweg:()=>{const b=curBeleg();if(b.scan?.status==='offen'&&!confirm('Erkannte Daten verwerfen?'))return;b.scan=null;persist();render()},
+  scanlief:()=>{const b=curBeleg(),l=b.scan?.daten?.lieferant||{},s=S();const k={id:uid(),nr:String(++s.knr.L),typ:'L',name:l.name||'',zusatz:'',strasse:l.strasse||'',plz:l.plz||'',ort:l.ort||'',land:'Österreich',uid:l.uid||'',email:'',tel:'',zahlungsziel:s.zahlungsziel,notiz:''};
+    DB.kontakte.push(k);b.kontaktId=k.id;log('Lieferant angelegt',k.name);persist();render()},
+  wvre:el=>wvRechnung(el.dataset.a),
+  wvnein:el=>{const b=beleg(el.dataset.id);if(!confirm(`Wareneingang ${b.fremdNr||bNr(b)} (${kName(b.kontaktId)}) nicht an den Kunden weiterverrechnen?`))return;b.verrechnen=false;log('nicht weiterverrechnen',b.fremdNr||bNr(b));commit();render()},
   ztadd:()=>{const a=$('#zt-a').value,t=$('#zt-t').value,h=num($('#zt-h').value);if(!a||!h){alert('Auftrag und Stunden angeben.');return}
     const tf=S().tarife.find(x=>x.kz===t)||{kosten:0,vk:0};lsSet('erp-lastA',a);lsSet('erp-lastT',t);
     DB.zeiten.push({id:uid(),datum:$('#zt-d').value||isoD(),auftragId:a,tarif:t,stunden:h,text:$('#zt-x').value,kosten:+tf.kosten||0,vk:+tf.vk||0,belegId:''});commit();render()},
@@ -2374,6 +2562,9 @@ document.addEventListener('change',e=>{
   if(el.id==='logo')return logoUpload(el);
   if(el.id==='imp')return importJSON(el);
   if(el.id==='lbimp')return lbImport(el);
+  if(el.id==='lsscan'){const f=[...el.files];el.value='';lsScan(f);return}
+  if(el.id==='kikey'){lsSet('erp-ki-key',el.value.trim()||null);render();return}
+  if(d.sc!==undefined)return scanSet(el);
   if(el.id==='att'){const b=curBeleg();if(b)anhaengeHochladen(b,[...el.files]);return}
   if(el.id==='erfoto'){const files=[...el.files];if(!files.length)return;const b=neuBeleg('ER',{kopf:'',fuss:''});go('beleg/'+b.id);anhaengeHochladen(b,files);return}
   const v=el.type==='checkbox'?el.checked:el.value,nv=el.type==='number'?num(v):v;

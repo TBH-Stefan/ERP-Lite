@@ -135,10 +135,17 @@ Struktur nach Grundaufbau der ÖNORM B 2061 – Zeilen frei anpassbar; Abgleich 
 
 ## 15. Lieferschein-Scan und Weiterverrechnung (Stand 07.10.2026)
 - **Einlesen (kostenlos, ohne Fremdbibliothek, im Browser):** „📷 Lieferschein einlesen“ bzw. „📄 Eingangsrechnung einlesen“ (Überblick, Einkauf) legt Wareneingang bzw. Eingangsrechnung an und hängt die Datei an. Gelesen werden E-Rechnungen (ZUGFeRD/Factur-X eingebettet im PDF, XRechnung/PEPPOL UBL, ebInterface, UBL-Lieferavis) exakt sowie PDFs mit Textebene (eigener PDF-Textleser, Positionstabelle über Spaltenkopf): Lieferant (UID), Beleg-Nr., Datum, Bestell-Nr., Lieferadresse, Positionen; bei Rechnungen zusätzlich Netto/USt/Brutto, Fälligkeit, Skonto und Bezug auf Lieferscheine (Verknüpfung mit dem Wareneingang, Positionsbezug für Lager).
-- **Fotos/eingescannte Belege** haben keinen Text: Positionen manuell. Optional (kostenpflichtig, nur mit API-Schlüssel je Gerät): KI-Erkennung durch Claude (Anthropic).
+- **Fotos/eingescannte Belege:** Texterkennung (Tesseract, lokal im Browser, kostenlos; einmalig ca. 5–15 MB von jsDelivr, danach zwischengespeichert), Seitenbilder werden aus Scan-PDFs entnommen; Ergebnis immer prüfen. Optional (kostenpflichtig, nur mit API-Schlüssel je Gerät): KI-Erkennung durch Claude (Anthropic) statt Texterkennung.
+- **Geschützte PDFs** (RC4/AES ohne Öffnungskennwort) und Formular-Objekte werden gelesen.
+- **Originale:** eingelesene Dateien werden unverändert als Anhang abgelegt (auch E-Rechnungs-XML), im Test-Modus im Browser-Speicher.
+- **Lieferantenangebot einlesen** legt eine Bestellung (Entwurf) an.
+- **Listenpreis und Rabatt** (auch „30+5“) aus Angebot, Lieferschein, Rechnung bzw. E-Rechnung werden je Lieferant im Artikelstamm geführt (Art.-Nr. beim Lieferanten, Listenpreis, Rabatt, Netto-EK, Stand) und nach Zustimmung aktualisiert; K4 übernimmt Listenpreis und Rabatt. Einkaufsbelege drucken die Art.-Nr. des Lieferanten.
 - **Abgleich Artikelstamm:** Zuordnung über Lieferanten-Art.-Nr., Art.-Nr./EAN, sonst Bezeichnung (≥ 60 % Wortübereinstimmung); je Zeile änderbar (anderer Artikel, neuer Artikel, ohne Artikel). Abweichungen (EK, Einheit, Bezeichnung, Lieferanten-Art.-Nr.) und fehlender Lieferant am Artikel werden angezeigt und nur angehakt und nach Rückfrage übernommen.
 - **Lager:** Schalter „Ins Lager einbuchen“ je Wareneingang; bei abweichender Lieferadresse (Baustelle) automatisch aus. Ohne Einbuchung keine Lagerbuchung, auch nicht später über Eingangs- oder Ausgangsrechnung.
 - **Zu verrechnen:** Übersicht der Wareneingänge auf Aufträge bzw. mit Direktlieferung, die noch nicht per Lieferschein/Rechnung (Positionsbezug) an den Kunden weiterverrechnet sind; „→ Rechnung erstellen“ legt einen Rechnungsentwurf für den Auftragskunden an (VK aus Artikelstamm, sonst EK); „nicht verrechnen“ nimmt einen Wareneingang heraus. Kennzahl im Überblick.
+
+- **Neuanlage im Popup:** Kunde/Lieferant direkt aus der Belegauswahl („+ Neuer …“), Lieferant aus dem Scan vorbelegt, Artikel aus einer Position („+A“).
+- Logo „TBH ERP-Lite“ führt zum Überblick.
 
 ## 16. Offene Punkte
 - **ÖNORM A 2063 (Import/Export)**: benötigt das gültige XML-Schema bzw. Beispieldateien (.onlv) – noch nicht umgesetzt.

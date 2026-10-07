@@ -75,7 +75,7 @@ details summary{cursor:pointer;font-size:12px;margin:4px 0}
 .k7{background:#fafbfd;border:1px solid var(--line);border-radius:6px;padding:8px;margin-top:6px}
 @media(max-width:760px){.lv-POS,.lv-ULG{margin-left:0}.oz{min-width:0}}
 nav{width:200px;background:var(--side);color:#cfd6e4;flex-shrink:0;position:sticky;top:0;height:100vh;overflow:auto;display:flex;flex-direction:column}
-nav .logo{font-weight:700;color:#fff;padding:14px 18px 10px;font-size:17px;display:flex;align-items:center;gap:10px}
+nav .logo,nav a.logo:hover{font-weight:700;color:#fff;padding:14px 18px 10px;font-size:17px;display:flex;align-items:center;gap:10px;background:none;text-decoration:none}
 .logo-tbh{display:inline-flex}.logo-tbh svg{height:34px;width:auto}.topbar .logo-tbh svg{height:26px}.topbar b{white-space:nowrap}#start h1 .logo-tbh svg{height:46px}#start h1{display:flex;align-items:center;gap:12px}
 nav a{display:block;padding:6px 18px;color:#cfd6e4;text-decoration:none}
 nav a:hover,nav a.on{background:#2c3446;color:#fff}
@@ -199,9 +199,9 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
 <body>
 <div id="start"></div>
 <div id="app">
-  <div class="topbar"><button id="menu" aria-label="Menü">☰</button><span class="logo-tbh"></span><b>ERP-Lite</b><span class="sp"></span><span id="sync2"></span></div>
+  <div class="topbar"><button id="menu" aria-label="Menü">☰</button><a href="#/dash" class="home" title="Überblick" style="display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none"><span class="logo-tbh"></span><b>ERP-Lite</b></a><span class="sp"></span><span id="sync2"></span></div>
   <nav>
-    <div class="logo"><span class="logo-tbh"></span>ERP-Lite</div>
+    <a class="logo" href="#/dash" title="Überblick"><span class="logo-tbh"></span>ERP-Lite</a>
     <a href="#/dash" data-n="dash">Überblick</a>
     <div class="grp">Vorgänge</div>
     <a href="#/belege/V" data-n="belege/V">Verkauf</a>
@@ -509,7 +509,8 @@ const DIRSTORE={
   async putFile(path,blob){const parts=path.split('/'),fn=parts.pop(),d=await this.dir(parts,true);const w=await (await d.getFileHandle(fn,{create:true})).createWritable();await w.write(blob);await w.close();return{name:fn,path,id:'',url:''}},
   async openFile(a){const parts=a.path.split('/'),fn=parts.pop(),f=await (await (await this.dir(parts,false)).getFileHandle(fn)).getFile();window.open(URL.createObjectURL(f),'_blank')}
 };
-const CACHESTORE={art:'cache',lastText:null,name:'nur dieser Browser (Test)',async save(){},async backup(){},async putFile(){throw new Error('Anhänge brauchen OneDrive oder einen Datenordner.')},async openFile(){}};
+const CACHESTORE={art:'cache',lastText:null,name:'nur dieser Browser (Test)',async save(){},async backup(){},async putFile(path,blob){await kvSet('att:'+path,blob);return{name:path.split('/').pop(),path,id:'',url:''}},
+  async openFile(a){const b=await kvGet('att:'+a.path);if(!b)throw new Error('Datei nicht mehr im Browser vorhanden.');window.open(URL.createObjectURL(b),'_blank')}};
 let STORE=CACHESTORE,saving=false,saveAgain=false,retryT=null;
 
 async function saveNow(){
@@ -653,13 +654,13 @@ async function bildVerkleinern(f){
     return blob?new File([blob],f.name.replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg'}):f;
   }catch(e){return f}
 }
-async function anhaengeHochladen(b,files){
+async function anhaengeHochladen(b,files,original=false){ // original: Belegscan/PDF unverändert aufbewahren (BAO)
   if(!files?.length)return;
   b.anhaenge=b.anhaenge||[];
   saveState('lade hoch …');
   try{
     for(const f0 of files){
-      const f=await bildVerkleinern(f0),safe=f.name.replace(/[^\w.\-]+/g,'_').slice(-60);
+      const f=original?f0:await bildVerkleinern(f0),safe=f.name.replace(/[^\w.\-]+/g,'_').slice(-60);
       const path=`Belege/${b.typ}/${b.datum.slice(0,4)}/${b.nr||'Entwurf-'+b.id}_${Date.now().toString(36)}_${safe}`;
       const a=await STORE.putFile(path,f);
       b.anhaenge.push({...a,datum:new Date().toISOString(),groesse:f.size});
@@ -968,7 +969,7 @@ V.dash=()=>{
   ${!S().firma.name?'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>':''}
   <div class="quick">
     <a class="btn" href="#/zeiten">⏱ Zeit erfassen</a>
-    <label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>
+    <label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>
     <button data-act="qneu" data-t="AN">+ Angebot</button>
     <button data-act="qneu" data-t="LS">+ Lieferschein</button>
     <button data-act="qneu" data-t="RE">+ Rechnung</button>
@@ -1006,7 +1007,7 @@ V.belege=(bereich='V')=>{
     <select data-o="ui" data-f="${k}Typ">${opt('','alle Belegarten',typ)}${typen.map(t=>opt(t,T[t].bez,typ)).join('')}</select>
     <select data-o="ui" data-f="${k}St">${opt('','alle',st)}${opt('entwurf','Entwürfe',st)}${opt('offen','offen',st)}${opt('ueber','überfällig',st)}${opt('storno','storniert',st)}</select>
     <input data-o="ui" data-f="${k}Q" placeholder="Suche Nr, Name, Betreff" value="${esc(UI[k+'Q'])}" style="width:240px">
-    <span class="sp"></span>${bereich==='E'?'<label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>':''}
+    <span class="sp"></span>${bereich==='E'?'<label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>':''}
     <select data-act="neu">${opt('','+ Neuer Beleg …','')}${typen.filter(t=>t!=='GS').map(t=>opt(t,T[t].bez,'')).join('')}</select>
   </div>
   <div class="card" style="padding:0"><table>
@@ -1053,7 +1054,7 @@ V.beleg=id=>{
     </tr>`}).join('');
   const kette=DB.belege.filter(x=>b.auftragId?x.auftragId===b.auftragId:(x.id===b.id||x.vorgaengerId===b.id||x.id===b.vorgaengerId)).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
   const auftragOpts=()=>opt('','– kein Auftrag (Lager/Gemeinkosten) –',b.auftragId)+auftragsListe().map(a=>opt(a.id,auftragLabel(a.id),b.auftragId)).join('');
-  const k=kontakt(b.kontaktId),scan=['WE','ER'].includes(b.typ)?scanBox(b):'';
+  const k=kontakt(b.kontaktId),scan=['WE','ER','BE'].includes(b.typ)?scanBox(b):'';
   const ans=ansicht();
   const kopfbar=`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
@@ -1069,7 +1070,7 @@ V.beleg=id=>{
   const formHTML=`
   <div class="card">
     <div class="row">
-      <label class="w2">${V_?'Kunde':'Lieferant'}<select data-h="kontaktId" ${dis}>${opt('','– wählen –',b.kontaktId)}${kont.map(k=>opt(k.id,k.name+(k.ort?' · '+k.ort:''),b.kontaktId)).join('')}</select></label>
+      <label class="w2">${V_?'Kunde':'Lieferant'}<select data-h="kontaktId" ${dis}>${opt('','– wählen –',b.kontaktId)}${kont.map(k=>opt(k.id,k.name+(k.ort?' · '+k.ort:''),b.kontaktId)).join('')}${opt('__neu',V_?'+ Neuer Kunde …':'+ Neuer Lieferant …','')}</select></label>
       <label class="w05">Datum<input type="date" data-h="datum" value="${b.datum}" ${dis}></label>
       ${b.typ==='AN'?`<label class="w05">Gültig bis<input type="date" data-h="gueltigBis" value="${b.gueltigBis}" ${dis}></label>`:''}
       ${['AB','BE'].includes(b.typ)?`<label class="w05">Liefertermin<input type="date" data-h="liefertermin" value="${b.liefertermin}" ${dis}></label>`:''}
@@ -1102,7 +1103,7 @@ V.beleg=id=>{
   const extra=`${t.re&&b.fest&&!b.storno&&!(b.typ==='GS'&&beleg(b.vorgaengerId))?zahlBox(b):''}
   <div class="card"><h2>Anhänge${b.typ==='ER'?' (Rechnung als Foto/PDF)':''}</h2>
     ${(b.anhaenge||[]).map((a,i)=>`<div class="att"><a href="javascript:void 0" data-act="attopen" data-i="${i}">📄 ${esc(a.name)}</a><span class="mut">${a.groesse?Math.round(a.groesse/1024)+' kB':''}</span><span class="sp"></span><button class="s d" data-act="attdel" data-i="${i}">✕</button></div>`).join('')||'<p class="mut" style="margin:0 0 6px">keine</p>'}
-    ${STORE.art==='cache'?'<p class="mut">Anhänge nur mit OneDrive oder Datenordner.</p>':`<label class="btn" style="margin-top:8px">📷 Foto / Datei hinzufügen<input type="file" id="att" accept="image/*,application/pdf" multiple hidden></label>`}
+    ${STORE.art==='cache'?'<p class="mut">Test-Modus: Anhänge liegen nur in diesem Browser.</p>':''}<label class="btn" style="margin-top:8px">📷 Foto / Datei hinzufügen<input type="file" id="att" accept="image/*,application/pdf,.xml" multiple hidden></label>
   </div>`;
   const side=`${ohneP?'':`<div class="card"><h2>Summen</h2><div id="sumbox">${sumBox(b)}</div></div>`}
     ${V_&&!ohneP&&b.typ!=='GS'?`<div class="card"><h2>Kalkulation DB II</h2><div id="kalkbox">${kalkBox(b)}</div></div>`:''}
@@ -1156,6 +1157,52 @@ function dialog({titel,html,ok='OK',check='',gefahr=false}){
     d.querySelector('#m-no').onclick=()=>fin(false);d.querySelector('#m-ok').onclick=()=>fin(true);
     if(check)d.querySelector('#m-chk').onchange=e=>{d.querySelector('#m-ok').disabled=!e.target.checked};
   });
+}
+
+/* Formular im Popup: felder=[{k,l,wert,typ,opts,cls,pflicht}] → Objekt mit Werten oder null */
+function formDialog({titel,felder,ok='Anlegen',breit=false}){
+  return new Promise(res=>{
+    const d=document.createElement('div');d.className='modal';
+    const fld=f=>`<label class="${f.cls||''}">${f.l}${f.pflicht?' *':''}${f.opts?`<select data-k="${f.k}">${f.opts.map(([v,t])=>opt(v,t,f.wert??'')).join('')}</select>`:f.typ==='checkbox'?`<br><input type="checkbox" data-k="${f.k}" ${f.wert?'checked':''}>`:`<input data-k="${f.k}" type="${f.typ||'text'}" ${f.typ==='number'?'step="any"':''} value="${esc(f.wert??'')}">`}</label>`;
+    const zeilen=[];let z=[];for(const f of felder){if(f.neu&&z.length){zeilen.push(z);z=[]}z.push(f)}if(z.length)zeilen.push(z);
+    d.innerHTML=`<div class="mbox" style="${breit?'max-width:760px':''}"><h2>${titel}</h2>${zeilen.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('')}
+      <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">${ok}</button></div></div>`;
+    document.body.appendChild(d);setTimeout(()=>d.querySelector('input,select')?.focus(),0);
+    const fin=v=>{d.remove();document.removeEventListener('keydown',kd);res(v)};
+    const lesen=()=>{const o={};for(const f of felder){const e=d.querySelector(`[data-k="${f.k}"]`);o[f.k]=f.typ==='checkbox'?e.checked:f.typ==='number'?num(e.value):e.value.trim()}return o};
+    const okf=()=>{const o=lesen(),fehlt=felder.find(f=>f.pflicht&&!o[f.k]);if(fehlt){d.querySelector('#m-err').textContent=`Bitte „${fehlt.l}“ ausfüllen.`;return}fin(o)};
+    const kd=e=>{if(e.key==='Escape')fin(null);if(e.key==='Enter'&&e.target.tagName==='INPUT')okf()};document.addEventListener('keydown',kd);
+    d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#m-ok').onclick=okf;
+  });
+}
+async function kontaktPopup(typ,v={}){ // typ K | L
+  const s=S(),nrV=String((s.knr[typ]||0)+1);
+  const o=await formDialog({titel:typ==='K'?'Neuer Kunde':'Neuer Lieferant',felder:[
+    {k:'name',l:'Name / Firma',wert:v.name,cls:'w2',pflicht:true},{k:'nr',l:typ==='K'?'Kunden-Nr.':'Lieferanten-Nr.',wert:nrV,cls:'w05'},
+    {k:'zusatz',l:'Zusatz / z. H.',wert:v.zusatz,neu:1},{k:'strasse',l:'Straße',wert:v.strasse,neu:1,cls:'w2'},
+    {k:'plz',l:'PLZ',wert:v.plz,neu:1,cls:'w05'},{k:'ort',l:'Ort',wert:v.ort},{k:'land',l:'Land',wert:v.land||'Österreich'},
+    {k:'uid',l:'UID-Nr.',wert:v.uid,neu:1},{k:'email',l:'E-Mail',wert:v.email},{k:'tel',l:'Telefon',wert:v.tel},
+    {k:'zahlungsziel',l:'Zahlungsziel Tage',typ:'number',wert:s.zahlungsziel,neu:1,cls:'w05'}]});
+  if(!o)return null;
+  if(DB.kontakte.some(k=>k.nr===o.nr&&k.typ===typ)){alert('Nummer '+o.nr+' ist bereits vergeben.');return null}
+  if(o.nr===nrV)s.knr[typ]=+nrV;
+  const k={id:uid(),typ,notiz:'',...o};DB.kontakte.push(k);log(typ==='K'?'Kunde angelegt':'Lieferant angelegt',k.name);return k;
+}
+async function artikelPopup(v={},lid=''){
+  const s=S(),nrV=String(s.anr+1).padStart(5,'0'),lief=DB.kontakte.filter(k=>k.typ!=='K');
+  const o=await formDialog({titel:'Neuer Artikel',breit:true,felder:[
+    {k:'nr',l:'Artikel-Nr. (eigene)',wert:v.nr||nrV,cls:'w05',pflicht:true},{k:'bez',l:'Bezeichnung',wert:v.bez,cls:'w2',pflicht:true},
+    {k:'art',l:'Art',wert:v.art||'W',opts:['W','L','F'].map(x=>[x,ART[x]]),cls:'w05'},
+    {k:'einheit',l:'Einheit',wert:v.einheit||'Stk',opts:s.einheiten.map(e=>[e,e]),neu:1,cls:'w05'},{k:'ek',l:'EK netto',typ:'number',wert:v.ek||0,cls:'w05'},{k:'vk',l:'VK netto',typ:'number',wert:v.vk||0,cls:'w05'},
+    {k:'lager',l:'Lagerartikel',typ:'checkbox',wert:!!v.lager,cls:'w05'},
+    {k:'lid',l:'Lieferant',wert:lid,opts:[['','–'],...lief.map(k=>[k.id,k.name])],neu:1},{k:'artNr',l:'Art.-Nr. beim Lieferanten',wert:v.artNr},
+    {k:'lp',l:'Listenpreis',typ:'number',wert:v.lp||'',cls:'w05'},{k:'rabatt',l:'Rabatt %',typ:'number',wert:v.rabatt||'',cls:'w05'}]});
+  if(!o)return null;
+  if(DB.artikel.some(a=>a.nr===o.nr)){alert('Artikel-Nr. '+o.nr+' existiert bereits.');return null}
+  if(o.nr===nrV)s.anr++;
+  const a={id:uid(),nr:o.nr,bez:o.bez,text:v.text||'',art:o.art,einheit:o.einheit,einheiten:[],ek:r2(o.ek),vk:r2(o.vk),steuer:v.steuer||s.stdSteuer,lager:o.lager,minBestand:0,
+    lieferanten:o.lid?[{kontaktId:o.lid,artNr:o.artNr,lp:o.lp||0,rabatt:o.rabatt||0,ek:r2(o.ek),stand:isoD()}]:[],aktiv:true};
+  DB.artikel.push(a);artDatalist();log('Artikel angelegt',a.nr+' '+a.bez);return a;
 }
 
 /* ---------- Angebote: Revision / Folgeangebot ---------- */
@@ -1347,7 +1394,7 @@ V.kontakt=id=>{
 V.artikel=id=>{
   if(id)return artikelEdit(id);
   const q=UI.aQ.toLowerCase();
-  const L=DB.artikel.filter(a=>!q||[a.nr,a.bez].join(' ').toLowerCase().includes(q)).sort((a,c)=>String(a.nr).localeCompare(String(c.nr)));
+  const L=DB.artikel.filter(a=>!q||[a.nr,a.bez,a.ean,...(a.lieferanten||[]).map(l=>l.artNr)].join(' ').toLowerCase().includes(q)).sort((a,c)=>String(a.nr).localeCompare(String(c.nr)));
   return`<h1>Artikel &amp; Leistungen</h1><div class="bar"><input data-o="ui" data-f="aQ" placeholder="Suche" value="${esc(UI.aQ)}" style="width:260px"><span class="sp"></span><button class="p" data-act="anew">+ Artikel</button></div>
   <div class="card" style="padding:0"><table><thead><tr><th>Nr</th><th>Bezeichnung</th><th>Art</th><th>Einh.</th><th class="n">EK</th><th class="n">VK</th><th>Lager</th><th class="n">Bestand</th></tr></thead><tbody>
   ${L.map(a=>`<tr class="click" onclick="nav('artikel/${a.id}')" style="${a.aktiv===false?'opacity:.5':''}"><td>${esc(a.nr)}</td><td>${esc(a.bez)}</td><td>${ART[a.art]}</td><td>${esc(a.einheit)}</td><td class="n">${fmt(a.ek)}</td><td class="n">${fmt(a.vk)}</td><td>${a.lager?'✓':''}</td><td class="n">${a.lager?fmtQ(bestand(a.id).menge):''}</td></tr>`).join('')||'<tr><td colspan="8" class="mut">Keine Artikel. Positionen können auch frei erfasst und mit „+A“ als Artikel gespeichert werden.</td></tr>'}
@@ -1368,8 +1415,9 @@ function artikelEdit(id){
     <label class="w05">USt<select data-o="a" data-id="${a.id}" data-f="steuer">${S().steuer.map(s=>opt(s.code,s.bez,a.steuer)).join('')}</select></label></div>
   <div class="row"><label class="w05">Lagerartikel<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="lager" ${a.lager?'checked':''}></label>${a.lager?f('minBestand','Mindestbestand','w05','number')+`<label class="w05">Bestand<input disabled value="${fmtQ(bs.menge)} ${esc(a.einheit)}"></label><label class="w05">Ø-EK<input disabled value="${fmt(avgEK(a.id))}"></label><label class="w05">Lagerwert<input disabled value="${fmt(bs.wert)}"></label>`:'<span style="flex:4"></span>'}</div>
   </div>
-  <div class="card"><h2>Lieferanten</h2><table><thead><tr><th>Lieferant</th><th>Art.-Nr. beim Lieferanten</th><th></th></tr></thead><tbody>
-  ${(a.lieferanten||[]).map((l,i)=>`<tr><td><select data-o="al" data-id="${a.id}" data-i="${i}" data-f="kontaktId">${opt('','–',l.kontaktId)}${lief.map(k=>opt(k.id,k.name,l.kontaktId)).join('')}</select></td><td><input data-o="al" data-id="${a.id}" data-i="${i}" data-f="artNr" value="${esc(l.artNr)}"></td><td><button class="s d" data-act="aldel" data-id="${a.id}" data-i="${i}">✕</button></td></tr>`).join('')}
+  <div class="card"><h2>Lieferanten</h2><table><thead><tr><th>Lieferant</th><th>Art.-Nr. beim Lieferanten</th><th class="n">Listenpreis</th><th class="n">Rabatt %</th><th class="n">Netto-EK</th><th>Stand</th><th></th></tr></thead><tbody>
+  ${(a.lieferanten||[]).map((l,i)=>{const fi=(fl,w)=>`<td style="width:${w}px"><input type="number" step="any" data-o="al" data-id="${a.id}" data-i="${i}" data-f="${fl}" value="${l[fl]??''}"></td>`;
+    return`<tr><td><select data-o="al" data-id="${a.id}" data-i="${i}" data-f="kontaktId">${opt('','–',l.kontaktId)}${lief.map(k=>opt(k.id,k.name,l.kontaktId)).join('')}</select></td><td><input data-o="al" data-id="${a.id}" data-i="${i}" data-f="artNr" value="${esc(l.artNr)}"></td>${fi('lp',100)}${fi('rabatt',80)}${fi('ek',100)}<td class="mut">${l.stand?dAT(l.stand):''}</td><td><button class="s d" data-act="aldel" data-id="${a.id}" data-i="${i}">✕</button></td></tr>`}).join('')}
   </tbody></table><button style="margin-top:8px" data-act="aladd" data-id="${a.id}">+ Lieferant</button></div>`;
 }
 
@@ -1801,7 +1849,7 @@ const ACT_LV=({
   kbdruck:el=>{const kb=ROOT.kb(el.dataset.id);druckHTML(kbDocHTML(kb),'K-Blaetter '+kb.name)},
   k4art:el=>{const kb=ROOT[el.dataset.r.split('|')[0]](el.dataset.r.split('|')[1]);const nr=prompt('Artikel-Nr. (mehrere mit Komma) oder * für alle Waren:','*');if(!nr)return;
     const L=nr.trim()==='*'?DB.artikel.filter(a=>a.art!=='L'&&a.aktiv!==false):nr.split(',').map(x=>DB.artikel.find(a=>a.nr===x.trim())).filter(Boolean);
-    for(const a of L)if(!kb.k4.some(m=>m.bez===a.bez))kb.k4.push({...TPL.k4(),bez:a.bez,einheit:a.einheit,lp:+a.ek||0});persist();render()},
+    for(const a of L)if(!kb.k4.some(m=>m.bez===a.bez)){const lf=(a.lieferanten||[]).find(l=>+l.lp>0);kb.k4.push({...TPL.k4(),bez:a.bez,einheit:a.einheit,lp:lf?+lf.lp:+a.ek||0,rab:lf?+lf.rabatt||0:0})}persist();render()},
   arradd:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id);let arr=getP(o,el.dataset.f);if(!arr){setP(o,el.dataset.f,[]);arr=getP(o,el.dataset.f)}arr.push(TPL[el.dataset.tpl]());persist();render()},
   arrdel:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id),arr=getP(o,el.dataset.f);arr.splice(+el.dataset.i,1);persist();render()},
   bibneu:()=>{DB.lvbib.unshift({id:uid(),gruppe:'',kurz:'',lang:'',einheit:'Stk',k7:null});persist();render()},
@@ -2232,8 +2280,8 @@ V.einstellungen=()=>{
 async function inflate(u8){ // FlateDecode; toleriert Restbytes nach dem Datenende
   for(const fmt of ['deflate','deflate-raw']){
     try{
-      const ds=new DecompressionStream(fmt),w=ds.writable.getWriter(),r=ds.readable.getReader(),parts=[];let n=0;
-      w.write(fmt==='deflate'?u8:u8.subarray(2)).catch(()=>{});w.close().catch(()=>{});
+      const ds=new DecompressionStream(fmt),w=ds.writable.getWriter(),r=ds.readable.getReader(),parts=[],src=fmt==='deflate'?u8:u8.subarray(2);let n=0;
+      (async()=>{try{for(let i=0;i<src.length;i+=16384)await w.write(src.subarray(i,i+16384));await w.close()}catch(e){}})(); // stückweise: bei Restbytes bleibt das Entpackte erhalten
       try{for(;;){const {done,value}=await r.read();if(done)break;parts.push(value);n+=value.length}}catch(e){}
       if(n){const o=new Uint8Array(n);let p=0;for(const x of parts){o.set(x,p);p+=x.length}return o}
     }catch(e){}
@@ -2313,11 +2361,12 @@ async function pdfLesen(buf){
         if(R>=3)for(let i=0;i<50;i++)h=md5(h.subarray(0,n));
         crypt={aes:V===4&&/AESV2/.test(cfm),key:h.subarray(0,n),skip:em[1]}}
     }catch(e){crypt={fehler:true}}}
+  const roh=n=>{const o=O[n],L=val(o.d,'Length'),len=L?.ref?+String(O[L.ref]?.d||'').trim():+L;return len>0&&len<=o.raw.length?o.raw.subarray(0,len):o.raw}; // exakte Länge laut /Length
   const entschl=async(n,raw)=>{if(!crypt||crypt.fehler||n===crypt.skip||/\/Type\s*\/XRef/.test(O[n].d))return raw;
     let k=crypt.key;if(!crypt.v5){const b=new Uint8Array(5);b[0]=n&255;b[1]=n>>8&255;b[2]=n>>16&255;b[3]=O[n].g&255;b[4]=O[n].g>>8&255;
       k=md5(cat(k,b,crypt.aes?Uint8Array.of(0x73,0x41,0x6c,0x54):new Uint8Array(0))).subarray(0,Math.min(16,crypt.key.length+5))}
     if(!crypt.aes)return rc4(k,raw);try{return await aesCBC(k,raw.subarray(0,16),raw.subarray(16,16+((raw.length-16)>>4<<4)),false)}catch(e){return null}};
-  const stream=async n=>{const o=O[n];if(!o?.raw)return null;if(o.dec!==undefined)return o.dec;const f=val(o.d,'Filter'),raw=await entschl(n,o.raw);if(!raw)return o.dec=null;
+  const stream=async n=>{const o=O[n];if(!o?.raw)return null;if(o.dec!==undefined)return o.dec;const f=val(o.d,'Filter'),raw=await entschl(n,roh(n));if(!raw)return o.dec=null;
     let dt=raw; // Filterkette in Reihenfolge anwenden
     for(const fl of (typeof f==='string'?f:'').match(/\w+/g)||[]){if(!dt)break;
       dt=fl==='FlateDecode'||fl==='Fl'?await inflate(dt):fl==='ASCII85Decode'||fl==='A85'?a85(dt):fl==='LZWDecode'||fl==='LZW'?lzw(dt):fl==='ASCIIHexDecode'||fl==='AHx'?Uint8Array.from((latin1(dt).replace(/[^0-9a-fA-F]/g,'').match(/../g)||[]).map(h=>parseInt(h,16))):null}
@@ -2346,11 +2395,11 @@ async function pdfLesen(buf){
   const pages=[],walk=(n,res,seen=new Set())=>{if(seen.has(n))return;seen.add(n);const d=O[n]?.d;if(!d)return;const r=val(d,'Resources')??res;
     if(/\/Type\s*\/Pages/.test(d)){for(const k of refs(val(d,'Kids')))walk(k,r,seen)}else if(/\/Type\s*\/Page\b/.test(d))pages.push({n,res:r})};
   for(const n of Object.keys(O))if(/\/Type\s*\/Pages/.test(O[n].d)&&!/\/Parent\s/.test(O[n].d))walk(n,null);
-  const zeilen=[];
+  const zeilen=[],bilder=[];
   for(const pg of pages){
     const d=O[pg.n].d,cont=val(d,'Contents'),parts=cont?.ref?[cont.ref]:refs(cont);let cs='';
     for(const p of parts){const t=await stream(p);if(t)cs+=latin1(t)+'\n';else{const arr=deref({ref:p});if(arr&&arr.trim().startsWith('['))for(const q of refs(arr)){const t2=await stream(q);if(t2)cs+=latin1(t2)+'\n'}}}
-    const pcs=[];
+    const pcs=[],bl=[];
     const lauf=async(cs,res,ctm0,tiefe)=>{
     const namen=k=>{const dd=deref(val(deref(res),k))||'',m={};for(const x of dd.matchAll(/\/([^\s\/<>\[\]]+)\s+(\d+)\s+\d+\s+R/g))m[x[1]]=x[2];return m};
     const fmap=namen('Font'),xmap=namen('XObject');
@@ -2387,12 +2436,14 @@ async function pdfLesen(buf){
         case'TJ':{const a=ops[ops.length-1]?.a||[];for(const el of a){if(el?.s!=null)await show(el.s);else if(typeof el==='number')tm=mmul([1,0,0,1,-el/1000*fs*th,0],tm)}break}
         case'BI':{const e=cs.indexOf('EI',cs.indexOf('ID',i));i=e<0?cs.length:e+2;break}
         case'Do':{const xn=xmap[String(ops[ops.length-1]).slice(1)],xo=O[xn];if(tiefe<6&&xo&&/\/Subtype\s*\/Form/.test(xo.d)){const t=await stream(xn);
-          if(t){const mx=val(xo.d,'Matrix'),mt=mx?mx.replace(/[\[\]]/g,' ').trim().split(/\s+/).map(Number):[1,0,0,1,0,0];await lauf(latin1(t),val(xo.d,'Resources')??res,mmul(mt.length===6?mt:[1,0,0,1,0,0],ctm),tiefe+1)}}break}
+          if(t){const mx=val(xo.d,'Matrix'),mt=mx?mx.replace(/[\[\]]/g,' ').trim().split(/\s+/).map(Number):[1,0,0,1,0,0];await lauf(latin1(t),val(xo.d,'Resources')??res,mmul(mt.length===6?mt:[1,0,0,1,0,0],ctm),tiefe+1)}}
+          else if(xo&&/\/Subtype\s*\/Image/.test(xo.d))bl.push({n:xn,f:(+val(xo.d,'Width')||0)*(+val(xo.d,'Height')||0)});break}
       }
       ops=[];
     }
     };
     await lauf(cs,pg.res,[1,0,0,1,0,0],0);
+    if(bl.length)bilder.push(bl.sort((a,b)=>b.f-a.f)[0].n); // größtes Bild der Seite (Scan)
     // Zeilen bilden: gleiche Grundlinie, nach x sortiert; große Lücken trennen Zellen
     pcs.sort((a,b)=>b.y-a.y||a.x-b.x);const ls=[];
     for(const p of pcs){const l=ls.find(z=>Math.abs(z.y-p.y)<Math.min(z.fs,p.fs)*0.45);if(l){l.p.push(p);l.fs=Math.max(l.fs,p.fs)}else ls.push({y:p.y,fs:p.fs,p:[p]})}
@@ -2401,9 +2452,26 @@ async function pdfLesen(buf){
       for(const p of l.p){const c=cells[cells.length-1],gap=c?p.x-c.x2:1e9;
         if(c&&gap<p.fs*0.45){c.t+=(gap>p.fs*0.15&&!/\s$/.test(c.t)&&!/^\s/.test(p.t)?' ':'')+p.t;c.x2=Math.max(c.x2,p.x2)}else cells.push({x:p.x,x2:p.x2,t:p.t})}
       for(const c of cells)c.t=c.t.replace(/\s+/g,' ').trim();
-      const cz=cells.filter(c=>c.t);if(cz.length)zeilen.push({y:l.y,fs:l.fs,cells:cz,text:cz.map(c=>c.t).join('  ')})}
+      const cz=cells.filter(c=>c.t);if(cz.length)zeilen.push({y:l.y,fs:l.fs,s:pages.indexOf(pg),cells:cz,text:cz.map(c=>c.t).join('  ')})}
   }
-  return{zeilen,xml,verschl:!!crypt,cfehler:!!crypt?.fehler};
+  // Seitenbilder für die Texterkennung: JPEG direkt, sonst Rohpixel über Canvas
+  const bildBlob=async n=>{const o=O[n],d=o.d,fl=String(val(d,'Filter')||'').match(/\w+/g)||[];let raw=await entschl(n,roh(n));if(!raw)return null;
+    if(fl.some(x=>/CCITT|JBIG2|JPX/.test(x)))return'fax';
+    for(const x of fl){if(x==='DCTDecode'||x==='DCT')return new Blob([raw],{type:'image/jpeg'});raw=x==='FlateDecode'||x==='Fl'?await inflate(raw):x==='ASCII85Decode'||x==='A85'?a85(raw):x==='LZWDecode'||x==='LZW'?lzw(raw):null;if(!raw)return null}
+    const W=+val(d,'Width'),H=+val(d,'Height'),bpc=+val(d,'BitsPerComponent')||8,cs=String(deref(val(d,'ColorSpace'))||''),nc=/RGB/.test(cs)?3:/CMYK/.test(cs)?4:1,rb=Math.ceil(W*nc*bpc/8);
+    if(!W||!H||/Indexed/.test(cs))return null;
+    const dp=deref(val(d,'DecodeParms'))||'',pr=+val(dp,'Predictor')||1;
+    if(pr>=10){const bpp=Math.max(1,nc*bpc/8),out=new Uint8Array(rb*H);for(let y=0;y<H;y++){const ft=raw[y*(rb+1)],src=y*(rb+1)+1,dst=y*rb;
+      for(let x=0;x<rb;x++){const a=x>=bpp?out[dst+x-bpp]:0,b=y?out[dst-rb+x]:0,c=x>=bpp&&y?out[dst-rb+x-bpp]:0,v=raw[src+x];
+        out[dst+x]=(ft===1?v+a:ft===2?v+b:ft===3?v+((a+b)>>1):ft===4?v+(Math.abs(b-c)<=Math.abs(a-c)&&Math.abs(b-c)<=Math.abs(a+b-2*c)?(Math.abs(a-c)<=Math.abs(b-c)?(Math.abs(a-c)<=Math.abs(a+b-2*c)?a:c):b):Math.abs(a-c)<=Math.abs(a+b-2*c)?a:c):v)&255}}raw=out}
+    const cv=document.createElement('canvas');cv.width=W;cv.height=H;const cx=cv.getContext('2d'),im=cx.createImageData(W,H),inv=/\/Decode\s*\[\s*1\s+0/.test(d);
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){let r,g,b;const q=y*rb;
+      if(bpc===1){const bit=(raw[q+(x>>3)]>>(7-(x&7)))&1;r=g=b=(bit^inv)?255:0}
+      else if(nc===1)r=g=b=raw[q+x];else if(nc===3){r=raw[q+x*3];g=raw[q+x*3+1];b=raw[q+x*3+2]}else{const k=raw[q+x*4+3];r=255-Math.min(255,raw[q+x*4]+k);g=255-Math.min(255,raw[q+x*4+1]+k);b=255-Math.min(255,raw[q+x*4+2]+k)}
+      const i4=(y*W+x)*4;im.data[i4]=r;im.data[i4+1]=g;im.data[i4+2]=b;im.data[i4+3]=255}
+    cx.putImageData(im,0,0);return await new Promise(ok=>cv.toBlob(ok,'image/png'))};
+  const bb=[];if(zeilen.length<4)for(const n of bilder){try{bb.push(await bildBlob(n))}catch(e){bb.push(null)}}
+  return{zeilen,xml,verschl:!!crypt,cfehler:!!crypt?.fehler,bilder:bb.filter(Boolean)};
 }
 /* Zahlen im deutschen Format: 1.234,56 · 4.750,- · 12,5 */
 const zahlDE=s=>{s=String(s||'').replace(/[€\s]/g,'').replace(/,-+$/,'');if(!/^-?[\d.,]+-?$/.test(s)||!/\d/.test(s))return null;const neg=/^-|-$/.test(s);s=s.replace(/-/g,'');
@@ -2419,37 +2487,53 @@ function textBeleg(Z,art){
     const nx=Z[i+1]?.cells.find(c=>c.x<cs[j].x2+20&&c.x2>cs[j].x-20);if(nx&&ok(nx.t))return ok(nx.t)}}return''};
   const nrOk=v=>{const m=v.match(/^[A-Z]{0,4}[\-\/ ]?[\w\-\/\.]*\d[\w\-\/\.]*/i);return m&&!DATUM.test(m[0])?m[0].replace(/[.,;]$/,''):''};
   const d={art,quelle:'PDF-Text',lieferant:{name:'',uid:'',strasse:'',plz:'',ort:''},lieferscheinNr:'',datum:'',bestellNr:'',lieferadresse:'',positionen:[],rohtext:all.slice(0,20000)};
-  d.lieferscheinNr=feld(art==='ER'?/rechnungs?[\s\-]*(nr\.?|nummer|no\.?)|rechnung\s*(nr\.?|nummer)?\s*:|faktura[\s\-]*(nr\.?|nummer)/i:/lieferschein[\s\-]*(nr\.?|nummer|no\.?)|lieferschein\s*:|ls[\s\-]*nr\.?/i,nrOk)||feld(/beleg[\s\-]*(nr\.?|nummer)|dokument[\s\-]*(nr\.?|nummer)|^nr\.?\s*:|^nummer\s*:/i,nrOk);
-  d.datum=isoAus(feld(/(rechnungs|liefer|lieferschein|beleg)?datum/i,v=>DATUM.test(v)?v:''))||isoAus(all);
+  d.lieferscheinNr=(art==='BE'?feld(/angebots?[\s\-]*(nr\.?|nummer|no\.?)|^angebot(?=\s+\S*\d)|offerte[\s\-]*(nr\.?|nummer)?/i,nrOk):'')||feld(art==='ER'?/rechnungs?[\s\-]*(nr\.?|nummer|no\.?)|rechnung\s*(nr\.?|nummer)?\s*:|faktura[\s\-]*(nr\.?|nummer)/i:/lieferschein[\s\-]*(nr\.?|nummer|no\.?)|lieferschein\s*:|ls[\s\-]*nr\.?|^lieferschein(?=\s+\S*\d)/i,nrOk)||feld(/beleg[\s\-]*(nr\.?|nummer)|dokument[\s\-]*(nr\.?|nummer)|^nr\.?\s*:|^nummer\s*:/i,nrOk);
+  const nrZ=d.lieferscheinNr&&Z.find(z=>z.text.includes(d.lieferscheinNr)&&DATUM.test(z.text));
+  d.datum=(nrZ&&isoAus(nrZ.text))||isoAus(feld(/(rechnungs|liefer|lieferschein|beleg|ausstellungs)datum|^datum/i,v=>DATUM.test(v)?v:''))||isoAus(all);
+  d.kommission=feld(/^(kommission|projekt|ihr beleg|ihr zeichen|baustelle)\b/i,v=>v.replace(/[|]+$/,'').trim());
   d.bestellNr=feld(/(ihre\s+)?(bestell(ung|nummer|nr\.?)?|kommission|komm\.|bestellzeichen|auftrags?[\s\-]*(nr\.?|nummer)|ihr zeichen)/i,nrOk);
   for(let i=0;i<Z.length;i++){const c=Z[i].cells.find(c=>/(liefer(adresse|anschrift|ort)|lieferung an|baustelle|warenempfänger|versandadresse)/i.test(c.t));if(!c)continue;
     const rest=c.t.replace(/.*?(liefer(adresse|anschrift|ort)|lieferung an|baustelle|warenempfänger|versandadresse)\s*:?\s*/i,'').trim(),z=[rest];
     for(let k=1;k<=3&&Z[i+k];k++){if(Z[i+k-1].y-Z[i+k].y>Z[i+k].fs*1.8)break;const n=Z[i+k].cells.find(x=>Math.abs(x.x-c.x)<30);if(n)z.push(n.t)}d.lieferadresse=z.filter(Boolean).join(', ').slice(0,160);break}
+  if(!d.lieferadresse){const pz=(S().firma.plz||'').replace(/\D/g,'')||'#';
+    for(let i=0;i<Math.min(Z.length,30);i++){const c=Z[i].cells[0];if(!/^((A|AT|D|DE|CH)\s?-\s?)?\d{4,5}\s+\p{L}/u.test(c.t)||c.t.includes('|')||c.t.includes(pz))continue;
+      const bl=[c.t];for(let k=1;k<=4&&i-k>=0;k++){const z=Z[i-k],n=z.cells.find(x=>Math.abs(x.x-c.x)<15);if(!n||Z[i-k].y-Z[i-k+1].y>Z[i-k].fs*2.6||n.t.includes('|'))break;if(!/^\+?[\d\s\/\-]{7,}$/.test(n.t))bl.unshift(n.t)}
+      if(bl.length>=2&&!normF(bl.join(' ')).includes(normF(S().firma.name||'#'))){d.lieferadresse=bl.join(', ').slice(0,160)}break}}
   const uids=[...all.matchAll(/\b(AT\s?U\s?\d{8}|DE\s?\d{9})\b/g)].map(x=>x[1].replace(/\s/g,'')).filter(x=>x!==eigen);d.lieferant.uid=uids[0]||'';
   const k=(d.lieferant.uid&&DB.kontakte.find(k=>k.typ!=='K'&&normN(k.uid)===normN(d.lieferant.uid)))||DB.kontakte.find(k=>k.typ!=='K'&&normF(k.name).length>2&&normF(all).includes(normF(k.name)));
-  if(k)d.lieferant.name=k.name;else{const top=Z.slice(0,12).map(z=>z.cells[0].t).find(t=>/\b(gmbh|ges\.?m\.?b\.?h|kg|ag|og|e\.u\.|co)\b/i.test(t)&&!normF(t).includes(normF(S().firma.name||'#')));d.lieferant.name=top||''}
+  if(k)d.lieferant.name=k.name;else{const top=Z.slice(0,12).map(z=>z.cells[0].t).find(t=>/\b(gmbh|ges\.?m\.?b\.?h|kg|ag|og|e\.u\.|co)\b/i.test(t)&&!normF(t).includes(normF(S().firma.name||'#')));d.lieferant.name=(top||'').split(/\s[|·]\s/)[0].trim()}
   // Positionstabelle über Kopfzeile erkennen
   const KOL=[['pos',/^(pos\.?|position|lfd\.?\s*nr\.?|nr\.?)$/i],['artnr',/art(ikel)?[\s.\-]*nr|artikelnummer|material(nr|nummer)?|^artikel$|^art\.?$|bestellnummer|best\.?-?nr/i],['bez',/bezeichnung|beschreibung|artikeltext|leistung|^text$/i],
-    ['menge',/^(menge|anzahl|liefermenge|geliefert|lief\.?\s*menge|stück|qty)/i],['einheit',/^(einheit|einh\.?|me|eh|vpe)$/i],['ep',/einzelpreis|e-?preis|^ep\b|preis\s*\/|^preis\b|netto-?preis/i],['gp',/gesamt(preis|betrag)?|^betrag|^summe|^gp\b|^wert|positionswert/i],['rabatt',/rabatt|^rab/i],['ust',/^(ust|mwst|steuer)/i]];
+    ['menge',/^(menge|anzahl|liefermenge|geliefert|lief\.?\s*menge|stück|qty)/i],['einheit',/^(einheit|einh\.?|me|eh|vpe)$/i],['lp',/listen-?preis|^lp\b|brutto-?preis|katalog-?preis|^liste\b|^lp\s*\//i],['ep',/einzelpreis|e-?preis|^ep\b|preis\s*\/|^preis\b|netto-?preis|^netto\s*\//i],['gp',/gesamt(preis|betrag)?|^betrag|^summe|^gp\b|^wert|positionswert/i],['rabatt',/rabatt|^rab/i],['ust',/^(ust|mwst|steuer)/i]];
+  KOL.push(['x',/^(gewicht|nachlieferung|rückstand|offen|bestellt|intrastat|ursprung|lagerort|lager|charge|serien|zolltarif|ean|vpe-?menge)/i]);
   const kind=t=>KOL.find(([,r])=>r.test(t.trim()))?.[0];
-  let H=null;const END=/^(summe|zwischensumme|gesamt|netto|übertrag|rabatt|zahlungs|mwst|ust|umsatzsteuer|endbetrag|rechnungsbetrag|seite\s+\d)/i;
+  let H=null,seite=null;const END=/^(summe|zwischensumme|gesamt|netto|übertrag|rabatt|zahlungs|mwst|ust|umsatzsteuer|endbetrag|rechnungsbetrag|seite\s+\d)/i,FUSS=/\b(iban|bic|amtsgericht|geschäftsführer|ust-?id|eigentumsvorbehalt|bankverbindung|firmenbuch|handelsregister)\b|datum\s*\/\s*name/i;
   for(const z of Z){
+    if(z.s!==seite){seite=z.s;H=null} // jede Seite wiederholt den Tabellenkopf
     const ks=z.cells.map(c=>kind(c.t)),uniq=new Set(ks.filter(Boolean));
     if(uniq.size>=3&&uniq.has('menge')&&(uniq.has('bez')||uniq.has('artnr'))){H=z.cells.map((c,j)=>({k:ks[j],c:(c.x+c.x2)/2,x:c.x,x2:c.x2})).filter(h=>h.k);continue}
     if(!H)continue;
-    if(END.test(z.cells[0].t)||END.test(z.text)&&z.cells.length<=3){H=null;continue}
+    if(END.test(z.cells[0].t)||END.test(z.text)&&z.cells.length<=3||FUSS.test(z.text)||(z.text.match(/\|/g)||[]).length>=2){H=null;continue}
     const row={};
     for(const c of z.cells){const cc=(c.x+c.x2)/2;let best=H[0],bd=1e9;for(const h of H){const dd=Math.min(Math.abs(cc-h.c),Math.abs(c.x-h.x),Math.abs(c.x2-h.x2));if(dd<bd){bd=dd;best=h}}
       let k2=best.k;const num=zahlDE(c.t);
-      if(['menge','ep','gp','pos','rabatt','ust'].includes(k2)&&num==null){const mm=c.t.match(/^([\d.,]+)\s*([A-Za-zäöüÄÖÜ²³]+\.?)$/);if(k2==='menge'&&mm&&zahlDE(mm[1])!=null){row.menge=zahlDE(mm[1]);row.einheit=mm[2];continue}
+      if(k2==='rabatt'){const rr=String(c.t).replace(/%/g,'').split('+').map(zahlDE).filter(x=>x!=null);if(rr.length){row.rabatt=r2((1-rr.reduce((a,x)=>a*(1-x/100),1))*100);continue}} // z. B. „30+5“
+      if(['menge','ep','gp','pos','ust','lp'].includes(k2)&&num==null){const mm=c.t.match(/^([\d.,]+)\s*([A-Za-zäöüÄÖÜ²³]+\.?)$/);if(k2==='menge'&&mm&&zahlDE(mm[1])!=null){row.menge=zahlDE(mm[1]);row.einheit=mm[2];continue}
         k2=EINH.test(c.t)?'einheit':/^\d+([.,]\d+)?\s*%$/.test(c.t)?k2:'bez'}
+      if(k2!=='x')(row._t=row._t||[]).push(c.t);
       row[k2]=row[k2]&&k2==='bez'?row[k2]+' '+c.t:(row[k2]&&k2==='artnr'?row[k2]+' '+c.t:c.t)}
     const menge=typeof row.menge==='number'?row.menge:zahlDE(row.menge);
-    if(menge==null||!(row.bez||row.artnr)){const last=d.positionen[d.positionen.length-1];if(last&&row.bez&&!row.menge&&!row.ep&&!row.gp)last.bez=(last.bez+' '+row.bez).slice(0,300);continue}
-    let ep=zahlDE(row.ep),gp=zahlDE(row.gp);if(ep==null&&gp!=null&&menge)ep=Math.round(gp/menge*10000)/10000;
-    let artNr=row.artnr||'',bez=row.bez||'';if(!bez){bez=artNr;artNr=''}
+    // neue Position nur mit plausibler Menge und Pos.-Nr., Artikel-Nr. oder Einheit; sonst Folgezeile (Bezeichnung/Langtext)
+    const istPos=menge!=null&&menge>0&&menge<1e5&&(row.bez||row.artnr)&&(/^\d{1,4}\.?$/.test(row.pos||'')||row.einheit||(row.artnr&&/\d/.test(row.artnr)));
+    if(!istPos){const last=d.positionen[d.positionen.length-1],t=(row._t||[]).join(' ').trim();
+      if(last&&t&&!last._ende){if(!last.bez)last.bez=t.slice(0,120);else last.text=((last.text?last.text+'\n':'')+t).slice(0,2000)}continue}
+    let ep=zahlDE(row.ep),gp=zahlDE(row.gp),lp=zahlDE(row.lp),rab=typeof row.rabatt==='number'?row.rabatt:null;
+    if(ep==null&&gp!=null&&menge)ep=Math.round(gp/menge*10000)/10000;
+    if(ep==null&&lp!=null)ep=Math.round(lp*(1-(rab||0)/100)*10000)/10000;
+    if(lp!=null&&rab==null&&ep!=null&&lp>0&&ep<lp)rab=r2((1-ep/lp)*100);
+    let artNr=row.artnr||'',bez=row.bez||'';if(!bez&&!/\d/.test(artNr)){bez=artNr;artNr=''}
     if(!artNr){const mm=bez.match(/^([A-Z0-9][A-Z0-9\-\.\/]{3,})\s+(.{3,})$/i);if(mm&&/\d/.test(mm[1])&&!/^\d{1,3}$/.test(mm[1])){artNr=mm[1];bez=mm[2]}}
-    d.positionen.push({artNr,ean:'',bez,menge,einheit:(row.einheit||'').replace(/\.$/,''),ep:ep||0,gp:gp||0,ust:zahlDE(String(row.ust||'').replace('%',''))||0});
+    d.positionen.push({artNr,ean:'',bez,text:'',menge,einheit:(row.einheit||'').replace(/\.$/,''),ep:ep||0,gp:gp||0,lp:lp||0,rabatt:rab||0,ust:zahlDE(String(row.ust||'').replace('%',''))||0});
   }
   // Ersatz ohne Tabellenkopf: „Menge Einheit Bezeichnung … Preis“ bzw. „Bezeichnung … Menge Einheit … Preis“
   if(!d.positionen.length)for(const z of Z){const t=z.text;let m=t.match(/^(?:\d{1,3}\.?\s+)?(?:([A-Z0-9][A-Z0-9\-\.\/]{3,})\s+)?(.+?)\s+(\d+(?:[.,]\d+)?)\s+(Stk|Stück|St|m|lfm|PA|Pkg|Set|kg|l|h|Std|m²|m2|Rolle|Krt|VE)\.?(?:\s+(.*))?$/i);
@@ -2491,7 +2575,8 @@ function xmlBeleg(txt){
       steuern:kids(se,'ApplicableTradeTax').map(t=>({satz:n(tx(t,'RateApplicablePercent')),betrag:n(tx(t,'CalculatedAmount'))})),
       positionen:kids(tt,'IncludedSupplyChainTradeLineItem').map(li=>{const qe=q(li,'SpecifiedLineTradeDelivery/BilledQuantity'),m=n(qe?.textContent),gp=n(tx(li,'SpecifiedLineTradeSettlement/SpecifiedTradeSettlementLineMonetarySummation/LineTotalAmount'));
         const pr=n(tx(li,'SpecifiedLineTradeAgreement/NetPriceProductTradePrice/ChargeAmount'))/(n(tx(li,'SpecifiedLineTradeAgreement/NetPriceProductTradePrice/BasisQuantity'))||1);
-        return{artNr:tx(li,'SpecifiedTradeProduct/SellerAssignedID'),ean:tx(li,'SpecifiedTradeProduct/GlobalID'),bez:tx(li,'SpecifiedTradeProduct/Name'),menge:m,einheit:UNIT[qe?.getAttribute('unitCode')]||qe?.getAttribute('unitCode')||'',ep:ep4(gp,m,pr),gp,ust:n(tx(li,'SpecifiedLineTradeSettlement/ApplicableTradeTax/RateApplicablePercent'))}})});
+        const gr=q(li,'SpecifiedLineTradeAgreement/GrossPriceProductTradePrice'),lp=gr?n(tx(gr,'ChargeAmount'))/(n(tx(gr,'BasisQuantity'))||1):0,rp=gr?n(tx(gr,'AppliedTradeAllowanceCharge/CalculationPercent')):0;
+        return{lp,rabatt:rp||(lp&&pr&&pr<lp?r2((1-pr/lp)*100):0),artNr:tx(li,'SpecifiedTradeProduct/SellerAssignedID'),ean:tx(li,'SpecifiedTradeProduct/GlobalID'),bez:tx(li,'SpecifiedTradeProduct/Name'),menge:m,einheit:UNIT[qe?.getAttribute('unitCode')]||qe?.getAttribute('unitCode')||'',ep:ep4(gp,m,pr),gp,ust:n(tx(li,'SpecifiedLineTradeSettlement/ApplicableTradeTax/RateApplicablePercent'))}})});
   }else if(eb){
     const bi=q(r,'Biller'),dv=q(r,'Delivery/Address');
     Object.assign(d,{art:'ER',quelle:'E-Rechnung (ebInterface)',lieferscheinNr:tx(r,'InvoiceNumber'),datum:tx(r,'InvoiceDate'),bestellNr:tx(r,'InvoiceRecipient/OrderReference/OrderID'),
@@ -2499,7 +2584,8 @@ function xmlBeleg(txt){
       lieferadresse:dv?[tx(dv,'Name'),tx(dv,'Street'),(tx(dv,'ZIP')+' '+tx(dv,'Town')).trim()].filter(Boolean).join(', '):'',
       brutto:n(tx(r,'TotalGrossAmount')),faellig:tx(r,'PaymentConditions/DueDate'),
       positionen:[...r.getElementsByTagNameNS('*','ListLineItem')].map(li=>{const qe=q(li,'Quantity'),m=n(qe?.textContent),gp=n(tx(li,'LineItemAmount')),up=q(li,'UnitPrice');
-        return{artNr:kids(li,'ArticleNumber').map(a=>a.textContent.trim())[0]||'',ean:'',bez:kids(li,'Description').map(a=>a.textContent.trim()).join(' '),menge:m,einheit:UNIT[qe?.getAttribute('Unit')]||qe?.getAttribute('Unit')||'',ep:ep4(gp,m,n(up?.textContent)/(n(up?.getAttribute('BaseQuantity'))||1)),gp,ust:n(tx(li,'TaxItem/TaxPercent')||tx(li,'VATRate'))}})});
+        const rd=q(li,'ReductionAndSurchargeListLineItemDetails/ReductionListLineItem'),rp=rd?n(tx(rd,'Percentage')):0;
+        return{rabatt:rp,lp:rp&&up?n(up.textContent)/(n(up.getAttribute('BaseQuantity'))||1):0,artNr:kids(li,'ArticleNumber').map(a=>a.textContent.trim())[0]||'',ean:'',bez:kids(li,'Description').map(a=>a.textContent.trim()).join(' '),menge:m,einheit:UNIT[qe?.getAttribute('Unit')]||qe?.getAttribute('Unit')||'',ep:ep4(gp,m,n(up?.textContent)/(n(up?.getAttribute('BaseQuantity'))||1)),gp,ust:n(tx(li,'TaxItem/TaxPercent')||tx(li,'VATRate'))}})});
     d.netto=r2(sum(d.positionen,p=>p.gp));
   }else if(['Invoice','CreditNote','DespatchAdvice'].includes(ln)){
     const sp=q(r,'AccountingSupplierParty/Party')||q(r,'DespatchSupplierParty/Party'),lm=q(r,'LegalMonetaryTotal'),dla=q(r,'Delivery/DeliveryLocation/Address')||q(r,'Shipment/Delivery/DeliveryAddress');
@@ -2510,20 +2596,46 @@ function xmlBeleg(txt){
       netto:n(tx(lm,'TaxExclusiveAmount')),brutto:n(tx(lm,'TaxInclusiveAmount')),faellig:tx(r,'DueDate')||tx(r,'PaymentMeans/PaymentDueDate'),
       steuern:kids(q(r,'TaxTotal'),'TaxSubtotal').map(t=>({satz:n(tx(t,'TaxCategory/Percent')),betrag:n(tx(t,'TaxAmount'))})),
       positionen:[...kids(r,'InvoiceLine'),...kids(r,'CreditNoteLine'),...kids(r,'DespatchLine')].map(li=>{const qe=q(li,'InvoicedQuantity')||q(li,'CreditedQuantity')||q(li,'DeliveredQuantity'),m=n(qe?.textContent),gp=n(tx(li,'LineExtensionAmount'));
-        return{artNr:tx(li,'Item/SellersItemIdentification/ID'),ean:tx(li,'Item/StandardItemIdentification/ID'),bez:tx(li,'Item/Name')||tx(li,'Item/Description'),menge:m,einheit:UNIT[qe?.getAttribute('unitCode')]||qe?.getAttribute('unitCode')||'',ep:ep4(gp,m,n(tx(li,'Price/PriceAmount'))/(n(tx(li,'Price/BaseQuantity'))||1)),gp,ust:n(tx(li,'Item/ClassifiedTaxCategory/Percent'))}})});
+        const bq=n(tx(li,'Price/BaseQuantity'))||1,np=n(tx(li,'Price/PriceAmount'))/bq,lp=n(tx(li,'Price/AllowanceCharge/BaseAmount'))/bq,mf=n(tx(li,'Price/AllowanceCharge/MultiplierFactorNumeric'));
+        return{lp,rabatt:mf?(mf<=1?mf*100:mf):(lp&&np<lp?r2((1-np/lp)*100):0),artNr:tx(li,'Item/SellersItemIdentification/ID'),ean:tx(li,'Item/StandardItemIdentification/ID'),bez:tx(li,'Item/Name')||tx(li,'Item/Description'),menge:m,einheit:UNIT[qe?.getAttribute('unitCode')]||qe?.getAttribute('unitCode')||'',ep:ep4(gp,m,n(tx(li,'Price/PriceAmount'))/(n(tx(li,'Price/BaseQuantity'))||1)),gp,ust:n(tx(li,'Item/ClassifiedTaxCategory/Percent'))}})});
     if(ln==='CreditNote')d.gutschrift=true;
   }else return null;
   if(!d.positionen.length&&!d.lieferscheinNr)return null;
   return d;
 }
-async function belegLokal(files,typ){
+/* Texterkennung für Scans/Fotos: Tesseract (Apache-2.0), wird nur bei Bedarf von jsDelivr geladen und läuft lokal */
+const TESS={js:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/',core:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/deu@1.0.0/4.0.0_best_int'};
+async function ocrZeilen(bilder,info=()=>{}){
+  if(!window.Tesseract)await new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=TESS.js+'tesseract.min.js';sc.onload=ok;sc.onerror=()=>err(new Error('Texterkennung konnte nicht geladen werden – Internetverbindung prüfen.'));document.head.appendChild(sc)});
+  let seite=0;info('Texterkennung wird geladen (beim ersten Mal einige MB) …');
+  const w=await Tesseract.createWorker('deu',1,{workerPath:TESS.js+'worker.min.js',corePath:TESS.core,langPath:TESS.lang,
+    logger:m=>{if(m.status==='recognizing text')info(`Texterkennung Seite ${seite} von ${bilder.length} – ${Math.round(m.progress*100)} %`)}});
   const Z=[];
+  try{for(let p=0;p<bilder.length;p++){seite=p+1;
+    const bm=await createImageBitmap(bilder[p]),sc=595/bm.width;bm.close?.();
+    const {data}=await w.recognize(bilder[p]);
+    const ws=(data.words||[]).filter(x=>x.text.trim()&&x.confidence>25).map(x=>({x:x.bbox.x0*sc,x2:x.bbox.x1*sc,yc:(x.bbox.y0+x.bbox.y1)/2*sc,h:(x.bbox.y1-x.bbox.y0)*sc,t:x.text.trim()})).sort((a,b)=>a.yc-b.yc);
+    const ls=[];for(const x of ws){const l=ls.find(z=>Math.abs(z.yc-x.yc)<Math.min(z.h,x.h)*0.5);if(l){l.w.push(x);l.h=Math.max(l.h,x.h)}else ls.push({yc:x.yc,h:x.h,w:[x]})}
+    for(const l of ls.sort((a,b)=>a.yc-b.yc)){l.w.sort((a,b)=>a.x-b.x);const fs=l.h/1.15,cells=[];
+      for(const x of l.w){const c=cells[cells.length-1];if(c&&x.x-c.x2<fs*1.0){c.t+=' '+x.t;c.x2=x.x2}else cells.push({x:x.x,x2:x.x2,t:x.t})}
+      Z.push({y:-(p*2000+l.yc),fs,s:p,cells,text:cells.map(c=>c.t).join('  ')})}}}
+  finally{await w.terminate()}
+  return Z;
+}
+async function belegLokal(files,typ,info,mitKI){
+  const Z=[],bilder=[];let fax=false;
   for(const f of files){
     const buf=await f.arrayBuffer();
     if(/xml/.test(f.type)||/\.xml$/i.test(f.name)){const d=xmlBeleg(new TextDecoder().decode(buf));if(d)return d;continue}
-    if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){const p=await pdfLesen(buf);if(p.xml){const d=xmlBeleg(p.xml);if(d)return d}Z.push(...p.zeilen)}
+    if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){const p=await pdfLesen(buf);if(p.xml){const d=xmlBeleg(p.xml);if(d)return d}
+      if(p.zeilen.length>3)Z.push(...p.zeilen);else for(const b of p.bilder)b==='fax'?fax=true:bilder.push(b)}
+    else if(f.type.startsWith('image/'))bilder.push(await bildVerkleinern(f));
   }
-  return Z.length>3&&Z.map(z=>z.text).join('').length>40?textBeleg(Z,typ):null;
+  if(Z.length>3&&Z.map(z=>z.text).join('').length>40)return textBeleg(Z,typ);
+  if(!bilder.length){if(fax)throw new Error('Der Scan liegt im Schwarzweiß-/Faxformat (CCITT/JBIG2) vor, das noch nicht gelesen werden kann. Bitte in Graustufen oder Farbe scannen.');return null}
+  if(mitKI)return null; // Fotos/Scans an die KI (nur mit API-Schlüssel)
+  const Z2=await ocrZeilen(bilder,info);if(Z2.length<3)return null;
+  const d=textBeleg(Z2,typ);d.quelle='Texterkennung (Scan)';return d;
 }
 
 /* ---------- Beleg-Scan: Abgleich und Übernahme (optional KI für Fotos) ---------- */
@@ -2587,6 +2699,9 @@ function scanDiffs(z,a,lid){
   if(!a)return[];
   const d=[],lf=lid?(a.lieferanten||[]).find(l=>l.kontaktId===lid):null,k=kontakt(lid),epB=+z.ep>0?r2(z.ep/scanFak(z,a)):0;
   if(epB&&Math.abs(epB-(+a.ek||0))>0.005)d.push(['ek',`EK ${fmt(a.ek)} → ${fmt(epB)} € je ${esc(a.einheit)}`,true]);
+  const lpB=+z.lp>0?r2(z.lp/scanFak(z,a)):0;
+  if(k&&lpB&&Math.abs(lpB-(+lf?.lp||0))>0.005)d.push(['lp',`Listenpreis ${esc(k.name)} ${lf?.lp?fmt(lf.lp):'–'} → ${fmt(lpB)} €`,true]);
+  if(k&&+z.rabatt&&Math.abs(+z.rabatt-(+lf?.rabatt||0))>0.005)d.push(['rabatt',`Rabatt ${esc(k.name)} ${lf?.rabatt!=null&&lf.rabatt!==''?fmtQ(lf.rabatt)+' %':'–'} → ${fmtQ(z.rabatt)} %`,true]);
   if(z.einheit&&normT(z.einheit)!==normT(a.einheit)&&scanFak(z,a)===1)d.push(['einheit',`Einheit ${esc(a.einheit)} → ${esc(z.einheit)}`,false]);
   if(z.bez&&normT(z.bez)!==normT(a.bez))d.push(['bez',`Bezeichnung → „${esc(z.bez)}“`,false]);
   if(k&&!lf)d.push(['lief',`Lieferant ${esc(k.name)} ergänzen${z.artNr?' (Art.-Nr. '+esc(z.artNr)+')':''}`,true]);
@@ -2599,6 +2714,7 @@ function scanKopf(b){
   if(/^\d{4}-\d{2}-\d{2}$/.test(d.datum||''))b.datum=d.datum;
   const k=lieferantFinden(l);if(k)b.kontaktId=k.id;
   if(d.bestellNr){b.bezug='Bestellung '+d.bestellNr;const be=DB.belege.find(x=>x.typ==='BE'&&!x.storno&&x.nr&&normN(x.nr)===normN(d.bestellNr));if(be){b.vorgaengerId=be.id;if(be.auftragId)b.auftragId=be.auftragId}}
+  if(d.kommission&&!b.betreff)b.betreff=d.kommission;
   if(d.lieferadresse&&b.typ==='WE'){b.betreff=b.betreff||'Lieferung an '+d.lieferadresse;b.lagerBuchen=false}
   if(b.typ==='ER'){
     if(d.faellig&&/^\d{4}-\d{2}-\d{2}$/.test(d.faellig))b.zahlungsziel=Math.max(0,Math.round((new Date(d.faellig)-new Date(b.datum))/864e5));else if(d.ziel)b.zahlungsziel=d.ziel;
@@ -2611,35 +2727,36 @@ function scanKopf(b){
 async function belegScan(files,typ){
   if(!files.length)return;
   const b=neuBeleg(typ,{kopf:'',fuss:'',...(typ==='WE'?{lagerBuchen:true}:{})});SCANFILES[b.id]=files;
-  log(typ==='WE'?'Lieferschein einlesen':'Rechnung einlesen',`${files.length} Datei(en)`);go('beleg/'+b.id);
-  if(STORE.art!=='cache')await anhaengeHochladen(b,files);
+  log({WE:'Lieferschein',ER:'Rechnung',BE:'Lieferantenangebot'}[typ]+' einlesen',`${files.length} Datei(en)`);go('beleg/'+b.id);
+  await anhaengeHochladen(b,files,true); // Originalbeleg unverändert ablegen
   await scanStart(b);
 }
 async function scanStart(b){
   const key=lsGet('erp-ki-key'),files=SCANFILES[b.id];if(!files)return;
   b.scan={status:'läuft'};render();
   try{
-    let d=await belegLokal(files,b.typ); // kostenlos: E-Rechnung bzw. PDF-Textebene
+    const info=t=>{const e=document.getElementById('scaninfo');if(e)e.textContent=t};
+    let d=await belegLokal(files,b.typ,info,!!key); // kostenlos: E-Rechnung, PDF-Textebene, Texterkennung
     if(!d&&key){d=await kiLieferschein(files,key);d.quelle='KI (Claude)'}
-    if(!d)throw new Error('Kein lesbarer Text gefunden (Foto oder eingescanntes PDF). Positionen bitte manuell erfassen. Tipp: Das PDF aus der E-Mail des Lieferanten bzw. eine E-Rechnung (XML) wird kostenlos ausgelesen.');
+    if(!d)throw new Error('Kein lesbarer Text gefunden. Positionen bitte manuell erfassen.');
     b.scan={status:'offen',daten:d};scanKopf(b)}catch(e){b.scan={status:'fehler',fehler:e.message}}
   commit();if(curBeleg()?.id===b.id)render();
 }
 function scanBox(b){
   const s=b.scan;if(!s||s.status==='übernommen')return'';
-  if(s.status==='läuft')return`<div class="card"><h2>📷 Beleg wird gelesen …</h2><p class="mut" style="margin:0">Bitte warten.</p></div>`;
+  if(s.status==='läuft')return`<div class="card"><h2>📷 Beleg wird gelesen …</h2><p class="mut" style="margin:0" id="scaninfo">Bitte warten.</p></div>`;
   if(s.status==='fehler')return`<div class="card"><h2>📷 Beleg auslesen</h2><p class="err" style="margin-top:0">${esc(s.fehler)}</p><div class="bar">${SCANFILES[b.id]?'<button data-act="scanneu">Erneut versuchen</button>':''}<button data-act="scanweg">Ausblenden</button></div></div>`;
   const d=s.daten,lid=b.kontaktId,l=d.lieferant||{};
   const rows=(d.positionen||[]).map((z,i)=>{const w=s.wahl[i],a=w.modus==='zu'?artikel(w.artId):null,df=a?scanDiffs(z,a,lid):[];
     return`<tr><td>${esc(z.artNr)}${z.ean?`<br><span class="mut">EAN ${esc(z.ean)}</span>`:''}</td><td>${esc(z.bez)}</td>
-    <td style="width:80px"><input type="number" step="any" data-sc="${i}" data-k="menge" value="${w.menge}"></td><td>${esc(z.einheit)}</td><td class="n">${+z.ep?fmtQ(z.ep):''}</td>
+    <td style="width:80px"><input type="number" step="any" data-sc="${i}" data-k="menge" value="${w.menge}"></td><td>${esc(z.einheit)}</td><td class="n">${+z.ep?fmtQ(z.ep):''}${+z.lp?`<br><span class="mut" style="font-size:12px">LP ${fmtQ(z.lp)}${+z.rabatt?' − '+fmtQ(z.rabatt)+' %':''}</span>`:''}</td>
     <td style="min-width:240px"><select data-sc="${i}" data-k="modus">${opt('zu','Artikelstamm',w.modus)}${opt('neu','neuer Artikel',w.modus)}${opt('frei','ohne Artikel',w.modus)}</select>
       ${w.modus==='zu'?`<input list="dl-art" data-sc="${i}" data-k="art" value="${a?esc(a.nr+' – '+a.bez):''}" placeholder="Artikel suchen …" style="margin-top:4px">${a?`<div class="mut" style="font-size:12px">${w.wie?'erkannt über '+esc(w.wie):'manuell gewählt'}</div>`:'<div class="err" style="font-size:12px">kein Artikel gewählt</div>'}`:''}
       ${w.modus==='neu'?`<label class="chk" style="margin:4px 0 0;font-size:13px"><input type="checkbox" data-sc="${i}" data-k="lager" ${w.lager?'checked':''}> Lagerartikel</label>`:''}</td>
     <td>${df.map(([key,txt,def])=>`<label class="chk" style="margin:0 0 2px;font-size:13px"><input type="checkbox" data-sc="${i}" data-k="an-${key}" ${(w.an[key]??def)?'checked':''}> ${txt}</label>`).join('')||(a?'<span class="okc">✓ stimmt überein</span>':'')}</td></tr>`}).join('');
   const sumPos=r2(sum(d.positionen||[],z=>(+z.gp)||(+z.menge||0)*(+z.ep||0))),abw=d.netto&&(d.positionen||[]).length&&Math.abs(sumPos-d.netto)>0.05;
-  return`<div class="card"><h2>📷 ${b.typ==='ER'?'Rechnungs':'Lieferschein'}-Abgleich <span class="tag ${/E-Rechnung|Lieferavis/.test(d.quelle||'')?'ok':'warn'}">${esc(d.quelle||'KI')}</span></h2>
-  ${d.quelle==='PDF-Text'?'<div class="hint">Aus dem PDF-Text gelesen – Zuordnung der Spalten bitte prüfen.</div>':''}
+  return`<div class="card"><h2>📷 ${{ER:'Rechnungs',BE:'Angebots',WE:'Lieferschein'}[b.typ]}-Abgleich <span class="tag ${/E-Rechnung|Lieferavis/.test(d.quelle||'')?'ok':'warn'}">${esc(d.quelle||'KI')}</span></h2>
+  ${d.quelle==='PDF-Text'||/Texterkennung/.test(d.quelle||'')?`<div class="hint">${d.quelle==='PDF-Text'?'Aus dem PDF-Text gelesen':'Per Texterkennung aus dem Scan gelesen'} – Mengen, Nummern und Zuordnung bitte prüfen.</div>`:''}
   ${b.typ==='ER'&&(d.netto||d.brutto)?`<p>Laut Rechnung: netto <b>${fmt(d.netto||0)} €</b>${(d.steuern||[]).map(t=>` · USt ${fmtQ(t.satz)} % ${fmt(t.betrag)} €`).join('')} · brutto <b>${fmt(d.brutto||0)} €</b>${d.faellig?' · fällig '+dAT(d.faellig):''}${d.skonto?` · ${fmtQ(d.skonto.satz)} % Skonto ${d.skonto.tage} Tage`:''}${abw?`<br><span class="err">Summe der erkannten Positionen ${fmt(sumPos)} € weicht vom Nettobetrag ab – Positionen prüfen.</span>`:''}</p>`:''}
   <p style="margin-top:0">Lieferant laut Beleg: <b>${esc(l.name||'–')}</b>${l.uid?' · UID '+esc(l.uid):''} · Nr. ${esc(d.lieferscheinNr||'–')} · ${d.datum?dAT(d.datum):''}${d.bestellNr?' · Bestellung '+esc(d.bestellNr):''}${d.lieferadresse?`<br>Lieferadresse: <b>${esc(d.lieferadresse)}</b>`:''}</p>
   ${lid?'':`<div class="hint">Lieferant nicht im Stamm gefunden. <button data-act="scanlief">„${esc(l.name||'Lieferant')}“ als Lieferant anlegen</button> oder oben auswählen.</div>`}
@@ -2667,7 +2784,7 @@ function scanUebernehmen(b){
     if(ts.length===1)b.pos[b.pos.length-1].ep=r2(d.netto);
     b.scan={status:'übernommen',datum:isoD()};log('Rechnung übernommen',d.lieferscheinNr||'');commit();render();return}
   const neu=plan.filter(x=>x.w.modus==='neu'),aend=plan.flatMap(x=>x.df.map(([,t])=>`• ${x.a.nr}: ${t.replace(/<[^>]+>/g,'').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')}`));
-  if(!confirm(`${b.typ==='ER'?'Rechnung':'Lieferschein'} übernehmen?\n\n${plan.length} Position(en) in ${b.typ==='ER'?'die Eingangsrechnung':'den Wareneingang'}\n${neu.length} neue(r) Artikel\n${aend.length} Änderung(en) im Artikelstamm${aend.length?':\n'+aend.join('\n'):''}`))return;
+  if(!confirm(`${{ER:'Rechnung',BE:'Lieferantenangebot',WE:'Lieferschein'}[b.typ]} übernehmen?\n\n${plan.length} Position(en) in ${{ER:'die Eingangsrechnung',BE:'die Bestellung (Entwurf)',WE:'den Wareneingang'}[b.typ]}\n${neu.length} neue(r) Artikel\n${aend.length} Änderung(en) im Artikelstamm${aend.length?':\n'+aend.join('\n'):''}`))return;
   const we=b.typ==='ER'?beleg(b.vorgaengerId):null,genutzt=new Set();
   for(const x of plan){
     let {z,w,a}=x;const fak=scanFak(z,a);
@@ -2675,17 +2792,19 @@ function scanUebernehmen(b){
       if(k==='ek')a.ek=r2(z.ep/fak);
       if(k==='einheit'){a.einheit=z.einheit;if(!S().einheiten.includes(z.einheit))S().einheiten.push(z.einheit)}
       if(k==='bez')a.bez=z.bez;
-      if(k==='lief')(a.lieferanten=a.lieferanten||[]).push({kontaktId:lid,artNr:z.artNr||''});
+      if(k==='lief'&&!(a.lieferanten=a.lieferanten||[]).some(l=>l.kontaktId===lid))a.lieferanten.push({kontaktId:lid,artNr:z.artNr||''});
       if(k==='lartnr')a.lieferanten.find(l=>l.kontaktId===lid).artNr=z.artNr;
+      if(['lp','rabatt','ek'].includes(k)&&lid){a.lieferanten=a.lieferanten||[];let lf=a.lieferanten.find(l=>l.kontaktId===lid);if(!lf)a.lieferanten.push(lf={kontaktId:lid,artNr:z.artNr||''});
+        if(k==='lp')lf.lp=r2(z.lp/fak);if(k==='rabatt')lf.rabatt=+z.rabatt;if(k==='ek')lf.ek=r2(z.ep/fak);lf.stand=d.datum||isoD()}
     }
     if(w.modus==='neu'){
       const nr=String(++S().anr).padStart(5,'0'),eh=z.einheit||'Stk';
-      a={id:uid(),nr,bez:z.bez,text:'',art:'W',einheit:eh,einheiten:[],ek:r2(+z.ep||0),vk:0,steuer:S().stdSteuer,lager:!!w.lager,minBestand:0,lieferanten:lid?[{kontaktId:lid,artNr:z.artNr||''}]:[],aktiv:true,ean:z.ean||''};
+      a={id:uid(),nr,bez:z.bez,text:z.text||'',art:'W',einheit:eh,einheiten:[],ek:r2(+z.ep||0),vk:0,steuer:S().stdSteuer,lager:!!w.lager,minBestand:0,lieferanten:lid?[{kontaktId:lid,artNr:z.artNr||'',lp:+z.lp||0,rabatt:+z.rabatt||0,ek:r2(+z.ep||0),stand:d.datum||isoD()}]:[],aktiv:true,ean:z.ean||''};
       DB.artikel.push(a);if(!S().einheiten.includes(eh))S().einheiten.push(eh);
     }
     const ep=+z.ep||r2((+a?.ek||0)*fak),stc=+z.ust?S().steuer.find(x=>+x.satz===+z.ust&&!x.hinweis)?.code:'';
     const vp=a&&we?we.pos.find(q=>q.artikelId===a.id&&!genutzt.has(q.id)):null;if(vp)genutzt.add(vp.id);
-    b.pos.push(neuPos({art:'W',artikelId:a?.id||'',nr:a?.nr||z.artNr||'',bez:a?.bez||z.bez,menge:+w.menge||0,einheit:z.einheit||a?.einheit||'Stk',faktor:fak,ep,ek:ep,steuer:stc||(a?.steuer)||S().stdSteuer,herkunftPosId:vp?.id||''}));
+    b.pos.push(neuPos({art:'W',artikelId:a?.id||'',nr:a?.nr||z.artNr||'',lnr:z.artNr||'',bez:a?.bez||z.bez,text:a?'':(z.text||''),menge:+w.menge||0,einheit:z.einheit||a?.einheit||'Stk',faktor:fak,ep,ek:ep,steuer:stc||(a?.steuer)||S().stdSteuer,herkunftPosId:vp?.id||''}));
   }
   log(b.typ==='ER'?'Rechnung übernommen':'Lieferschein übernommen',`${d.lieferscheinNr||''}: ${plan.length} Pos., ${neu.length} neue Artikel, ${aend.length} Änderungen`);
   b.scan={status:'übernommen',datum:isoD()};artDatalist();commit();render();
@@ -2750,7 +2869,7 @@ function docHTML(b,edit=false){
       return`<tr class="grpz"><td><b>${pnr[p.id]}</b></td><td colspan="${ncol-(zeigP?2:1)}"><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Gruppe')}</b>${p.text||edit?`<div class="lt">${ed(`p:${i}:text`,p.text,'Gruppentext …',true)}</div>`:''}</td>${zeigP?`<td class="n"><b>${fmt(gruppePreis(p,gi))}</b></td>`:''}</tr>`}
     const g=gi.grp[p.id],ohne=ohneP||(g&&(+g.pauschal>0||g.ohneEP));
     const pr=ohneP?'':ohne?`<td colspan="${ncol-4}"></td>`:`${ls?`<td class="n">${edit?ed(`p:${i}:epL`,fmt(p.epL)):fmt(p.epL)}</td><td class="n">${edit?ed(`p:${i}:epS`,fmt(p.epS)):fmt(p.epS)}</td>`:''}<td class="n">${edit&&!ls?ed(`p:${i}:ep`,fmt(p.ep)):fmt(p.ep)}</td>${rab?`<td class="n">${edit?ed(`p:${i}:rabatt`,+p.rabatt?fmtQ(p.rabatt):'','%'):(+p.rabatt?fmtQ(p.rabatt)+' %':'')}</td>`:''}${mehrSt?`<td class="n">${esc(steuerDef(p.steuer).satz)} %</td>`:''}<td class="n">${fmt(posGP(p))}</td>`;
-    return`<tr><td>${pnr[p.id]}</td><td><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Bezeichnung')}</b>${p.nr?` <span style="color:#555">(${esc(p.nr)})</span>`:''}${p.text||edit?`<div class="lt">${ed(`p:${i}:text`,p.text,'Langtext …',true)}</div>`:''}</td>
+    return`<tr><td>${pnr[p.id]}</td><td><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Bezeichnung')}</b>${(()=>{const ln=t.b==='E'?(p.lnr||artikel(p.artikelId)?.lieferanten?.find(l=>l.kontaktId===b.kontaktId)?.artNr||''):'';return ln?` <span style="color:#555">(Ihre Art.-Nr. ${esc(ln)})</span>`:p.nr?` <span style="color:#555">(${esc(p.nr)})</span>`:''})()}${p.text||edit?`<div class="lt">${ed(`p:${i}:text`,p.text,'Langtext …',true)}</div>`:''}</td>
     <td class="c">${edit?ed(`p:${i}:menge`,fmtQ(p.menge)):fmtQ(p.menge)}</td><td class="c">${esc(p.einheit)}</td>${pr}</tr>`;
   };
   // Zeilen inkl. Gruppensummen (bei Gruppen ohne Pauschalpreis und mit Einzelpreisen)
@@ -2817,12 +2936,9 @@ const ACT={
   hist:el=>showHist(curBeleg(),+el.dataset.i,el),
   hclose:()=>closePop(),
   hset:el=>{const{b,i,h}=HIST,x=h[+el.dataset.j],p=b.pos[i];p.ep=x.ep;if(T[b.typ].b==='V'){p.rabatt=x.rabatt;if(x.ek)p.ek=x.ek}else p.ek=x.ep;if(x.einheit&&x.einheit!==p.einheit&&!p.artikelId)p.einheit=x.einheit;persist();render()},
-  mkart:el=>{const b=curBeleg(),p=b.pos[+el.dataset.i];if(!p.bez){alert('Bitte zuerst eine Bezeichnung eingeben.');return}
-    const nr=prompt('Artikel-Nr. für „'+p.bez+'“:',p.nr||String(++S().anr).padStart(5,'0'));if(!nr)return;
-    if(DB.artikel.some(a=>a.nr===nr)){alert('Artikel-Nr. existiert bereits.');return}
-    const f=+p.faktor||1,V_=T[b.typ].b==='V';
-    const a={id:uid(),nr,bez:p.bez,text:p.text,art:isInfo(p)?'W':p.art,einheit:p.einheit,einheiten:[],ek:r2((V_?+p.ek:+p.ep)/f),vk:V_?r2(+p.ep/f):0,steuer:p.steuer,lager:false,minBestand:0,lieferanten:V_?[]:[{kontaktId:b.kontaktId,artNr:''}],aktiv:true};
-    DB.artikel.push(a);p.artikelId=a.id;p.nr=nr;artDatalist();persist();render()},
+  mkart:async el=>{const b=curBeleg(),p=b.pos[+el.dataset.i];const f=+p.faktor||1,V_=T[b.typ].b==='V';
+    const a=await artikelPopup({bez:p.bez,text:p.text,art:isInfo(p)?'W':p.art,einheit:p.einheit,ek:r2((V_?+p.ek:+p.ep)/f),vk:V_?r2(+p.ep/f):0,steuer:p.steuer,artNr:p.lnr||''},V_?'':b.kontaktId);if(!a)return;
+    p.artikelId=a.id;p.nr=a.nr;if(!p.bez)p.bez=a.bez;persist();render()},
   pzeit:()=>{const b=curBeleg();const zt=DB.zeiten.filter(z=>z.auftragId===b.auftragId&&!z.belegId);if(!zt.length){alert('Keine offenen Stunden für diesen Auftrag.');return}zeitenInPos(b,zt);persist();render()},
   zadd:()=>{const b=curBeleg(),bet=num($('#z-bet').value),sk=num($('#z-sk').value);if(!bet&&!sk)return;if(FB().sperre&&($('#z-dat').value||isoD())<=FB().sperre){alert('Periode bis '+dAT(FB().sperre)+' ist gesperrt.');return}
     b.zahlungen.push({id:uid(),datum:$('#z-dat').value||isoD(),betrag:r2(bet),skonto:r2(sk),art:$('#z-art').value,notiz:$('#z-not').value});
@@ -2833,8 +2949,8 @@ const ACT={
   zabr:el=>zeitenAbrechnen(el.dataset.id),
   scanok:()=>scanUebernehmen(curBeleg()),scanneu:()=>scanStart(curBeleg()),
   scanweg:()=>{const b=curBeleg();if(b.scan?.status==='offen'&&!confirm('Erkannte Daten verwerfen?'))return;b.scan=null;persist();render()},
-  scanlief:()=>{const b=curBeleg(),l=b.scan?.daten?.lieferant||{},s=S();const k={id:uid(),nr:String(++s.knr.L),typ:'L',name:l.name||'',zusatz:'',strasse:l.strasse||'',plz:l.plz||'',ort:l.ort||'',land:'Österreich',uid:l.uid||'',email:'',tel:'',zahlungsziel:s.zahlungsziel,notiz:''};
-    DB.kontakte.push(k);b.kontaktId=k.id;log('Lieferant angelegt',k.name);persist();render()},
+  scanlief:async()=>{const b=curBeleg(),l=b.scan?.daten?.lieferant||{};const k=await kontaktPopup('L',{...l,land:/^DE/.test(l.uid||'')?'Deutschland':'Österreich'});if(!k)return;
+    b.kontaktId=k.id;b.scan.wahl=(b.scan.daten.positionen||[]).map((z,i)=>{const w=b.scan.wahl[i];if(w.modus!=='neu')return w;const f=artikelFinden(z,k.id);return f?{...w,modus:'zu',artId:f.a.id,wie:f.wie}:w});persist();render()},
   wvre:el=>wvRechnung(el.dataset.a),
   wvnein:el=>{const b=beleg(el.dataset.id);if(!confirm(`Wareneingang ${b.fremdNr||bNr(b)} (${kName(b.kontaktId)}) nicht an den Kunden weiterverrechnen?`))return;b.verrechnen=false;log('nicht weiterverrechnen',b.fremdNr||bNr(b));commit();render()},
   ztadd:()=>{const a=$('#zt-a').value,t=$('#zt-t').value,h=num($('#zt-h').value);if(!a||!h){alert('Auftrag und Stunden angeben.');return}
@@ -2881,12 +2997,13 @@ document.addEventListener('change',e=>{
   if(el.id==='logo')return logoUpload(el);
   if(el.id==='imp')return importJSON(el);
   if(el.id==='lbimp')return lbImport(el);
-  if(el.id==='lsscan'||el.id==='erfoto'){const f=[...el.files];el.value='';belegScan(f,el.id==='lsscan'?'WE':'ER');return}
+  if(['lsscan','erfoto','bescan'].includes(el.id)){const f=[...el.files];el.value='';belegScan(f,{lsscan:'WE',erfoto:'ER',bescan:'BE'}[el.id]);return}
   if(el.id==='kikey'){lsSet('erp-ki-key',el.value.trim()||null);render();return}
   if(d.sc!==undefined)return scanSet(el);
   if(el.id==='att'){const b=curBeleg();if(b)anhaengeHochladen(b,[...el.files]);return}
   const v=el.type==='checkbox'?el.checked:el.value,nv=el.type==='number'?num(v):v;
   if(d.p!==undefined){const b=curBeleg();if(!b||b.fest)return;onPos(b,+d.p,d.f,v);persist();return}
+  if(d.h==='kontaktId'&&v==='__neu'){const b=curBeleg();kontaktPopup(T[b.typ].b==='V'?'K':'L').then(k=>{if(k){onHead(b,'kontaktId',k.id);persist()}render()});return}
   if(d.h){const b=curBeleg();if(!b||b.fest)return;onHead(b,d.h,el.type==='number'?num(v):v);persist();return}
   switch(d.o){
     case'ui':UI[d.f]=v;render();return;

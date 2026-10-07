@@ -6,7 +6,7 @@ Aufbau: Die App (`index.html`) liegt unter einer festen https-Adresse. Daten, Si
 1. Konto auf github.com anlegen (falls nicht vorhanden).
 2. Neues Repository, z. B. `erp-lite` → *Add file → Upload files* → `index.html` hochladen → *Commit*.
 3. *Settings → Pages → Source: Deploy from a branch → Branch `main`, Ordner `/ (root)` → Save*.
-4. Nach ca. 1 min ist die App erreichbar unter `https://tbh-stefan.github.io/erp-lite/` – diese Adresse notieren.
+4. Nach ca. 1 min ist die App erreichbar unter `https://tbh-stefan.github.io/ERP-Lite/` – diese Adresse notieren.
 
 Das Repository ist öffentlich, enthält aber **nur den Programmcode**, keine Daten. Client-ID und Mandanten-ID sind keine Geheimnisse.
 

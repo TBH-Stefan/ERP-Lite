@@ -293,7 +293,7 @@ const OHNE_PREIS=['LS','WE'];
 const REOPEN=['AN','AB','BE','PR'];
 
 let DB=null,saveT=null,pending=false,lastBackupDay=null,HIST=null;
-const UI={vTyp:'',vSt:'',vQ:'',eTyp:'',eSt:'',eQ:'',jahr:String(new Date().getFullYear()),kQ:'',aQ:'',wvAlle:false,aSel:[]};
+const UI={vTyp:'',vSt:'',vQ:'',eTyp:'',eSt:'',eQ:'',jahr:String(new Date().getFullYear()),kQ:'',aQ:'',aGr:'',wvAlle:false,aSel:[]};
 
 /* ---------- Hilfsfunktionen ---------- */
 const $=s=>document.querySelector(s);
@@ -377,7 +377,7 @@ function neueDB(){
       einheiten:['Stk','m','m²','m³','h','PA','kg','l','Krt','Rolle','Set','km','Tag','Wo','Mon'],
       tarife:[{kz:'SV',bez:'Sachverständigenleistung',kosten:0,vk:0},{kz:'MONT',bez:'Montage',kosten:0,vk:0},{kz:'FAHRT',bez:'Fahrtzeit',kosten:0,vk:0}],
       nk,texte,knr:{K:10000,L:70000},anr:0,
-      spalten:{},zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,lvnr:0
+      spalten:{},artgruppen:[],zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,lvnr:0
     },
     kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],fibu:fibuNeu(),log:[],papierkorb:[]
   };
@@ -1252,6 +1252,7 @@ async function artikelPopup(v={},lid=''){
   const o=await formDialog({titel:'Neuer Artikel',breit:true,felder:[
     {k:'nr',l:'Artikel-Nr. (eigene)',wert:v.nr||nrV,cls:'w05',pflicht:true},{k:'bez',l:'Bezeichnung',wert:v.bez,cls:'w2',pflicht:true},
     {k:'art',l:'Art',wert:v.art||'W',opts:['W','L','F'].map(x=>[x,ART[x]]),cls:'w05'},
+    {k:'gruppe',l:'Artikelgruppe',wert:v.gruppe||(UI.aGr&&UI.aGr!=='__ohne'?UI.aGr:''),opts:[['','– keine –'],...S().artgruppen.slice().sort((a,c)=>a.bez.localeCompare(c.bez)).map(g=>[g.id,g.bez])],cls:'w05'},
     {k:'einheit',l:'Einheit',wert:v.einheit||'Stk',opts:s.einheiten.map(e=>[e,e]),neu:1,cls:'w05'},{k:'ek',l:'EK netto',typ:'number',wert:v.ek||0,cls:'w05'},{k:'vk',l:'VK netto',typ:'number',wert:v.vk||0,cls:'w05'},
     {k:'lager',l:'Lagerartikel',typ:'checkbox',wert:!!v.lager,cls:'w05'},
     {k:'lid',l:'Lieferant',wert:lid,opts:[['','–'],...lief.map(k=>[k.id,k.name])],neu:1},{k:'artNr',l:'Art.-Nr. beim Lieferanten',wert:v.artNr},
@@ -1259,7 +1260,7 @@ async function artikelPopup(v={},lid=''){
   if(!o)return null;
   if(DB.artikel.some(a=>a.nr===o.nr)){alert('Artikel-Nr. '+o.nr+' existiert bereits.');return null}
   if(o.nr===nrV)s.anr++;
-  const a={id:uid(),nr:o.nr,bez:o.bez,text:v.text||'',art:o.art,einheit:o.einheit,einheiten:[],ek:r2(o.ek),vk:r2(o.vk),steuer:v.steuer||s.stdSteuer,lager:o.lager,minBestand:0,
+  const a={id:uid(),nr:o.nr,bez:o.bez,gruppe:o.gruppe||'',text:v.text||'',art:o.art,einheit:o.einheit,einheiten:[],ek:r2(o.ek),vk:r2(o.vk),steuer:v.steuer||s.stdSteuer,lager:o.lager,minBestand:0,
     lieferanten:o.lid?[{kontaktId:o.lid,artNr:o.artNr,lp:o.lp||0,rabatt:o.rabatt||0,ek:r2(o.ek),stand:isoD()}]:[],aktiv:true};
   DB.artikel.push(a);artDatalist();log('Artikel angelegt',a.nr+' '+a.bez);return a;
 }
@@ -1463,7 +1464,7 @@ V.kontakt=id=>{
 };
 
 /* ---------- Artikel ---------- */
-function artikelListe(){const q=UI.aQ.toLowerCase(),alle=lsGet('erp-aInaktiv')==='1';return DB.artikel.filter(a=>(alle||a.aktiv!==false)&&(!q||[a.nr,a.bez,a.ean,...(a.lieferanten||[]).map(l=>l.artNr)].join(' ').toLowerCase().includes(q))).sort((a,c)=>String(a.nr).localeCompare(String(c.nr)))}
+function artikelListe(){const q=UI.aQ.toLowerCase(),alle=lsGet('erp-aInaktiv')==='1',gr=UI.aGr;return DB.artikel.filter(a=>(alle||a.aktiv!==false)&&(!gr||(gr==='__ohne'?!a.gruppe:a.gruppe===gr))&&(!q||[a.nr,a.bez,a.ean,grBez(a.gruppe),...(a.lieferanten||[]).map(l=>l.artNr)].join(' ').toLowerCase().includes(q))).sort((a,c)=>String(a.nr).localeCompare(String(c.nr)))}
 // Löschen (auch mehrere): verwendete Artikel bleiben, Rest in den Papierkorb
 function artikelLoeschen(ids){
   const L=ids.map(artikel).filter(Boolean);if(!L.length)return false;
@@ -1482,11 +1483,12 @@ V.artikel=id=>{
   if(id)return artikelEdit(id);
   const L=artikelListe(),sichtbar=new Set(L.map(a=>a.id)),sel=new Set((UI.aSel=UI.aSel.filter(id=>sichtbar.has(id)))),nInaktiv=DB.artikel.filter(a=>a.aktiv===false).length;
   return`<h1>Artikel &amp; Leistungen</h1><div class="bar"><input data-o="ui" data-f="aQ" placeholder="Suche (auch Lief.-Art.-Nr.)" value="${esc(UI.aQ)}" style="width:260px">
+    <select data-o="ui" data-f="aGr" title="Nach Artikelgruppe filtern">${opt('','alle Gruppen',UI.aGr)}${opt('__ohne','– ohne Gruppe –',UI.aGr)}${S().artgruppen.slice().sort((a,c)=>a.bez.localeCompare(c.bez)).map(g=>opt(g.id,`${g.bez} (${DB.artikel.filter(a=>a.gruppe===g.id).length})`,UI.aGr)).join('')}</select><button data-act="agrp" title="Gruppen anlegen, umbenennen, löschen">Gruppen …</button>
     <label class="chk" style="margin:0"><input type="checkbox" data-act="ainakt" ${lsGet('erp-aInaktiv')==='1'?'checked':''}> deaktivierte anzeigen${nInaktiv?` (${nInaktiv})`:''}</label><span class="sp"></span>
-    ${sel.size?`<span><b>${sel.size}</b> ausgewählt</span><button data-act="amakt" data-v="0">Deaktivieren</button><button data-act="amakt" data-v="1">Aktivieren</button><button class="d" data-act="amdel">Löschen …</button>`:''}<button class="p" data-act="anew">+ Artikel</button></div>
+    ${sel.size?`<span><b>${sel.size}</b> ausgewählt</span><select data-act="amgr" title="Ausgewählten Artikeln eine Gruppe zuordnen">${opt('','Gruppe zuordnen …','')}${opt('__keine','– keine Gruppe –','')}${S().artgruppen.slice().sort((a,c)=>a.bez.localeCompare(c.bez)).map(g=>opt(g.id,g.bez,'')).join('')}${opt('__neu','+ neue Gruppe …','')}</select><button data-act="amakt" data-v="0">Deaktivieren</button><button data-act="amakt" data-v="1">Aktivieren</button><button class="d" data-act="amdel">Löschen …</button>`:''}<button class="p" data-act="anew">+ Artikel</button></div>
   ${tabelle('artikel',[
     {k:'nr',l:'Nr',f:a=>esc(a.nr)},{k:'bez',l:'Bezeichnung',f:a=>esc(a.bez)},{k:'lnr',l:'Lief.-Art.-Nr.',f:a=>esc(lfNr(a))},{k:'lief',l:'Lieferant',f:a=>esc(lfNamen(a)),std:false},
-    {k:'art',l:'Art',f:a=>ART[a.art]},{k:'einheit',l:'Einh.',f:a=>esc(a.einheit)},{k:'lp',l:'Listenpreis',n:1,f:a=>+lf1(a).lp?fmt(lf1(a).lp):'',std:false},{k:'rabatt',l:'Rabatt %',n:1,f:a=>+lf1(a).rabatt?fmtQ(lf1(a).rabatt):'',std:false},
+    {k:'gruppe',l:'Gruppe',f:a=>esc(grBez(a.gruppe))},{k:'art',l:'Art',f:a=>ART[a.art]},{k:'einheit',l:'Einh.',f:a=>esc(a.einheit)},{k:'lp',l:'Listenpreis',n:1,f:a=>+lf1(a).lp?fmt(lf1(a).lp):'',std:false},{k:'rabatt',l:'Rabatt %',n:1,f:a=>+lf1(a).rabatt?fmtQ(lf1(a).rabatt):'',std:false},
     {k:'ek',l:'EK',n:1,f:a=>fmt(a.ek)},{k:'vk',l:'VK',n:1,f:a=>fmt(a.vk)},{k:'aufschlag',l:'Aufschlag %',n:1,f:a=>+a.ek&&+a.vk?fmtQ(r2((a.vk/a.ek-1)*100)):'',std:false},
     {k:'steuer',l:'USt',f:a=>esc(steuerDef(a.steuer)?.bez||a.steuer),std:false},{k:'ean',l:'EAN',f:a=>esc(a.ean||''),std:false},
     {k:'lager',l:'Lager',f:a=>a.lager?'✓':''},{k:'bestand',l:'Bestand',n:1,f:a=>a.lager?fmtQ(bestand(a.id).menge):''},{k:'min',l:'Mindestbestand',n:1,f:a=>+a.minBestand?fmtQ(a.minBestand):'',std:false},
@@ -1501,7 +1503,7 @@ function artikelEdit(id){
   const bs=bestand(a.id);
   return`<div class="bar"><h1 style="margin:0">${esc(a.nr)} ${esc(a.bez)}</h1><span class="sp"></span><button class="d" data-act="adel" data-id="${a.id}">Löschen</button></div>
   <div class="card">
-  <div class="row">${f('nr','Artikel-Nr.','w05')}${f('bez','Bezeichnung','w2')}<label class="w05">Art<select data-o="a" data-id="${a.id}" data-f="art">${['W','L','F'].map(k=>opt(k,ART[k],a.art)).join('')}</select></label><label class="w05">aktiv<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="aktiv" ${a.aktiv!==false?'checked':''}></label></div>
+  <div class="row">${f('nr','Artikel-Nr.','w05')}${f('bez','Bezeichnung','w2')}<label class="w05">Artikelgruppe<select data-o="a" data-id="${a.id}" data-f="gruppe">${grOpts(a.gruppe)}${opt('__neu','+ neue Gruppe …','')}</select></label><label class="w05">Art<select data-o="a" data-id="${a.id}" data-f="art">${['W','L','F'].map(k=>opt(k,ART[k],a.art)).join('')}</select></label><label class="w05">aktiv<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="aktiv" ${a.aktiv!==false?'checked':''}></label></div>
   <div class="row"><label>Langtext<textarea data-o="a" data-id="${a.id}" data-f="text">${esc(a.text)}</textarea></label></div>
   <div class="row"><label class="w05">Basiseinheit<select data-o="a" data-id="${a.id}" data-f="einheit">${S().einheiten.map(e=>opt(e,e,a.einheit)).join('')}</select></label>
     <label>Weitere Einheiten (z. B. Krt=10; Rolle=100)<input data-o="a" data-id="${a.id}" data-f="einheitenStr" value="${esc((a.einheiten||[]).map(x=>x.e+'='+x.f).join('; '))}"></label>
@@ -2364,6 +2366,26 @@ function spaltenDialog(id){
   d.querySelector('#m-no').onclick=()=>d.remove();
   d.querySelector('#sp-std').onclick=()=>{d.remove();delete S().spalten[id];commit();render()};
   d.querySelector('#m-ok').onclick=()=>{const k=ord.filter(x=>an.has(x));if(!k.length){alert('Mindestens eine Spalte auswählen.');return}(S().spalten=S().spalten||{})[id]=k;d.remove();commit();render()};
+}
+/* Artikelgruppen (Einstellungen: artgruppen [{id,bez}]) */
+const grBez=id=>S().artgruppen.find(g=>g.id===id)?.bez||'';
+const grOpts=(wert,leer='– keine Gruppe –')=>opt('',leer,wert||'')+S().artgruppen.slice().sort((a,c)=>a.bez.localeCompare(c.bez)).map(g=>opt(g.id,g.bez,wert||'')).join('');
+async function gruppeNeu(){const n=(prompt('Name der neuen Artikelgruppe:')||'').trim();if(!n)return null;
+  const da=S().artgruppen.find(g=>g.bez.toLowerCase()===n.toLowerCase());if(da)return da.id;const g={id:uid(),bez:n};S().artgruppen.push(g);log('Artikelgruppe angelegt',n);return g.id}
+function gruppenDialog(){
+  const d=document.createElement('div');d.className='modal';
+  const zeich=()=>{const G=S().artgruppen.slice().sort((a,c)=>a.bez.localeCompare(c.bez));d.querySelector('#gr-l').innerHTML=G.map(g=>`<div class="att"><input data-gr="${g.id}" value="${esc(g.bez)}" style="flex:1"><span class="mut" style="min-width:70px;text-align:right">${DB.artikel.filter(a=>a.gruppe===g.id).length} Artikel</span><button class="s d" data-grdel="${g.id}">✕</button></div>`).join('')||'<p class="mut">Noch keine Gruppen.</p>'};
+  d.innerHTML=`<div class="mbox"><h2>Artikelgruppen</h2><div id="gr-l" style="max-height:50vh;overflow:auto"></div>
+    <div class="bar" style="margin:12px 0 0"><input id="gr-neu" placeholder="Neue Gruppe, z. B. Kabel, PV-Speicher, Montage" style="flex:1"><button id="gr-add">+ Anlegen</button></div>
+    <div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button class="p" id="m-ok">Fertig</button></div></div>`;
+  document.body.appendChild(d);zeich();
+  const add=()=>{const e=d.querySelector('#gr-neu'),n=e.value.trim();if(!n)return;if(S().artgruppen.some(g=>g.bez.toLowerCase()===n.toLowerCase())){alert('Gruppe gibt es bereits.');return}S().artgruppen.push({id:uid(),bez:n});log('Artikelgruppe angelegt',n);e.value='';zeich()};
+  d.querySelector('#gr-add').onclick=add;d.querySelector('#gr-neu').onkeydown=e=>{if(e.key==='Enter')add()};
+  d.addEventListener('change',e=>{const id=e.target.dataset.gr;if(!id)return;const g=S().artgruppen.find(x=>x.id===id),n=e.target.value.trim();if(!n){e.target.value=g.bez;return}if(n!==g.bez){log('Artikelgruppe umbenannt',g.bez+' → '+n);g.bez=n}});
+  d.addEventListener('click',e=>{const id=e.target.dataset.grdel;if(!id)return;const g=S().artgruppen.find(x=>x.id===id),L=DB.artikel.filter(a=>a.gruppe===id);
+    if(!confirm(`Gruppe „${g.bez}“ löschen?${L.length?`\n${L.length} Artikel verlieren die Zuordnung (Artikel bleiben erhalten).`:''}`))return;
+    for(const a of L)a.gruppe='';S().artgruppen=S().artgruppen.filter(x=>x!==g);if(UI.aGr===id)UI.aGr='';log('Artikelgruppe gelöscht',g.bez+(L.length?` (${L.length} Artikel ohne Gruppe)`:''));zeich()});
+  d.querySelector('#m-ok').onclick=()=>{d.remove();commit();render()};
 }
 const lfNamen=a=>(a.lieferanten||[]).map(l=>kName(l.kontaktId)).filter(x=>x&&x!=='–').join(', ');
 const lfNr=a=>(a.lieferanten||[]).map(l=>l.artNr).filter(Boolean).join(', ');
@@ -3252,8 +3274,12 @@ const ACT={
   knew:async el=>{const k=await kontaktPopup(el.dataset.t);if(k){commit();go('kontakt/'+k.id)}},
   kdel:el=>{const id=el.dataset.id;if(DB.belege.some(b=>b.kontaktId===id)){alert('Kontakt hat Belege und kann nicht gelöscht werden.');return}if(!confirm('Kontakt löschen?'))return;wegwerfen('kontakte',[kontakt(id)]);go('kontakte')},
   kbel:el=>{const b=neuBeleg(el.dataset.t,{kontaktId:el.dataset.id,zahlungsziel:+kontakt(el.dataset.id).zahlungsziel||S().zahlungsziel});persist();go('beleg/'+b.id)},
-  anew:()=>{const s=S(),nr=String(++s.anr).padStart(5,'0');const a={id:uid(),nr,bez:'',text:'',art:'W',einheit:'Stk',einheiten:[],ek:0,vk:0,steuer:s.stdSteuer,lager:false,minBestand:0,lieferanten:[],aktiv:true};DB.artikel.push(a);persist();go('artikel/'+a.id)},
+  anew:()=>{const s=S(),nr=String(++s.anr).padStart(5,'0');const a={id:uid(),nr,bez:'',gruppe:UI.aGr&&UI.aGr!=='__ohne'?UI.aGr:'',text:'',art:'W',einheit:'Stk',einheiten:[],ek:0,vk:0,steuer:s.stdSteuer,lager:false,minBestand:0,lieferanten:[],aktiv:true};DB.artikel.push(a);persist();go('artikel/'+a.id)},
   adel:el=>{if(artikelLoeschen([el.dataset.id]))go('artikel')},
+  agrp:()=>gruppenDialog(),
+  amgr:async el=>{let g=el.value;el.value='';if(!g)return;if(g==='__neu'){g=await gruppeNeu();if(!g){render();return}}if(g==='__keine')g='';
+    const L=UI.aSel.map(artikel).filter(Boolean);if(!L.length)return;if(!confirm(`${L.length} Artikel ${g?'der Gruppe „'+grBez(g)+'“ zuordnen':'aus der Gruppe nehmen'}?`)){render();return}
+    for(const a of L)a.gruppe=g;log('Artikelgruppe zugeordnet',`${L.length} Artikel → ${grBez(g)||'keine Gruppe'}`);commit();render()},
   ainakt:el=>{lsSet('erp-aInaktiv',el.checked?'1':null);render()},
   aselall:el=>{UI.aSel=el.checked?artikelListe().map(a=>a.id):[];render()},
   amdel:()=>{if(artikelLoeschen(UI.aSel))UI.aSel=UI.aSel.filter(id=>artikel(id));render()},
@@ -3324,7 +3350,8 @@ document.addEventListener('change',e=>{
       if(d.f==='nr'){const n=String(nv).trim();if(!n||DB.kontakte.some(x=>x!==k&&x.nr===n)){alert(n?`Nummer ${n} ist bereits vergeben.`:'Nummer darf nicht leer sein.');render();return}
         log('Kontakt-Nr. geändert',`${k.nr} → ${n} ${k.name}`);k.nr=n;const t=k.typ==='L'?'L':'K';if(/^\d+$/.test(n)&&+n>(S().knr[t]||0)&&+n<(S().knr[t]||0)+100000)S().knr[t]=+n;persist();render();return}
       k[d.f]=nv;break}
-    case'a':{const a=artikel(d.id);if(d.f==='einheitenStr'){a.einheiten=String(v).split(/[;,]/).map(x=>x.split('=')).filter(x=>x.length===2&&x[0].trim()&&num(x[1])>0).map(([e,f])=>({e:e.trim(),f:num(f)}));for(const x of a.einheiten)if(!S().einheiten.includes(x.e))S().einheiten.push(x.e)}else a[d.f]=nv;if(['nr','bez','aktiv'].includes(d.f))artDatalist();if(['lager','einheitenStr'].includes(d.f)){persist();render();return}break}
+    case'a':{const a=artikel(d.id);
+      if(d.f==='gruppe'&&v==='__neu'){gruppeNeu().then(g=>{if(g){a.gruppe=g;persist()}render()});return}if(d.f==='einheitenStr'){a.einheiten=String(v).split(/[;,]/).map(x=>x.split('=')).filter(x=>x.length===2&&x[0].trim()&&num(x[1])>0).map(([e,f])=>({e:e.trim(),f:num(f)}));for(const x of a.einheiten)if(!S().einheiten.includes(x.e))S().einheiten.push(x.e)}else a[d.f]=nv;if(['nr','bez','aktiv'].includes(d.f))artDatalist();if(['lager','einheitenStr'].includes(d.f)){persist();render();return}break}
     case'al':artikel(d.id).lieferanten[+d.i][d.f]=v;break;
     case's':if(d.f==='ltDruck')S().ltDruck=v==='true';else if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()];o[pth[0]]=nv}break;
     case'st':{const x=S().steuer[+d.i];if(d.f==='code'){const alt=x.code;if(S().steuer.some((y,j)=>j!==+d.i&&y.code===v)){alert('Code existiert bereits.');render();return}if(DB.belege.some(b=>b.pos.some(p=>p.steuer===alt))){alert('Code wird verwendet und kann nicht geändert werden.');render();return}}x[d.f]=nv;break}

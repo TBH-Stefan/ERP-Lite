@@ -156,35 +156,40 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
   table.pos textarea{height:44px}
   table.pos button.s{padding:6px 12px;font-size:14px}
   .blatt{padding:14px 12px;min-height:0}
-  .blatt .doc .hd,.blatt .doc .adr{flex-direction:column;gap:8px;margin-bottom:5mm}
-  .blatt .doc .firm{text-align:left}
+  .blatt .doc .adr{flex-direction:column;gap:8px;margin-bottom:5mm}
   .blatt .doc .to{width:auto}
-  .blatt .doc .info td{padding:0 8px 0 0}
+  .blatt .doc .info{text-align:left;padding-top:0}
   .blatt .doc .tot{width:100%}
-  .blatt .doc .ft{flex-direction:column;gap:4px}
+  .blatt .doc .sig{margin-top:8mm}
 }
 #print{display:none}
-@media print{#app,#start,.pop{display:none!important}#print{display:block}body{background:#fff}@page{size:A4;margin:14mm 14mm 22mm 20mm}}
-.doc{font:9.5pt/1.35 Arial,Helvetica,sans-serif;color:#000}
-.doc .hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14mm}
-.doc .hd img{max-height:22mm;max-width:70mm}
-.doc .firm{text-align:right;font-size:8.5pt}
-.doc .firm b{font-size:11pt}
-.doc .adr{display:flex;justify-content:space-between;margin-bottom:10mm}
-.doc .snd{font-size:7pt;text-decoration:underline;margin-bottom:2mm}
-.doc .to{width:85mm;font-size:10pt}
-.doc .info td{padding:0 0 0 8mm;border:0;font-size:9pt}
-.doc .info td:first-child{color:#444}
-.doc h3{font-size:14pt;margin:0 0 2mm}
-.doc table.p{margin:4mm 0}
-.doc table.p th{background:none;color:#000;border-bottom:1px solid #000;font-size:8.5pt;padding:2px 4px}
-.doc table.p td{border-bottom:1px solid #ddd;padding:3px 4px;font-size:9pt}
+.pgw,.pgw>*>tr>td{border:0;padding:0;width:100%;border-collapse:collapse}.pgw .pgf{height:14mm}
+@media print{#app,#start,.pop{display:none!important}#print{display:block}body{background:#fff}@page{size:A4;margin:14mm 14mm 12mm 20mm;@bottom-right{content:'Seite ' counter(page) ' von ' counter(pages);font:7pt Arial,sans-serif;vertical-align:bottom;padding-bottom:4mm}}}
+.doc{font:9.5pt/1.4 Mulish,'Segoe UI',Arial,Helvetica,sans-serif;color:#000}
+.doc .hd{display:flex;justify-content:flex-end;margin-bottom:6mm}
+.doc .logo{text-align:right}
+.doc .logo img{height:24mm;max-width:70mm;display:inline-block}
+.doc .slg{font:11pt/1.2 Cambria,Georgia,'Times New Roman',serif;color:#80704d;text-align:right;margin-top:1mm}
+.doc .slg div:first-child{padding-right:3.2em}
+.doc .adr{display:flex;justify-content:space-between;align-items:flex-start;gap:8mm;margin-bottom:12mm}
+.doc .to{width:85mm;font:10.5pt/1.35 Mulish,'Segoe UI',Arial,sans-serif;padding-top:2mm}
+.doc .info{text-align:right;font:9pt/1.75 Arial,Helvetica,sans-serif;padding-top:9mm}
+.doc h3{font-size:11.5pt;font-weight:700;color:#1d3929;margin:0 0 4mm;letter-spacing:.2px}
+.doc table.p{margin:6mm 0 3mm;border-top:1px solid #888;border-bottom:2px solid #000}
+.doc table.p th{background:none;color:#000;font-weight:400;border-bottom:1px solid #888;font-size:9pt;padding:6px 5px;text-align:center}
+.doc table.p th:nth-child(2){text-align:left}.doc table.p th.n{text-align:right}
+.doc table.p td{border-bottom:1px solid #bbb;padding:5px 5px;font-size:9pt;vertical-align:top}
+.doc table.p tbody td:first-child{text-align:center;white-space:nowrap}
+.doc table.p td.c{text-align:center}
 .doc .lt{font-size:8.5pt;color:#333;white-space:pre-wrap}
-.doc .tot{margin-left:auto;width:85mm}
-.doc .tot td{border:0;padding:1px 4px}
-.doc .tot tr.b td{border-top:1px solid #000;font-weight:700}
+.doc .tot{margin-left:auto;width:95mm;border-collapse:collapse}
+.doc .tot td{border:0;padding:3px 4px;text-align:right}
+.doc .tot td:first-child{padding-right:8mm}
+.doc .tot tr.b td{font-weight:700;padding-top:4px}
+.doc .tot tr.g td{color:#1d3929;border-bottom:1.5px solid #1d3929}
 .doc .txt{white-space:pre-wrap;margin:3mm 0}
-.doc .ft{position:fixed;bottom:-14mm;left:0;right:0;font-size:7pt;color:#444;border-top:1px solid #999;padding-top:1.5mm;display:flex;gap:6mm;justify-content:space-between}
+.doc .sig{margin:16mm 0 0 auto;width:75mm;text-align:center;line-height:2.2;font-size:9pt}
+.doc .ft{position:fixed;bottom:0;left:0;right:0;font:7pt/1.35 Arial,Helvetica,sans-serif;color:#000;border-top:2.5px solid #80704d;padding-top:1.5mm;text-align:center}
 .doc .wm{color:#b42318;font-weight:700;font-size:12pt;margin-bottom:3mm}
 </style>
 </head>
@@ -325,7 +330,7 @@ function neueDB(){
   return{
     meta:{version:1,erstellt:new Date().toISOString(),app:'ERP-Lite'},
     settings:{
-      firma:{name:'',zusatz:'',strasse:'',plz:'',ort:'',land:'Österreich',uid:'',fn:'',gericht:'',tel:'',mail:'',web:'',bank:'',iban:'',bic:'',logo:''},
+      firma:{name:'',zusatz:'',strasse:'',plz:'',ort:'',land:'Österreich',uid:'',fn:'',gericht:'',tel:'',mail:'',web:'',bank:'',iban:'',bic:'',logo:'',slogan:'',zeichner:'',zeichnerFkt:'Geschäftsführung'},
       bearbeiter:'',
       steuer:[
         {code:'20',satz:20,bez:'20 % USt',hinweis:''},
@@ -1714,7 +1719,7 @@ function lvBieterPreisInit(lv,path){
 /* --- LV-Druck --- */
 function lvDocHTML(lv,modus){
   const f=S().firma,k=kontakt(lv.kontaktId)||{},oz=lvOZ(lv),sm=lvSummen(lv),preise=modus==='preise',leer=modus==='leer';
-  const kopf=`<div class="hd"><div>${f.logo?`<img src="${f.logo}">`:''}</div><div class="firm"><b>${esc(f.name)}</b><br>${esc(f.strasse)}<br>${esc(f.plz)} ${esc(f.ort)}</div></div>
+  const kopf=`${briefkopf(f)}
     <h3>Leistungsverzeichnis ${esc(lv.nr)}</h3><div><b>${esc(lv.titel)}</b></div>${k.name?`<div>Auftraggeber: ${esc(k.name)}, ${esc(k.ort||'')}</div>`:''}<div>Datum: ${dAT(lv.datum)}</div>
     ${lv.vorbLB?`<div class="txt"><b>Ständige Vorbemerkungen der Leistungsbeschreibung</b>${rt(lv.vorbLB)}</div>`:''}${lv.vorb?`<div class="txt"><b>Vorbemerkungen</b>\n${esc(lv.vorb)}</div>`:''}`;
   if(modus==='k7'){
@@ -1749,7 +1754,7 @@ function druckHTML(html,titel){
 }
 function kbDocHTML(kb){
   const g=k2gz(kb),f=S().firma;
-  return`<div class="doc"><div class="hd"><div>${f.logo?`<img src="${f.logo}">`:''}</div><div class="firm"><b>${esc(f.name)}</b></div></div>
+  return`<div class="doc">${briefkopf(f)}
   <h3>K-Blätter · ${esc(kb.name)}</h3>${kb.bieter?`<div>Bieter: ${esc(kb.bieter)}</div>`:''}${kb.projekt?`<div>${esc(kb.projekt)}</div>`:''}
   <h3 style="margin-top:6mm;font-size:12pt">K2 · Gesamtzuschlag</h3><table class="p"><thead><tr><th>Bestandteil</th><th class="n">Lohn %</th><th class="n">Sonstiges %</th></tr></thead><tbody>
   ${kb.k2.zeilen.map(z=>`<tr><td>${esc(z.bez)}</td><td class="n">${fmt(z.l)}</td><td class="n">${fmt(z.s)}</td></tr>`).join('')}<tr><td><b>Gesamtzuschlag</b></td><td class="n"><b>${fmt(g.l)}</b></td><td class="n"><b>${fmt(g.s)}</b></td></tr></tbody></table>
@@ -2189,7 +2194,8 @@ V.einstellungen=()=>{
   <div class="row">${ff('strasse','Straße','w2')}${ff('plz','PLZ')}${ff('ort','Ort')}${ff('land','Land')}</div>
   <div class="row">${ff('uid','UID-Nr.')}${ff('fn','Firmenbuch-Nr.')}${ff('gericht','Firmenbuchgericht')}${ff('tel','Telefon')}${ff('mail','E-Mail')}${ff('web','Web')}</div>
   <div class="row">${ff('bank','Bank')}${ff('iban','IBAN','w2')}${ff('bic','BIC')}<label>Bearbeiter<input data-o="s" data-f="bearbeiter" value="${esc(s.bearbeiter)}"></label></div>
-  <div class="row"><label>Logo (PNG/JPG, max. 300 kB)<input type="file" id="logo" accept="image/*"></label>${f.logo?`<img src="${f.logo}" style="max-height:50px"><button data-act="logodel">Logo entfernen</button>`:''}<span style="flex:2"></span></div></div>
+  <div class="row">${ff('zeichner','Unterzeichner (z. B. Horvath Stefan, BSc.)','w2')}${ff('zeichnerFkt','Funktion')}<label class="w2">Untertitel unter Logo (2 Zeilen)<textarea data-o="s" data-f="firma.slogan" style="height:44px">${esc(f.slogan)}</textarea></label></div>
+  <div class="row"><label>Logo (PNG/JPG/SVG, max. 300 kB; leer = TBH-Logo)<input type="file" id="logo" accept="image/*"></label><img src="${f.logo||LOGO_TBH}" style="max-height:50px">${f.logo?`<button data-act="logodel">Logo entfernen</button>`:''}<span style="flex:2"></span></div></div>
   <div class="card"><h2>Kaufmännisch</h2><div class="row">
     ${sf('zahlungsziel','Zahlungsziel Tage')}${sf('skonto','Skonto %')}${sf('skontoTage','Skonto Tage')}${sf('angebotGueltig','Angebot gültig Tage')}
     ${sf('zielDB2','Ziel-DB II %')}${sf('mgz','MGZ % auf Material')}${sf('abwGrenze','Prüfgrenze Abweichung %')}
@@ -2208,6 +2214,11 @@ V.einstellungen=()=>{
 };
 
 /* ---------- Druck ---------- */
+// Firmenlogo TBH (Standard, falls in den Einstellungen kein eigenes Logo hochgeladen ist)
+const LOGO_TBH='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="380 492 730 686"><g fill="#93886a"><rect x="719" y="613" width="59" height="508"/><rect x="1043" y="613" width="59" height="508"/><rect x="778" y="819" width="265" height="51"/></g><path d="M687 729V1171M661 750H828C905 750 928 795 928 843S905 936 828 936H687M687 936H838C920 936 958 980 958 1044S920 1149 838 1149H661" fill="none" stroke="#1a1a1a" stroke-opacity=".93" stroke-width="44"/><path d="M386 499H851V562H654V1121H583V562H386Z"/></svg>');
+const briefkopf=f=>`<div class="hd"><div class="logo"><img src="${f.logo||LOGO_TBH}" alt="">${f.slogan?`<div class="slg">${String(f.slogan).split('\n').map(z=>`<div>${esc(z)}</div>`).join('')}</div>`:''}</div></div>`;
+const fusszeile=f=>`<div class="ft">${[[f.name,f.strasse,(f.plz+' '+f.ort).trim()].filter(Boolean).map(x=>esc(x.toUpperCase())).concat(f.mail?[esc(f.mail)]:[],f.bank?[esc(f.bank.toUpperCase())]:[]).join(' | '),
+  [f.iban?'IBAN: '+esc(f.iban):'',f.bic?'BIC: '+esc(f.bic):'',f.fn?'FIRMENBUCHNUMMER: FN '+esc(f.fn)+(f.gericht?', '+esc(f.gericht.toUpperCase()):''):'',f.uid?'UID: '+esc(f.uid):''].filter(Boolean).join(' | ')].filter(Boolean).join('<br>')}</div>`;
 function docHTML(b,edit=false){
   const f=S().firma,k=b.fest&&b.adresse?b.adresse:adressSnapshot(kontakt(b.kontaktId)),s=summen(b),t=T[b.typ],ohneP=OHNE_PREIS.includes(b.typ);
   edit=edit&&!b.fest;
@@ -2226,31 +2237,32 @@ function docHTML(b,edit=false){
     const g=gi.grp[p.id],ohne=ohneP||(g&&(+g.pauschal>0||g.ohneEP));
     const pr=ohneP?'':ohne?`<td colspan="${ncol-4}"></td>`:`${ls?`<td class="n">${edit?ed(`p:${i}:epL`,fmt(p.epL)):fmt(p.epL)}</td><td class="n">${edit?ed(`p:${i}:epS`,fmt(p.epS)):fmt(p.epS)}</td>`:''}<td class="n">${edit&&!ls?ed(`p:${i}:ep`,fmt(p.ep)):fmt(p.ep)}</td>${rab?`<td class="n">${edit?ed(`p:${i}:rabatt`,+p.rabatt?fmtQ(p.rabatt):'','%'):(+p.rabatt?fmtQ(p.rabatt)+' %':'')}</td>`:''}${mehrSt?`<td class="n">${esc(steuerDef(p.steuer).satz)} %</td>`:''}<td class="n">${fmt(posGP(p))}</td>`;
     return`<tr><td>${pnr[p.id]}</td><td><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Bezeichnung')}</b>${p.nr?` <span style="color:#555">(${esc(p.nr)})</span>`:''}${p.text||edit?`<div class="lt">${ed(`p:${i}:text`,p.text,'Langtext …',true)}</div>`:''}</td>
-    <td class="n">${edit?ed(`p:${i}:menge`,fmtQ(p.menge)):fmtQ(p.menge)}</td><td>${esc(p.einheit)}</td>${pr}</tr>`;
+    <td class="c">${edit?ed(`p:${i}:menge`,fmtQ(p.menge)):fmtQ(p.menge)}</td><td class="c">${esc(p.einheit)}</td>${pr}</tr>`;
   };
   // Zeilen inkl. Gruppensummen (bei Gruppen ohne Pauschalpreis und mit Einzelpreisen)
   const tr=liste=>{let o='',g=null;const ende=()=>{if(g&&!ohneP&&!(+g.pauschal>0)&&!g.ohneEP)o+=`<tr class="gsum"><td></td><td colspan="${ncol-2}">Summe ${pnr[g.id]} ${esc(g.bez)}</td><td class="n">${fmt(gi.sumG[g.id])}</td></tr>`};
     for(const p of liste){if(p.art==='G'){ende();g=p}o+=zeile(p)}ende();return o};
-  const th=`<tr><th>Pos</th><th>Bezeichnung</th><th class="n">Menge</th><th>Einh.</th>${ohneP?'':`${ls?'<th class="n">EP Lohn</th><th class="n">EP Sonst.</th>':''}<th class="n">EP €</th>${rab?'<th class="n">Rabatt %</th>':''}${mehrSt?'<th class="n">USt</th>':''}<th class="n">GP €</th>`}</tr>`;
+  const th=`<tr><th>Pos</th><th>Bezeichnung</th><th>Menge</th><th>Einheit</th>${ohneP?'':`${ls?'<th class="n">EP Lohn</th><th class="n">EP Sonst.</th>':''}<th class="n">Einzelpreis</th>${rab?'<th class="n">Rabatt %</th>':''}${mehrSt?'<th class="n">USt</th>':''}<th class="n">Gesamtpreis</th>`}</tr>`;
   const hinweise=[...new Set(s.steuern.map(x=>steuerDef(x.code).hinweis).filter(Boolean))];
   const nrTxt=b.nr||(edit?vorschlagNr(b)+' (Vorschlag)':'ENTWURF');
   const mitLeistung=(t.re&&t.b==='V')||b.typ==='LS';
-  const info=[[t.b==='V'?'Beleg-Nr.':'Bestell-Nr.',nrTxt],['Datum',dAT(b.datum)],[t.b==='V'?'Kunden-Nr.':'Lieferanten-Nr.',k.nr],k.uid?['Ihre UID',k.uid]:null,b.typ==='ER'?['Rechnung Lief.',b.fremdNr]:null,b.fremdNr&&b.typ==='BE'?['Ihr Angebot',b.fremdNr]:null,b.leistung||(edit&&mitLeistung)?['Leistung',{h:ed('h:leistung',b.leistung,'TT.MM.JJJJ')}]:null,b.gueltigBis?['Gültig bis',dAT(b.gueltigBis)]:null,b.liefertermin?['Liefertermin',dAT(b.liefertermin)]:null,S().bearbeiter?['Bearbeiter',S().bearbeiter]:null].filter(Boolean);
+  const datLbl=b.typ==='AN'?'Angebotsdatum':t.re&&t.b==='V'&&b.typ!=='GS'?'Rechnungsdatum':'Datum';
+  const info=[[datLbl,dAT(b.datum)],[t.b==='V'?'Kunden-Nr.':'Lieferanten-Nr.',k.nr],k.uid?['Ihre UID',k.uid]:null,b.typ==='ER'?['Rechnung Lief.',b.fremdNr]:null,b.fremdNr&&b.typ==='BE'?['Ihr Angebot',b.fremdNr]:null,b.leistung||(edit&&mitLeistung)?['Leistung',{h:ed('h:leistung',b.leistung,'TT.MM.JJJJ')}]:null,b.gueltigBis?['Gültig bis',dAT(b.gueltigBis)]:null,b.liefertermin?['Liefertermin',dAT(b.liefertermin)]:null,S().bearbeiter?['Ansprechperson',S().bearbeiter]:null,f.mail?['E-Mail',f.mail]:null,f.tel?['Telefon',f.tel]:null].filter(Boolean);
   let zb='';
   if(t.re&&t.b==='V'&&b.typ!=='GS'){zb=`Zahlbar bis ${dAT(faellig(b))} ohne Abzug`+(+b.skonto?`, bei Zahlung bis ${dAT(addDays(b.datum,b.skontoTage))} abzüglich ${fmtQ(b.skonto)} % Skonto`:'')+'.'}
   else if(['AN','AB','PR'].includes(b.typ)){zb=`Zahlungsbedingungen: ${b.zahlungsziel} Tage netto`+(+b.skonto?`, ${b.skontoTage} Tage ${fmtQ(b.skonto)} % Skonto`:'')+'. Alle Preise in EUR zuzüglich gesetzlicher Umsatzsteuer.'}
   return`<div class="doc">
   ${b.fest?'':'<div class="wm">ENTWURF – nicht gültig</div>'}
-  <div class="hd"><div>${f.logo?`<img src="${f.logo}">`:''}</div><div class="firm"><b>${esc(f.name)}</b><br>${esc(f.zusatz)}${f.zusatz?'<br>':''}${esc(f.strasse)}<br>${esc(f.plz)} ${esc(f.ort)}<br>${esc(f.tel)}${f.tel?'<br>':''}${esc(f.mail)}</div></div>
-  <div class="adr"><div class="to"><div class="snd">${esc([f.name,f.strasse,(f.plz+' '+f.ort).trim()].filter(Boolean).join(' · '))}</div>${esc(k.name)}<br>${k.zusatz?esc(k.zusatz)+'<br>':''}${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.land&&k.land!=='Österreich'?'<br>'+esc(k.land):''}</div>
-  <table class="info" style="width:auto">${info.map(([a,v])=>`<tr><td>${a}</td><td>${v&&v.h!=null?v.h:esc(v)}</td></tr>`).join('')}</table></div>
-  <h3>${t.bez} ${esc(nrTxt)}</h3>
-  ${b.betreff||edit?`<div><b>${ed('h:betreff',b.betreff,'Betreff / Projekt')}</b></div>`:''}${b.bezug||edit?`<div>Bezug: ${ed('h:bezug',b.bezug,'z. B. Ihre Anfrage vom …')}</div>`:''}
+  ${briefkopf(f)}
+  <div class="adr"><div class="to">${esc(k.name)}<br>${k.zusatz?esc(k.zusatz)+'<br>':''}${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.land&&k.land!=='Österreich'?'<br>'+esc(k.land):''}</div>
+  <div class="info">${info.map(([a,v])=>`<div>${a}: ${v&&v.h!=null?v.h:esc(v)}</div>`).join('')}</div></div>
+  <h3>${esc(t.bez.toUpperCase())} NR.: ${esc(nrTxt)}</h3>
+  ${b.betreff||edit?`<div>Projekt: ${ed('h:betreff',b.betreff,'Betreff / Projekt')}</div>`:''}${b.bezug||edit?`<div>Bezug: ${ed('h:bezug',b.bezug,'z. B. Ihre Anfrage vom …')}</div>`:''}
   ${b.kopf||edit?`<div class="txt">${ed('h:kopf',b.kopf,'Kopftext …',true)}</div>`:''}
   <table class="p"><thead>${th}</thead><tbody>${tr(haupt)}</tbody></table>
-  ${ohneP?'':`<table class="tot"><tr><td>Summe netto</td><td class="n">${fmt(s.netto)} €</td></tr>${ls?`<tr><td style="font-size:8.5pt">davon Lohn ${fmt(s.lohn)} € · Sonstiges ${fmt(s.sonst)} €${Math.abs(s.netto-s.lohn-s.sonst)>0.005?` · ohne Aufteilung (Gruppenpreise) ${fmt(s.netto-s.lohn-s.sonst)} €`:''}</td><td></td></tr>`:''}
-  ${s.steuern.map(x=>`<tr><td>${x.satz?`zzgl. ${fmtQ(x.satz)} % USt auf ${fmt(x.basis)}`:esc(x.bez)+' '+fmt(x.basis)}</td><td class="n">${fmt(x.betrag)} €</td></tr>`).join('')}
-  <tr class="b"><td>Gesamtbetrag</td><td class="n">${fmt(s.brutto)} €</td></tr>
+  ${ohneP?'':`<table class="tot"><tr><td>Nettobetrag</td><td class="n">${fmt(s.netto)} €</td></tr>${ls?`<tr><td style="font-size:8.5pt">davon Lohn ${fmt(s.lohn)} € · Sonstiges ${fmt(s.sonst)} €${Math.abs(s.netto-s.lohn-s.sonst)>0.005?` · ohne Aufteilung (Gruppenpreise) ${fmt(s.netto-s.lohn-s.sonst)} €`:''}</td><td></td></tr>`:''}
+  ${s.steuern.map(x=>`<tr><td>${x.satz?`zzgl. Umsatzsteuer ${fmtQ(x.satz)} %${mehrSt?' auf '+fmt(x.basis):''}`:esc(x.bez)+' '+fmt(x.basis)}</td><td class="n">${fmt(x.betrag)} €</td></tr>`).join('')}
+  <tr class="b g"><td>Gesamtbetrag</td><td class="n">${fmt(s.brutto)} €</td></tr>
   ${s.abz.map(a=>`<tr><td>abzgl. ${T[a.typ].bez} ${esc(a.nr)} vom ${dAT(a.datum)}<br><span style="font-size:8pt">netto ${fmt(a.netto)}, USt ${fmt(sum(a.steuern,x=>x.betrag))}</span></td><td class="n">−${fmt(a.brutto)} €</td></tr>`).join('')}
   ${s.abz.length?`<tr class="b"><td>Zu zahlen</td><td class="n">${fmt(s.zahlbar)} €</td></tr>`:''}</table>`}
   ${hinweise.map(h=>`<div class="txt"><b>${esc(h)}</b></div>`).join('')}
@@ -2258,11 +2270,13 @@ function docHTML(b,edit=false){
   ${zb?`<div class="txt">${zb}</div>`:''}
   ${b.typ==='LS'?'<div class="txt" style="margin-top:12mm">Ware vollständig und unbeschädigt erhalten:<br><br><br>______________________________<br>Datum, Unterschrift</div>':''}
   ${b.fuss||edit?`<div class="txt">${ed('h:fuss',b.fuss,'Fußtext …',true)}</div>`:''}
-  <div class="ft"><div>${esc(f.name)}<br>${esc(f.strasse)}, ${esc(f.plz)} ${esc(f.ort)}</div><div>${f.uid?'UID: '+esc(f.uid)+'<br>':''}${f.fn?'FN '+esc(f.fn)+(f.gericht?', '+esc(f.gericht):''):''}</div><div>${esc(f.bank)}<br>${f.iban?'IBAN '+esc(f.iban):''}${f.bic?' · BIC '+esc(f.bic):''}</div><div>${esc(f.tel)}<br>${esc(f.mail)}</div></div>
+  ${f.zeichner&&t.b==='V'?`<div class="sig"><b>${esc(f.zeichner)}</b>${f.zeichnerFkt?`<div>${esc(f.zeichnerFkt)}</div>`:''}</div>`:''}
+  ${fusszeile(f)}
   </div>`;
 }
 function drucken(b){
-  $('#print').innerHTML=docHTML(b);
+  // tfoot wiederholt sich auf jeder Druckseite und hält Platz für die feste Fußzeile frei
+  $('#print').innerHTML=`<table class="pgw"><tbody><tr><td>${docHTML(b)}</td></tr></tbody><tfoot><tr><td><div class="pgf"></div></td></tr></tfoot></table>`;
   const alt=document.title;document.title=`${T[b.typ].bez} ${bNr(b)} ${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]/g,'-');
   setTimeout(()=>{window.print();document.title=alt},50);
 }

@@ -64,6 +64,9 @@ Definition (wie GWT-Kalkulationsmappe): **DB II = (Umsatz nach Skonto − Herste
 Ausweis: DB II € und % vom Umsatz, Aufschlag % auf HK, Fehlbetrag zum Ziel.
 
 ## 6. Lager
+- **Lagerplätze** als Baum in beliebig vielen Ebenen (z. B. Lager › Regal › Fach › Platz), Code aus dem Pfad, z. B. `HL-R01-F02-P03`; anlegen, umbenennen, verschieben, löschen wie Artikelgruppen.
+- **Matrix:** Regale (von–bis) × Fächer × Plätze mit Bezeichnung und Stellenzahl in einem Schritt unter einem Lager bzw. Regal anlegen; Erweitern durch erneuten Aufruf mit größerem Bereich (vorhandene bleiben, nur neue werden ergänzt).
+- **Zuordnung je Artikel:** Lagerplatz in der Artikelmaske und direkt in der Lagerliste (Auswahlfeld je Zeile); Lagerliste mit Suche (auch Lagerplatz), Filter nach Lagerplatz inkl. Unterebenen bzw. „ohne Lagerplatz“; Spalte „Lagerplatz“ auch in der Artikelliste zuschaltbar. Alle Schritte im Protokoll.
 - Bestand ausschließlich aus Bewegungsjournal; Bewertung gleitender Durchschnitt.
 - Manuelle Korrektur und Inventur (Ist-Menge → Differenzbuchung).
 - Mindestbestand mit Warnung im Überblick.

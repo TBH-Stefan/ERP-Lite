@@ -1252,7 +1252,7 @@ async function artikelPopup(v={},lid=''){
   const o=await formDialog({titel:'Neuer Artikel',breit:true,felder:[
     {k:'nr',l:'Artikel-Nr. (eigene)',wert:v.nr||nrV,cls:'w05',pflicht:true},{k:'bez',l:'Bezeichnung',wert:v.bez,cls:'w2',pflicht:true},
     {k:'art',l:'Art',wert:v.art||'W',opts:['W','L','F'].map(x=>[x,ART[x]]),cls:'w05'},
-    {k:'gruppe',l:'Artikelgruppe',wert:v.gruppe||(UI.aGr&&UI.aGr!=='__ohne'?UI.aGr:''),opts:[['','– keine –'],...S().artgruppen.slice().sort((a,c)=>a.bez.localeCompare(c.bez)).map(g=>[g.id,g.bez])],cls:'w05'},
+    {k:'gruppe',l:'Artikelgruppe',wert:v.gruppe||(UI.aGr&&UI.aGr!=='__ohne'?UI.aGr:''),opts:[['','– keine –'],...grListe()],cls:'w05'},
     {k:'einheit',l:'Einheit',wert:v.einheit||'Stk',opts:s.einheiten.map(e=>[e,e]),neu:1,cls:'w05'},{k:'ek',l:'EK netto',typ:'number',wert:v.ek||0,cls:'w05'},{k:'vk',l:'VK netto',typ:'number',wert:v.vk||0,cls:'w05'},
     {k:'lager',l:'Lagerartikel',typ:'checkbox',wert:!!v.lager,cls:'w05'},
     {k:'lid',l:'Lieferant',wert:lid,opts:[['','–'],...lief.map(k=>[k.id,k.name])],neu:1},{k:'artNr',l:'Art.-Nr. beim Lieferanten',wert:v.artNr},
@@ -1464,7 +1464,7 @@ V.kontakt=id=>{
 };
 
 /* ---------- Artikel ---------- */
-function artikelListe(){const q=UI.aQ.toLowerCase(),alle=lsGet('erp-aInaktiv')==='1',gr=UI.aGr;return DB.artikel.filter(a=>(alle||a.aktiv!==false)&&(!gr||(gr==='__ohne'?!a.gruppe:a.gruppe===gr))&&(!q||[a.nr,a.bez,a.ean,grBez(a.gruppe),...(a.lieferanten||[]).map(l=>l.artNr)].join(' ').toLowerCase().includes(q))).sort((a,c)=>String(a.nr).localeCompare(String(c.nr)))}
+function artikelListe(){const q=UI.aQ.toLowerCase(),alle=lsGet('erp-aInaktiv')==='1',gr=UI.aGr,grSet=gr&&gr!=='__ohne'?grUnter(gr):null;return DB.artikel.filter(a=>(alle||a.aktiv!==false)&&(!gr||(gr==='__ohne'?!a.gruppe||!grG(a.gruppe):grSet.has(a.gruppe)))&&(!q||[a.nr,a.bez,a.ean,grBez(a.gruppe),...(a.lieferanten||[]).map(l=>l.artNr)].join(' ').toLowerCase().includes(q))).sort((a,c)=>String(a.nr).localeCompare(String(c.nr)))}
 // Löschen (auch mehrere): verwendete Artikel bleiben, Rest in den Papierkorb
 function artikelLoeschen(ids){
   const L=ids.map(artikel).filter(Boolean);if(!L.length)return false;
@@ -1483,9 +1483,9 @@ V.artikel=id=>{
   if(id)return artikelEdit(id);
   const L=artikelListe(),sichtbar=new Set(L.map(a=>a.id)),sel=new Set((UI.aSel=UI.aSel.filter(id=>sichtbar.has(id)))),nInaktiv=DB.artikel.filter(a=>a.aktiv===false).length;
   return`<h1>Artikel &amp; Leistungen</h1><div class="bar"><input data-o="ui" data-f="aQ" placeholder="Suche (auch Lief.-Art.-Nr.)" value="${esc(UI.aQ)}" style="width:260px">
-    <select data-o="ui" data-f="aGr" title="Nach Artikelgruppe filtern">${opt('','alle Gruppen',UI.aGr)}${opt('__ohne','– ohne Gruppe –',UI.aGr)}${S().artgruppen.slice().sort((a,c)=>a.bez.localeCompare(c.bez)).map(g=>opt(g.id,`${g.bez} (${DB.artikel.filter(a=>a.gruppe===g.id).length})`,UI.aGr)).join('')}</select><button data-act="agrp" title="Gruppen anlegen, umbenennen, löschen">Gruppen …</button>
+    <select data-o="ui" data-f="aGr" title="Nach Artikelgruppe filtern (inkl. Untergruppen)">${opt('','alle Gruppen',UI.aGr)}${opt('__ohne','– ohne Gruppe –',UI.aGr)}${grBaum().map(({g,t})=>opt(g.id,'\u2003'.repeat(t)+(t?'└ ':'')+g.bez+` (${grAnz(g.id)})`,UI.aGr)).join('')}</select><button data-act="agrp" title="Gruppen anlegen, umbenennen, löschen">Gruppen …</button>
     <label class="chk" style="margin:0"><input type="checkbox" data-act="ainakt" ${lsGet('erp-aInaktiv')==='1'?'checked':''}> deaktivierte anzeigen${nInaktiv?` (${nInaktiv})`:''}</label><span class="sp"></span>
-    ${sel.size?`<span><b>${sel.size}</b> ausgewählt</span><select data-act="amgr" title="Ausgewählten Artikeln eine Gruppe zuordnen">${opt('','Gruppe zuordnen …','')}${opt('__keine','– keine Gruppe –','')}${S().artgruppen.slice().sort((a,c)=>a.bez.localeCompare(c.bez)).map(g=>opt(g.id,g.bez,'')).join('')}${opt('__neu','+ neue Gruppe …','')}</select><button data-act="amakt" data-v="0">Deaktivieren</button><button data-act="amakt" data-v="1">Aktivieren</button><button class="d" data-act="amdel">Löschen …</button>`:''}<button class="p" data-act="anew">+ Artikel</button></div>
+    ${sel.size?`<span><b>${sel.size}</b> ausgewählt</span><select data-act="amgr" title="Ausgewählten Artikeln eine Gruppe zuordnen">${opt('','Gruppe zuordnen …','')}${opt('__keine','– keine Gruppe –','')}${grListe().map(([id,l])=>opt(id,l,'')).join('')}${opt('__neu','+ neue Hauptgruppe …','')}</select><button data-act="amakt" data-v="0">Deaktivieren</button><button data-act="amakt" data-v="1">Aktivieren</button><button class="d" data-act="amdel">Löschen …</button>`:''}<button class="p" data-act="anew">+ Artikel</button></div>
   ${tabelle('artikel',[
     {k:'nr',l:'Nr',f:a=>esc(a.nr)},{k:'bez',l:'Bezeichnung',f:a=>esc(a.bez)},{k:'lnr',l:'Lief.-Art.-Nr.',f:a=>esc(lfNr(a))},{k:'lief',l:'Lieferant',f:a=>esc(lfNamen(a)),std:false},
     {k:'gruppe',l:'Gruppe',f:a=>esc(grBez(a.gruppe))},{k:'art',l:'Art',f:a=>ART[a.art]},{k:'einheit',l:'Einh.',f:a=>esc(a.einheit)},{k:'lp',l:'Listenpreis',n:1,f:a=>+lf1(a).lp?fmt(lf1(a).lp):'',std:false},{k:'rabatt',l:'Rabatt %',n:1,f:a=>+lf1(a).rabatt?fmtQ(lf1(a).rabatt):'',std:false},
@@ -1503,7 +1503,7 @@ function artikelEdit(id){
   const bs=bestand(a.id);
   return`<div class="bar"><h1 style="margin:0">${esc(a.nr)} ${esc(a.bez)}</h1><span class="sp"></span><button class="d" data-act="adel" data-id="${a.id}">Löschen</button></div>
   <div class="card">
-  <div class="row">${f('nr','Artikel-Nr.','w05')}${f('bez','Bezeichnung','w2')}<label class="w05">Artikelgruppe<select data-o="a" data-id="${a.id}" data-f="gruppe">${grOpts(a.gruppe)}${opt('__neu','+ neue Gruppe …','')}</select></label><label class="w05">Art<select data-o="a" data-id="${a.id}" data-f="art">${['W','L','F'].map(k=>opt(k,ART[k],a.art)).join('')}</select></label><label class="w05">aktiv<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="aktiv" ${a.aktiv!==false?'checked':''}></label></div>
+  <div class="row">${f('nr','Artikel-Nr.','w05')}${f('bez','Bezeichnung','w2')}<label class="w05">Artikelgruppe<select data-o="a" data-id="${a.id}" data-f="gruppe">${grOpts(a.gruppe)}${a.gruppe&&grG(a.gruppe)?opt('__sub',`+ Untergruppe von „${grG(a.gruppe).bez}“ …`,''):''}${opt('__neu','+ neue Hauptgruppe …','')}</select></label><label class="w05">Art<select data-o="a" data-id="${a.id}" data-f="art">${['W','L','F'].map(k=>opt(k,ART[k],a.art)).join('')}</select></label><label class="w05">aktiv<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="aktiv" ${a.aktiv!==false?'checked':''}></label></div>
   <div class="row"><label>Langtext<textarea data-o="a" data-id="${a.id}" data-f="text">${esc(a.text)}</textarea></label></div>
   <div class="row"><label class="w05">Basiseinheit<select data-o="a" data-id="${a.id}" data-f="einheit">${S().einheiten.map(e=>opt(e,e,a.einheit)).join('')}</select></label>
     <label>Weitere Einheiten (z. B. Krt=10; Rolle=100)<input data-o="a" data-id="${a.id}" data-f="einheitenStr" value="${esc((a.einheiten||[]).map(x=>x.e+'='+x.f).join('; '))}"></label>
@@ -2367,24 +2367,38 @@ function spaltenDialog(id){
   d.querySelector('#sp-std').onclick=()=>{d.remove();delete S().spalten[id];commit();render()};
   d.querySelector('#m-ok').onclick=()=>{const k=ord.filter(x=>an.has(x));if(!k.length){alert('Mindestens eine Spalte auswählen.');return}(S().spalten=S().spalten||{})[id]=k;d.remove();commit();render()};
 }
-/* Artikelgruppen (Einstellungen: artgruppen [{id,bez}]) */
-const grBez=id=>S().artgruppen.find(g=>g.id===id)?.bez||'';
-const grOpts=(wert,leer='– keine Gruppe –')=>opt('',leer,wert||'')+S().artgruppen.slice().sort((a,c)=>a.bez.localeCompare(c.bez)).map(g=>opt(g.id,g.bez,wert||'')).join('');
-async function gruppeNeu(){const n=(prompt('Name der neuen Artikelgruppe:')||'').trim();if(!n)return null;
-  const da=S().artgruppen.find(g=>g.bez.toLowerCase()===n.toLowerCase());if(da)return da.id;const g={id:uid(),bez:n};S().artgruppen.push(g);log('Artikelgruppe angelegt',n);return g.id}
+/* Artikelgruppen als Baum (Einstellungen: artgruppen [{id,bez,parent}], beliebig tief) */
+const AG=()=>S().artgruppen,grG=id=>AG().find(g=>g.id===id);
+const grKinder=pid=>AG().filter(g=>(g.parent||'')===(pid||'')).sort((a,c)=>a.bez.localeCompare(c.bez));
+function grBaum(pid='',t=0,o=[],seen=new Set()){for(const g of grKinder(pid)){if(seen.has(g.id))continue;seen.add(g.id);o.push({g,t});grBaum(g.id,t+1,o,seen)}return o}
+const grPfad=id=>{const p=[];let g=grG(id),n=0;while(g&&n++<50){p.unshift(g.bez);g=grG(g.parent)}return p.join(' › ')};
+const grBez=grPfad;
+const grUnter=id=>{const o=new Set([id]);let w=[id];while(w.length){const n=[];for(const x of w)for(const k of grKinder(x))if(!o.has(k.id)){o.add(k.id);n.push(k.id)}w=n}return o};
+const grAnz=id=>{const u=grUnter(id);return DB.artikel.filter(a=>u.has(a.gruppe)).length};
+const grListe=()=>grBaum().map(({g,t})=>[g.id,'\u2003'.repeat(t)+(t?'└ ':'')+g.bez]);
+const grOpts=(wert,leer='– keine Gruppe –')=>opt('',leer,wert||'')+grListe().map(([id,l])=>opt(id,l,wert||'')).join('');
+async function gruppeNeu(parent=''){const n=(prompt(parent?`Neue Untergruppe von „${grPfad(parent)}“:`:'Name der neuen Artikelgruppe:')||'').trim();if(!n)return null;
+  const da=AG().find(g=>(g.parent||'')===parent&&g.bez.toLowerCase()===n.toLowerCase());if(da)return da.id;const g={id:uid(),bez:n,parent};AG().push(g);log('Artikelgruppe angelegt',grPfad(g.id));return g.id}
 function gruppenDialog(){
   const d=document.createElement('div');d.className='modal';
-  const zeich=()=>{const G=S().artgruppen.slice().sort((a,c)=>a.bez.localeCompare(c.bez));d.querySelector('#gr-l').innerHTML=G.map(g=>`<div class="att"><input data-gr="${g.id}" value="${esc(g.bez)}" style="flex:1"><span class="mut" style="min-width:70px;text-align:right">${DB.artikel.filter(a=>a.gruppe===g.id).length} Artikel</span><button class="s d" data-grdel="${g.id}">✕</button></div>`).join('')||'<p class="mut">Noch keine Gruppen.</p>'};
-  d.innerHTML=`<div class="mbox"><h2>Artikelgruppen</h2><div id="gr-l" style="max-height:50vh;overflow:auto"></div>
-    <div class="bar" style="margin:12px 0 0"><input id="gr-neu" placeholder="Neue Gruppe, z. B. Kabel, PV-Speicher, Montage" style="flex:1"><button id="gr-add">+ Anlegen</button></div>
+  const zeich=()=>{const B=grBaum();d.querySelector('#gr-l').innerHTML=B.map(({g,t})=>{const u=grUnter(g.id);
+    return`<div class="att" style="padding-left:${t*22}px">${t?'<span class="mut">└</span>':''}<input data-gr="${g.id}" value="${esc(g.bez)}" style="flex:1;min-width:120px">
+    <select data-grp="${g.id}" title="Übergeordnete Gruppe (verschieben)" style="max-width:150px">${opt('','– oberste Ebene –',g.parent||'')}${grListe().filter(([id])=>!u.has(id)).map(([id,l])=>opt(id,l.trim(),g.parent||'')).join('')}</select>
+    <span class="mut" style="min-width:64px;text-align:right" title="inkl. Untergruppen">${grAnz(g.id)} Art.</span><button class="s" data-grsub="${g.id}" title="Untergruppe anlegen">+ Unter</button><button class="s d" data-grdel="${g.id}">✕</button></div>`}).join('')||'<p class="mut">Noch keine Gruppen.</p>'};
+  d.innerHTML=`<div class="mbox" style="max-width:720px"><h2>Artikelgruppen</h2><p class="mut" style="margin-top:0">Beliebig tief: „+ Unter“ legt eine Untergruppe an, die Auswahl rechts verschiebt eine Gruppe samt Untergruppen.</p><div id="gr-l" style="max-height:55vh;overflow:auto"></div>
+    <div class="bar" style="margin:12px 0 0"><input id="gr-neu" placeholder="Neue Hauptgruppe, z. B. Elektro, PV, Montage" style="flex:1"><button id="gr-add">+ Anlegen</button></div>
     <div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button class="p" id="m-ok">Fertig</button></div></div>`;
   document.body.appendChild(d);zeich();
-  const add=()=>{const e=d.querySelector('#gr-neu'),n=e.value.trim();if(!n)return;if(S().artgruppen.some(g=>g.bez.toLowerCase()===n.toLowerCase())){alert('Gruppe gibt es bereits.');return}S().artgruppen.push({id:uid(),bez:n});log('Artikelgruppe angelegt',n);e.value='';zeich()};
+  const add=()=>{const e=d.querySelector('#gr-neu'),n=e.value.trim();if(!n)return;if(grKinder('').some(g=>g.bez.toLowerCase()===n.toLowerCase())){alert('Gruppe gibt es bereits.');return}const g={id:uid(),bez:n,parent:''};AG().push(g);log('Artikelgruppe angelegt',n);e.value='';zeich()};
   d.querySelector('#gr-add').onclick=add;d.querySelector('#gr-neu').onkeydown=e=>{if(e.key==='Enter')add()};
-  d.addEventListener('change',e=>{const id=e.target.dataset.gr;if(!id)return;const g=S().artgruppen.find(x=>x.id===id),n=e.target.value.trim();if(!n){e.target.value=g.bez;return}if(n!==g.bez){log('Artikelgruppe umbenannt',g.bez+' → '+n);g.bez=n}});
-  d.addEventListener('click',e=>{const id=e.target.dataset.grdel;if(!id)return;const g=S().artgruppen.find(x=>x.id===id),L=DB.artikel.filter(a=>a.gruppe===id);
-    if(!confirm(`Gruppe „${g.bez}“ löschen?${L.length?`\n${L.length} Artikel verlieren die Zuordnung (Artikel bleiben erhalten).`:''}`))return;
-    for(const a of L)a.gruppe='';S().artgruppen=S().artgruppen.filter(x=>x!==g);if(UI.aGr===id)UI.aGr='';log('Artikelgruppe gelöscht',g.bez+(L.length?` (${L.length} Artikel ohne Gruppe)`:''));zeich()});
+  d.addEventListener('change',e=>{const t=e.target;
+    if(t.dataset.gr){const g=grG(t.dataset.gr),n=t.value.trim();if(!n){t.value=g.bez;return}if(n!==g.bez){log('Artikelgruppe umbenannt',grPfad(g.id)+' → '+n);g.bez=n;zeich()}}
+    if(t.dataset.grp){const g=grG(t.dataset.grp),np=t.value;if(grUnter(g.id).has(np)){zeich();return}const alt=grPfad(g.id);g.parent=np;log('Artikelgruppe verschoben',alt+' → '+grPfad(g.id));zeich()}});
+  d.addEventListener('click',async e=>{const t=e.target;
+    if(t.dataset.grsub){const n=await gruppeNeu(t.dataset.grsub);if(n)zeich();return}
+    const id=t.dataset.grdel;if(!id)return;const g=grG(id),L=DB.artikel.filter(a=>a.gruppe===id),K=grKinder(id),ob=g.parent||'';
+    if(!confirm(`Gruppe „${grPfad(id)}“ löschen?${K.length?`\n${K.length} Untergruppe(n) rücken eine Ebene nach oben.`:''}${L.length?`\n${L.length} Artikel kommen ${ob?'in „'+grPfad(ob)+'“':'ohne Gruppe'}.`:''}\nArtikel bleiben erhalten.`))return;
+    const pf=grPfad(id);for(const a of L)a.gruppe=ob;for(const k of K)k.parent=ob;S().artgruppen=AG().filter(x=>x!==g);if(UI.aGr===id)UI.aGr=ob;log('Artikelgruppe gelöscht',pf);zeich()});
   d.querySelector('#m-ok').onclick=()=>{d.remove();commit();render()};
 }
 const lfNamen=a=>(a.lieferanten||[]).map(l=>kName(l.kontaktId)).filter(x=>x&&x!=='–').join(', ');
@@ -3351,7 +3365,7 @@ document.addEventListener('change',e=>{
         log('Kontakt-Nr. geändert',`${k.nr} → ${n} ${k.name}`);k.nr=n;const t=k.typ==='L'?'L':'K';if(/^\d+$/.test(n)&&+n>(S().knr[t]||0)&&+n<(S().knr[t]||0)+100000)S().knr[t]=+n;persist();render();return}
       k[d.f]=nv;break}
     case'a':{const a=artikel(d.id);
-      if(d.f==='gruppe'&&v==='__neu'){gruppeNeu().then(g=>{if(g){a.gruppe=g;persist()}render()});return}if(d.f==='einheitenStr'){a.einheiten=String(v).split(/[;,]/).map(x=>x.split('=')).filter(x=>x.length===2&&x[0].trim()&&num(x[1])>0).map(([e,f])=>({e:e.trim(),f:num(f)}));for(const x of a.einheiten)if(!S().einheiten.includes(x.e))S().einheiten.push(x.e)}else a[d.f]=nv;if(['nr','bez','aktiv'].includes(d.f))artDatalist();if(['lager','einheitenStr'].includes(d.f)){persist();render();return}break}
+      if(d.f==='gruppe'&&(v==='__neu'||v==='__sub')){gruppeNeu(v==='__sub'?a.gruppe:'').then(g=>{if(g){a.gruppe=g;persist()}render()});return}if(d.f==='einheitenStr'){a.einheiten=String(v).split(/[;,]/).map(x=>x.split('=')).filter(x=>x.length===2&&x[0].trim()&&num(x[1])>0).map(([e,f])=>({e:e.trim(),f:num(f)}));for(const x of a.einheiten)if(!S().einheiten.includes(x.e))S().einheiten.push(x.e)}else a[d.f]=nv;if(['nr','bez','aktiv'].includes(d.f))artDatalist();if(['lager','einheitenStr'].includes(d.f)){persist();render();return}break}
     case'al':artikel(d.id).lieferanten[+d.i][d.f]=v;break;
     case's':if(d.f==='ltDruck')S().ltDruck=v==='true';else if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()];o[pth[0]]=nv}break;
     case'st':{const x=S().steuer[+d.i];if(d.f==='code'){const alt=x.code;if(S().steuer.some((y,j)=>j!==+d.i&&y.code===v)){alert('Code existiert bereits.');render();return}if(DB.belege.some(b=>b.pos.some(p=>p.steuer===alt))){alert('Code wird verwendet und kann nicht geändert werden.');render();return}}x[d.f]=nv;break}

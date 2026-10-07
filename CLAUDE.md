@@ -23,7 +23,7 @@ Anwender: Stefan Horvath. Sprache in Code-Kommentaren, Oberfläche und Antworten
 - Sammelrechnung aus Lieferscheinen: `sammelRechnung()`. Folgebeleg aus Entwurf: vorher `festschreiben()`.
 - Papierkorb/Rückgängig: `wegwerfen()`, `wiederherstellen()`.
 - Listen über `tabelle(id,cols,rows,…)` mit Spaltenauswahl (`S().spalten`, `spaltenDialog()`); neue Spalten dort als `{k,l,f,n,std}` ergänzen.
-- Artikelgruppen: `S().artgruppen` [{id,bez}], Artikel-Feld `gruppe`; `grBez()`, `grOpts()`, `gruppenDialog()`, Filter `UI.aGr`.
+- Artikelgruppen (Baum): `S().artgruppen` [{id,bez,parent}], Artikel-Feld `gruppe`; `grBaum()`, `grPfad()`, `grUnter()` (inkl. Untergruppen), `grOpts()`, `gruppenDialog()`, Filter `UI.aGr`.
 - Kontakte: `kontaktPopup(typ,vorbelegung,kontakt)` (neu/bearbeiten, Pflichtfelder), `kontaktFehlt()`, `konditionenUebernehmen()`.
 
 ## Regeln für Änderungen

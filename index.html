@@ -332,6 +332,7 @@ function wiederherstellen(eids){
     if(L.some(x=>x.id===o.id)){fehler.push(e.info+': bereits vorhanden');continue}
     if(e.c==='artikel'&&L.some(x=>x.nr===o.nr)){fehler.push(`${e.info}: Artikel-Nr. ${o.nr} inzwischen vergeben`);continue}
     if(e.c==='kontakte'&&L.some(x=>x.nr===o.nr&&x.typ===o.typ)){fehler.push(`${e.info}: Nummer ${o.nr} inzwischen vergeben`);continue}
+    if(e.c==='artikel'&&o._links){for(const [bid,pid] of o._links){const p=beleg(bid)?.pos.find(q=>q.id===pid);if(p&&!p.artikelId)p.artikelId=o.id}delete o._links}
     if(e.c==='belege'&&o._zeiten){for(const z of DB.zeiten)if(o._zeiten.includes(z.id)&&!z.belegId)z.belegId=o.id;delete o._zeiten}
     L.push(o);DB.papierkorb=DB.papierkorb.filter(x=>x.id!==eid);log(PK[e.c].n+' wiederhergestellt',e.info);n++}
   if(n){artDatalist();commit()}
@@ -1434,11 +1435,15 @@ function artikelListe(){const q=UI.aQ.toLowerCase();return DB.artikel.filter(a=>
 // Löschen (auch mehrere): verwendete Artikel bleiben, Rest in den Papierkorb
 function artikelLoeschen(ids){
   const L=ids.map(artikel).filter(Boolean);if(!L.length)return false;
-  const benutzt=L.filter(a=>DB.belege.some(b=>b.pos.some(p=>p.artikelId===a.id))||DB.lager.some(e=>e.artikelId===a.id)),frei=L.filter(a=>!benutzt.includes(a));
-  if(benutzt.length){const t=`${benutzt.length} Artikel ${benutzt.length>1?'werden':'wird'} in Belegen oder im Lager verwendet und ${benutzt.length>1?'können':'kann'} nicht gelöscht werden:\n`+benutzt.slice(0,15).map(a=>`• ${a.nr} ${a.bez}`).join('\n')+(benutzt.length>15?'\n…':'');
+  // geschützt: in festgeschriebenen (auch stornierten) Belegen oder mit Lagerbewegung; nur in Entwürfen → löschbar, Positionen behalten den Text
+  const wo=a=>{const fb=DB.belege.find(b=>b.fest&&b.pos.some(p=>p.artikelId===a.id));return fb?`${T[fb.typ].bez} ${bNr(fb)}`:DB.lager.some(e=>e.artikelId===a.id)?'Lagerbewegungen':''};
+  const benutzt=L.filter(a=>wo(a)),frei=L.filter(a=>!benutzt.includes(a));
+  if(benutzt.length){const t=`${benutzt.length} Artikel ${benutzt.length>1?'stehen':'steht'} in festgeschriebenen Belegen oder im Lager und ${benutzt.length>1?'können':'kann'} nicht gelöscht werden:\n`+benutzt.slice(0,15).map(a=>`• ${a.nr} ${a.bez} (${wo(a)})`).join('\n')+(benutzt.length>15?'\n…':'');
     if(confirm(t+'\n\nStattdessen deaktivieren (bleibt erhalten, wird nicht mehr vorgeschlagen)?')){for(const a of benutzt)if(a.aktiv!==false){a.aktiv=false;log('Artikel deaktiviert',`${a.nr} ${a.bez}`)}commit()}}
   if(!frei.length){artDatalist();return false}
-  if(!confirm(`${frei.length} Artikel löschen?\n\n`+frei.slice(0,15).map(a=>`• ${a.nr} ${a.bez}`).join('\n')+(frei.length>15?'\n…':'')+'\n\nGelöschte Artikel können über „Rückgängig“ bzw. den Papierkorb (Export & Sicherung) wiederhergestellt werden.'))return false;
+  const entw=DB.belege.filter(b=>!b.fest&&b.pos.some(p=>frei.some(a=>a.id===p.artikelId)));
+  if(!confirm(`${frei.length} Artikel löschen?\n\n`+frei.slice(0,15).map(a=>`• ${a.nr} ${a.bez}`).join('\n')+(frei.length>15?'\n…':'')+(entw.length?`\n\nIn ${entw.length} Entwurf/Entwürfen verwendet (${entw.slice(0,3).map(b=>T[b.typ].bez+' '+kName(b.kontaktId)).join(', ')}): die Positionen bleiben mit Text erhalten, nur die Verknüpfung zum Artikel wird gelöst.`:'')+'\n\nGelöschte Artikel können über „Rückgängig“ bzw. den Papierkorb (Export & Sicherung) wiederhergestellt werden.'))return false;
+  for(const a of frei){const ln=[];for(const b of entw)for(const p of b.pos)if(p.artikelId===a.id){p.artikelId='';ln.push([b.id,p.id])}if(ln.length)a._links=ln} // für Wiederherstellung merken
   wegwerfen('artikel',frei);artDatalist();return true;
 }
 V.artikel=id=>{
@@ -3055,6 +3060,13 @@ const ACT={
   qneu:el=>{const b=neuBeleg(el.dataset.t);persist();go('beleg/'+b.id)},
 };
 Object.assign(ACT,ACT_LV,ACT_LB,ACT_FB);
+// Live-Suche: Suchfelder (UI.*Q) filtern beim Tippen, Fokus und Cursor bleiben erhalten
+let suchT=null;
+document.addEventListener('input',e=>{
+  const el=e.target,d=el.dataset;if(d.o!=='ui'||!/Q$/.test(d.f||''))return;
+  clearTimeout(suchT);suchT=setTimeout(()=>{UI[d.f]=el.value;const pos=el.selectionStart;render();
+    const n=document.querySelector(`[data-o="ui"][data-f="${d.f}"]`);if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}},d.f==='lbQ'?350:150);
+});
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');
   if(!el){if(!e.target.closest('.pop'))closePop();return}

@@ -23,7 +23,7 @@ body.loaded #app{display:flex}
 .seg button.on{background:var(--acc2);color:var(--acc);font-weight:600}
 .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
 .split .sticky{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}
-.blatt{background:#fff;color:#000;max-width:210mm;min-height:120mm;margin:0 auto 14px;padding:10mm 13mm 12mm 17mm;box-shadow:0 2px 14px rgba(0,0,0,.12);border:1px solid var(--line)}
+.blatt{background:#fff;color:#000;max-width:210mm;min-height:120mm;margin:0 auto 14px;padding:10mm 14mm 12mm 20mm;box-shadow:0 2px 14px rgba(0,0,0,.12);border:1px solid var(--line)}
 .blatt .doc .ft{position:static;margin-top:12mm}
 .blatt .doc .hd{margin-top:0}
 .ed{outline:1px dashed #9db8e6;outline-offset:1px;border-radius:2px;min-width:24px;display:inline-block;cursor:text}
@@ -172,7 +172,14 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
 }
 #print{display:none}
 .pgw,.pgw>*>tr>td{border:0;padding:0;width:100%;border-collapse:collapse}.pgw .pgf{height:16mm}
-@media print{#app,#start,.pop{display:none!important}#print{display:block}body{background:#fff}@page{size:A4;margin:10mm 14mm 17.3mm 20mm;@bottom-right{content:'Seite ' counter(page) ' von ' counter(pages);white-space:nowrap;font:7.5pt Arial,sans-serif;vertical-align:top;text-align:right;padding-top:10.5mm;width:30mm;margin-right:1mm}}#print.mb .ft{display:none}#print.mb .pgf{height:0}}
+@media print{#app,#start,.pop{display:none!important}#print{display:block}body{background:#fff}@page{size:A4;margin:10mm 14mm 17.3mm 20mm;@bottom-right{content:'Seite ' counter(page) ' von ' counter(pages);white-space:nowrap;font:7.5pt Arial,sans-serif;vertical-align:top;text-align:right;padding-top:10.5mm;width:30mm;margin-right:1mm}}#print.mb .ft{display:none}#print.mb .pgf{height:0}
+  .doc table.p tr,.doc .tot,.doc .sig{break-inside:avoid}.doc table.p tr.grpz,.doc h3{break-after:avoid}.doc table.p thead{display:table-header-group}}
+/* Seitenansicht der Vorschau: Seitenränder mit Fußzeile und Seitenzahl, grauer Spalt zwischen den Seiten */
+.blatt.seiten{padding-bottom:0}.blatt.seiten .doc .ft{display:none}
+.pgsp>td{padding:0!important;border:0!important;background:none!important}
+.pgband{margin:0 -14mm 0 -20mm;font:7.5pt/1.3 Arial,Helvetica,sans-serif;color:#000;text-align:center;position:relative}
+.pgband .pf{margin:0 18.7mm 0 17.8mm;height:17.3mm;box-sizing:border-box;padding-top:1mm}.pgband .pf.l{border-top:1mm solid #80704d}
+.pgband .pz{position:absolute;right:15mm;top:9.8mm;white-space:nowrap}.pgband .gap{height:7mm;background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 -1px}.pgband .pt{height:10mm}
 .doc{position:relative;font:9.5pt/1.4 Arial,Helvetica,sans-serif;color:#000}
 .doc .hd{position:relative;height:35mm}
 /* Briefkopf wie Vorlage: Bild 42,4 × 31,5 mm, links 150,2 mm / oben 11 mm vom Blattrand (Ränder 20/10/14 mm), Anschrift ab 47 mm */
@@ -382,7 +389,7 @@ function neueDB(){
       einheiten:['Stk','m','m²','m³','h','PA','kg','l','Krt','Rolle','Set','km','Tag','Wo','Mon'],
       tarife:[{kz:'SV',bez:'Sachverständigenleistung',kosten:0,vk:0},{kz:'MONT',bez:'Montage',kosten:0,vk:0},{kz:'FAHRT',bez:'Fahrtzeit',kosten:0,vk:0}],
       nk,texte,knr:{K:10000,L:70000},anr:0,
-      spalten:{},artgruppen:[],lagerplaetze:[],zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,lvnr:0
+      spalten:{},artgruppen:[],lagerplaetze:[],zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,papier:'A4',lvnr:0
     },
     kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],fibu:fibuNeu(),log:[],papierkorb:[]
   };
@@ -1030,6 +1037,7 @@ function render(){
   closePop();
   const f=V[view]||V.dash;
   $('#main').innerHTML=f(arg);
+  requestAnimationFrame(vorschauSeiten);
 }
 window.addEventListener('hashchange',async()=>{
   if(!DB)return;
@@ -1408,7 +1416,7 @@ function zahlBox(b){
 function updateCalc(b){
   b.pos.forEach((p,i)=>{const e=$('#gp'+i);if(e)e.textContent=fmt(posGP(p))});
   const s=$('#sumbox');if(s)s.innerHTML=sumBox(b);const k=$('#kalkbox');if(k)k.innerHTML=kalkBox(b);
-  const v=$('#vorschau');if(v)v.innerHTML=docHTML(b,true);
+  const v=$('#vorschau');if(v){v.innerHTML=docHTML(b,true);vorschauSeiten()}
 }
 function curBeleg(){const h=location.hash.replace(/^#\/?/,'').split('/');return h[0]==='beleg'?beleg(h[1]):null}
 
@@ -2009,7 +2017,7 @@ function preisspiegelDruck(lv){
   </tbody></table><table class="tot">${lv.bieter.map(b=>{let s=0;for(const p of pos)if(!p.art){const x=p.preise?.[b.id];if(x)s+=((+x.l||0)+(+x.s||0))*(+p.menge||0)}return`<tr><td>${esc(b.name)} (Nachlass ${fmtQ(b.nachlass||0)} %)</td><td class="n">${fmt(s*(1-(+b.nachlass||0)/100))} €</td></tr>`}).join('')}</table>`;
 }
 function druckHTML(html,titel){
-  $('#print').innerHTML=html;const alt=document.title;document.title=titel.replace(/[\\/:*?"<>|]/g,'-');
+  papierCSS();$('#print').innerHTML=html;const alt=document.title;document.title=titel.replace(/[\\/:*?"<>|]/g,'-');
   setTimeout(()=>{window.print();document.title=alt},50);
 }
 function kbDocHTML(kb){
@@ -2600,7 +2608,7 @@ V.einstellungen=()=>{
   <div class="row">${ff('name','Firmenname','w2')}${ff('zusatz','Zusatz (z. B. Inhaber, Gewerbe)','w2')}</div>
   <div class="row">${ff('strasse','Straße','w2')}${ff('plz','PLZ')}${ff('ort','Ort')}${ff('land','Land')}</div>
   <div class="row">${ff('uid','UID-Nr.')}${ff('fn','Firmenbuch-Nr.')}${ff('gericht','Firmenbuchgericht')}${ff('tel','Telefon')}${ff('mail','E-Mail')}${ff('web','Web')}</div>
-  <div class="row">${ff('bank','Bank')}${ff('iban','IBAN','w2')}${ff('bic','BIC')}<label>Bearbeiter<input data-o="s" data-f="bearbeiter" value="${esc(s.bearbeiter)}"></label></div>
+  <div class="row">${ff('bank','Bank')}${ff('iban','IBAN','w2')}${ff('bic','BIC')}<label>Bearbeiter<input data-o="s" data-f="bearbeiter" value="${esc(s.bearbeiter)}"></label><label title="Druck, PDF und Vorschau (Seitenumbruch, Seitenzahl)">Papierformat<select data-o="s" data-f="papier">${Object.entries(PAPIER).map(([k,x])=>opt(k,x.l,s.papier||'A4')).join('')}</select></label></div>
   <div class="row">${ff('zeichner','Unterzeichner (z. B. Horvath Stefan, BSc.)','w2')}${ff('zeichnerFkt','Funktion')}<label class="w2">Untertitel (nur bei eigenem Logo)<textarea data-o="s" data-f="firma.slogan" style="height:44px">${esc(f.slogan)}</textarea></label></div>
   <div class="row"><label>Logo (PNG/JPG/SVG, max. 300 kB; leer = TBH-Briefkopf)<input type="file" id="logo" accept="image/*"></label><img src="${f.logo||KOPF_TBH}" style="max-height:50px">${f.logo?`<button data-act="logodel">Logo entfernen</button>`:''}<span style="flex:2"></span></div></div>
   <div class="card"><h2>Belege einlesen</h2>
@@ -3269,7 +3277,41 @@ function docHTML(b,edit=false){
   ${fusszeile(f)}
   </div>`;
 }
+/* Papierformat (Einstellungen): das Layout bleibt im A4-Maß und wird für Druck und PDF auf das Format skaliert */
+const PAPIER={A4:{l:'A4 (210 × 297 mm)',w:210,h:297},A5:{l:'A5 (148 × 210 mm)',w:148,h:210},Letter:{l:'US-Letter (216 × 279 mm)',w:215.9,h:279.4}};
+const papier=()=>{const p=PAPIER[S().papier]||PAPIER.A4,k=p.w/210;return{...p,k,hc:p.h/k-27.3}}; // hc = nutzbare Höhe je Seite (A4-mm, Ränder oben 10 / unten 17,3 mm)
+function papierCSS(){const P=papier(),m=x=>(x*P.k).toFixed(2)+'mm';
+  ($('#papiercss')||document.head.appendChild(Object.assign(document.createElement('style'),{id:'papiercss'}))).textContent=P.k===1?'':`@media print{@page{size:${P.w}mm ${P.h}mm;margin:${m(10)} ${m(14)} ${m(17.3)} ${m(20)}}#print{zoom:${P.k.toFixed(4)}}}`}
+/* Vorschau seitenweise: Blöcke bzw. Tabellenzeilen, die nicht mehr auf die Seite passen, beginnen auf einer neuen Seite
+   (Position mit Bezeichnung und Langtext bleibt zusammen, Gruppenkopf und Tabellenkopf nicht allein am Seitenende, Tabellenkopf wiederholt) */
+const MMPX=96/25.4;
+function vorschauSeiten(){
+  for(const bl of document.querySelectorAll('.blatt')){
+    bl.querySelectorAll('.pgsp').forEach(e=>e.remove());bl.classList.remove('seiten');
+    if(window.innerWidth<760||!bl.offsetWidth)continue;
+    bl.classList.add('seiten');
+    const doc=bl.querySelector('.doc')||bl,H=papier().hc*MMPX,fz=bl.querySelector('.ft')?fussZeilen(S().firma):[];
+    const band=(fill,letzte)=>`<div style="height:${Math.max(0,fill).toFixed(1)}px"></div><div class="pgband"><div class="pf${fz.length?' l':''}">${fz.map(esc).join('<br>')}</div><span class="pz"></span>${letzte?'':'<div class="gap"></div><div class="pt"></div>'}</div>`;
+    const bloecke=[];for(const c of doc.children){if(c.matches('.wm,.ft,.pgsp'))continue;const R=c.matches('table')?[...c.querySelectorAll(':scope>tbody>tr')]:[];
+      if(R.length)R.forEach((r,i)=>bloecke.push({el:r,tab:c,erst:i===0}));else bloecke.push({el:c})}
+    const t0=()=>bl.getBoundingClientRect().top+parseFloat(getComputedStyle(bl).paddingTop);
+    let start=0,n=1;
+    for(let i=0;i<bloecke.length;i++){const B=bloecke[i],unten=B.el.getBoundingClientRect().bottom-t0();
+      if(unten-start<=H+0.5)continue;
+      let j=i;while(j>0&&bloecke[j-1].tab&&bloecke[j-1].tab===B.tab&&bloecke[j-1].el.classList.contains('grpz'))j--; // Gruppenkopf mitnehmen
+      const Z=bloecke[j],el=Z.erst?Z.tab:Z.el,zt=el.getBoundingClientRect().top-t0();
+      if(zt<=start+1){start+=H;n++;i--;continue} // Block größer als eine Seite: wird geteilt
+      const fill=start+H-zt;let sp;
+      if(el.tagName==='TR'){sp=document.createElement('tr');sp.className='pgsp';sp.innerHTML=`<td colspan="30">${band(fill)}</td>`;el.before(sp);
+        const kopf=Z.tab.tHead?.rows[0]?.cloneNode(true);if(kopf){kopf.classList.add('pgsp');el.before(kopf)}}
+      else{sp=document.createElement('div');sp.className='pgsp';sp.innerHTML=band(fill);el.before(sp)}
+      start=sp.getBoundingClientRect().bottom-t0();n++;i=j-1}
+    const ende=document.createElement('div');ende.className='pgsp';ende.innerHTML=band(start+H-(doc.getBoundingClientRect().bottom-t0()),true);doc.appendChild(ende);
+    bl.querySelectorAll('.pz').forEach((z,i)=>z.textContent=`Seite ${i+1} von ${n}`);bl.dataset.seiten=n}
+}
+window.addEventListener('resize',()=>{clearTimeout(vorschauSeiten.t);vorschauSeiten.t=setTimeout(vorschauSeiten,200)});
 function drucken(b){
+  papierCSS();
   // tfoot wiederholt sich auf jeder Druckseite und hält Platz für die feste Fußzeile frei
   $('#print').innerHTML=`<table class="pgw"><tbody><tr><td>${docHTML(b)}</td></tr></tbody><tfoot><tr><td><div class="pgf"></div></td></tr></tfoot></table>`;
   // Fußzeile als Seitenrand-Feld (@page): wiederholt sich zuverlässig auf jeder Seite; ältere/andere Browser: feste Fußzeile
@@ -3285,7 +3327,7 @@ const WINANSI={0x20AC:128,0x201A:130,0x201E:132,0x2026:133,0x2018:145,0x2019:146
 const pdfStr=t=>{let o='';for(const ch of t){const c=ch.codePointAt(0),w=c<128||(c>=160&&c<256&&!WINANSI[c])?c:WINANSI[c]??63;o+=w===40||w===41||w===92?'\\'+String.fromCharCode(w):w<32||w>126?'\\'+w.toString(8).padStart(3,'0'):String.fromCharCode(w)}return o};
 async function deflate(u8){const cs=new CompressionStream('deflate');const r=new Response(new Blob([u8]).stream().pipeThrough(cs));return new Uint8Array(await r.arrayBuffer())}
 async function pdfAusBeleg(b){
-  const PX=0.75,MX=56.69,MT=28.35,MB=49.04,PW=595.28,PH=841.89,HC=(PH-MT-MB)/PX; // px→pt, Ränder wie Druck
+  const P=papier(),K=P.k,PX=0.75*K,MX=56.69*K,MT=28.35*K,MB=49.04*K,PW=+(P.w/25.4*72).toFixed(2),PH=+(P.h/25.4*72).toFixed(2),HC=(PH-MT-MB)/PX; // px→pt, Ränder wie Druck (auf das Papierformat skaliert)
   const box=document.createElement('div');box.style.cssText='position:fixed;left:-10000px;top:0;width:665px;background:#fff';box.className='pdfmess';
   box.innerHTML=docHTML(b);box.querySelector('.ft')?.remove();document.body.appendChild(box);
   await Promise.all([...box.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
@@ -3308,7 +3350,8 @@ async function pdfAusBeleg(b){
       if(lauf&&Math.abs(lauf.y-base)<1)lauf.s+=m[0],lauf.x2=X(r.right);else{fertig();lauf={t:'text',x:X(r.left),x2:X(r.right),y:base,top:Y(r.top),s:m[0],fs,fett,kurs,c}}}
     fertig()}
   // Seitenumbrüche an Zeilen-/Blockgrenzen; Tabellenkopf auf Folgeseiten wiederholen
-  const brk=[...box.querySelectorAll('tr,.doc>div,.doc>table,.doc>h3,.lt,.txt,.sig')].map(e=>Y(e.getBoundingClientRect().bottom)).sort((a,c)=>a-c);
+  // Umbruch nur nach ganzen Zeilen (Position = Bezeichnung + Langtext), nicht nach Tabellen- oder Gruppenkopf
+  const brk=[...box.querySelectorAll('tbody>tr:not(.grpz),.doc>div:not(.hd),.doc>table,.txt,.sig')].map(e=>Y(e.getBoundingClientRect().bottom)).sort((a,c)=>a-c);
   const tab=box.querySelector('table.p'),tR=tab?.getBoundingClientRect(),thR=tab?.querySelector('thead')?.getBoundingClientRect(),thH=thR?thR.height:0,thTop=thR?Y(thR.top):0;
   const hoehe=Math.max(...[...it].map(x=>x.t==='text'?x.y+4:x.t==='line'?Math.max(x.y1,x.y2):x.y+x.h),0);
   const seiten=[];let st=0;
@@ -3327,9 +3370,9 @@ async function pdfAusBeleg(b){
     else for(const x of thead)if(drin(x))zeichne(x,0);
     for(const x of it)if(drin(x))zeichne(x,0);
     // Fußzeile und Seitenzahl wie im Druck
-    o.push(`0.502 0.439 0.302 RG 2.83 w 50.46 ${MB.toFixed(2)} m 542.30 ${MB.toFixed(2)} l S`);
-    fz.forEach((z,i)=>o.push(`BT /F1 7.5 Tf 0 0 0 rg ${(296.38-breite(z)/2).toFixed(2)} ${(MB-12.5-i*9.75).toFixed(2)} Td (${pdfStr(z)}) Tj ET`));
-    const sz=`Seite ${seiten.indexOf(s)+1} von ${seiten.length}`;o.push(`BT /F1 7.5 Tf 0 0 0 rg ${(552.76-breite(sz)).toFixed(2)} 14 Td (${sz}) Tj ET`);
+    o.push(`0.502 0.439 0.302 RG ${(2.83*K).toFixed(2)} w ${(50.46*K).toFixed(2)} ${MB.toFixed(2)} m ${(542.30*K).toFixed(2)} ${MB.toFixed(2)} l S`);
+    fz.forEach((z,i)=>o.push(`BT /F1 ${(7.5*K).toFixed(2)} Tf 0 0 0 rg ${(296.38*K-breite(z)*K/2).toFixed(2)} ${(MB-(12.5+i*9.75)*K).toFixed(2)} Td (${pdfStr(z)}) Tj ET`));
+    const sz=`Seite ${seiten.indexOf(s)+1} von ${seiten.length}`;o.push(`BT /F1 ${(7.5*K).toFixed(2)} Tf 0 0 0 rg ${(552.76*K-breite(sz)*K).toFixed(2)} ${(14*K).toFixed(2)} Td (${sz}) Tj ET`);
     return o};
   const cv=document.createElement('canvas').getContext('2d');cv.font='10px Arial';const breite=t=>cv.measureText(t).width*0.75; // 7,5 pt = 10 px; Arial ≙ Helvetica
   const strs=seiten.map(strom);

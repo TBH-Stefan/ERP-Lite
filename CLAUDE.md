@@ -19,6 +19,7 @@ Anwender: Stefan Horvath. Sprache in Code-Kommentaren, Oberfläche und Antworten
 - Abgleich zwischen Geräten: `merge3()` (3-Wege je Datensatz).
 - Belege einlesen: `belegScan()` → `belegLokal()` (E-Rechnung, PDF-Text, Texterkennung; KI nur mit Schlüssel) → `textBeleg()` → Abgleich `scanBox()`/`scanUebernehmen()`. Originale unverändert über `anhaengeHochladen(…,true)`.
 - Popups für Neuanlage: `formDialog()`, `kontaktPopup()`, `artikelPopup()`.
+- Papierformat `S().papier` → `PAPIER`/`papier()` (Skalierfaktor k, nutzbare Höhe hc), Druck über `papierCSS()`; Seitenansicht der Vorschau `vorschauSeiten()` (nach `render()`/`updateCalc()`, fügt `.pgsp`-Abstände mit Fußzeile/Seitenzahl ein).
 - PDF ohne Bibliothek: `pdfAusBeleg()` misst die Belegvorschau (`docHTML`) aus und schreibt Helvetica-Text, Linien, Logo; Umbruch an Zeilengrenzen, Tabellenkopf wiederholt. Versand: `versenden()` über Graph `/me/sendMail` (Scope Mail.Send, eigener Token `mailToken()`); ohne O365: PDF speichern + mailto.
 - Angebots-Revisionen: `angebotRevision()` (Felder `basisNr`, `rev`, `revGrund`, Position `revPosId`), `revListe()`, `revDiff()`, Karte `revHistorie()`. Belegliste gruppiert über `belegGruppen()` (vorgaengerId/stornoVon), Auf-/Zuklappen `grpAuf()`/`UI.auf`.
 - Sammelrechnung aus Lieferscheinen: `sammelRechnung()`. Folgebeleg aus Entwurf: vorher `festschreiben()`.

@@ -83,7 +83,10 @@ Ausweis: DB II € und % vom Umsatz, Aufschlag % auf HK, Fehlbetrag zum Ziel.
 **Bilanz:** wird nicht aus dem ERP erzeugt. Dafür ist eine doppelte Buchhaltung (Finanzbuchhaltung mit Kontenrahmen, Anlagen, Abschreibungen, Abgrenzungen) nötig. Das ERP liefert die Belegdaten dafür; siehe offene Punkte.
 
 ## 8. Druck / PDF
-- Druckansicht A4 je Beleg, Logo, Firmendaten, Pflichtangaben; LS und WE ohne Preise.
+- Druckansicht je Beleg, Logo, Firmendaten, Pflichtangaben; LS und WE ohne Preise.
+- **Papierformat einstellbar** (Einstellungen → Firma): A4 (Standard), A5, US-Letter – gilt für Druck, PDF und Vorschau (Layout im A4-Maß, auf das Format skaliert).
+- **Mehrseitig:** Reicht eine Seite nicht, wird eine weitere angehängt; jede Seite mit Fußzeile und „Seite x von y“, Tabellenkopf wiederholt. Die Vorschau zeigt die Seiten einzeln mit Seitenrand, Fußzeile und Seitenzahl (ab Bildschirmbreite 760 px).
+- **Seitenumbruch nie innerhalb einer Position:** Bezeichnung und Langtext bleiben zusammen; Gruppen- und Tabellenkopf stehen nie allein am Seitenende; Summenblock und Unterschrift werden nicht getrennt. Nur eine einzelne Position, die länger als eine ganze Seite ist, wird geteilt.
 - PDF über „Drucken → Als PDF speichern“; Dateiname wird vorbelegt (Belegart Nr Kunde).
 - Kopf-/Fußtexte je Belegart in den Einstellungen.
 

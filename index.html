@@ -1431,7 +1431,8 @@ function artikelEdit(id){
   <div class="card"><h2>Lieferanten</h2><table><thead><tr><th>Lieferant</th><th>Art.-Nr. beim Lieferanten</th><th class="n">Listenpreis</th><th class="n">Rabatt %</th><th class="n">Netto-EK</th><th>Stand</th><th></th></tr></thead><tbody>
   ${(a.lieferanten||[]).map((l,i)=>{const fi=(fl,w)=>`<td style="width:${w}px"><input type="number" step="any" data-o="al" data-id="${a.id}" data-i="${i}" data-f="${fl}" value="${l[fl]??''}"></td>`;
     return`<tr><td><select data-o="al" data-id="${a.id}" data-i="${i}" data-f="kontaktId">${opt('','–',l.kontaktId)}${lief.map(k=>opt(k.id,k.name,l.kontaktId)).join('')}</select></td><td><input data-o="al" data-id="${a.id}" data-i="${i}" data-f="artNr" value="${esc(l.artNr)}"></td>${fi('lp',100)}${fi('rabatt',80)}${fi('ek',100)}<td class="mut">${l.stand?dAT(l.stand):''}</td><td><button class="s d" data-act="aldel" data-id="${a.id}" data-i="${i}">✕</button></td></tr>`}).join('')}
-  </tbody></table><button style="margin-top:8px" data-act="aladd" data-id="${a.id}">+ Lieferant</button></div>`;
+  </tbody></table><button style="margin-top:8px" data-act="aladd" data-id="${a.id}">+ Lieferant</button></div>
+  ${(a.unterlagen||[]).length?`<div class="card"><h2>Unterlagen (Angebote)</h2>${a.unterlagen.map((u,i)=>`<div class="att"><a href="javascript:void 0" data-act="aopen" data-id="${a.id}" data-i="${i}">📄 ${esc(u.name)}</a><span class="mut">${esc(u.herkunft||'')}</span></div>`).join('')}</div>`:''}`;
 }
 
 /* ---------- Lager ---------- */
@@ -2658,7 +2659,7 @@ const LS_SCHEMA={type:'object',additionalProperties:false,required:['lieferant',
   lieferant:{type:'object',additionalProperties:false,required:['name','uid','strasse','plz','ort'],properties:{name:{type:'string'},uid:{type:'string'},strasse:{type:'string'},plz:{type:'string'},ort:{type:'string'}}},
   lieferscheinNr:{type:'string'},datum:{type:'string',description:'JJJJ-MM-TT'},bestellNr:{type:'string'},lieferadresse:{type:'string',description:'abweichende Liefer-/Baustellenadresse, sonst leer'},
   positionen:{type:'array',items:{type:'object',additionalProperties:false,required:['artNr','ean','bez','menge','einheit','ep'],properties:{artNr:{type:'string'},ean:{type:'string'},bez:{type:'string'},menge:{type:'number'},einheit:{type:'string'},ep:{type:'number',description:'Einzelpreis netto je Einheit, 0 wenn nicht angegeben'}}}}}};
-const SCANFILES={}; // Dateien der laufenden Sitzung (für „Erneut versuchen“)
+const SCANFILES={},SCANUP={}; // Dateien der laufenden Sitzung (für „Erneut versuchen“), laufende Ablage der Originale
 const normT=s=>String(s||'').toLowerCase().replace(/[^a-z0-9äöüß]+/g,' ').trim();
 const normN=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const normF=s=>normT(s).replace(/\b(gmbh|ges m b h|gesmbh|co|kg|ag|og|e u|eu|und)\b/g,' ').replace(/\s+/g,' ').trim();
@@ -2742,7 +2743,7 @@ async function belegScan(files,typ){
   const b=neuBeleg(typ,{kopf:'',fuss:'',...(typ==='WE'?{lagerBuchen:true}:{})});SCANFILES[b.id]=files;
   log({WE:'Lieferschein',ER:'Rechnung',BE:'Lieferantenangebot'}[typ]+' einlesen',`${files.length} Datei(en)`);go('beleg/'+b.id);
   await scanStart(b); // erst auslesen, damit Lieferant und Nummer in den Dateinamen kommen
-  await anhaengeHochladen(b,files,true,true); // Originalbeleg unverändert ablegen
+  await (SCANUP[b.id]=anhaengeHochladen(b,files,true,true)); // Originalbeleg unverändert ablegen
 }
 async function scanStart(b){
   const key=lsGet('erp-ki-key'),files=SCANFILES[b.id];if(!files)return;
@@ -2775,7 +2776,7 @@ function scanBox(b){
   ${lid?'':`<div class="hint">Lieferant nicht im Stamm gefunden. <button data-act="scanlief">„${esc(l.name||'Lieferant')}“ als Lieferant anlegen</button> oder oben auswählen.</div>`}
   <div style="overflow-x:auto"><table><thead><tr><th>Art.-Nr.</th><th>Bezeichnung laut Beleg</th><th>Menge</th><th>Einh.</th><th class="n">EP</th><th>Zuordnung</th><th>Änderungen im Artikelstamm</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="mut">Keine Positionen erkannt.</td></tr>'}</tbody></table></div>
   ${d.rohtext?`<details style="margin-top:6px"><summary class="mut">Gelesener Text anzeigen</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:300px;overflow:auto">${esc(d.rohtext)}</pre></details>`:''}
-  <div class="bar" style="margin-top:8px"><button class="p" data-act="scanok">Prüfen und übernehmen …</button><button data-act="scanweg">Verwerfen</button><span class="mut">Angehakte Änderungen werden nach Rückfrage in den Artikelstamm geschrieben.</span></div></div>`;
+  <div class="bar" style="margin-top:8px"><button class="p" data-act="scanok">${b.typ==='BE'?'Als Bestellung übernehmen …':'Prüfen und übernehmen …'}</button>${b.typ==='BE'?'<button class="p" data-act="scanstamm">Nur Artikelstamm aktualisieren …</button>':''}<button data-act="scanweg">Verwerfen</button><span class="mut">Angehakte Änderungen werden nach Rückfrage in den Artikelstamm geschrieben.</span></div></div>`;
 }
 function scanSet(el){
   const b=curBeleg(),w=b?.scan?.wahl?.[+el.dataset.sc],k=el.dataset.k;if(!w||b.fest)return;
@@ -2786,7 +2787,7 @@ function scanSet(el){
   else w[k]=el.type==='checkbox'?el.checked:el.value;
   persist();render();
 }
-function scanUebernehmen(b){
+async function scanUebernehmen(b,nurStamm=false){ // nurStamm: Angebot nur in den Artikelstamm, ohne Bestellung
   if(b.fest||b.scan?.status!=='offen')return;
   const s=b.scan,d=s.daten,lid=b.kontaktId,zl=d.positionen||[];
   if(zl.some((z,i)=>s.wahl[i].modus==='zu'&&!artikel(s.wahl[i].artId))){alert('Bitte bei allen Zeilen „Artikelstamm“ einen Artikel wählen oder „neuer Artikel“ / „ohne Artikel“ einstellen.');return}
@@ -2797,7 +2798,11 @@ function scanUebernehmen(b){
     if(ts.length===1)b.pos[b.pos.length-1].ep=r2(d.netto);
     b.scan={status:'übernommen',datum:isoD()};log('Rechnung übernommen',d.lieferscheinNr||'');commit();render();return}
   const neu=plan.filter(x=>x.w.modus==='neu'),aend=plan.flatMap(x=>x.df.map(([,t])=>`• ${x.a.nr}: ${t.replace(/<[^>]+>/g,'').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')}`));
-  if(!confirm(`${{ER:'Rechnung',BE:'Lieferantenangebot',WE:'Lieferschein'}[b.typ]} übernehmen?\n\n${plan.length} Position(en) in ${{ER:'die Eingangsrechnung',BE:'die Bestellung (Entwurf)',WE:'den Wareneingang'}[b.typ]}\n${neu.length} neue(r) Artikel\n${aend.length} Änderung(en) im Artikelstamm${aend.length?':\n'+aend.join('\n'):''}`))return;
+  if(nurStamm){const n=plan.filter(x=>x.w.modus!=='frei').length;
+    if(!n){alert('Keine Zeile mit Artikel – bitte „Artikelstamm“ oder „neuer Artikel“ wählen.');return}
+    if(!confirm(`Nur den Artikelstamm aktualisieren?\n\nEs wird KEINE Bestellung angelegt.\n${neu.length} neue(r) Artikel\n${aend.length} Änderung(en)${aend.length?':\n'+aend.join('\n'):''}\n\nDas Angebot wird bei den ${n} Artikel(n) unter „Unterlagen“ abgelegt.`))return;
+    await SCANUP[b.id]}
+  else if(!confirm(`${{ER:'Rechnung',BE:'Lieferantenangebot',WE:'Lieferschein'}[b.typ]} übernehmen?\n\n${plan.length} Position(en) in ${{ER:'die Eingangsrechnung',BE:'die Bestellung (Entwurf)',WE:'den Wareneingang'}[b.typ]}\n${neu.length} neue(r) Artikel\n${aend.length} Änderung(en) im Artikelstamm${aend.length?':\n'+aend.join('\n'):''}`))return;
   const we=b.typ==='ER'?beleg(b.vorgaengerId):null,genutzt=new Set();
   for(const x of plan){
     let {z,w,a}=x;const fak=scanFak(z,a);
@@ -2815,10 +2820,15 @@ function scanUebernehmen(b){
       a={id:uid(),nr,bez:z.bez,text:z.text||'',art:'W',einheit:eh,einheiten:[],ek:r2(+z.ep||0),vk:0,steuer:S().stdSteuer,lager:!!w.lager,minBestand:0,lieferanten:lid?[{kontaktId:lid,artNr:z.artNr||'',lp:+z.lp||0,rabatt:+z.rabatt||0,ek:r2(+z.ep||0),stand:d.datum||isoD()}]:[],aktiv:true,ean:z.ean||''};
       DB.artikel.push(a);if(!S().einheiten.includes(eh))S().einheiten.push(eh);
     }
+    if(nurStamm){if(a){const qu=`${{BE:'Angebot',ER:'Rechnung',WE:'Lieferschein'}[b.typ]} ${d.lieferscheinNr||''} ${kName(lid)} ${dAT(d.datum||b.datum)}`.replace(/\s+/g,' ').trim();
+      a.unterlagen=a.unterlagen||[];for(const an of b.anhaenge||[])if(!a.unterlagen.some(u=>u.path===an.path))a.unterlagen.push({...an,herkunft:qu})}continue}
     const ep=+z.ep||r2((+a?.ek||0)*fak),stc=+z.ust?S().steuer.find(x=>+x.satz===+z.ust&&!x.hinweis)?.code:'';
     const vp=a&&we?we.pos.find(q=>q.artikelId===a.id&&!genutzt.has(q.id)):null;if(vp)genutzt.add(vp.id);
     b.pos.push(neuPos({art:'W',artikelId:a?.id||'',nr:a?.nr||z.artNr||'',lnr:z.artNr||'',bez:a?.bez||z.bez,text:a?'':(z.text||''),menge:+w.menge||0,einheit:z.einheit||a?.einheit||'Stk',faktor:fak,ep,ek:ep,steuer:stc||(a?.steuer)||S().stdSteuer,herkunftPosId:vp?.id||''}));
   }
+  if(nurStamm){ // Entwurf ohne Nummer wieder entfernen; Original bleibt bei den Artikeln
+    log('Angebot in Artikelstamm',`${d.lieferscheinNr||''} ${kName(lid)}: ${neu.length} neue Artikel, ${aend.length} Änderungen`);
+    DB.belege=DB.belege.filter(x=>x.id!==b.id);artDatalist();commit();go('artikel');return}
   log(b.typ==='ER'?'Rechnung übernommen':'Lieferschein übernommen',`${d.lieferscheinNr||''}: ${plan.length} Pos., ${neu.length} neue Artikel, ${aend.length} Änderungen`);
   b.scan={status:'übernommen',datum:isoD()};artDatalist();commit();render();
 }
@@ -2960,7 +2970,7 @@ const ACT={
   abe:el=>{const b=neuBeleg('BE',{auftragId:el.dataset.id,betreff:'Projekt: '+(beleg(el.dataset.id)?.betreff||'')});persist();go('beleg/'+b.id)},
   aer:el=>{const b=neuBeleg('ER',{auftragId:el.dataset.id,kopf:'',fuss:''});persist();go('beleg/'+b.id)},
   zabr:el=>zeitenAbrechnen(el.dataset.id),
-  scanok:()=>scanUebernehmen(curBeleg()),scanneu:()=>scanStart(curBeleg()),
+  scanok:()=>scanUebernehmen(curBeleg()),scanstamm:()=>scanUebernehmen(curBeleg(),true),scanneu:()=>scanStart(curBeleg()),
   scanweg:()=>{const b=curBeleg();if(b.scan?.status==='offen'&&!confirm('Erkannte Daten verwerfen?'))return;b.scan=null;persist();render()},
   scanlief:async()=>{const b=curBeleg(),l=b.scan?.daten?.lieferant||{};const k=await kontaktPopup('L',{...l,land:/^DE/.test(l.uid||'')?'Deutschland':'Österreich'});if(!k)return;
     b.kontaktId=k.id;b.scan.wahl=(b.scan.daten.positionen||[]).map((z,i)=>{const w=b.scan.wahl[i];if(w.modus!=='neu')return w;const f=artikelFinden(z,k.id);return f?{...w,modus:'zu',artId:f.a.id,wie:f.wie}:w});persist();render()},
@@ -2976,6 +2986,7 @@ const ACT={
   anew:()=>{const s=S(),nr=String(++s.anr).padStart(5,'0');const a={id:uid(),nr,bez:'',text:'',art:'W',einheit:'Stk',einheiten:[],ek:0,vk:0,steuer:s.stdSteuer,lager:false,minBestand:0,lieferanten:[],aktiv:true};DB.artikel.push(a);persist();go('artikel/'+a.id)},
   adel:el=>{const id=el.dataset.id;if(DB.belege.some(b=>b.pos.some(p=>p.artikelId===id))||DB.lager.some(e=>e.artikelId===id)){alert('Artikel wird verwendet – stattdessen „aktiv“ abwählen.');return}if(!confirm('Artikel löschen?'))return;DB.artikel=DB.artikel.filter(a=>a.id!==id);artDatalist();persist();go('artikel')},
   aladd:el=>{const a=artikel(el.dataset.id);(a.lieferanten=a.lieferanten||[]).push({kontaktId:'',artNr:''});persist();render()},
+  aopen:async el=>{const u=artikel(el.dataset.id).unterlagen[+el.dataset.i];try{await STORE.openFile(u)}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
   aldel:el=>{artikel(el.dataset.id).lieferanten.splice(+el.dataset.i,1);persist();render()},
   lgbook:()=>{const a=$('#lg-a').value,m=$('#lg-m').value,q=num($('#lg-q').value),p=$('#lg-p').value,t=$('#lg-t').value;if(!a){alert('Artikel wählen.');return}
     let menge=m==='ist'?r3(q-bestand(a).menge):q;if(!menge){alert('Keine Mengenänderung.');return}

@@ -1,0 +1,12 @@
+# Firmendaten und Sicherungen – niemals ins (öffentliche) Repository
+erp-daten.json
+erp-daten_*.json
+backup/
+Belege/
+
+# Vorlagen (LB-HT, 10 MB) – wird pro Gerät in der App importiert
+vorlagen/
+
+# Arbeitsdateien
+*.tmp
+~$*

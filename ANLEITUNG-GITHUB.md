@@ -1,6 +1,6 @@
 # GitHub einrichten und ERP-Lite veröffentlichen
 
-Ergebnis: ERP-Lite ist unter `https://<benutzername>.github.io/erp-lite/` erreichbar (PC und Handy).
+Ergebnis: ERP-Lite ist unter `https://tbh-stefan.github.io/erp-lite/` erreichbar (PC und Handy).
 Diese Adresse brauchst du danach für die Microsoft-Entra-Registrierung (`ANLEITUNG-MOBIL.md`, Schritt 2).
 
 ## Vorab: was ins Repository kommt
@@ -12,7 +12,7 @@ Mit dem kostenlosen GitHub-Konto muss das Repository für GitHub Pages **öffent
 
 ## 1. Konto anlegen (ca. 5 min)
 1. https://github.com/signup öffnen.
-2. E-Mail: Firmenadresse verwenden (z. B. `office@…` oder deine TBH-Adresse), Passwort, **Benutzername** wählen – er wird Teil der Adresse (`<benutzername>.github.io`). Kurz und neutral wählen, z. B. `tbh-gmbh`.
+2. E-Mail: Firmenadresse verwenden (z. B. `office@…` oder deine TBH-Adresse), Passwort, **Benutzername** wählen – er wird Teil der Adresse (gewählt: `TBH-Stefan` → `tbh-stefan.github.io`).
 3. E-Mail bestätigen (Code aus dem Postfach eingeben).
 4. **Zwei-Faktor-Anmeldung einschalten:** Profilbild → *Settings* → *Password and authentication* → *Enable two-factor authentication* → Authenticator-App (z. B. Microsoft Authenticator). Wiederherstellungscodes sicher ablegen.
 
@@ -40,7 +40,7 @@ git config user.name "Stefan Horvath"
 git config user.email "<E-Mail des GitHub-Kontos>"
 git add .
 git commit -m "ERP-Lite: erster Stand"
-git remote add origin https://github.com/<benutzername>/erp-lite.git
+git remote add origin https://github.com/TBH-Stefan/erp-lite.git
 git push -u origin main
 ```
 Beim ersten `git push` öffnet sich ein Anmeldefenster (Browser) – mit dem GitHub-Konto bestätigen.
@@ -49,7 +49,7 @@ Spätere Updates: `git add .` · `git commit -m "Beschreibung"` · `git push`.
 ## 4. GitHub Pages einschalten (ca. 2 min)
 1. Im Repository *Settings* → links *Pages*.
 2. *Build and deployment* → Source: **Deploy from a branch** · Branch: **main** · Ordner: **/ (root)** → *Save*.
-3. Nach 1–2 Minuten erscheint oben: *Your site is live at* `https://<benutzername>.github.io/erp-lite/`.
+3. Nach 1–2 Minuten erscheint oben: *Your site is live at* `https://tbh-stefan.github.io/erp-lite/`.
 4. Adresse im Browser öffnen → Startbildschirm von ERP-Lite muss erscheinen.
 
 ## 5. Danach

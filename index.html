@@ -1025,7 +1025,8 @@ function preisHistorie(b,p){
 function artikelInPos(b,p,a){
   Object.assign(p,{artikelId:a.id,nr:a.nr,bez:a.bez,text:a.text||'',einheit:a.einheit,faktor:1,steuer:a.steuer||S().stdSteuer,art:a.art||'W'});
   const h=preisHistorie(b,p).filter(x=>x.einheit===p.einheit);
-  if(T[b.typ].b==='V'){p.ek=+a.ek||0;p.ep=h.length?h[0].ep:(+a.vk||0);p.rabatt=h.length?h[0].rabatt:(+kontakt(b.kontaktId)?.rabatt||0)}
+  // Verkauf: Preis/Rabatt nur aus früheren Belegen DIESES Kunden, sonst VK des Artikels und Kundenrabatt (Preise anderer Kunden nur über die Preishistorie wählbar)
+  if(T[b.typ].b==='V'){const g=h.find(x=>x.gleich);p.ek=+a.ek||0;p.ep=g?g.ep:(+a.vk||0);p.rabatt=g?g.rabatt:(+kontakt(b.kontaktId)?.rabatt||0)}
   else{p.ep=h.length?h[0].ep:(+a.ek||0);p.ek=p.ep;const l=(a.lieferanten||[]).find(x=>x.kontaktId===b.kontaktId);if(l?.artNr)p.text=(p.text?p.text+'\n':'')+'Ihre Art.-Nr.: '+l.artNr}
 }
 
@@ -1223,7 +1224,7 @@ V.beleg=id=>{
   </div>
   <div class="card" style="padding:8px;overflow-x:auto">
     <div class="bar" style="margin:0 0 6px"><span class="mut">${ohneP?'Druck:':'Spalten einblenden:'}</span>
-      ${ohneP?'':`<label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optRabatt" ${zRab?'checked':''} ${dis||b.pos.some(p=>+p.rabatt)?'disabled':''}> Rabatt</label>
+      ${ohneP?'':`<label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optRabatt" ${zRab?'checked':''} ${dis}> Rabatt</label>
       <label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optLS" ${zLS?'checked':''} ${dis}> Lohn / Sonstiges</label>`}
       <label class="chk" style="margin:0;font-size:13px" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''} ${dis}> Langtext drucken</label></div>
     <table class="pos"><thead><tr><th></th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonstiges</th>':''}<th>${zLS?'PP':'EP netto'}</th>${zRab?'<th>Rab. %</th>':''}<th class="n">${zLS?'GP':'GP netto'}</th><th>USt</th><th title="Einstandspreis je Einheit">EK</th>`}<th>Kz</th><th></th></tr></thead>
@@ -3651,6 +3652,7 @@ document.addEventListener('change',e=>{
 function onHead(b,f,v){
   b[f]=v;
   if(f==='ltDruck'){render();return}
+  if(f==='optRabatt'&&!v){const P=b.pos.filter(p=>+p.rabatt);if(P.length){if(confirm(`${P.length} Position(en) haben einen Rabatt (${[...new Set(P.map(p=>fmtQ(p.rabatt)+' %'))].join(', ')}).\nRabatt bei allen Positionen entfernen und Spalte ausblenden?`))for(const p of P)p.rabatt=0;else b.optRabatt=true}}
   if(f==='optRabatt'||f==='optLS'){if(f==='optLS'&&v)for(const p of b.pos)if(!isInfo(p)&&p.epL==null&&p.epS==null){p.epL=p.art==='L'?+p.ep||0:0;p.epS=p.art==='L'?0:+p.ep||0}render();return}
   if(f==='kontaktId'){const k=kontakt(v);if(k)konditionenUebernehmen(b,k);render()}
   if(f==='datum'&&b.typ==='AN'){b.gueltigBis=addDays(v,S().angebotGueltig);render()}

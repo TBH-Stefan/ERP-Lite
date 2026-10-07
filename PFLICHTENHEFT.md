@@ -183,3 +183,7 @@ Struktur nach Grundaufbau der ÖNORM B 2061 – Zeilen frei anpassbar; Abgleich 
 ## Skonto
 - **Zahlung buchen:** Liegt das Zahlungsdatum innerhalb der Skontofrist (Belegdatum + Skontotage), wird der Skonto (Satz × offener Bruttobetrag) vorgeschlagen: Haken „Skonto abziehen“ gesetzt, Skontobetrag und Zahlbetrag vorbelegt; Datumsänderung prüft die Frist neu, Haken und Felder bleiben änderbar. Skonto nach Fristablauf nur nach Rückfrage. Gilt für Ausgangs- und Eingangsrechnungen; FiBu bucht wie bisher Kunden-/Lieferantenskonto mit USt-/VSt-Korrektur.
 - **Auswertungen → Skonto (Jahr, nach Zahlungsdatum):** Kundenskonto gewährt und Lieferantenskonto erhalten (brutto, netto, Anzahl; Kundenabzüge außerhalb der Frist markiert), nicht genutzte Lieferantenskonti (ohne Abzug bezahlt, entgangener Betrag), noch nutzbare Skonti offener Eingangsrechnungen mit Frist; Aufstellung je Monat und je Partner, Einzelliste der Zahlungen (Zahlbetrag, Skonto, %, Frist) mit Sprung zum Beleg.
+
+## Preise und Rabatt in Verkaufsbelegen
+- Artikel in Position: Einzelpreis und Rabatt nur aus früheren Belegen **desselben Kunden**; sonst VK des Artikels und Kundenrabatt (Kontakt). Preise anderer Kunden nur bewusst über die Preishistorie (Klick) übernehmen.
+- Schalter „Rabatt“ jederzeit bedienbar: Abwählen bei Positionen mit Rabatt fragt nach und setzt den Rabatt aller Positionen auf 0 (Spalte ausgeblendet).

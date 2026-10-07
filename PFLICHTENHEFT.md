@@ -64,7 +64,7 @@ Definition (wie GWT-Kalkulationsmappe): **DB II = (Umsatz nach Skonto − Herste
 Ausweis: DB II € und % vom Umsatz, Aufschlag % auf HK, Fehlbetrag zum Ziel.
 
 ## 6. Lager
-- **Lagerplätze** als Baum in beliebig vielen Ebenen (z. B. Lager › Regal › Fach › Platz), Code aus dem Pfad, z. B. `HL-R01-F02-P03`; anlegen, umbenennen, verschieben, löschen wie Artikelgruppen.
+- **Lagerplätze** als Baum in beliebig vielen Ebenen (z. B. Lager › Regal › Fach › Platz), Code aus dem Pfad, z. B. `HL-R01-F02-P03`; anlegen, umbenennen, verschieben, löschen wie Artikelgruppen. **Mehrfachauswahl** (Haken, „Alle“, Umschalt+Klick = Bereich; Haken an einer Ebene markiert die Unterebenen mit): ausgewählte gemeinsam verschieben, umbenennen (Suchen/Ersetzen, z. B. `R0` → `R`) oder löschen – Unterebenen und Artikel rücken zur nächsten verbleibenden Ebene.
 - **Matrix:** Regale (von–bis) × Fächer × Plätze mit Bezeichnung und Stellenzahl in einem Schritt unter einem Lager bzw. Regal anlegen; Erweitern durch erneuten Aufruf mit größerem Bereich (vorhandene bleiben, nur neue werden ergänzt).
 - **Zuordnung je Artikel:** Lagerplatz in der Artikelmaske und direkt in der Lagerliste (Auswahlfeld je Zeile); Lagerliste mit Suche (auch Lagerplatz), Filter nach Lagerplatz inkl. Unterebenen bzw. „ohne Lagerplatz“; Spalte „Lagerplatz“ auch in der Artikelliste zuschaltbar. Alle Schritte im Protokoll.
 - Bestand ausschließlich aus Bewegungsjournal; Bewertung gleitender Durchschnitt.
@@ -163,6 +163,7 @@ Struktur nach Grundaufbau der ÖNORM B 2061 – Zeilen frei anpassbar; Abgleich 
 - Deaktivierte Artikel sind in der Übersicht ausgeblendet; Schalter „deaktivierte anzeigen (Anzahl)“, Einstellung je Gerät.
 - **Live-Suche** in allen Suchfeldern (Verkauf, Einkauf, Kontakte, Artikel, LV-Bausteine, LB-Katalog) beim Tippen.
 - **Papierkorb / Rückgängig:** Gelöschte Artikel, Kontakte, Belegentwürfe und Zeiteinträge kommen in den Papierkorb (Export & Sicherung) und sind wiederherstellbar; direkt nach dem Löschen Hinweis mit „Rückgängig“ (15 s). Endgültiges Löschen nur ausdrücklich. Alle Schritte im Protokoll. Festgeschriebene Belege werden nie gelöscht (nur Storno).
+- **Zurück (Verlauf):** Jede Änderung (Feld, Position, Stammdaten, Dialog) ist schrittweise rücknehmbar (bis 50 Schritte): **Maus-Zurücktaste** nimmt Änderungen auf der aktuellen Seite zurück (gibt es dort nichts mehr, navigiert sie wie gewohnt), Maus-Vortaste wiederholt; außerdem Strg+Z / Strg+Y (außerhalb von Eingabefeldern) und „↶ Zurück“ in der Seitenleiste bzw. der Leiste „Ungespeicherte Änderungen“. Hinweis zeigt, was zurückgenommen wurde. Festschreiben, Storno und vergebene Belegnummern werden nie zurückgedreht (lückenlose Nummernkreise); der Verlauf beginnt nach Laden/Abgleich neu.
 
 ## 16. Offene Punkte
 - **ÖNORM A 2063 (Import/Export)**: benötigt das gültige XML-Schema bzw. Beispieldateien (.onlv) – noch nicht umgesetzt.

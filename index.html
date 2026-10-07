@@ -84,7 +84,8 @@ nav .logo,nav a.logo:hover{font-weight:700;color:#fff;padding:14px 18px 10px;fon
 nav a{display:block;padding:6px 18px;color:#cfd6e4;text-decoration:none}
 nav a:hover,nav a.on{background:#2c3446;color:#fff}
 nav .grp{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#8792a8;padding:12px 18px 3px}
-#savestate{font-size:12px;color:#8fd3a8;padding:12px 18px;margin-top:auto}
+#savestate{font-size:12px;color:#8fd3a8;padding:4px 18px 12px}
+#undobtn{margin:auto 18px 0;background:#2c3446;color:#fff;border:0}#undobtn:disabled{opacity:.4}
 #savestate.bad{color:#ffb4ab}
 main{flex:1;padding:20px 26px 60px;min-width:0}
 h1{font-size:21px;margin:0 0 14px}h2{font-size:15px;margin:0 0 10px}
@@ -225,6 +226,7 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
     <a href="#/lvbib" data-n="lvbib">Textbausteine</a>
     <a href="#/export" data-n="export">Export &amp; Sicherung</a>
     <a href="#/einstellungen" data-n="einstellungen">Einstellungen</a>
+    <button id="undobtn" data-act="zurueck" disabled>↶ Zurück</button>
     <div id="savestate">–</div>
   </nav>
   <main id="main"></main>
@@ -408,16 +410,62 @@ const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
 function saveState(t,bad){for(const e of [$('#savestate'),$('#sync2')]){if(e){e.textContent=t;e.className=bad?'bad':''}}}
 /* Änderungen werden erst nach Bestätigung gespeichert (persist = vormerken, commit = speichern) */
-function persist(){DIRTY=true;dirtyBar()}
+function persist(){merk();DIRTY=true;dirtyBar()}
 function snap(){SNAP=JSON.stringify(DB)}
-async function commit(){DIRTY=false;dirtyBar();pending=true;await saveNow();snap()}
-function verwerfen(){if(SNAP)DB=migrate(JSON.parse(SNAP));DIRTY=false;dirtyBar();artDatalist();render()}
+async function commit(){merk();DIRTY=false;dirtyBar();pending=true;await saveNow();snap();LAST=SNAP}
+function verwerfen(){if(SNAP)DB=migrate(JSON.parse(SNAP));merk();DIRTY=false;dirtyBar();artDatalist();render()}
+/* Verlauf „Zurück“: vor jeder vorgemerkten oder gespeicherten Änderung wird der vorige Stand gemerkt (max. 50 Schritte).
+   Maus-Zurücktaste = Änderung auf der aktuellen Seite rückgängig (sonst normale Navigation), Maus-Vortaste = wiederholen.
+   Strg+Z / Strg+Y außerhalb von Eingabefeldern. Festschreiben und vergebene Nummern werden nie zurückgedreht. */
+let UNDO=[],REDO=[],LAST=null,MAUS=0;
+function undoBasis(leeren){LAST=DB?JSON.stringify(DB):null;if(leeren){UNDO=[];REDO=[]}undoBtn()}
+function merk(){if(!DB)return;const j=JSON.stringify(DB);if(LAST&&j!==LAST){UNDO.push({j:LAST,h:location.hash||'#/dash'});if(UNDO.length>50)UNDO.shift();REDO=[]}LAST=j;undoBtn()}
+function undoBtn(){const e=document.getElementById('undobtn');if(e){e.disabled=!UNDO.length;e.title=UNDO.length?`Letzte Änderung rückgängig (${UNDO.length} Schritt(e)) – Maus-Zurücktaste oder Strg+Z`:'Nichts rückgängig zu machen'}}
+// Was unterscheidet zwei Stände? (für den Hinweis)
+function aenderungText(a,b){
+  for(const[k,n]of[['lagerplaetze','Lagerplätze'],['artgruppen','Artikelgruppen']])if(JSON.stringify(a.settings?.[k])!==JSON.stringify(b.settings?.[k]))return n;
+  const L=[['belege','Beleg',x=>bNr(x)],['artikel','Artikel',x=>x.nr+' '+x.bez],['kontakte','Kontakt',x=>x.name],['lager','Lagerbuchung',()=>''],['zeiten','Zeiterfassung',()=>''],['kalk','K-Blatt',x=>x.bez||x.name||''],['lv','LV',x=>x.bez||x.name||''],['lvbib','Textbaustein',x=>x.bez||x.kurz||''],['papierkorb','Papierkorb',()=>'']];
+  for(const[k,n,f]of L){const A=a[k]||[],B=b[k]||[];if(JSON.stringify(A)===JSON.stringify(B))continue;
+    const m=new Map(A.map(x=>[x.id,JSON.stringify(x)])),bi=new Set(B.map(x=>x.id));
+    const x=B.find(x=>m.get(x.id)!==JSON.stringify(x))||A.find(x=>!bi.has(x.id));let t='';try{t=x?f(x):''}catch(e){}return(n+' '+(t||'')).trim()}
+  if(JSON.stringify(a.settings)!==JSON.stringify(b.settings))return'Einstellungen/Stammdaten';
+  return'Änderung'}
+// Festgeschriebene Belege und Nummernkreise dürfen nicht zurückgedreht werden
+function undoSperre(alt){const A=new Map((alt.belege||[]).map(b=>[b.id,b]));
+  for(const b of DB.belege)if(b.fest){const o=A.get(b.id);if(!o||!o.fest)return`${bNr(b)} wurde inzwischen festgeschrieben – Korrektur nur per Storno/Gutschrift.`}
+  if(JSON.stringify(alt.settings?.nk)!==JSON.stringify(S().nk))return'Seither wurde eine Belegnummer vergeben (Nummernkreise bleiben lückenlos).';
+  return''}
+function undoAnwenden(j,h){DB=migrate(JSON.parse(j));LAST=JSON.stringify(DB);DIRTY=LAST!==SNAP;dirtyBar();artDatalist();
+  if(h&&location.hash!==h){SKIP=true;location.hash=h}else render();undoBtn()}
+function zurueck(nurSeite){
+  const e=UNDO[UNDO.length-1];if(!e)return false;if(nurSeite&&e.h!==(location.hash||'#/dash'))return false;
+  const alt=JSON.parse(e.j),sp=undoSperre(alt);
+  if(sp){UNDO=[];undoBtn();alert('Weiter zurück nicht möglich:\n'+sp);return true}
+  UNDO.pop();const was=aenderungText(alt,DB);REDO.push({j:JSON.stringify(DB),h:location.hash||'#/dash',was});
+  undoAnwenden(e.j,e.h);undoHinweis('↶ Rückgängig: '+was+(UNDO.length?` · noch ${UNDO.length} Schritt(e)`:''));return true}
+function vor(nurSeite){
+  const e=REDO[REDO.length-1];if(!e)return false;if(nurSeite&&e.h!==(location.hash||'#/dash'))return false;
+  REDO.pop();UNDO.push({j:JSON.stringify(DB),h:location.hash||'#/dash'});undoAnwenden(e.j,e.h);undoHinweis('↷ Wiederholt: '+e.was);return true}
+function undoHinweis(t){document.getElementById('undo')?.remove();const d=document.createElement('div');d.id='undo';d.className='undo';d.style.bottom='78px';
+  d.innerHTML=`<span>${esc(t)}</span>${UNDO.length?'<button data-z="u">↶ Weiter zurück</button>':''}${REDO.length?'<button data-z="r">↷ Wiederholen</button>':''}<button class="x" title="Schließen">✕</button>`;document.body.appendChild(d);
+  const t_=setTimeout(()=>d.remove(),8000);d.onclick=e=>{const z=e.target.dataset.z;if(!e.target.closest('button'))return;clearTimeout(t_);d.remove();if(z==='u')zurueck();if(z==='r')vor()}}
+const imFeld=el=>el&&(/INPUT|TEXTAREA|SELECT/.test(el.tagName)||el.isContentEditable);
+// Maus-Zurück/Vor (Tasten 4/5 = button 3/4): nur abfangen, wenn es auf dieser Seite etwas zurückzunehmen gibt
+const mausZiel=b=>{if(document.querySelector('.modal'))return false;const S_=b===3?UNDO:REDO,e=S_[S_.length-1];if(e&&e.h===(location.hash||'#/dash'))return true;
+  return b===3&&imFeld(document.activeElement)&&!!document.activeElement.closest('#main')};
+document.addEventListener('mousedown',e=>{if((e.button===3||e.button===4)&&mausZiel(e.button))e.preventDefault()});
+document.addEventListener('mouseup',e=>{if(e.button!==3&&e.button!==4)return;if(document.querySelector('.modal'))return;
+  if(e.button===3&&imFeld(document.activeElement))document.activeElement.blur(); // offene Eingabe zuerst übernehmen
+  if(e.button===3?zurueck(true):vor(true)){e.preventDefault();e.stopPropagation();MAUS=Date.now()*(e.button===3?1:-1)}});
+document.addEventListener('keydown',e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey)return;const k=e.key.toLowerCase();if(k!=='z'&&k!=='y')return;
+  if(imFeld(e.target)||document.querySelector('.modal'))return; // in Eingabefeldern gilt das normale Rückgängig des Browsers
+  const r=k==='y'||e.shiftKey;if(r?vor():zurueck())e.preventDefault()});
 function dirtyBar(){
   let e=$('#dirtybar');
   if(!DIRTY){if(e)e.remove();return}
   if(e)return;
   e=document.createElement('div');e.id='dirtybar';
-  e.innerHTML='<span>● Ungespeicherte Änderungen</span><span class="sp"></span><button data-act="verwerfen">Verwerfen</button><button class="p" data-act="speichern">Speichern</button>';
+  e.innerHTML='<span>● Ungespeicherte Änderungen</span><span class="sp"></span><button data-act="zurueck" title="Letzte Änderung rückgängig (Maus-Zurücktaste, Strg+Z)">↶ Zurück</button><button data-act="verwerfen">Verwerfen</button><button class="p" data-act="speichern">Speichern</button>';
   document.body.appendChild(e);
 }
 function frageSpeichern(){
@@ -600,7 +648,7 @@ function merge3(base,local,remote){
 async function zusammenfuehren(){
   try{
     const base=STORE.lastText?JSON.parse(STORE.lastText):null,txt=await STORE.load();
-    if(txt){const{db,konfl}=merge3(base,DB,migrate(JSON.parse(txt)));DB=migrate(db);
+    if(txt){const{db,konfl}=merge3(base,DB,migrate(JSON.parse(txt)));DB=migrate(db);undoBasis(true);
       if(konfl.length)alert('Diese Datensätze wurden gleichzeitig auf einem anderen Gerät geändert – es gilt die Version des anderen Geräts:\n\n• '+[...new Set(konfl)].join('\n• '))}
     artDatalist();render();pending=true;await saveNow();
   }catch(e){saveState('Abgleich fehlgeschlagen',true);alert('Abgleich mit OneDrive fehlgeschlagen:\n'+e.message)}
@@ -609,7 +657,7 @@ async function zusammenfuehren(){
 async function aktualisieren(){
   if(STORE.art!=='od'||DIRTY||pending||saving||!DB)return;
   const a=document.activeElement;if(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))return;
-  try{const m=await STORE.meta();if(m&&m.eTag!==STORE.etag){const txt=await STORE.load();DB=migrate(JSON.parse(txt));artDatalist();render();saveState('Aktualisiert '+new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}))}}catch(e){}
+  try{const m=await STORE.meta();if(m&&m.eTag!==STORE.etag){const txt=await STORE.load();DB=migrate(JSON.parse(txt));snap();undoBasis(true);artDatalist();render();saveState('Aktualisiert '+new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}))}}catch(e){}
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')aktualisieren()});
 setInterval(()=>{if(document.visibilityState==='visible')aktualisieren()},60000);
@@ -638,7 +686,7 @@ async function odStart(){
   laden(data);
   const u=await kvGet('unsynced').catch(()=>null);
   if(u&&u.local){
-    try{const{db,konfl}=merge3(u.base?JSON.parse(u.base):null,migrate(JSON.parse(u.local)),DB);DB=migrate(db);artDatalist();render();
+    try{const{db,konfl}=merge3(u.base?JSON.parse(u.base):null,migrate(JSON.parse(u.local)),DB);DB=migrate(db);undoBasis(true);artDatalist();render();
       alert('Offline erfasste Änderungen wurden nachgetragen.'+(konfl.length?'\n\nKonflikte (Version des anderen Geräts gilt):\n• '+[...new Set(konfl)].join('\n• '):''))}catch(e){}
   }
   pending=true;await saveNow();
@@ -672,7 +720,7 @@ function laden(d){
   DB=migrate(d);
   $('#start').style.display='none';document.body.classList.add('loaded');
   artDatalist();
-  snap();CURHASH=location.hash;if(!location.hash||location.hash==='#')go(S().firma.name?'dash':'einstellungen');else render();
+  snap();undoBasis(true);CURHASH=location.hash;if(!location.hash||location.hash==='#')go(S().firma.name?'dash':'einstellungen');else render();
 }
 
 /* ---------- Anhänge (Fotos, PDFs) ---------- */
@@ -985,10 +1033,11 @@ function render(){
 window.addEventListener('hashchange',async()=>{
   if(!DB)return;
   if(SKIP){SKIP=false;CURHASH=location.hash;render();return}
+  if(MAUS&&Math.abs(Date.now()-Math.abs(MAUS))<500){const r=MAUS>0?1:-1;MAUS=0;SKIP=true;history.go(r);return} // Maustaste hat bereits rückgängig gemacht → Navigation zurücknehmen
   if(DIRTY){
     const ziel=location.hash;history.replaceState(null,'',CURHASH||'#/dash');
     const r=await frageSpeichern();if(r==='abbrechen')return;
-    if(r==='speichern')await commit();else{if(SNAP)DB=migrate(JSON.parse(SNAP));DIRTY=false;dirtyBar();artDatalist()}
+    if(r==='speichern')await commit();else{if(SNAP)DB=migrate(JSON.parse(SNAP));merk();DIRTY=false;dirtyBar();artDatalist()}
     location.hash=ziel;return;
   }
   CURHASH=location.hash;snap();render();
@@ -2414,27 +2463,53 @@ async function lagerMatrix(B,parent=''){
 }
 function baumDialog(B){
   const c=B.c,d=document.createElement('div');d.className='modal';
-  const zeich=()=>{d.querySelector('#gr-l').innerHTML=B.liste().map(({g,t})=>{const u=B.unter(g.id);
-    return`<div class="att" style="padding-left:${t*22}px">${t?'<span class="mut">└</span>':''}<input data-gr="${g.id}" value="${esc(g.bez)}" style="flex:1;min-width:110px">
+  const SEL=new Set();let letzte=-1; // Mehrfachauswahl (Haken; Umschalt+Klick = Bereich; Haken an einer Ebene markiert die Unterebenen mit)
+  const selBar=()=>{for(const id of [...SEL])if(!B.G(id))SEL.delete(id);const n=SEL.size,b=d.querySelector('#gr-sel');
+    b.innerHTML=`<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="gr-alle" ${n&&n===B.L().length?'checked':''}> Alle</label><b>${n} ausgewählt</b><span class="sp"></span>
+    <select id="gr-zu" ${n?'':'disabled'} title="Ausgewählte verschieben"><option value="">Verschieben nach …</option>${opt('__top','– oberste Ebene –','')}${B.opts().filter(([id])=>![...SEL].some(x=>B.unter(x).has(id))).map(([id,l])=>opt(id,l.trim(),'')).join('')}</select>
+    <button class="s" id="gr-ren" ${n?'':'disabled'} title="Text in den Bezeichnungen ersetzen, z. B. R0 → R">Umbenennen …</button><button class="s d" id="gr-mdel" ${n?'':'disabled'}>✕ Ausgewählte löschen</button>`};
+  const zeich=()=>{d.querySelector('#gr-l').innerHTML=B.liste().map(({g,t},i)=>{const u=B.unter(g.id);
+    return`<div class="att" style="padding-left:${t*22}px"><input type="checkbox" data-grx="${g.id}" data-i="${i}" ${SEL.has(g.id)?'checked':''} title="Auswählen (Umschalt = Bereich)">${t?'<span class="mut">└</span>':''}<input data-gr="${g.id}" value="${esc(g.bez)}" style="flex:1;min-width:110px">
     <select data-grp="${g.id}" title="Übergeordnet (verschieben)" style="max-width:150px">${opt('','– oberste Ebene –',g.parent||'')}${B.opts().filter(([id])=>!u.has(id)).map(([id,l])=>opt(id,l.trim(),g.parent||'')).join('')}</select>
-    <span class="mut" style="min-width:58px;text-align:right" title="Artikel inkl. Unterebenen">${B.anz(g.id)} Art.</span><button class="s" data-grsub="${g.id}" title="Unterebene anlegen">+ Unter</button>${k==='lp'?`<button class="s" data-grmx="${g.id}" title="Regale/Fächer/Plätze darunter per Matrix">▦</button>`:''}<button class="s d" data-grdel="${g.id}">✕</button></div>`}).join('')||'<p class="mut">Noch keine Einträge.</p>'};
+    <span class="mut" style="min-width:58px;text-align:right" title="Artikel inkl. Unterebenen">${B.anz(g.id)} Art.</span><button class="s" data-grsub="${g.id}" title="Unterebene anlegen">+ Unter</button>${k==='lp'?`<button class="s" data-grmx="${g.id}" title="Regale/Fächer/Plätze darunter per Matrix">▦</button>`:''}<button class="s d" data-grdel="${g.id}">✕</button></div>`}).join('')||'<p class="mut">Noch keine Einträge.</p>';selBar()};
+  // Löschen mehrerer Knoten: Unterebenen und Artikel rücken zur nächsten verbleibenden Ebene darüber
+  const loeschen=ids=>{const ziel=id=>{let g=B.G(id),n=0;while(g&&ids.has(g.id)&&n++<60)g=B.G(g.parent);return g?g.id:''};
+    const A=DB.artikel.filter(a=>ids.has(a[c.feld])),K=B.L().filter(x=>!ids.has(x.id)&&ids.has(x.parent||''));
+    const namen=[...ids].map(id=>B.pfad(id));
+    if(!confirm(`${ids.size} ${ids.size===1?'Eintrag':'Einträge'} löschen?\n${namen.slice(0,12).join(', ')}${namen.length>12?' …':''}${K.length?`\n${K.length} weitere Unterebene(n) rücken nach oben.`:''}${A.length?`\n${A.length} Artikel kommen zur nächsthöheren Ebene bzw. ohne Zuordnung.`:''}\nArtikel bleiben erhalten.`))return false;
+    for(const a of A)a[c.feld]=ziel(a[c.feld]);for(const x of K)x.parent=ziel(x.parent);
+    if(ids.has(UI.aGr))UI.aGr=ziel(UI.aGr);if(ids.has(UI.lgP))UI.lgP=ziel(UI.lgP);
+    S()[c.key]=B.L().filter(x=>!ids.has(x.id));for(const id of ids)SEL.delete(id);
+    log(c.name+(ids.size>1?' gelöscht (Mehrfachauswahl)':' gelöscht'),namen.join(', '));return true};
   const k=B===LP?'lp':'gr';
-  d.innerHTML=`<div class="mbox" style="max-width:760px"><h2>${c.titel}</h2><p class="mut" style="margin-top:0">Beliebig tief: „+ Unter“ legt eine Unterebene an, die Auswahl verschiebt samt Unterebenen.${k==='lp'?' ▦ bzw. „Matrix …“ legt Regale, Fächer und Plätze in einem Schritt an oder erweitert sie.':''}</p><div id="gr-l" style="max-height:55vh;overflow:auto"></div>
+  d.innerHTML=`<div class="mbox" style="max-width:760px"><h2>${c.titel}</h2><p class="mut" style="margin-top:0">Beliebig tief: „+ Unter“ legt eine Unterebene an, die Auswahl verschiebt samt Unterebenen.${k==='lp'?' ▦ bzw. „Matrix …“ legt Regale, Fächer und Plätze in einem Schritt an oder erweitert sie.':''}</p><div id="gr-sel" class="bar" style="margin:0 0 6px;flex-wrap:wrap;gap:8px;align-items:center"></div><div id="gr-l" style="max-height:52vh;overflow:auto"></div>
     <div class="bar" style="margin:12px 0 0"><input id="gr-neu" placeholder="${c.neu}" style="flex:1"><button id="gr-add">+ Anlegen</button>${k==='lp'?'<button id="gr-mx">▦ Matrix …</button>':''}</div>
     <div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button class="p" id="m-ok">Fertig</button></div></div>`;
   document.body.appendChild(d);zeich();
   const add=()=>{const e=d.querySelector('#gr-neu'),n=e.value.trim();if(!n)return;if(B.kinder('').some(g=>g.bez.toLowerCase()===n.toLowerCase())){alert('Gibt es bereits.');return}B.L().push({id:uid(),bez:n,parent:''});log(c.name+' angelegt',n);e.value='';zeich()};
   d.querySelector('#gr-add').onclick=add;d.querySelector('#gr-neu').onkeydown=e=>{if(e.key==='Enter')add()};
   if(k==='lp')d.querySelector('#gr-mx').onclick=async()=>{d.style.display='none';await lagerMatrix(B);d.style.display='';zeich()};
-  d.addEventListener('change',e=>{const t=e.target;
+  d.addEventListener('change',async e=>{const t=e.target;
+    if(t.id==='gr-alle'){SEL.clear();if(t.checked)for(const g of B.L())SEL.add(g.id);zeich();return}
+    if(t.id==='gr-zu'){const zu=t.value==='__top'?'':t.value;if(!t.value)return;
+      const top=[...SEL].filter(id=>{let g=B.G(B.G(id)?.parent),n=0;while(g&&n++<60){if(SEL.has(g.id))return false;g=B.G(g.parent)}return true}); // Unterebenen wandern mit
+      const ok=top.filter(id=>!B.unter(id).has(zu));for(const id of ok)B.G(id).parent=zu;
+      log(c.name+' verschoben (Mehrfachauswahl)',ok.map(id=>B.pfad(id)).join(', '));zeich();return}
+    if(t.dataset.grx){const id=t.dataset.grx,i=+t.dataset.i,an=t.checked,L=B.liste();
+      const ids=e.shiftKey||t._shift?L.slice(Math.min(i,letzte<0?i:letzte),Math.max(i,letzte<0?i:letzte)+1).map(x=>x.g.id):[id];
+      for(const x of ids)for(const y of B.unter(x))an?SEL.add(y):SEL.delete(y);letzte=i;zeich();return}
     if(t.dataset.gr){const g=B.G(t.dataset.gr),n=t.value.trim();if(!n){t.value=g.bez;return}if(n!==g.bez){log(c.name+' umbenannt',B.pfad(g.id)+' → '+n);g.bez=n;zeich()}}
     if(t.dataset.grp){const g=B.G(t.dataset.grp),np=t.value;if(B.unter(g.id).has(np)){zeich();return}const alt=B.pfad(g.id);g.parent=np;log(c.name+' verschoben',alt+' → '+B.pfad(g.id));zeich()}});
   d.addEventListener('click',async e=>{const t=e.target;
+    if(t.dataset.grx){t._shift=e.shiftKey;return}
+    if(t.id==='gr-mdel'){if(SEL.size&&loeschen(new Set(SEL)))zeich();return}
+    if(t.id==='gr-ren'){const o=await formDialog({titel:`${SEL.size} Bezeichnung(en) ändern`,ok:'Ändern',felder:[{k:'such',l:'Suchen (leer = am Anfang einfügen)',wert:''},{k:'ers',l:'Ersetzen durch',wert:''}]});if(!o)return;
+      let n=0,dup=[];for(const id of SEL){const g=B.G(id),neu=(o.such?g.bez.split(o.such).join(o.ers):o.ers+g.bez).trim();if(!neu||neu===g.bez)continue;
+        if(B.kinder(g.parent).some(x=>x!==g&&x.bez.toLowerCase()===neu.toLowerCase())){dup.push(B.pfad(id));continue}g.bez=neu;n++}
+      log(c.name+' umbenannt (Mehrfachauswahl)',`${n}× „${o.such}“ → „${o.ers}“`);zeich();if(dup.length)alert('Nicht umbenannt (Name auf derselben Ebene schon vorhanden):\n'+dup.join('\n'));return}
     if(t.dataset.grsub){if(await knotenNeu(B,t.dataset.grsub))zeich();return}
     if(t.dataset.grmx){d.style.display='none';await lagerMatrix(B,t.dataset.grmx);d.style.display='';zeich();return}
-    const id=t.dataset.grdel;if(!id)return;const g=B.G(id),L=DB.artikel.filter(a=>a[c.feld]===id),K=B.kinder(id),ob=g.parent||'';
-    if(!confirm(`„${B.pfad(id)}“ löschen?${K.length?`\n${K.length} Unterebene(n) rücken eine Ebene nach oben.`:''}${L.length?`\n${L.length} Artikel kommen ${ob?'nach „'+B.pfad(ob)+'“':'ohne Zuordnung'}.`:''}\nArtikel bleiben erhalten.`))return;
-    const pf=B.pfad(id);for(const a of L)a[c.feld]=ob;for(const x of K)x.parent=ob;S()[c.key]=B.L().filter(x=>x!==g);if(UI.aGr===id)UI.aGr=ob;if(UI.lgP===id)UI.lgP=ob;log(c.name+' gelöscht',pf);zeich()});
+    const id=t.dataset.grdel;if(!id)return;if(loeschen(new Set([id])))zeich()});
   d.querySelector('#m-ok').onclick=()=>{d.remove();commit();render()};
 }
 const gruppenDialog=()=>baumDialog(GR);
@@ -3382,7 +3457,7 @@ const ACT={
     lagerBuchung({artikelId:a,menge,preis:p!==''?num(p):null,datum:$('#lg-d').value||isoD(),text:(m==='ist'?'Inventur':'Korrektur')+(t?': '+t:'')});
     log('Lagerbuchung',`${artikel(a).nr}: ${fmtQ(menge)}`);commit();render()},
   exp:el=>EXPORTS[el.dataset.k](),
-  savenow:()=>commit(),speichern:()=>commit(),verwerfen:()=>{if(confirm("Alle ungespeicherten Änderungen verwerfen?"))verwerfen()},
+  savenow:()=>commit(),speichern:()=>commit(),zurueck:()=>{if(!zurueck())alert('Keine Änderung zum Zurücknehmen.')},verwerfen:()=>{if(confirm("Alle ungespeicherten Änderungen verwerfen?"))verwerfen()},
   stadd:()=>{S().steuer.push({code:'NEU',satz:0,bez:'',hinweis:''});persist();render()},
   stdel:el=>{const x=S().steuer[+el.dataset.i];if(DB.belege.some(b=>b.pos.some(p=>p.steuer===x.code))){alert('Steuersatz wird in Belegen verwendet.');return}S().steuer.splice(+el.dataset.i,1);persist();render()},
   tfadd:()=>{S().tarife.push({kz:'NEU',bez:'',kosten:0,vk:0});persist();render()},

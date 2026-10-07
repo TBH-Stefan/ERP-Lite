@@ -22,6 +22,7 @@ Anwender: Stefan Horvath. Sprache in Code-Kommentaren, Oberfläche und Antworten
 - PDF ohne Bibliothek: `pdfAusBeleg()` misst die Belegvorschau (`docHTML`) aus und schreibt Helvetica-Text, Linien, Logo; Umbruch an Zeilengrenzen, Tabellenkopf wiederholt. Versand: `versenden()` über Graph `/me/sendMail` (Scope Mail.Send, eigener Token `mailToken()`); ohne O365: PDF speichern + mailto.
 - Sammelrechnung aus Lieferscheinen: `sammelRechnung()`. Folgebeleg aus Entwurf: vorher `festschreiben()`.
 - Papierkorb/Rückgängig: `wegwerfen()`, `wiederherstellen()`.
+- Verlauf „Zurück“: `merk()` (in `persist()`/`commit()`) legt den vorigen Stand auf `UNDO`; `zurueck()`/`vor()`, Maus-Tasten 4/5 (button 3/4), Strg+Z/Y; `undoSperre()` schützt Festschreiben/Nummernkreise; nach Laden/Abgleich `undoBasis(true)`.
 - Listen über `tabelle(id,cols,rows,…)` mit Spaltenauswahl (`S().spalten`, `spaltenDialog()`); neue Spalten dort als `{k,l,f,n,std}` ergänzen.
 - Bäume über `baum(k)` → `GR` (Artikelgruppen, `S().artgruppen`, Artikelfeld `gruppe`) und `LP` (Lagerplätze, `S().lagerplaetze`, Feld `lagerplatz`), Knoten {id,bez,parent}; Verwaltung `baumDialog(B)`, Auswahlfeld `ketteHTML(k,wert,attr)` → Struktur-Popup `baumWahl(k,wert)` (auch `formDialog`-Feldtyp `kette`), Matrix `lagerMatrix()`, Filter `UI.aGr`/`UI.lgP`.
 - Kontakte: `kontaktPopup(typ,vorbelegung,kontakt)` (neu/bearbeiten, Pflichtfelder), `kontaktFehlt()`, `konditionenUebernehmen()`.

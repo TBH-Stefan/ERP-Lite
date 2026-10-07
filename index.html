@@ -1410,12 +1410,20 @@ function kalkBox(b){
   ${v.fehl>0.005?`<dt class="err">Fehlbetrag zu Ziel ${fmtQ(S().zielDB2)} %</dt><dd class="err">${fmt(v.fehl)}</dd>`:''}</dl>
   ${b.pos.some(p=>!isInfo(p)&&!p.kz&&!(+p.ek))?'<p class="warnc" style="margin:6px 0 0;font-size:12px">Positionen ohne EK – DB II zu hoch ausgewiesen.</p>':''}`;
 }
+/* Skonto: innerhalb der Frist (Belegdatum + Skontotage) wird der Abzug beim Buchen der Zahlung vorgeschlagen (auf den offenen Bruttobetrag) */
+const skontoBis=b=>addDays(b.datum,+b.skontoTage||0);
+function skontoInfo(b,datum){const sk=+b.skonto||0,o=offen(b),bis=skontoBis(b);return{sk,bis,o,ok:sk>0&&o>0.005&&(datum||isoD())<=bis,betrag:r2(o*sk/100)}}
+function zSkonto(datum){const b=curBeleg(),c=$('#z-skan');if(!b||!c)return;const i=skontoInfo(b,$('#z-dat').value);
+  c.disabled=!i.ok;if(!i.ok||datum)c.checked=i.ok; // Datum geändert: Vorschlag neu (in der Frist = abziehen)
+ const sk=c.checked?i.betrag:0;$('#z-sk').value=sk;$('#z-bet').value=r2(i.o-sk);
+  $('#z-skinfo').innerHTML=i.sk?(i.ok?`${fmtQ(i.sk)} % Skonto bis ${dAT(i.bis)}: <b>${fmt(i.betrag)} €</b>`:`<span class="err">Skontofrist (${fmtQ(i.sk)} % bis ${dAT(i.bis)}) abgelaufen</span>`):''}
 function zahlBox(b){
-  const o=offen(b);
+  const o=offen(b),si=skontoInfo(b,isoD()),sk0=si.ok?si.betrag:0;
   return`<div class="card"><h2>Zahlungen</h2><table><thead><tr><th>Datum</th><th>Art</th><th class="n">Betrag</th><th class="n">Skonto</th><th>Notiz</th><th></th></tr></thead><tbody>
   ${(b.zahlungen||[]).map((z,i)=>`<tr><td>${dAT(z.datum)}</td><td>${esc(z.art)}</td><td class="n">${fmt(z.betrag)}</td><td class="n">${z.skonto?fmt(z.skonto):''}</td><td>${esc(z.notiz)}</td><td><button class="s d" data-act="zdel" data-i="${i}">✕</button></td></tr>`).join('')||'<tr><td colspan="6" class="mut">keine</td></tr>'}
   </tbody></table>
-  ${Math.abs(o)>0.005?`<div class="row" style="margin-top:8px"><label class="w05">Datum<input type="date" id="z-dat" value="${isoD()}"></label><label class="w05">Betrag<input type="number" step="any" id="z-bet" value="${o}"></label><label class="w05">Skonto<input type="number" step="any" id="z-sk" value="0"></label><label class="w05">Art<select id="z-art">${opt('Bank','Bank')}${opt('Bar','Bar')}${opt('Verrechnung','Verrechnung')}</select></label><label>Notiz<input id="z-not"></label><button class="p" data-act="zadd">Zahlung buchen</button></div>`:''}</div>`;
+  ${Math.abs(o)>0.005?`<div class="row" style="margin-top:8px"><label class="w05">Datum<input type="date" id="z-dat" value="${isoD()}" onchange="zSkonto(1)"></label><label class="w05">Betrag<input type="number" step="any" id="z-bet" value="${r2(o-sk0)}"></label><label class="w05">Skonto<input type="number" step="any" id="z-sk" value="${sk0}"></label><label class="w05">Art<select id="z-art">${opt('Bank','Bank')}${opt('Bar','Bar')}${opt('Verrechnung','Verrechnung')}</select></label><label>Notiz<input id="z-not"></label><button class="p" data-act="zadd">Zahlung buchen</button></div>
+  ${si.sk&&o>0.005?`<div class="bar" style="margin:6px 0 0"><label class="chk" style="margin:0"><input type="checkbox" id="z-skan" onchange="zSkonto()" ${si.ok?'checked':'disabled'}> Skonto abziehen</label><span id="z-skinfo" class="mut">${si.ok?`${fmtQ(si.sk)} % Skonto bis ${dAT(si.bis)}: <b>${fmt(si.betrag)} €</b>`:`<span class="err">Skontofrist (${fmtQ(si.sk)} % bis ${dAT(si.bis)}) abgelaufen</span>`}</span></div>`:''}`:''}</div>`;
 }
 function updateCalc(b){
   b.pos.forEach((p,i)=>{const e=$('#gp'+i);if(e)e.textContent=fmt(posGP(p))});
@@ -1685,6 +1693,13 @@ V.auswertung=()=>{
   const opT=L=>`<table><thead><tr><th>Beleg</th><th>Partner</th><th>fällig</th><th class="n">offen</th></tr></thead><tbody>${L.map(b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${esc(b.nr)}${b.fremdNr?' / '+esc(b.fremdNr):''}</td><td>${esc(kName(b.kontaktId))}</td><td class="${faellig(b)<heute?'err':''}">${dAT(faellig(b))}</td><td class="n">${fmt(offen(b))}</td></tr>`).join('')||'<tr><td colspan="4" class="mut">keine</td></tr>'}</tbody><tfoot><tr><td colspan="3">Summe</td><td class="n">${fmt(sum(L,offen))}</td></tr></tfoot></table>`;
   const mn=['Jän','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
   const aufJ=auftragsListe().filter(a=>a.docs.some(d=>zaehltUmsatz(d)&&d.datum.startsWith(j))).map(a=>({a,n:nachkalk(a.id)}));
+  // Skonto: gewährt (Verkauf) / erhalten (Einkauf) nach Zahlungsdatum; nicht genutzte Lieferantenskonti; noch nutzbare
+  const SK=[],SM=Array.from({length:12},()=>({v:0,e:0})),SP={};
+  for(const b of DB.belege.filter(b=>T[b.typ].re&&b.fest))for(const z of b.zahlungen||[]){if(!+z.skonto||!z.datum.startsWith(j))continue;const s=summen(b),V_=T[b.typ].b==='V',net=s.brutto?z.skonto*s.netto/s.brutto:z.skonto;
+    SK.push({b,z,V_,net,frist:+b.skonto>0&&z.datum<=skontoBis(b)});SM[+z.datum.slice(5,7)-1][V_?'v':'e']+=z.skonto;const k=(V_?'V':'E')+b.kontaktId;SP[k]=SP[k]||{k:b.kontaktId,V_,n:0,sk:0,net:0};SP[k].n++;SP[k].sk+=z.skonto;SP[k].net+=net}
+  const skV=SK.filter(x=>x.V_),skE=SK.filter(x=>!x.V_);
+  const verpasst=er.filter(b=>+b.skonto>0&&skontoBis(b).startsWith(j)&&Math.abs(offen(b))<=0.005&&!(b.zahlungen||[]).some(z=>+z.skonto)).map(b=>({b,pot:r2(summen(b).zahlbar*b.skonto/100)}));
+  const nutzbar=er.filter(b=>+b.skonto>0&&offen(b)>0.005&&skontoBis(b)>=heute).map(b=>({b,pot:r2(offen(b)*b.skonto/100)})).sort((x,y)=>skontoBis(x.b).localeCompare(skontoBis(y.b)));
   return`<div class="bar"><h1 style="margin:0">Auswertungen</h1><select data-o="ui" data-f="jahr">${jahre.map(x=>opt(x,x,j)).join('')}</select></div>
   <div class="grid">
     <div class="kpi">Umsatz netto<b>${fmt(sum(M,m=>m.u))} €</b></div>
@@ -1702,6 +1717,23 @@ V.auswertung=()=>{
   <div class="cols" style="grid-template-columns:1fr 1fr">
   <div class="card"><h2>Umsatz nach Kunde ${j}</h2><table>${Object.entries(kunden).sort((a,c)=>c[1]-a[1]).map(([k,u])=>`<tr><td>${esc(kName(k))}</td><td class="n">${fmt(u)}</td></tr>`).join('')||'<tr><td class="mut">keine</td></tr>'}</table></div>
   <div class="card"><h2>Umsatz nach Artikel/Leistung ${j}</h2><table>${Object.entries(artk).sort((a,c)=>c[1].u-a[1].u).slice(0,40).map(([k,x])=>`<tr><td>${esc(k)}</td><td class="n">${fmtQ(x.m)} ${esc(x.e)}</td><td class="n">${fmt(x.u)}</td></tr>`).join('')||'<tr><td class="mut">keine</td></tr>'}</table></div>
+  <div class="card" style="grid-column:1/-1"><h2>Skonto ${j}</h2>
+    <div class="grid" style="margin-bottom:10px">
+      <div class="kpi">Kundenskonto gewährt<b>${fmt(sum(skV,x=>x.z.skonto))} €</b><span class="mut">${skV.length} Zahlung(en) · netto ${fmt(sum(skV,x=>x.net))} €${skV.some(x=>!x.frist)?` · <span class="err">${skV.filter(x=>!x.frist).length} außerhalb der Frist</span>`:''}</span></div>
+      <div class="kpi">Lieferantenskonto erhalten<b>${fmt(sum(skE,x=>x.z.skonto))} €</b><span class="mut">${skE.length} Zahlung(en) · netto ${fmt(sum(skE,x=>x.net))} €</span></div>
+      <div class="kpi">Lieferantenskonto nicht genutzt<b class="${verpasst.length?'err':''}">${fmt(sum(verpasst,x=>x.pot))} €</b><span class="mut">${verpasst.length} Rechnung(en) ohne Abzug bezahlt</span></div>
+      <div class="kpi">Noch nutzbar<b>${fmt(sum(nutzbar,x=>x.pot))} €</b><span class="mut">${nutzbar.length} offene Eingangsrechnung(en) in der Frist</span></div>
+    </div>
+    <div class="cols" style="grid-template-columns:1fr 1fr;margin:0">
+      <div><table><thead><tr><th>Monat</th><th class="n">Kundenskonto</th><th class="n">Lieferantenskonto</th></tr></thead><tbody>${SM.map((m,i)=>`<tr><td>${mn[i]}</td><td class="n">${m.v?fmt(m.v):''}</td><td class="n">${m.e?fmt(m.e):''}</td></tr>`).join('')}</tbody>
+        <tfoot><tr><td>Summe</td><td class="n">${fmt(sum(SM,m=>m.v))}</td><td class="n">${fmt(sum(SM,m=>m.e))}</td></tr></tfoot></table></div>
+      <div><table><thead><tr><th>Partner</th><th>Art</th><th class="n">Anz.</th><th class="n">Skonto brutto</th><th class="n">netto</th></tr></thead><tbody>${Object.values(SP).sort((a,c)=>c.sk-a.sk).map(x=>`<tr class="click" onclick="nav('kontakt/${x.k}')"><td>${esc(kName(x.k))}</td><td>${x.V_?'Kunde':'Lieferant'}</td><td class="n">${x.n}</td><td class="n">${fmt(x.sk)}</td><td class="n">${fmt(x.net)}</td></tr>`).join('')||'<tr><td colspan="5" class="mut">keine</td></tr>'}</tbody></table></div>
+    </div>
+    <details style="margin-top:10px"><summary>Einzelne Zahlungen mit Skonto (${SK.length})</summary><table><thead><tr><th>Zahlung</th><th>Beleg</th><th>Partner</th><th class="n">Zahlbetrag</th><th class="n">Skonto</th><th class="n">%</th><th>Frist</th></tr></thead><tbody>
+      ${SK.sort((a,c)=>a.z.datum.localeCompare(c.z.datum)).map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${dAT(x.z.datum)}</td><td>${esc(x.b.nr)}${x.b.fremdNr?' / '+esc(x.b.fremdNr):''}</td><td>${esc(kName(x.b.kontaktId))}</td><td class="n">${fmt(x.z.betrag)}</td><td class="n">${fmt(x.z.skonto)}</td><td class="n">${fmtQ(r2(x.z.skonto/((+x.z.betrag||0)+x.z.skonto)*100))}</td><td>${x.frist?'bis '+dAT(skontoBis(x.b)):'<span class="err">außerhalb</span>'}</td></tr>`).join('')||'<tr><td colspan="7" class="mut">keine</td></tr>'}</tbody></table></details>
+    ${verpasst.length?`<details style="margin-top:6px"><summary>Nicht genutzte Lieferantenskonti (${verpasst.length})</summary><table>${verpasst.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${esc(x.b.nr)} / ${esc(x.b.fremdNr||'')}</td><td>${esc(kName(x.b.kontaktId))}</td><td>${fmtQ(x.b.skonto)} % bis ${dAT(skontoBis(x.b))}</td><td class="n">${fmt(x.pot)}</td></tr>`).join('')}</table></details>`:''}
+    ${nutzbar.length?`<details open style="margin-top:6px"><summary>Jetzt noch Skonto nutzen (${nutzbar.length})</summary><table>${nutzbar.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${esc(x.b.nr)} / ${esc(x.b.fremdNr||'')}</td><td>${esc(kName(x.b.kontaktId))}</td><td>${fmtQ(x.b.skonto)} % bis <b>${dAT(skontoBis(x.b))}</b></td><td class="n">${fmt(x.pot)}</td></tr>`).join('')}</table></details>`:''}
+  </div>
   <div class="card"><h2>Offene Posten Kunden</h2>${opT(deb)}</div>
   <div class="card"><h2>Offene Posten Lieferanten</h2>${opT(kred)}</div>
   </div>`;
@@ -3501,6 +3533,7 @@ const ACT={
     p.artikelId=a.id;p.nr=a.nr;if(!p.bez)p.bez=a.bez;persist();render()},
   pzeit:()=>{const b=curBeleg();const zt=DB.zeiten.filter(z=>z.auftragId===b.auftragId&&!z.belegId);if(!zt.length){alert('Keine offenen Stunden für diesen Auftrag.');return}zeitenInPos(b,zt);persist();render()},
   zadd:()=>{const b=curBeleg(),bet=num($('#z-bet').value),sk=num($('#z-sk').value);if(!bet&&!sk)return;if(FB().sperre&&($('#z-dat').value||isoD())<=FB().sperre){alert('Periode bis '+dAT(FB().sperre)+' ist gesperrt.');return}
+    if(sk>0&&($('#z-dat').value||isoD())>skontoBis(b)&&!confirm(`Skontofrist ${+b.skonto?'('+fmtQ(b.skonto)+' % bis '+dAT(skontoBis(b))+') ':''}ist zum Zahlungsdatum abgelaufen bzw. kein Skonto vereinbart.\nSkonto ${fmt(sk)} € trotzdem buchen?`))return;
     b.zahlungen.push({id:uid(),datum:$('#z-dat').value||isoD(),betrag:r2(bet),skonto:r2(sk),art:$('#z-art').value,notiz:$('#z-not').value});
     log('Zahlung',`${b.nr}: ${fmt(bet)}${sk?' + Skonto '+fmt(sk):''}`);commit();render()},
   zdel:el=>{const b=curBeleg(),z=b.zahlungen[+el.dataset.i];if(!confirm(`Zahlung ${fmt(z.betrag)} vom ${dAT(z.datum)} löschen?`))return;b.zahlungen.splice(+el.dataset.i,1);log('Zahlung gelöscht',`${b.nr}: ${fmt(z.betrag)}`);commit();render()},

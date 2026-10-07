@@ -23,6 +23,7 @@ Anwender: Stefan Horvath. Sprache in Code-Kommentaren, Oberfläche und Antworten
 - PDF ohne Bibliothek: `pdfAusBeleg()` misst die Belegvorschau (`docHTML`) aus und schreibt Helvetica-Text, Linien, Logo; Umbruch an Zeilengrenzen, Tabellenkopf wiederholt. Versand: `versenden()` über Graph `/me/sendMail` (Scope Mail.Send, eigener Token `mailToken()`); ohne O365: PDF speichern + mailto.
 - Angebots-Revisionen: `angebotRevision()` (Felder `basisNr`, `rev`, `revGrund`, Position `revPosId`), `revListe()`, `revDiff()`, Karte `revHistorie()`. Belegliste gruppiert über `belegGruppen()` (vorgaengerId/stornoVon), Auf-/Zuklappen `grpAuf()`/`UI.auf`.
 - Sammelrechnung aus Lieferscheinen: `sammelRechnung()`. Folgebeleg aus Entwurf: vorher `festschreiben()`.
+- Zahlungen/Skonto: `zahlBox()`, `skontoInfo()`/`skontoBis()`, `zSkonto()`, Buchen `ACT.zadd`; Auswertung Skonto in `V.auswertung`.
 - Papierkorb/Rückgängig: `wegwerfen()`, `wiederherstellen()`.
 - Verlauf „Zurück“: `merk()` (in `persist()`/`commit()`) legt den vorigen Stand auf `UNDO`; `zurueck()`/`vor()`, Maus-Tasten 4/5 (button 3/4), Strg+Z/Y; `undoSperre()` schützt Festschreiben/Nummernkreise; nach Laden/Abgleich `undoBasis(true)`.
 - Listen über `tabelle(id,cols,rows,…)` mit Spaltenauswahl (`S().spalten`, `spaltenDialog()`); neue Spalten dort als `{k,l,f,n,std}` ergänzen.

@@ -179,3 +179,7 @@ Struktur nach Grundaufbau der ÖNORM B 2061 – Zeilen frei anpassbar; Abgleich 
 
 ## Überblick – Verweise
 - Jede Kennzahl und jede Liste im Überblick führt zu den zugehörigen Unterlagen: Offene Forderungen → Verkauf, Filter „offene Rechnungen“ („überfällig“ → Filter „überfällig“); Offene Verbindlichkeiten → Einkauf, „offene Rechnungen“; Offene Angebote → Verkauf, Angebote offen; Umsatz → Auswertungen; DB II → Aufträge; Noch zu verrechnen → Zu verrechnen; Listen-Überschriften (Überfällige Ausgangsrechnungen, Eingangsrechnungen fällig, Unter Mindestbestand, Offene Bestellungen, Entwürfe Verkauf/Einkauf) → gefilterte Liste; einzelne Zeilen → Beleg bzw. Artikel.
+
+## Skonto
+- **Zahlung buchen:** Liegt das Zahlungsdatum innerhalb der Skontofrist (Belegdatum + Skontotage), wird der Skonto (Satz × offener Bruttobetrag) vorgeschlagen: Haken „Skonto abziehen“ gesetzt, Skontobetrag und Zahlbetrag vorbelegt; Datumsänderung prüft die Frist neu, Haken und Felder bleiben änderbar. Skonto nach Fristablauf nur nach Rückfrage. Gilt für Ausgangs- und Eingangsrechnungen; FiBu bucht wie bisher Kunden-/Lieferantenskonto mit USt-/VSt-Korrektur.
+- **Auswertungen → Skonto (Jahr, nach Zahlungsdatum):** Kundenskonto gewährt und Lieferantenskonto erhalten (brutto, netto, Anzahl; Kundenabzüge außerhalb der Frist markiert), nicht genutzte Lieferantenskonti (ohne Abzug bezahlt, entgangener Betrag), noch nutzbare Skonti offener Eingangsrechnungen mit Frist; Aufstellung je Monat und je Partner, Einzelliste der Zahlungen (Zahlbetrag, Skonto, %, Frist) mit Sprung zum Beleg.

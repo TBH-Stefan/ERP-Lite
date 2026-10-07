@@ -114,6 +114,7 @@ Struktur nach Grundaufbau der ÖNORM B 2061 – Zeilen frei anpassbar; Abgleich 
 ## 12. Bedienung und Belegdarstellung (Stand 06.10.2026)
 - **Speichern nur nach Bestätigung:** Änderungen werden vorgemerkt (Leiste „Ungespeicherte Änderungen – Verwerfen / Speichern“, Strg+S). Beim Verlassen einer Ansicht Rückfrage Speichern / Verwerfen / Abbrechen. Geschäftsaktionen mit eigener Bestätigung (Festschreiben, Storno, Zahlung, Lager-/Zeitbuchung, Anhang, Import) speichern sofort.
 - **Rabattspalte** nur bei Bedarf (Option je Beleg; automatisch sichtbar, sobald ein Rabatt erfasst ist).
+- **Langtext:** Eingabefeld in der Positionstabelle auf ca. 5 Zeilen begrenzt (scrollbar, aufziehbar); Schalter „Langtext drucken“ je Beleg (Vorschau, Druck, PDF; Gruppen- und Textzeilen bleiben), Vorgabe in den Einstellungen, Folgebelege übernehmen die Einstellung.
 - **Lohn / Sonstiges** je Position optional (EP = EP Lohn + EP Sonstiges), im Ausdruck eigene Spalten und Aufteilung der Summe.
 - **Gruppen** (Positionsart „Gruppe“): Gruppentitel und -text, Nummerierung 1 / 1.01, Gruppensumme; optional **Gruppenpreis** (pauschal, ersetzt die Summe der Positionen) und Ausblenden der Einzelpreise; Gruppe als Option/Alternative.
 - **Formatierte Texte** (fett, kursiv, unterstrichen, Aufzählung, Nummerierung) für Positions-, Gruppen-, Kopf- und Fußtexte; Inhalte werden bereinigt gespeichert.

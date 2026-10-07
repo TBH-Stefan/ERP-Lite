@@ -49,6 +49,7 @@ button.gef{background:var(--err);border-color:var(--err)}
 #dirtybar button:not(.p){color:var(--ink)}
 @media(max-width:760px){#dirtybar{left:8px;right:8px;transform:none;min-width:0;bottom:8px}}
 .rte{border:1px solid #cdd2da;border-radius:5px;padding:5px 7px;min-height:32px;background:#fff;margin-top:2px;color:var(--ink);font-size:13px;line-height:1.4;cursor:text}
+.pos .rte{max-height:calc(5 * 1.4em + 12px);overflow-y:auto;resize:vertical} /* Langtext in der Eingabe: ca. 5 Zeilen, scrollbar */
 .rte[contenteditable]:focus{outline:2px solid var(--acc);outline-offset:-1px}
 .rte:not([contenteditable]){background:#f3f4f6}
 .rte:empty:before{content:attr(data-ph);color:#9aa3b2}
@@ -841,14 +842,14 @@ function neuBeleg(typ,o={}){
   const b={id:uid(),typ,nr:'',datum:d,kontaktId:'',betreff:'',bezug:'',fremdNr:'',leistung:'',liefertermin:'',
     auftragId:'',vorgaengerId:'',stornoVon:'',kopf:s.texte[typ]?.kopf||'',fuss:s.texte[typ]?.fuss||'',
     zahlungsziel:s.zahlungsziel,skonto:s.skonto,skontoTage:s.skontoTage,gueltigBis:typ==='AN'?addDays(d,s.angebotGueltig):'',
-    status:'',fest:false,storno:false,pos:[],zahlungen:[],erstellt:new Date().toISOString(),...o};
+    status:'',fest:false,storno:false,pos:[],zahlungen:[],erstellt:new Date().toISOString(),ltDruck:s.ltDruck!==false,...o};
   if(!b.auftragId&&T[typ].b==='V')b.auftragId=b.id;
   DB.belege.push(b);return b;
 }
 function neuPos(o={}){return{id:uid(),art:'W',artikelId:'',nr:'',bez:'',text:'',menge:1,einheit:'Stk',faktor:1,ep:0,rabatt:0,ek:0,steuer:S().stdSteuer,kz:'',herkunftPosId:'',...o}}
 function folge(src,typ,extra={}){
   if(!src.fest){alert('Bitte den Beleg zuerst festschreiben.');return null}
-  const o={auftragId:src.auftragId||'',vorgaengerId:src.id,betreff:src.betreff,bezug:`${T[src.typ].bez} ${src.nr} vom ${dAT(src.datum)}`,
+  const o={ltDruck:src.ltDruck!==false,optRabatt:!!src.optRabatt,optLS:!!src.optLS,auftragId:src.auftragId||'',vorgaengerId:src.id,betreff:src.betreff,bezug:`${T[src.typ].bez} ${src.nr} vom ${dAT(src.datum)}`,
     kontaktId:typ==='BE'?'':src.kontaktId,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,...extra};
   if(typ==='BE'){o.zahlungsziel=S().zahlungsziel;o.skonto=0;o.skontoTage=0;o.betreff=src.betreff?'Projekt: '+src.betreff:''}
   if(typ==='AR'){
@@ -1143,9 +1144,10 @@ V.beleg=id=>{
     ${V_||b.typ==='BE'?`<div class="row"><label>Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label><label>Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>`:''}
   </div>
   <div class="card" style="padding:8px;overflow-x:auto">
-    ${ohneP?'':`<div class="bar" style="margin:0 0 6px"><span class="mut">Spalten einblenden:</span>
-      <label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optRabatt" ${zRab?'checked':''} ${dis||b.pos.some(p=>+p.rabatt)?'disabled':''}> Rabatt</label>
-      <label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optLS" ${zLS?'checked':''} ${dis}> Lohn / Sonstiges</label></div>`}
+    <div class="bar" style="margin:0 0 6px"><span class="mut">${ohneP?'Druck:':'Spalten einblenden:'}</span>
+      ${ohneP?'':`<label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optRabatt" ${zRab?'checked':''} ${dis||b.pos.some(p=>+p.rabatt)?'disabled':''}> Rabatt</label>
+      <label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optLS" ${zLS?'checked':''} ${dis}> Lohn / Sonstiges</label>`}
+      <label class="chk" style="margin:0;font-size:13px" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''} ${dis}> Langtext drucken</label></div>
     <table class="pos"><thead><tr><th></th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>EP Lohn</th><th>EP Sonst.</th>':''}<th>EP netto</th>${zRab?'<th>Rab. %</th>':''}<th class="n">GP netto</th><th>USt</th><th title="Einstandspreis je Einheit">EK</th>`}<th>Kz</th><th></th></tr></thead>
     <tbody>${rows||`<tr><td colspan="14" class="mut">Noch keine Positionen.</td></tr>`}</tbody></table>
     ${b.fest?'':`<div class="bar" style="margin:8px 0 0"><button data-act="padd" data-art="G">+ Gruppe</button><button data-act="padd" data-art="W">+ Ware</button><button data-act="padd" data-art="L">+ Leistung</button><button data-act="padd" data-art="F">+ Fremdleistung</button><button data-act="padd" data-art="T">+ Text</button>${V_?`<button data-act="pzeit">+ Stunden aus Zeiterfassung</button>`:''}</div>`}
@@ -2387,6 +2389,7 @@ V.einstellungen=()=>{
   <div class="card"><h2>Kaufmännisch</h2><div class="row">
     <label class="w05">Letzte Kunden-Nr.<input type="number" data-o="s" data-f="knr.K" value="${s.knr.K}" title="Nächster Kunde erhält diese Nummer + 1"></label><label class="w05">Letzte Lieferanten-Nr.<input type="number" data-o="s" data-f="knr.L" value="${s.knr.L}"></label>
     ${sf('zahlungsziel','Zahlungsziel Tage')}${sf('skonto','Skonto %')}${sf('skontoTage','Skonto Tage')}${sf('angebotGueltig','Angebot gültig Tage')}
+    <label class="w05">Langtext drucken<select data-o="s" data-f="ltDruck">${opt('true','ja (Standard)',String(s.ltDruck!==false))}${opt('false','nein',String(s.ltDruck!==false))}</select></label>
     ${sf('zielDB2','Ziel-DB II %')}${sf('mgz','MGZ % auf Material')}${sf('abwGrenze','Prüfgrenze Abweichung %')}
     <label class="w05">USt-Besteuerung<select data-o="s" data-f="besteuerung">${opt('soll','Soll (vereinbarte Entgelte)',s.besteuerung)}${opt('ist','Ist (vereinnahmte Entgelte)',s.besteuerung)}</select></label>
     <label class="w05">Standard-USt<select data-o="s" data-f="stdSteuer">${s.steuer.map(x=>opt(x.code,x.bez,s.stdSteuer)).join('')}</select></label></div>
@@ -3007,7 +3010,7 @@ function docHTML(b,edit=false){
       return`<tr class="grpz"><td><b>${pnr[p.id]}</b></td><td colspan="${ncol-(zeigP?2:1)}"><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Gruppe')}</b>${p.text||edit?`<div class="lt">${ed(`p:${i}:text`,p.text,'Gruppentext …',true)}</div>`:''}</td>${zeigP?`<td class="n"><b>${fmt(gruppePreis(p,gi))}</b></td>`:''}</tr>`}
     const g=gi.grp[p.id],ohne=ohneP||(g&&(+g.pauschal>0||g.ohneEP));
     const pr=ohneP?'':ohne?`<td colspan="${ncol-4}"></td>`:`${ls?`<td class="n">${edit?ed(`p:${i}:epL`,fmt(p.epL)):fmt(p.epL)}</td><td class="n">${edit?ed(`p:${i}:epS`,fmt(p.epS)):fmt(p.epS)}</td>`:''}<td class="n">${edit&&!ls?ed(`p:${i}:ep`,fmt(p.ep)):fmt(p.ep)}</td>${rab?`<td class="n">${edit?ed(`p:${i}:rabatt`,+p.rabatt?fmtQ(p.rabatt):'','%'):(+p.rabatt?fmtQ(p.rabatt)+' %':'')}</td>`:''}${mehrSt?`<td class="n">${esc(steuerDef(p.steuer).satz)} %</td>`:''}<td class="n">${fmt(posGP(p))}</td>`;
-    return`<tr><td>${pnr[p.id]}</td><td><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Bezeichnung')}</b>${(()=>{const ln=t.b==='E'?(p.lnr||artikel(p.artikelId)?.lieferanten?.find(l=>l.kontaktId===b.kontaktId)?.artNr||''):'';return ln?` <span style="color:#555">(Ihre Art.-Nr. ${esc(ln)})</span>`:p.nr?` <span style="color:#555">(${esc(p.nr)})</span>`:''})()}${p.text||edit?`<div class="lt">${ed(`p:${i}:text`,p.text,'Langtext …',true)}</div>`:''}</td>
+    return`<tr><td>${pnr[p.id]}</td><td><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Bezeichnung')}</b>${(()=>{const ln=t.b==='E'?(p.lnr||artikel(p.artikelId)?.lieferanten?.find(l=>l.kontaktId===b.kontaktId)?.artNr||''):'';return ln?` <span style="color:#555">(Ihre Art.-Nr. ${esc(ln)})</span>`:p.nr?` <span style="color:#555">(${esc(p.nr)})</span>`:''})()}${b.ltDruck!==false&&(p.text||edit)?`<div class="lt">${ed(`p:${i}:text`,p.text,'Langtext …',true)}</div>`:''}</td>
     <td class="c">${edit?ed(`p:${i}:menge`,fmtQ(p.menge)):fmtQ(p.menge)}</td><td class="c">${esc(p.einheit)}</td>${pr}</tr>`;
   };
   // Zeilen inkl. Gruppensummen (bei Gruppen ohne Pauschalpreis und mit Einzelpreisen)
@@ -3323,7 +3326,7 @@ document.addEventListener('change',e=>{
       k[d.f]=nv;break}
     case'a':{const a=artikel(d.id);if(d.f==='einheitenStr'){a.einheiten=String(v).split(/[;,]/).map(x=>x.split('=')).filter(x=>x.length===2&&x[0].trim()&&num(x[1])>0).map(([e,f])=>({e:e.trim(),f:num(f)}));for(const x of a.einheiten)if(!S().einheiten.includes(x.e))S().einheiten.push(x.e)}else a[d.f]=nv;if(['nr','bez','aktiv'].includes(d.f))artDatalist();if(['lager','einheitenStr'].includes(d.f)){persist();render();return}break}
     case'al':artikel(d.id).lieferanten[+d.i][d.f]=v;break;
-    case's':if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()];o[pth[0]]=nv}break;
+    case's':if(d.f==='ltDruck')S().ltDruck=v==='true';else if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()];o[pth[0]]=nv}break;
     case'st':{const x=S().steuer[+d.i];if(d.f==='code'){const alt=x.code;if(S().steuer.some((y,j)=>j!==+d.i&&y.code===v)){alert('Code existiert bereits.');render();return}if(DB.belege.some(b=>b.pos.some(p=>p.steuer===alt))){alert('Code wird verwendet und kann nicht geändert werden.');render();return}}x[d.f]=nv;break}
     case'tf':S().tarife[+d.i][d.f]=nv;break;
     case'fbk':FB().konten[+d.i][d.f]=v;break;
@@ -3336,6 +3339,7 @@ document.addEventListener('change',e=>{
 });
 function onHead(b,f,v){
   b[f]=v;
+  if(f==='ltDruck'){render();return}
   if(f==='optRabatt'||f==='optLS'){if(f==='optLS'&&v)for(const p of b.pos)if(!isInfo(p)&&p.epL==null&&p.epS==null){p.epL=p.art==='L'?+p.ep||0:0;p.epS=p.art==='L'?0:+p.ep||0}render();return}
   if(f==='kontaktId'){const k=kontakt(v);if(k)konditionenUebernehmen(b,k);render()}
   if(f==='datum'&&b.typ==='AN'){b.gueltigBis=addDays(v,S().angebotGueltig);render()}

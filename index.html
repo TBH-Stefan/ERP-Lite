@@ -31,6 +31,9 @@ body.loaded #app{display:flex}
 .ed:hover{background:#f5f8ff}
 .ed:focus{outline:2px solid var(--acc);background:#eef4ff}
 .ed:empty:before{content:attr(data-ph);color:#9aa3b2;font-weight:400}
+tr.prjz td{background:var(--acc2);font-size:14px;padding:7px 10px;border-top:2px solid var(--acc)}tr.prjz button{margin-left:6px}
+.pikto button{display:inline-flex;flex-direction:column;align-items:center;gap:2px;min-width:82px;padding:6px 8px;font-size:12px;line-height:1.2}.pikto .ic{font-size:21px;line-height:1}
+.chips{gap:4px;flex-wrap:wrap}.chips button{border-radius:16px;padding:4px 11px;font-size:13px}.chips button.on{background:var(--acc2);color:var(--acc);border-color:var(--acc);font-weight:600}
 tr.kind td{background:#f7f8fa;font-size:13px}tr.kind td:nth-child(2){padding-left:18px}.grpk{min-width:34px;font-weight:600}
 .undo{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:120;background:#1d2330;color:#fff;border-radius:8px;padding:10px 12px 10px 16px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 28px rgba(0,0,0,.3);max-width:92vw}.undo button{background:#fff;color:#1d2330;border:0;font-weight:600}.undo button.x{background:none;color:#aab;font-weight:400}
 .bwfeld{display:block;width:100%;text-align:left;font:inherit;padding:6px 8px;border:1px solid #cdd2da;border-radius:5px;background:#fff;cursor:pointer;margin-top:2px;min-height:34px}
@@ -1104,7 +1107,12 @@ function belegGruppen(L){
   const M=new Map();for(const b of L){const r=wurzel(b).id;if(!M.has(r))M.set(r,[]);M.get(r).push(b)}
   return[...M.entries()].map(([rid,m])=>{const r=beleg(rid),fam=r&&r.typ==='AN'?(r.basisNr||r.nr):null;
     const revs=fam?m.filter(x=>x.typ==='AN'&&(x.nr===fam||x.basisNr===fam)).sort((a,c)=>(c.rev||0)-(a.rev||0)):[];
-    const kopf=revs[0]||m.find(x=>x.id===rid)||m[m.length-1];return{kopf,kinder:m.filter(x=>x!==kopf)}})}
+    const kopf=revs[0]||m.find(x=>x.id===rid)||m[m.length-1];return{kopf,kinder:m.filter(x=>x!==kopf),rid}})}
+// Projektname (optional, fett als Überschrift einer Belegkette); gespeichert am Ausgangsbeleg – reine Ordnungsangabe, ändert keinen Belegtext
+function projektName(rid){const r=beleg(rid);if(!r)return;const n=prompt('Projektname für diese zusammenhängenden Belege (leer = keiner):',r.projekt||'');if(n===null)return;
+  r.projekt=n.trim();log('Projektname',`${bNr(r)}: ${r.projekt||'(entfernt)'}`);commit();render()}
+const BICON={AN:'📝',AB:'✅',PR:'📄',LS:'🚚',AR:'💶',TR:'🧩',RE:'🧾',SR:'🏁',GS:'↩️',BE:'🛒',WE:'📦',ER:'📥'};
+const MONATE=['Jänner','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 let GRK=[];
 function grpAuf(id){if(id==='*'||id==='-'){UI.auf={};if(id==='*')for(const k of GRK)UI.auf[k]=1}else UI.auf[id]=!UI.auf[id];render()}
 V.belege=(bereich='V')=>{
@@ -1116,18 +1124,28 @@ V.belege=(bereich='V')=>{
   if(st==='offenRe')L=L.filter(b=>T[b.typ].re&&b.fest&&!b.storno&&Math.abs(offen(b))>0.005);
   if(st==='ueber')L=L.filter(b=>T[b.typ].re&&offen(b)>0.005&&faellig(b)<heute);
   if(st==='storno')L=L.filter(b=>b.storno);
-  if(q)L=L.filter(b=>[b.nr,b.betreff,b.fremdNr,kName(b.kontaktId)].join(' ').toLowerCase().includes(q));
+  if(q)L=L.filter(b=>[b.nr,b.betreff,b.fremdNr,b.projekt,kName(b.kontaktId)].join(' ').toLowerCase().includes(q));
+  const jahre=[...new Set([String(new Date().getFullYear()),...DB.belege.filter(b=>T[b.typ].b===bereich).map(b=>b.datum.slice(0,4))])].sort().reverse();
+  const fJ=UI[k+'Jahr']||'',fQ=UI[k+'Qrt']||'',fM=UI[k+'Mon']||''; // Zeitraum: Jahr, Quartal, Monat
+  if(fJ)L=L.filter(b=>b.datum.startsWith(fJ));
+  if(fQ)L=L.filter(b=>Math.ceil(+b.datum.slice(5,7)/3)===+fQ);
+  if(fM)L=L.filter(b=>+b.datum.slice(5,7)===+fM);
   L.sort((a,c)=>c.datum.localeCompare(a.datum)||(c.nr||'~').localeCompare(a.nr||'~'));
   const GR_=belegGruppen(L),KIND=new Set(),ANZ=new Map();UI.auf=UI.auf||{};
+  const PRJ=new Map();for(const g of GR_)if(g.kinder.length||beleg(g.rid)?.projekt)PRJ.set(g.kopf.id,g.rid);
   L=GR_.flatMap(g=>{ANZ.set(g.kopf.id,g.kinder.length);const k=UI.auf[g.kopf.id]?g.kinder:[];k.forEach(x=>KIND.add(x.id));return[g.kopf,...k]});
   GRK=GR_.filter(g=>g.kinder.length).map(g=>g.kopf.id);const mitGr=GRK.length>0;
   return`<h1>${bereich==='V'?'Verkauf':'Einkauf'}</h1>
+  <div class="bar pikto"><span class="mut" style="align-self:center">Neu:</span>${typen.filter(t=>t!=='GS').map(t=>`<button data-act="qneu" data-t="${t}" title="Neue(s) ${T[t].bez}"><span class="ic">${BICON[t]}</span>${T[t].bez.replace('Auftragsbestätigung','Auftragsbest.').replace('Anzahlungsrechnung','Anzahlungs-RE').replace('Proformarechnung','Proforma')}</button>`).join('')}
+    <span class="sp"></span>${bereich==='V'?'<button data-act="sammelre0" title="Rechnung aus Lieferscheinen"><span class="ic">🧾🚚</span>RE aus LS …</button>':''}</div>
+  <div class="bar chips"><button class="${typ?'':'on'}" data-act="btyp" data-k="${k}" data-t="">Alle</button>${typen.map(t=>`<button class="${typ===t?'on':''}" data-act="btyp" data-k="${k}" data-t="${t}" title="${T[t].bez}">${BICON[t]} ${T[t].bez}</button>`).join('')}</div>
   <div class="bar">
-    <select data-o="ui" data-f="${k}Typ">${opt('','alle Belegarten',typ)}${typen.map(t=>opt(t,T[t].bez,typ)).join('')}</select>
-    <select data-o="ui" data-f="${k}St">${opt('','alle',st)}${opt('entwurf','Entwürfe',st)}${opt('offen','offen',st)}${opt('offenRe','offene Rechnungen',st)}${opt('ueber','überfällig',st)}${opt('storno','storniert',st)}</select>
+    <select data-o="ui" data-f="${k}Jahr" title="Jahr">${opt('','alle Jahre',fJ)}${jahre.map(x=>opt(x,x,fJ)).join('')}</select>
+    <select data-o="ui" data-f="${k}Qrt" title="Quartal">${opt('','alle Quartale',fQ)}${[1,2,3,4].map(x=>opt(String(x),'Q'+x,fQ)).join('')}</select>
+    <select data-o="ui" data-f="${k}Mon" title="Monat">${opt('','alle Monate',fM)}${MONATE.map((x,i)=>opt(String(i+1),x,fM)).join('')}</select>
+    <select data-o="ui" data-f="${k}St" title="Status">${opt('','alle Status',st)}${opt('entwurf','Entwürfe',st)}${opt('offen','offen',st)}${opt('offenRe','offene Rechnungen',st)}${opt('ueber','überfällig',st)}${opt('storno','storniert',st)}</select>
     <input data-o="ui" data-f="${k}Q" placeholder="Suche Nr, Name, Betreff" value="${esc(UI[k+'Q'])}" style="width:240px">
-    <span class="sp"></span>${bereich==='V'?'<button data-act="sammelre0">Rechnung aus Lieferscheinen …</button>':''}${bereich==='E'?'<label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>':''}
-    <select data-act="neu">${opt('','+ Neuer Beleg …','')}${typen.filter(t=>t!=='GS').map(t=>opt(t,T[t].bez,'')).join('')}</select>
+    <span class="sp"></span>${bereich==='E'?'<label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>':''}
   </div>
   ${tabelle('belege'+bereich,[
     {k:'datum',l:'Datum',hm:1,f:b=>dAT(b.datum)},{k:'nr',l:'Nummer',f:b=>`${esc(bNr(b))}<br><span class="mut">${b.typ} · ${dAT(b.datum)}</span>`},
@@ -1139,8 +1157,9 @@ V.belege=(bereich='V')=>{
     {k:'faellig',l:'Fällig',f:b=>T[b.typ].re&&b.fest?dAT(faellig(b)):'',std:false},{k:'versand',l:'Versendet',f:b=>(b.versand||[]).length?'✉ '+dAT(b.versand[b.versand.length-1].datum.slice(0,10)):'',std:false},
     {k:'anh',l:'Anhänge',n:1,f:b=>(b.anhaenge||[]).length||'',std:false},{k:'rev',l:'Revision',f:b=>{if(b.typ!=='AN'||!(b.basisNr||b.nr))return'';const n=revListe(b).length;return n>1?`R${b.rev||0} von ${n}`:''},std:bereich==='V'},{k:'status',l:'Status',f:b=>statusTag(b)}],L,
     {zeile:b=>`class="click${KIND.has(b.id)?' kind':''}" onclick="nav('beleg/${b.id}')"`,leer:'Keine Belege.',
+     zwischen:(b,n)=>{const r=PRJ.has(b.id)&&beleg(PRJ.get(b.id));return r&&r.projekt?`<tr class="prjz"><td colspan="${n}"><b>${esc(r.projekt)}</b> <button class="s" onclick="projektName('${r.id}')" title="Projektname ändern">✎</button></td></tr>`:''},
      vor:mitGr?{kopf:`<span style="white-space:nowrap"><button class="s" onclick="grpAuf('*')" title="Alle aufklappen">+</button><button class="s" onclick="grpAuf('-')" title="Alle zuklappen">−</button></span>`,
-       zelle:b=>KIND.has(b.id)?'<td class="mut" style="text-align:right;padding-right:2px">└</td>':`<td>${ANZ.get(b.id)?`<button class="s grpk" onclick="event.stopPropagation();grpAuf('${b.id}')" title="${ANZ.get(b.id)} zugehörige(r) Beleg(e) (Revisionen, Folgebelege) ${UI.auf[b.id]?'zuklappen':'aufklappen'}">${UI.auf[b.id]?'−':'+'}${ANZ.get(b.id)}</button>`:''}</td>`}:null})}`;
+       zelle:b=>KIND.has(b.id)?'<td class="mut" style="text-align:right;padding-right:2px">└</td>':`<td>${ANZ.get(b.id)?`<button class="s grpk" onclick="event.stopPropagation();grpAuf('${b.id}')" title="${ANZ.get(b.id)} zugehörige(r) Beleg(e) (Revisionen, Folgebelege) ${UI.auf[b.id]?'zuklappen':'aufklappen'}">${UI.auf[b.id]?'−':'+'}${ANZ.get(b.id)}</button>${beleg(PRJ.get(b.id))?.projekt?'':`<button class="s" onclick="event.stopPropagation();projektName('${PRJ.get(b.id)}')" title="Projektname als Überschrift vergeben">🏷</button>`}`:''}</td>`}:null})}`;
 };
 
 /* ---------- Beleg-Editor ---------- */
@@ -2492,11 +2511,11 @@ V.export=()=>{
 
 /* ---------- Einstellbare Tabellenspalten (je Liste, in den Einstellungen gespeichert) ---------- */
 const TABS={};
-function tabelle(id,cols,rows,{zeile,vor,nach,leer='Keine Einträge.',fuss}={}){
+function tabelle(id,cols,rows,{zeile,vor,nach,leer='Keine Einträge.',fuss,zwischen}={}){
   TABS[id]=cols;const w=S().spalten?.[id],vis=(w?w.map(k=>cols.find(c=>c.k===k)).filter(Boolean):cols.filter(c=>c.std!==false));if(!vis.length)vis.push(cols[0]);
   const cl=c=>[c.n?'n':'',c.hm?'hm':''].join(' ').trim();
   return`<div class="card" style="padding:0;overflow-x:auto"><table data-tab="${id}"><thead><tr>${vor?`<th style="width:28px">${vor.kopf||''}</th>`:''}${vis.map(c=>`<th class="${cl(c)}">${c.l}</th>`).join('')}${nach?'<th></th>':''}<th style="width:30px;text-align:right"><button class="s" data-act="spalten" data-id="${id}" title="Spalten auswählen">⚙</button></th></tr></thead><tbody>
-  ${rows.map(r=>`<tr ${zeile?zeile(r):''}>${vor?vor.zelle(r):''}${vis.map(c=>`<td class="${cl(c)} ${c.cls?c.cls(r):''}">${c.f(r)??''}</td>`).join('')}${nach?nach(r):''}<td></td></tr>`).join('')||`<tr><td colspan="${vis.length+3}" class="mut">${leer}</td></tr>`}</tbody>${fuss?fuss(vis,!!vor):''}</table></div>`;
+  ${rows.map(r=>`${zwischen?zwischen(r,vis.length+(vor?1:0)+(nach?1:0)+1):''}<tr ${zeile?zeile(r):''}>${vor?vor.zelle(r):''}${vis.map(c=>`<td class="${cl(c)} ${c.cls?c.cls(r):''}">${c.f(r)??''}</td>`).join('')}${nach?nach(r):''}<td></td></tr>`).join('')||`<tr><td colspan="${vis.length+3}" class="mut">${leer}</td></tr>`}</tbody>${fuss?fuss(vis,!!vor):''}</table></div>`;
 }
 function spaltenDialog(id){
   const cols=TABS[id];if(!cols)return;const w=S().spalten?.[id];let ord=[...(w?w.filter(k=>cols.some(c=>c.k===k)):cols.filter(c=>c.std!==false).map(c=>c.k)),...cols.map(c=>c.k)].filter((k,i,a)=>a.indexOf(k)===i);
@@ -3593,6 +3612,7 @@ const ACT={
   wechseln:()=>{if(pending&&!confirm('Nicht gespeicherte Änderungen gehen verloren. Fortfahren?'))return;lsSet('erp-modus',null);location.hash='';location.reload()},
   attopen:async el=>{const a=curBeleg().anhaenge[+el.dataset.i];try{await STORE.openFile(a)}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
   attdel:el=>{const b=curBeleg(),a=b.anhaenge[+el.dataset.i];if(!confirm(`Verknüpfung zu „${a.name}“ entfernen?\n(Die Datei selbst bleibt im Speicherort erhalten.)`))return;b.anhaenge.splice(+el.dataset.i,1);log('Anhang entfernt',`${bNr(b)}: ${a.name}`);persist();render()},
+  btyp:el=>{UI[el.dataset.k+'Typ']=el.dataset.t;render()},
   qneu:el=>{const b=neuBeleg(el.dataset.t);persist();go('beleg/'+b.id)},
 };
 Object.assign(ACT,ACT_LV,ACT_LB,ACT_FB);

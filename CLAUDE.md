@@ -21,7 +21,7 @@ Anwender: Stefan Horvath. Sprache in Code-Kommentaren, Oberfläche und Antworten
 - Popups für Neuanlage: `formDialog()`, `kontaktPopup()`, `artikelPopup()`.
 - Papierformat `S().papier` → `PAPIER`/`papier()` (Skalierfaktor k, nutzbare Höhe hc), Druck über `papierCSS()`; Seitenansicht der Vorschau `vorschauSeiten()` (nach `render()`/`updateCalc()`, fügt `.pgsp`-Abstände mit Fußzeile/Seitenzahl ein).
 - PDF ohne Bibliothek: `pdfAusBeleg()` misst die Belegvorschau (`docHTML`) aus und schreibt Helvetica-Text, Linien, Logo; Umbruch an Zeilengrenzen, Tabellenkopf wiederholt. Versand: `versenden()` über Graph `/me/sendMail` (Scope Mail.Send, eigener Token `mailToken()`); ohne O365: PDF speichern + mailto.
-- Angebots-Revisionen: `angebotRevision()` (Felder `basisNr`, `rev`, `revGrund`, Position `revPosId`), `revListe()`, `revDiff()`, Karte `revHistorie()`. Belegliste gruppiert über `belegGruppen()` (vorgaengerId/stornoVon), Auf-/Zuklappen `grpAuf()`/`UI.auf`.
+- Angebots-Revisionen: `angebotRevision()` (Felder `basisNr`, `rev`, `revGrund`, Position `revPosId`), `revListe()`, `revDiff()`, Karte `revHistorie()`. Belegliste gruppiert über `belegGruppen()` (vorgaengerId/stornoVon), Auf-/Zuklappen `grpAuf()`/`UI.auf`. Projektname `projektName(rid)` (Feld `projekt` am Ausgangsbeleg, Überschrift über `tabelle(…,{zwischen})`), Zeitraum `UI.vJahr/vQrt/vMon` (bzw. `e…`), Piktogramme `BICON`.
 - Sammelrechnung aus Lieferscheinen: `sammelRechnung()`. Folgebeleg aus Entwurf: vorher `festschreiben()`.
 - Zahlungen/Skonto: `zahlBox()`, `skontoInfo()`/`skontoBis()`, `zSkonto()`, Buchen `ACT.zadd`; Auswertung Skonto in `V.auswertung`.
 - Papierkorb/Rückgängig: `wegwerfen()`, `wiederherstellen()`.

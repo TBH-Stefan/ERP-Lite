@@ -187,3 +187,8 @@ Struktur nach Grundaufbau der ÖNORM B 2061 – Zeilen frei anpassbar; Abgleich 
 ## Preise und Rabatt in Verkaufsbelegen
 - Artikel in Position: Einzelpreis und Rabatt nur aus früheren Belegen **desselben Kunden**; sonst VK des Artikels und Kundenrabatt (Kontakt). Preise anderer Kunden nur bewusst über die Preishistorie (Klick) übernehmen.
 - Schalter „Rabatt“ jederzeit bedienbar: Abwählen bei Positionen mit Rabatt fragt nach und setzt den Rabatt aller Positionen auf 0 (Spalte ausgeblendet).
+
+## Belegliste Verkauf / Einkauf
+- Oben **Schaltflächen mit Piktogrammen** zum Anlegen je Belegart (Verkauf: Angebot, Auftragsbestätigung, Proforma, Lieferschein, Anzahlungs-, Teil-, Rechnung, Schlussrechnung, Rechnung aus Lieferscheinen; Einkauf: Bestellung, Wareneingang, Eingangsrechnung) statt Auswahlliste; Belegart-Filter als Schaltflächen (Alle + je Belegart).
+- **Zeitraum-Filter:** Jahr, Quartal, Monat (kombinierbar, z. B. 2026 + Q2) zusätzlich zu Status und Suche.
+- **Projektname:** Hängen mehrere Belege zusammen (Auftrag/Belegkette), kann über 🏷 optional ein Projektname vergeben werden; er steht fett als Überschrift über der Gruppe (✎ ändern, leer = entfernen), auch wenn nur ein Beleg im gewählten Zeitraum liegt, und ist durchsuchbar. Gespeichert am Ausgangsbeleg als reine Ordnungsangabe (ändert keinen Belegtext).

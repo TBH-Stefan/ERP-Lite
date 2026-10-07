@@ -654,14 +654,27 @@ async function bildVerkleinern(f){
     return blob?new File([blob],f.name.replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg'}):f;
   }catch(e){return f}
 }
-async function anhaengeHochladen(b,files,original=false){ // original: Belegscan/PDF unverändert aufbewahren (BAO)
+// Dateiname für eingelesene Belege: Lieferant-Kürzel-Nummer, z. B. Krannich-Solar-LS-2106-4016286.pdf
+function anhangName(b,f,i,n){
+  const d=b.scan?.daten||{},kurz={WE:'LS',ER:'RE',BE:'AN'}[b.typ]||b.typ;
+  const lief=(kontakt(b.kontaktId)?.name||d.lieferant?.name||'').replace(/\(.*?\)/g,' ').replace(/\b(gmbh|ges\.?\s?m\.?\s?b\.?\s?h\.?|co|kg|ag|og|e\.?\s?u|ltd|inc|s\.?r\.?l|b\.?v|se|mbh|gesmbh)\b\.?/gi,' ')
+    .replace(/[^\p{L}\p{N}]+/gu,' ').trim().split(/\s+/).filter(Boolean).slice(0,4).join('-');
+  const nr=String(d.lieferscheinNr||b.fremdNr||'').replace(/[^\p{L}\p{N}\-]+/gu,'-').replace(/^-+|-+$/g,'');
+  if(!lief&&!nr)return null;
+  const ext=((f.name||'').match(/\.[a-z0-9]{2,4}$/i)||[f.type==='application/pdf'?'.pdf':f.type==='image/png'?'.png':'.jpg'])[0].toLowerCase();
+  let name=[lief,new RegExp('^'+kurz+'[-\\d]','i').test(nr)?'':kurz,nr||b.datum].filter(Boolean).join('-')+(n>1?'-'+(i+1):''); // „RE-889“ nicht als „RE-RE-889“
+  const belegt=new Set(DB.belege.flatMap(x=>(x.anhaenge||[]).map(a=>a.path)));let k=1,erg=name+ext;
+  while(belegt.has(`Belege/${b.typ}/${b.datum.slice(0,4)}/${erg}`))erg=`${name}_${++k}${ext}`; // nie eine vorhandene Datei überschreiben
+  return erg;
+}
+async function anhaengeHochladen(b,files,original=false,benennen=false){ // original: Belegscan/PDF unverändert aufbewahren (BAO); benennen: Name aus erkannten Daten
   if(!files?.length)return;
   b.anhaenge=b.anhaenge||[];
   saveState('lade hoch …');
   try{
     for(const f0 of files){
-      const f=original?f0:await bildVerkleinern(f0),safe=f.name.replace(/[^\w.\-]+/g,'_').slice(-60);
-      const path=`Belege/${b.typ}/${b.datum.slice(0,4)}/${b.nr||'Entwurf-'+b.id}_${Date.now().toString(36)}_${safe}`;
+      const f=original?f0:await bildVerkleinern(f0),safe=f.name.replace(/[^\w.\-]+/g,'_').slice(-60),nm=benennen?anhangName(b,f0,files.indexOf(f0),files.length):null;
+      const path=nm?`Belege/${b.typ}/${b.datum.slice(0,4)}/${nm}`:`Belege/${b.typ}/${b.datum.slice(0,4)}/${b.nr||'Entwurf-'+b.id}_${Date.now().toString(36)}_${safe}`;
       const a=await STORE.putFile(path,f);
       b.anhaenge.push({...a,datum:new Date().toISOString(),groesse:f.size});
       log('Anhang',`${T[b.typ].bez} ${bNr(b)}: ${a.name}`);
@@ -2728,8 +2741,8 @@ async function belegScan(files,typ){
   if(!files.length)return;
   const b=neuBeleg(typ,{kopf:'',fuss:'',...(typ==='WE'?{lagerBuchen:true}:{})});SCANFILES[b.id]=files;
   log({WE:'Lieferschein',ER:'Rechnung',BE:'Lieferantenangebot'}[typ]+' einlesen',`${files.length} Datei(en)`);go('beleg/'+b.id);
-  await anhaengeHochladen(b,files,true); // Originalbeleg unverändert ablegen
-  await scanStart(b);
+  await scanStart(b); // erst auslesen, damit Lieferant und Nummer in den Dateinamen kommen
+  await anhaengeHochladen(b,files,true,true); // Originalbeleg unverändert ablegen
 }
 async function scanStart(b){
   const key=lsGet('erp-ki-key'),files=SCANFILES[b.id];if(!files)return;

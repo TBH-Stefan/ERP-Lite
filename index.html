@@ -32,6 +32,8 @@ body.loaded #app{display:flex}
 .ed:focus{outline:2px solid var(--acc);background:#eef4ff}
 .ed:empty:before{content:attr(data-ph);color:#9aa3b2;font-weight:400}
 .undo{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:120;background:#1d2330;color:#fff;border-radius:8px;padding:10px 12px 10px 16px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 28px rgba(0,0,0,.3);max-width:92vw}.undo button{background:#fff;color:#1d2330;border:0;font-weight:600}.undo button.x{background:none;color:#aab;font-weight:400}
+.bwfeld{display:block;width:100%;text-align:left;font:inherit;padding:6px 8px;border:1px solid #cdd2da;border-radius:5px;background:#fff;cursor:pointer;margin-top:2px;min-height:34px}
+.bwz{display:flex;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer}.bwz:hover{background:var(--acc2)}
 .modal{position:fixed;inset:0;background:rgba(15,20,30,.45);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:10vh 12px 12px}
 .mbox{background:#fff;border-radius:10px;max-width:520px;width:100%;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
 .mtab td{border:0;padding:3px 10px 3px 0}
@@ -1222,8 +1224,8 @@ function formDialog({titel,felder,ok='Anlegen',breit=false}){
       <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">${ok}</button></div></div>`;
     document.body.appendChild(d);setTimeout(()=>d.querySelector('input,select')?.focus(),0);
     const fin=v=>{d.remove();document.removeEventListener('keydown',kd);res(v)};
-    d.addEventListener('change',async e=>{const t=e.target;if(!t.dataset.kette)return;const box=t.closest('[data-k]'),v=await ketteWert(t);if(v!==null)box.dataset.wert=v;
-      const f=felder.find(x=>x.k===box.dataset.k);box.innerHTML=ketteHTML(f.baum,box.dataset.wert,'data-fk="1"')});
+    d.addEventListener('click',async e=>{const t=e.target.closest('[data-bw]');if(!t)return;e.preventDefault();const box=t.closest('[data-k]'),f=felder.find(x=>x.k===box.dataset.k),v=await baumWahl(f.baum,box.dataset.wert);
+      if(v!==null){box.dataset.wert=v;box.innerHTML=ketteHTML(f.baum,v,'data-fk="1"')}});
     const lesen=()=>{const o={};for(const f of felder){const e=d.querySelector(`[data-k="${f.k}"]`);o[f.k]=f.typ==='kette'?e.dataset.wert:f.typ==='checkbox'?e.checked:f.typ==='number'?num(e.value):e.value.trim()}return o};
     const okf=()=>{const o=lesen(),fehlt=felder.find(f=>f.pflicht&&!o[f.k]);if(fehlt){d.querySelector('#m-err').textContent=`Bitte „${fehlt.l}“ ausfüllen.`;return}fin(o)};
     const kd=e=>{if(e.key==='Escape')fin(null);if(e.key==='Enter'&&e.target.tagName==='INPUT')okf()};document.addEventListener('keydown',kd);
@@ -1505,13 +1507,13 @@ function artikelEdit(id){
   const bs=bestand(a.id);
   return`<div class="bar"><h1 style="margin:0">${esc(a.nr)} ${esc(a.bez)}</h1><span class="sp"></span><button class="d" data-act="adel" data-id="${a.id}">Löschen</button></div>
   <div class="card">
-  <div class="row">${f('nr','Artikel-Nr.','w05')}${f('bez','Bezeichnung','w2')}<label class="w2">Artikelgruppe${ketteHTML('gr',a.gruppe,`data-aid="${a.id}"`)}</label><label class="w05">Art<select data-o="a" data-id="${a.id}" data-f="art">${['W','L','F'].map(k=>opt(k,ART[k],a.art)).join('')}</select></label><label class="w05">aktiv<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="aktiv" ${a.aktiv!==false?'checked':''}></label></div>
+  <div class="row">${f('nr','Artikel-Nr.','w05')}${f('bez','Bezeichnung','w2')}<label class="w2">Artikelgruppe${ketteHTML('gr',a.gruppe,`data-act="bwahl" data-aid="${a.id}"`)}</label><label class="w05">Art<select data-o="a" data-id="${a.id}" data-f="art">${['W','L','F'].map(k=>opt(k,ART[k],a.art)).join('')}</select></label><label class="w05">aktiv<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="aktiv" ${a.aktiv!==false?'checked':''}></label></div>
   <div class="row"><label>Langtext<textarea data-o="a" data-id="${a.id}" data-f="text">${esc(a.text)}</textarea></label></div>
   <div class="row"><label class="w05">Basiseinheit<select data-o="a" data-id="${a.id}" data-f="einheit">${S().einheiten.map(e=>opt(e,e,a.einheit)).join('')}</select></label>
     <label>Weitere Einheiten (z. B. Krt=10; Rolle=100)<input data-o="a" data-id="${a.id}" data-f="einheitenStr" value="${esc((a.einheiten||[]).map(x=>x.e+'='+x.f).join('; '))}"></label>
     ${f('ek','EK je Basiseinheit','w05','number')}${f('vk','VK je Basiseinheit','w05','number')}
     <label class="w05">USt<select data-o="a" data-id="${a.id}" data-f="steuer">${S().steuer.map(s=>opt(s.code,s.bez,a.steuer)).join('')}</select></label></div>
-  <div class="row"><label class="w05">Lagerartikel<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="lager" ${a.lager?'checked':''}></label><label class="w2">Lagerplatz${ketteHTML('lp',a.lagerplatz,`data-aid="${a.id}"`)}</label>${a.lager?f('minBestand','Mindestbestand','w05','number')+`<label class="w05">Bestand<input disabled value="${fmtQ(bs.menge)} ${esc(a.einheit)}"></label><label class="w05">Ø-EK<input disabled value="${fmt(avgEK(a.id))}"></label><label class="w05">Lagerwert<input disabled value="${fmt(bs.wert)}"></label>`:'<span style="flex:4"></span>'}</div>
+  <div class="row"><label class="w05">Lagerartikel<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="lager" ${a.lager?'checked':''}></label><label class="w2">Lagerplatz${ketteHTML('lp',a.lagerplatz,`data-act="bwahl" data-aid="${a.id}"`)}</label>${a.lager?f('minBestand','Mindestbestand','w05','number')+`<label class="w05">Bestand<input disabled value="${fmtQ(bs.menge)} ${esc(a.einheit)}"></label><label class="w05">Ø-EK<input disabled value="${fmt(avgEK(a.id))}"></label><label class="w05">Lagerwert<input disabled value="${fmt(bs.wert)}"></label>`:'<span style="flex:4"></span>'}</div>
   </div>
   <div class="card"><h2>Lieferanten</h2><table><thead><tr><th>Lieferant</th><th>Art.-Nr. beim Lieferanten</th><th class="n">Listenpreis</th><th class="n">Rabatt %</th><th class="n">Netto-EK</th><th>Stand</th><th></th></tr></thead><tbody>
   ${(a.lieferanten||[]).map((l,i)=>{const fi=(fl,w)=>`<td style="width:${w}px"><input type="number" step="any" data-o="al" data-id="${a.id}" data-i="${i}" data-f="${fl}" value="${l[fl]??''}"></td>`;
@@ -2436,13 +2438,35 @@ function baumDialog(B){
   d.querySelector('#m-ok').onclick=()=>{d.remove();commit();render()};
 }
 const gruppenDialog=()=>baumDialog(GR);
-function ketteHTML(k,wert,attr=''){
-  const B=k==='lp'?LP:GR,ids=[];let g=B.G(wert),n=0;while(g&&n++<50){ids.unshift(g.id);g=B.G(g.parent)}
-  const sel=[];let par='';
-  for(let i=0;i<=ids.length;i++){const kids=B.kinder(par),v=ids[i]||'';if(i&&!kids.length&&!v){sel.push(`<select data-kette="${k}" data-par="${par}" ${attr} style="width:auto;max-width:170px">${opt('','– Unterebene …',v)}${opt('__neu','+ neue Unterebene …','')}</select>`);break}
-    sel.push(`<select data-kette="${k}" data-par="${par}" ${attr} style="width:auto;max-width:200px">${opt('',i?'– (keine Unterebene) –':(k==='lp'?'– kein Lagerplatz –':'– keine Gruppe –'),v)}${kids.map(x=>opt(x.id,x.bez,v)).join('')}${opt('__neu',i?'+ neue Unterebene …':(k==='lp'?'+ neues Lager …':'+ neue Hauptgruppe …'),'')}</select>`);
-    if(!v)break;par=v}
-  return`<span class="kette" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">${sel.join('<span class="mut">›</span>')}</span>`;
+// Auswahlfeld für Gruppe/Lagerplatz: Klick öffnet das Struktur-Popup (baumWahl)
+function ketteHTML(k,wert,attr=''){const B=k==='lp'?LP:GR,p=B.pfad(wert);
+  return`<button type="button" class="bwfeld" data-bw="${k}" data-wert="${esc(wert||'')}" ${attr} title="Klicken zum Auswählen">${p?esc(p):`<span class="mut">${k==='lp'?'– kein Lagerplatz –':'– keine Gruppe –'}</span>`}<span style="float:right;margin-left:8px">▾</span></button>`}
+/* Struktur-Popup: jeder Klick auf einen Eintrag öffnet die nächste Ebene; „Übernehmen“ wählt die aktuelle Ebene, Doppelklick wählt sofort */
+function baumWahl(k,wert){
+  const B=k==='lp'?LP:GR;return new Promise(res=>{
+    const d=document.createElement('div');d.className='modal';let cur=wert&&B.G(wert)?wert:'';
+    const zeich=()=>{const ids=[];let g=B.G(cur),n=0;while(g&&n++<50){ids.unshift(g.id);g=B.G(g.parent)}
+      d.querySelector('#bw-pfad').innerHTML=`<a href="javascript:void 0" data-bwgo="">${k==='lp'?'Alle Lager':'Alle Gruppen'}</a>`+ids.map(id=>` › <a href="javascript:void 0" data-bwgo="${id}">${esc(B.G(id).bez)}</a>`).join('');
+      const K=B.kinder(cur);
+      d.querySelector('#bw-l').innerHTML=K.map(x=>{const nk=B.kinder(x.id).length;return`<div class="bwz" data-bwin="${x.id}" title="Klick: Ebene öffnen · Doppelklick: wählen"><span>${esc(x.bez)}</span><span class="mut" style="margin-left:auto;font-size:12px">${nk?nk+' Unterebene'+(nk>1?'n':'')+' ›':''}</span></div>`}).join('')||`<p class="mut" style="margin:8px 0">Keine weiteren Unterebenen${cur?' – „Übernehmen“ wählt „'+esc(B.pfad(cur))+'“.':'.'}</p>`;
+      d.querySelector('#bw-ok').textContent=cur?`„${B.pfad(cur)}“ übernehmen`:(k==='lp'?'Ohne Lagerplatz übernehmen':'Ohne Gruppe übernehmen');
+      d.querySelector('#bw-neu').placeholder=cur?`Neue Unterebene in „${B.G(cur).bez}“`:(k==='lp'?'Neues Lager':'Neue Hauptgruppe')};
+    d.innerHTML=`<div class="mbox" style="max-width:560px"><h2>${k==='lp'?'Lagerplatz wählen':'Artikelgruppe wählen'}</h2>
+      <div id="bw-pfad" style="margin-bottom:8px"></div><div id="bw-l" style="max-height:50vh;min-height:220px;overflow:auto;border:1px solid var(--line);border-radius:6px"></div>
+      <div class="bar" style="margin:10px 0 0"><input id="bw-neu" style="flex:1"><button id="bw-add">+ Anlegen</button></div>
+      <div class="bar" style="margin:12px 0 0">${cur?'':''}<button id="bw-hoch">‹ Ebene zurück</button><span class="sp"></span><button id="m-no">Abbrechen</button><button class="p" id="bw-ok"></button></div></div>`;
+    document.body.appendChild(d);zeich();
+    const fin=v=>{d.remove();document.removeEventListener('keydown',kd);res(v)};
+    const kd=e=>{if(e.key==='Escape'){e.stopPropagation();fin(null)}};document.addEventListener('keydown',kd,true);
+    let letzt=0; // Doppelklick: zweiter Klick kurz nach einem Eintrags-Klick wählt die geöffnete Ebene (Liste ist dann schon neu aufgebaut)
+    d.addEventListener('click',e=>{if(letzt&&Date.now()-letzt<450&&e.detail>=2&&e.target.closest('#bw-l')){fin(cur);return}
+      const t=e.target.closest('[data-bwin],[data-bwgo]');if(!t)return;letzt=t.dataset.bwin!=null?Date.now():0;cur=t.dataset.bwin??t.dataset.bwgo;zeich()});
+    const add=()=>{const e=d.querySelector('#bw-neu'),n=e.value.trim();if(!n)return;let g=B.kinder(cur).find(x=>x.bez.toLowerCase()===n.toLowerCase());
+      if(!g){g={id:uid(),bez:n,parent:cur};B.L().push(g);log(B.c.name+' angelegt',B.pfad(g.id))}e.value='';cur=g.id;zeich()};
+    d.querySelector('#bw-add').onclick=add;d.querySelector('#bw-neu').onkeydown=e=>{if(e.key==='Enter'){e.stopPropagation();add()}};
+    d.querySelector('#bw-hoch').onclick=()=>{cur=B.G(cur)?.parent||'';zeich()};
+    d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#bw-ok').onclick=()=>fin(cur);
+  });
 }
 async function ketteWert(el){const B=el.dataset.kette==='lp'?LP:GR,par=el.dataset.par||'';if(el.value==='__neu')return(await knotenNeu(B,par))||null;return el.value||par}
 const lfNamen=a=>(a.lieferanten||[]).map(l=>kName(l.kontaktId)).filter(x=>x&&x!=='–').join(', ');
@@ -3334,6 +3358,8 @@ const ACT={
   kbel:el=>{const b=neuBeleg(el.dataset.t,{kontaktId:el.dataset.id,zahlungsziel:+kontakt(el.dataset.id).zahlungsziel||S().zahlungsziel});persist();go('beleg/'+b.id)},
   anew:async()=>{const a=await artikelPopup({});if(a){commit();go('artikel/'+a.id)}},
   adel:el=>{if(artikelLoeschen([el.dataset.id]))go('artikel')},
+  bwahl:async el=>{const a=artikel(el.dataset.aid),k=el.dataset.bw,B=k==='lp'?LP:GR;if(!a)return;const v=await baumWahl(k,a[B.c.feld]);
+    if(v!==null&&v!==(a[B.c.feld]||'')){a[B.c.feld]=v;log(B.c.name+' zugeordnet',`${a.nr} → ${B.pfad(v)||'keine'}`);persist()}render()},
   agrp:()=>gruppenDialog(),lpverw:()=>baumDialog(LP),lpmx:async()=>{if(await lagerMatrix(LP)){commit();render()}},
   amgr:async el=>{let g=el.value;el.value='';if(!g)return;if(g==='__neu'){g=await gruppeNeu();if(!g){render();return}}if(g==='__keine')g='';
     const L=UI.aSel.map(artikel).filter(Boolean);if(!L.length)return;if(!confirm(`${L.length} Artikel ${g?'der Gruppe „'+grBez(g)+'“ zuordnen':'aus der Gruppe nehmen'}?`)){render();return}

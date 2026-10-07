@@ -31,6 +31,7 @@ body.loaded #app{display:flex}
 .ed:hover{background:#f5f8ff}
 .ed:focus{outline:2px solid var(--acc);background:#eef4ff}
 .ed:empty:before{content:attr(data-ph);color:#9aa3b2;font-weight:400}
+.undo{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:120;background:#1d2330;color:#fff;border-radius:8px;padding:10px 12px 10px 16px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 28px rgba(0,0,0,.3);max-width:92vw}.undo button{background:#fff;color:#1d2330;border:0;font-weight:600}.undo button.x{background:none;color:#aab;font-weight:400}
 .modal{position:fixed;inset:0;background:rgba(15,20,30,.45);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:10vh 12px 12px}
 .mbox{background:#fff;border-radius:10px;max-width:520px;width:100%;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
 .mtab td{border:0;padding:3px 10px 3px 0}
@@ -291,7 +292,7 @@ const OHNE_PREIS=['LS','WE'];
 const REOPEN=['AN','AB','BE','PR'];
 
 let DB=null,saveT=null,pending=false,lastBackupDay=null,HIST=null;
-const UI={vTyp:'',vSt:'',vQ:'',eTyp:'',eSt:'',eQ:'',jahr:String(new Date().getFullYear()),kQ:'',aQ:'',wvAlle:false};
+const UI={vTyp:'',vSt:'',vQ:'',eTyp:'',eSt:'',eQ:'',jahr:String(new Date().getFullYear()),kQ:'',aQ:'',wvAlle:false,aSel:[]};
 
 /* ---------- Hilfsfunktionen ---------- */
 const $=s=>document.querySelector(s);
@@ -317,6 +318,32 @@ const bNr=b=>b?(b.nr||'Entwurf'):'';
 const steuerDef=c=>S().steuer.find(s=>s.code===c)||{code:c,satz:0,bez:c,hinweis:''};
 const opt=(v,t,sel)=>`<option value="${esc(v)}"${String(v)===String(sel)?' selected':''}>${esc(t)}</option>`;
 function log(aktion,info){DB.log.push({ts:new Date().toISOString(),aktion,info})}
+/* Papierkorb: Gelöschtes bleibt wiederherstellbar (Rückgängig) */
+const PK={artikel:{n:'Artikel',info:a=>`${a.nr} ${a.bez}`},kontakte:{n:'Kontakt',info:k=>`${k.nr} ${k.name}`},belege:{n:'Belegentwurf',info:b=>`${T[b.typ]?.bez} ${kName(b.kontaktId)} ${dAT(b.datum)}`},zeiten:{n:'Zeiteintrag',info:z=>`${dAT(z.datum)} ${fmtQ(z.stunden)} h ${z.text||''}`}};
+function wegwerfen(c,objs){ // c: Sammlung in DB; Einträge entfernen, im Papierkorb ablegen, protokollieren
+  const ids=new Set(objs.map(o=>o.id)),ts=new Date().toISOString(),neu=[];
+  DB[c]=DB[c].filter(o=>!ids.has(o.id));
+  for(const o of objs){const e={id:uid(),c,ts,info:PK[c].info(o),daten:o};DB.papierkorb.push(e);neu.push(e.id);log(PK[c].n+' gelöscht',e.info+' (Papierkorb)')}
+  commit();rueckgaengigHinweis(neu,`${objs.length} ${PK[c].n}${objs.length>1?(c==='belege'?'e':c==='zeiten'?'e':''):''} gelöscht`);
+}
+function wiederherstellen(eids){
+  const fehler=[];let n=0;
+  for(const eid of eids){const e=DB.papierkorb.find(x=>x.id===eid);if(!e)continue;const o=e.daten,L=DB[e.c];
+    if(L.some(x=>x.id===o.id)){fehler.push(e.info+': bereits vorhanden');continue}
+    if(e.c==='artikel'&&L.some(x=>x.nr===o.nr)){fehler.push(`${e.info}: Artikel-Nr. ${o.nr} inzwischen vergeben`);continue}
+    if(e.c==='kontakte'&&L.some(x=>x.nr===o.nr&&x.typ===o.typ)){fehler.push(`${e.info}: Nummer ${o.nr} inzwischen vergeben`);continue}
+    if(e.c==='belege'&&o._zeiten){for(const z of DB.zeiten)if(o._zeiten.includes(z.id)&&!z.belegId)z.belegId=o.id;delete o._zeiten}
+    L.push(o);DB.papierkorb=DB.papierkorb.filter(x=>x.id!==eid);log(PK[e.c].n+' wiederhergestellt',e.info);n++}
+  if(n){artDatalist();commit()}
+  if(fehler.length)alert('Nicht wiederhergestellt:\n'+fehler.join('\n'));
+  render();return n;
+}
+function rueckgaengigHinweis(eids,text){
+  document.getElementById('undo')?.remove();const d=document.createElement('div');d.id='undo';d.className='undo';
+  d.innerHTML=`<span>${esc(text)}</span><button>Rückgängig</button><button class="x" title="Schließen">✕</button>`;document.body.appendChild(d);
+  const weg=()=>d.remove(),t=setTimeout(weg,15000);
+  d.querySelector('button').onclick=()=>{clearTimeout(t);weg();wiederherstellen(eids)};d.querySelector('.x').onclick=()=>{clearTimeout(t);weg()};
+}
 /* Navigation: go() = vom Programm ausgelöst (ohne Rückfrage), nav() = vom Benutzer (mit Rückfrage bei ungespeicherten Änderungen) */
 let DIRTY=false,SNAP=null,SKIP=false,CURHASH='';
 function go(h){if(location.hash==='#/'+h){render();return}SKIP=true;location.hash='#/'+h}
@@ -350,7 +377,7 @@ function neueDB(){
       nk,texte,knr:{K:10000,L:70000},anr:0,
       zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,lvnr:0
     },
-    kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],fibu:fibuNeu(),log:[]
+    kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],fibu:fibuNeu(),log:[],papierkorb:[]
   };
 }
 // Firmendaten laut Briefpapier (Fußzeile der Vorlagen); füllen nur leere Felder
@@ -543,7 +570,7 @@ function loginHinweis(){for(const e of [$('#savestate'),$('#sync2')])if(e){e.sty
 /* Zusammenführen, wenn auf einem anderen Gerät zwischenzeitlich gespeichert wurde (3-Wege-Abgleich je Datensatz) */
 function merge3(base,local,remote){
   const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b),konfl=[],out=remote;
-  for(const c of ['kontakte','artikel','belege','lager','zeiten','kalk','lv','lvbib']){
+  for(const c of ['kontakte','artikel','belege','lager','zeiten','kalk','lv','lvbib','papierkorb']){
     out[c]=out[c]||[];
     const B=new Map((base?.[c]||[]).map(x=>[x.id,x])),R=new Map(out[c].map(x=>[x.id,x]));
     for(const l of local[c]||[]){
@@ -893,10 +920,9 @@ async function festschreiben(b0){
 function stornieren(b){
   if(!b.fest){
     if(DB.belege.some(x=>x!==b&&(x.auftragId===b.id||x.vorgaengerId===b.id))){alert('Entwurf hat Folgebelege und kann nicht gelöscht werden.');return}
-    if(!confirm('Entwurf endgültig löschen?'))return;
-    DB.belege.splice(DB.belege.indexOf(b),1);
-    for(const z of DB.zeiten)if(z.belegId===b.id)z.belegId='';
-    log('Entwurf gelöscht',T[b.typ].bez);commit();go('belege/'+T[b.typ].b);return;
+    if(!confirm('Entwurf löschen? (kann über den Papierkorb wiederhergestellt werden)'))return;
+    b._zeiten=DB.zeiten.filter(z=>z.belegId===b.id).map(z=>z.id);for(const z of DB.zeiten)if(z.belegId===b.id)z.belegId=''; // beim Wiederherstellen neu verknüpfen
+    wegwerfen('belege',[b]);go('belege/'+T[b.typ].b);return;
   }
   const t=T[b.typ];
   if(t.b==='V'&&t.re&&b.typ!=='GS'){
@@ -1404,13 +1430,24 @@ V.kontakt=id=>{
 };
 
 /* ---------- Artikel ---------- */
+function artikelListe(){const q=UI.aQ.toLowerCase();return DB.artikel.filter(a=>!q||[a.nr,a.bez,a.ean,...(a.lieferanten||[]).map(l=>l.artNr)].join(' ').toLowerCase().includes(q)).sort((a,c)=>String(a.nr).localeCompare(String(c.nr)))}
+// Löschen (auch mehrere): verwendete Artikel bleiben, Rest in den Papierkorb
+function artikelLoeschen(ids){
+  const L=ids.map(artikel).filter(Boolean);if(!L.length)return false;
+  const benutzt=L.filter(a=>DB.belege.some(b=>b.pos.some(p=>p.artikelId===a.id))||DB.lager.some(e=>e.artikelId===a.id)),frei=L.filter(a=>!benutzt.includes(a));
+  if(benutzt.length){const t=`${benutzt.length} Artikel ${benutzt.length>1?'werden':'wird'} in Belegen oder im Lager verwendet und ${benutzt.length>1?'können':'kann'} nicht gelöscht werden:\n`+benutzt.slice(0,15).map(a=>`• ${a.nr} ${a.bez}`).join('\n')+(benutzt.length>15?'\n…':'');
+    if(confirm(t+'\n\nStattdessen deaktivieren (bleibt erhalten, wird nicht mehr vorgeschlagen)?')){for(const a of benutzt)if(a.aktiv!==false){a.aktiv=false;log('Artikel deaktiviert',`${a.nr} ${a.bez}`)}commit()}}
+  if(!frei.length){artDatalist();return false}
+  if(!confirm(`${frei.length} Artikel löschen?\n\n`+frei.slice(0,15).map(a=>`• ${a.nr} ${a.bez}`).join('\n')+(frei.length>15?'\n…':'')+'\n\nGelöschte Artikel können über „Rückgängig“ bzw. den Papierkorb (Export & Sicherung) wiederhergestellt werden.'))return false;
+  wegwerfen('artikel',frei);artDatalist();return true;
+}
 V.artikel=id=>{
   if(id)return artikelEdit(id);
-  const q=UI.aQ.toLowerCase();
-  const L=DB.artikel.filter(a=>!q||[a.nr,a.bez,a.ean,...(a.lieferanten||[]).map(l=>l.artNr)].join(' ').toLowerCase().includes(q)).sort((a,c)=>String(a.nr).localeCompare(String(c.nr)));
-  return`<h1>Artikel &amp; Leistungen</h1><div class="bar"><input data-o="ui" data-f="aQ" placeholder="Suche" value="${esc(UI.aQ)}" style="width:260px"><span class="sp"></span><button class="p" data-act="anew">+ Artikel</button></div>
-  <div class="card" style="padding:0"><table><thead><tr><th>Nr</th><th>Bezeichnung</th><th>Art</th><th>Einh.</th><th class="n">EK</th><th class="n">VK</th><th>Lager</th><th class="n">Bestand</th></tr></thead><tbody>
-  ${L.map(a=>`<tr class="click" onclick="nav('artikel/${a.id}')" style="${a.aktiv===false?'opacity:.5':''}"><td>${esc(a.nr)}</td><td>${esc(a.bez)}</td><td>${ART[a.art]}</td><td>${esc(a.einheit)}</td><td class="n">${fmt(a.ek)}</td><td class="n">${fmt(a.vk)}</td><td>${a.lager?'✓':''}</td><td class="n">${a.lager?fmtQ(bestand(a.id).menge):''}</td></tr>`).join('')||'<tr><td colspan="8" class="mut">Keine Artikel. Positionen können auch frei erfasst und mit „+A“ als Artikel gespeichert werden.</td></tr>'}
+  const L=artikelListe(),sel=new Set((UI.aSel=UI.aSel.filter(id=>artikel(id))));
+  return`<h1>Artikel &amp; Leistungen</h1><div class="bar"><input data-o="ui" data-f="aQ" placeholder="Suche (auch Lief.-Art.-Nr.)" value="${esc(UI.aQ)}" style="width:260px"><span class="sp"></span>
+    ${sel.size?`<span><b>${sel.size}</b> ausgewählt</span><button data-act="amakt" data-v="0">Deaktivieren</button><button data-act="amakt" data-v="1">Aktivieren</button><button class="d" data-act="amdel">Löschen …</button>`:''}<button class="p" data-act="anew">+ Artikel</button></div>
+  <div class="card" style="padding:0"><table><thead><tr><th style="width:28px"><input type="checkbox" data-act="aselall" title="Alle (gefilterten) auswählen" ${L.length&&L.every(a=>sel.has(a.id))?'checked':''}></th><th>Nr</th><th>Bezeichnung</th><th>Art</th><th>Einh.</th><th class="n">EK</th><th class="n">VK</th><th>Lager</th><th class="n">Bestand</th></tr></thead><tbody>
+  ${L.map(a=>`<tr class="click" onclick="nav('artikel/${a.id}')" style="${a.aktiv===false?'opacity:.5':''}"><td onclick="event.stopPropagation()"><input type="checkbox" data-asel="${a.id}" ${sel.has(a.id)?'checked':''}></td><td>${esc(a.nr)}</td><td>${esc(a.bez)}</td><td>${ART[a.art]}</td><td>${esc(a.einheit)}</td><td class="n">${fmt(a.ek)}</td><td class="n">${fmt(a.vk)}</td><td>${a.lager?'✓':''}</td><td class="n">${a.lager?fmtQ(bestand(a.id).menge):''}</td></tr>`).join('')||'<tr><td colspan="9" class="mut">Keine Artikel. Positionen können auch frei erfasst und mit „+A“ als Artikel gespeichert werden.</td></tr>'}
   </tbody></table></div>`;
 };
 function artikelEdit(id){
@@ -2253,6 +2290,8 @@ V.export=()=>{
   <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>
   <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}</div>
   <div class="bar"><button data-act="exp" data-k="json">Gesamtdaten exportieren (JSON)</button><label class="btn" style="font-size:14px;color:inherit">Daten importieren (ersetzt alles)<input type="file" id="imp" accept=".json" style="display:none"></label><button data-act="savenow">Jetzt speichern</button></div></div>
+  <div class="card"><h2>Papierkorb</h2>${DB.papierkorb.length?`<table><thead><tr><th>Gelöscht am</th><th>Art</th><th>Eintrag</th><th></th></tr></thead><tbody>${DB.papierkorb.slice().reverse().map(e=>`<tr><td style="white-space:nowrap">${new Date(e.ts).toLocaleString('de-AT')}</td><td>${PK[e.c]?.n||e.c}</td><td>${esc(e.info)}</td><td style="white-space:nowrap"><button class="s" data-act="pkrest" data-id="${e.id}">Wiederherstellen</button> <button class="s d" data-act="pkdel" data-id="${e.id}">Endgültig löschen</button></td></tr>`).join('')}</tbody></table>
+    <div class="bar" style="margin-top:8px"><button data-act="pkrestall">Alle wiederherstellen</button><button class="d" data-act="pkleer">Papierkorb leeren …</button></div>`:'<p class="mut" style="margin:0">leer</p>'}</div>
   <div class="card"><h2>Protokoll (letzte 100)</h2><table>${DB.log.slice(-100).reverse().map(l=>`<tr><td style="white-space:nowrap">${new Date(l.ts).toLocaleString('de-AT')}</td><td>${esc(l.aktion)}</td><td>${esc(l.info)}</td></tr>`).join('')||'<tr><td class="mut">leer</td></tr>'}</table></div>`;
 };
 
@@ -2979,13 +3018,20 @@ const ACT={
   ztadd:()=>{const a=$('#zt-a').value,t=$('#zt-t').value,h=num($('#zt-h').value);if(!a||!h){alert('Auftrag und Stunden angeben.');return}
     const tf=S().tarife.find(x=>x.kz===t)||{kosten:0,vk:0};lsSet('erp-lastA',a);lsSet('erp-lastT',t);
     DB.zeiten.push({id:uid(),datum:$('#zt-d').value||isoD(),auftragId:a,tarif:t,stunden:h,text:$('#zt-x').value,kosten:+tf.kosten||0,vk:+tf.vk||0,belegId:''});commit();render()},
-  ztdel:el=>{const i=DB.zeiten.findIndex(z=>z.id===el.dataset.id);if(i>=0&&confirm('Eintrag löschen?')){DB.zeiten.splice(i,1);commit();render()}},
+  ztdel:el=>{const z=DB.zeiten.find(z=>z.id===el.dataset.id);if(z&&confirm('Eintrag löschen?')){wegwerfen('zeiten',[z]);render()}},
   knew:el=>{const t=el.dataset.t,s=S();const k={id:uid(),nr:String(++s.knr[t]),typ:t,name:'',zusatz:'',strasse:'',plz:'',ort:'',land:'Österreich',uid:'',email:'',tel:'',zahlungsziel:s.zahlungsziel,notiz:''};DB.kontakte.push(k);persist();go('kontakt/'+k.id);setTimeout(()=>$('[data-f="name"]')?.focus(),30)},
-  kdel:el=>{const id=el.dataset.id;if(DB.belege.some(b=>b.kontaktId===id)){alert('Kontakt hat Belege und kann nicht gelöscht werden.');return}if(!confirm('Kontakt löschen?'))return;DB.kontakte=DB.kontakte.filter(k=>k.id!==id);persist();go('kontakte')},
+  kdel:el=>{const id=el.dataset.id;if(DB.belege.some(b=>b.kontaktId===id)){alert('Kontakt hat Belege und kann nicht gelöscht werden.');return}if(!confirm('Kontakt löschen?'))return;wegwerfen('kontakte',[kontakt(id)]);go('kontakte')},
   kbel:el=>{const b=neuBeleg(el.dataset.t,{kontaktId:el.dataset.id,zahlungsziel:+kontakt(el.dataset.id).zahlungsziel||S().zahlungsziel});persist();go('beleg/'+b.id)},
   anew:()=>{const s=S(),nr=String(++s.anr).padStart(5,'0');const a={id:uid(),nr,bez:'',text:'',art:'W',einheit:'Stk',einheiten:[],ek:0,vk:0,steuer:s.stdSteuer,lager:false,minBestand:0,lieferanten:[],aktiv:true};DB.artikel.push(a);persist();go('artikel/'+a.id)},
-  adel:el=>{const id=el.dataset.id;if(DB.belege.some(b=>b.pos.some(p=>p.artikelId===id))||DB.lager.some(e=>e.artikelId===id)){alert('Artikel wird verwendet – stattdessen „aktiv“ abwählen.');return}if(!confirm('Artikel löschen?'))return;DB.artikel=DB.artikel.filter(a=>a.id!==id);artDatalist();persist();go('artikel')},
+  adel:el=>{if(artikelLoeschen([el.dataset.id]))go('artikel')},
+  aselall:el=>{UI.aSel=el.checked?artikelListe().map(a=>a.id):[];render()},
+  amdel:()=>{if(artikelLoeschen(UI.aSel))UI.aSel=UI.aSel.filter(id=>artikel(id));render()},
+  amakt:el=>{const ak=el.dataset.v==='1',L=UI.aSel.map(artikel).filter(a=>a&&(a.aktiv!==false)!==ak);if(!L.length)return;
+    if(!confirm(`${L.length} Artikel ${ak?'aktivieren':'deaktivieren'}?`))return;for(const a of L){a.aktiv=ak;log(ak?'Artikel aktiviert':'Artikel deaktiviert',`${a.nr} ${a.bez}`)}artDatalist();commit();render()},
   aladd:el=>{const a=artikel(el.dataset.id);(a.lieferanten=a.lieferanten||[]).push({kontaktId:'',artNr:''});persist();render()},
+  pkrest:el=>wiederherstellen([el.dataset.id]),pkrestall:()=>wiederherstellen(DB.papierkorb.map(e=>e.id)),
+  pkdel:el=>{const e=DB.papierkorb.find(x=>x.id===el.dataset.id);if(!e||!confirm(`„${e.info}“ endgültig löschen? Das kann nicht rückgängig gemacht werden.`))return;DB.papierkorb=DB.papierkorb.filter(x=>x!==e);log(PK[e.c].n+' endgültig gelöscht',e.info);commit();render()},
+  pkleer:()=>{const n=DB.papierkorb.length;if(!n||!confirm(`Papierkorb mit ${n} Einträgen endgültig leeren? Das kann nicht rückgängig gemacht werden.`))return;for(const e of DB.papierkorb)log(PK[e.c].n+' endgültig gelöscht',e.info);DB.papierkorb=[];commit();render()},
   aopen:async el=>{const u=artikel(el.dataset.id).unterlagen[+el.dataset.i];try{await STORE.openFile(u)}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
   aldel:el=>{artikel(el.dataset.id).lieferanten.splice(+el.dataset.i,1);persist();render()},
   lgbook:()=>{const a=$('#lg-a').value,m=$('#lg-m').value,q=num($('#lg-q').value),p=$('#lg-p').value,t=$('#lg-t').value;if(!a){alert('Artikel wählen.');return}
@@ -3024,6 +3070,7 @@ document.addEventListener('change',e=>{
   if(['lsscan','erfoto','bescan'].includes(el.id)){const f=[...el.files];el.value='';belegScan(f,{lsscan:'WE',erfoto:'ER',bescan:'BE'}[el.id]);return}
   if(el.id==='kikey'){lsSet('erp-ki-key',el.value.trim()||null);render();return}
   if(d.sc!==undefined)return scanSet(el);
+  if(d.asel!==undefined){UI.aSel=el.checked?[...new Set([...UI.aSel,d.asel])]:UI.aSel.filter(x=>x!==d.asel);render();return}
   if(el.id==='att'){const b=curBeleg();if(b)anhaengeHochladen(b,[...el.files]);return}
   const v=el.type==='checkbox'?el.checked:el.value,nv=el.type==='number'?num(v):v;
   if(d.p!==undefined){const b=curBeleg();if(!b||b.fest)return;onPos(b,+d.p,d.f,v);persist();return}

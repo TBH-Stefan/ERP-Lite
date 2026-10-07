@@ -147,6 +147,8 @@ Struktur nach Grundaufbau der ÖNORM B 2061 – Zeilen frei anpassbar; Abgleich 
 
 - **Neuanlage im Popup:** Kunde/Lieferant direkt aus der Belegauswahl („+ Neuer …“), Lieferant aus dem Scan vorbelegt, Artikel aus einer Position („+A“).
 - Logo „TBH ERP-Lite“ führt zum Überblick.
+- **Artikel-Übersicht:** Mehrfachauswahl (einzeln, „alle“ des Filters) mit Löschen, Deaktivieren, Aktivieren. In Belegen oder im Lager verwendete Artikel werden nicht gelöscht, sondern auf Wunsch deaktiviert.
+- **Papierkorb / Rückgängig:** Gelöschte Artikel, Kontakte, Belegentwürfe und Zeiteinträge kommen in den Papierkorb (Export & Sicherung) und sind wiederherstellbar; direkt nach dem Löschen Hinweis mit „Rückgängig“ (15 s). Endgültiges Löschen nur ausdrücklich. Alle Schritte im Protokoll. Festgeschriebene Belege werden nie gelöscht (nur Storno).
 
 ## 16. Offene Punkte
 - **ÖNORM A 2063 (Import/Export)**: benötigt das gültige XML-Schema bzw. Beispieldateien (.onlv) – noch nicht umgesetzt.

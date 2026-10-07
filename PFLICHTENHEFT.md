@@ -96,7 +96,8 @@ Ausweis: DB II € und % vom Umsatz, Aufschlag % auf HK, Fehlbetrag zum Ziel.
 ## 10. Belegbearbeitung
 - Ansicht je Beleg: Eingabe / Vorschau / Beides; Vorschau = Belegblatt direkt im Programm, gestrichelte Felder im Blatt bearbeitbar, Übernahme in die Eingabefelder (und umgekehrt).
 - Nummernvorschlag im Entwurf; Vergabe erst beim Festschreiben nach Sicherheitsdialog (bei unveränderbaren Belegen mit Pflicht-Bestätigung).
-- Angebote: Revision (`AN-JJJJ-NNNN-R1`, Vorgänger „ersetzt“) und Folgeangebot (neue Nummer, gleicher Vorgang).
+- Angebote: **Bearbeiten eines festgeschriebenen Angebots erzeugt eine Revision** (`AN-JJJJ-NNNN-R1`, R2 …; optional mit Änderungsgrund) als eigenen Datensatz – jeder Stand bleibt unverändert gespeichert, beim Festschreiben der Revision wird der Vorgänger „ersetzt“ (keine neue Nummer aus dem Nummernkreis). Karte **„Revisionen“** im Beleg zeigt die durchgängige Historie: alle Stände mit Datum, Status, Netto und Differenz, Änderungsgrund sowie die Änderungen gegenüber dem Vorgänger (Positionen neu/entfernt/geändert, Menge, EP, Rabatt, Texte). Folgeangebot (neue Nummer, gleicher Vorgang).
+- **Verkauf/Einkauf gruppiert zusammenhängende Belege** (Revisionen, Folgebelege, Storno): Kopfzeile = aktuelle Revision bzw. Ausgangsbeleg, zugehörige Belege mit **+/−** auf- und zuklappen (je Gruppe oder alle). Spalte „Revision“ (R1 von 3).
 
 ## 11. Kalkulation ÖNORM B 2061 und Leistungsverzeichnisse
 | Teil | Inhalt |

@@ -31,6 +31,7 @@ body.loaded #app{display:flex}
 .ed:hover{background:#f5f8ff}
 .ed:focus{outline:2px solid var(--acc);background:#eef4ff}
 .ed:empty:before{content:attr(data-ph);color:#9aa3b2;font-weight:400}
+tr.kind td{background:#f7f8fa;font-size:13px}tr.kind td:nth-child(2){padding-left:18px}.grpk{min-width:34px;font-weight:600}
 .undo{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:120;background:#1d2330;color:#fff;border-radius:8px;padding:10px 12px 10px 16px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 28px rgba(0,0,0,.3);max-width:92vw}.undo button{background:#fff;color:#1d2330;border:0;font-weight:600}.undo button.x{background:none;color:#aab;font-weight:400}
 .bwfeld{display:block;width:100%;text-align:left;font:inherit;padding:6px 8px;border:1px solid #cdd2da;border-radius:5px;background:#fff;cursor:pointer;margin-top:2px;min-height:34px}
 .bwz{display:flex;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer}.bwz:hover{background:var(--acc2)}
@@ -1085,6 +1086,15 @@ V.dash=()=>{
 };
 
 /* ---------- Belegliste ---------- */
+/* Zusammenhängende Belege (Revisionen, Folgebelege, Storno) als Gruppe: Kopfzeile = aktuelle Revision bzw. Ausgangsbeleg, Rest mit +/- auf- und zuklappen */
+function belegGruppen(L){
+  const wurzel=b=>{let x=b,n=0;while(n++<60){const v=beleg(x.vorgaengerId)||beleg(x.stornoVon);if(!v||v===x)break;x=v}return x};
+  const M=new Map();for(const b of L){const r=wurzel(b).id;if(!M.has(r))M.set(r,[]);M.get(r).push(b)}
+  return[...M.entries()].map(([rid,m])=>{const r=beleg(rid),fam=r&&r.typ==='AN'?(r.basisNr||r.nr):null;
+    const revs=fam?m.filter(x=>x.typ==='AN'&&(x.nr===fam||x.basisNr===fam)).sort((a,c)=>(c.rev||0)-(a.rev||0)):[];
+    const kopf=revs[0]||m.find(x=>x.id===rid)||m[m.length-1];return{kopf,kinder:m.filter(x=>x!==kopf)}})}
+let GRK=[];
+function grpAuf(id){if(id==='*'||id==='-'){UI.auf={};if(id==='*')for(const k of GRK)UI.auf[k]=1}else UI.auf[id]=!UI.auf[id];render()}
 V.belege=(bereich='V')=>{
   const k=bereich==='V'?'v':'e',typ=UI[k+'Typ'],st=UI[k+'St'],q=UI[k+'Q'].toLowerCase(),heute=isoD();
   const typen=Object.keys(T).filter(t=>T[t].b===bereich);
@@ -1095,6 +1105,9 @@ V.belege=(bereich='V')=>{
   if(st==='storno')L=L.filter(b=>b.storno);
   if(q)L=L.filter(b=>[b.nr,b.betreff,b.fremdNr,kName(b.kontaktId)].join(' ').toLowerCase().includes(q));
   L.sort((a,c)=>c.datum.localeCompare(a.datum)||(c.nr||'~').localeCompare(a.nr||'~'));
+  const GR_=belegGruppen(L),KIND=new Set(),ANZ=new Map();UI.auf=UI.auf||{};
+  L=GR_.flatMap(g=>{ANZ.set(g.kopf.id,g.kinder.length);const k=UI.auf[g.kopf.id]?g.kinder:[];k.forEach(x=>KIND.add(x.id));return[g.kopf,...k]});
+  GRK=GR_.filter(g=>g.kinder.length).map(g=>g.kopf.id);const mitGr=GRK.length>0;
   return`<h1>${bereich==='V'?'Verkauf':'Einkauf'}</h1>
   <div class="bar">
     <select data-o="ui" data-f="${k}Typ">${opt('','alle Belegarten',typ)}${typen.map(t=>opt(t,T[t].bez,typ)).join('')}</select>
@@ -1111,8 +1124,10 @@ V.belege=(bereich='V')=>{
     {k:'leistung',l:'Leistung',f:b=>esc(b.leistung||''),std:false},{k:'netto',l:'Netto',n:1,hm:1,f:b=>fmt(sgn(b)*summen(b).netto)},{k:'ust',l:'USt',n:1,f:b=>fmt(sgn(b)*sum(summen(b).steuern,x=>x.betrag)),std:false},
     {k:'brutto',l:'Brutto',n:1,f:b=>fmt(sgn(b)*summen(b).zahlbar)},{k:'offen',l:'Offen',n:1,hm:1,f:b=>T[b.typ].re?fmt(offen(b)):''},
     {k:'faellig',l:'Fällig',f:b=>T[b.typ].re&&b.fest?dAT(faellig(b)):'',std:false},{k:'versand',l:'Versendet',f:b=>(b.versand||[]).length?'✉ '+dAT(b.versand[b.versand.length-1].datum.slice(0,10)):'',std:false},
-    {k:'anh',l:'Anhänge',n:1,f:b=>(b.anhaenge||[]).length||'',std:false},{k:'status',l:'Status',f:b=>statusTag(b)}],L,
-    {zeile:b=>`class="click" onclick="nav('beleg/${b.id}')"`,leer:'Keine Belege.'})}`;
+    {k:'anh',l:'Anhänge',n:1,f:b=>(b.anhaenge||[]).length||'',std:false},{k:'rev',l:'Revision',f:b=>{if(b.typ!=='AN'||!(b.basisNr||b.nr))return'';const n=revListe(b).length;return n>1?`R${b.rev||0} von ${n}`:''},std:bereich==='V'},{k:'status',l:'Status',f:b=>statusTag(b)}],L,
+    {zeile:b=>`class="click${KIND.has(b.id)?' kind':''}" onclick="nav('beleg/${b.id}')"`,leer:'Keine Belege.',
+     vor:mitGr?{kopf:`<span style="white-space:nowrap"><button class="s" onclick="grpAuf('*')" title="Alle aufklappen">+</button><button class="s" onclick="grpAuf('-')" title="Alle zuklappen">−</button></span>`,
+       zelle:b=>KIND.has(b.id)?'<td class="mut" style="text-align:right;padding-right:2px">└</td>':`<td>${ANZ.get(b.id)?`<button class="s grpk" onclick="event.stopPropagation();grpAuf('${b.id}')" title="${ANZ.get(b.id)} zugehörige(r) Beleg(e) (Revisionen, Folgebelege) ${UI.auf[b.id]?'zuklappen':'aufklappen'}">${UI.auf[b.id]?'−':'+'}${ANZ.get(b.id)}</button>`:''}</td>`}:null})}`;
 };
 
 /* ---------- Beleg-Editor ---------- */
@@ -1163,7 +1178,7 @@ V.beleg=id=>{
     ${!b.storno&&t.folge.length&&b.status!=='ersetzt'?`${['AN','AB','LS','PR'].includes(b.typ)?`<button data-act="folgere">→ Rechnung</button>`:''}<select data-act="folge" title="${b.fest?'':'Wird vorher festgeschrieben'}">${opt('','Folgebeleg …','')}${t.folge.map(f=>opt(f,T[f].bez,'')).join('')}</select>`:''}
     ${b.typ==='LS'&&!b.storno?`<button data-act="sammelre">Sammelrechnung …</button>`:''}
     <button data-act="senden" title="Als PDF per E-Mail versenden">✉ Senden …</button><button data-act="pdfdl" title="PDF-Datei speichern">PDF speichern</button>
-    ${b.fest&&!b.storno&&b.typ==='AN'&&b.status!=='ersetzt'?`<button data-act="anrev">Revision</button><button data-act="anfolge">Folgeangebot</button><button data-act="anst" data-v="${b.status==='abgelehnt'?'':'abgelehnt'}">${b.status==='abgelehnt'?'wieder offen':'abgelehnt'}</button>`:''}
+    ${b.fest&&!b.storno&&b.typ==='AN'&&b.status!=='ersetzt'?`<button data-act="anrev" title="Erstellt eine neue Revision zum Bearbeiten – dieser Stand bleibt unverändert gespeichert">✎ Bearbeiten (Revision)</button><button data-act="anfolge">Folgeangebot</button><button data-act="anst" data-v="${b.status==='abgelehnt'?'':'abgelehnt'}">${b.status==='abgelehnt'?'wieder offen':'abgelehnt'}</button>`:''}
     ${b.fest&&!b.storno&&REOPEN.includes(b.typ)&&b.status!=='ersetzt'?`<button data-act="reopen">Bearbeiten</button>`:''}
     <button data-act="dup">Duplizieren</button>
     ${b.storno?'':`<button class="d" data-act="storno">${b.fest?'Stornieren':'Löschen'}</button>`}
@@ -1210,6 +1225,7 @@ V.beleg=id=>{
   </div>`;
   const side=`${ohneP?'':`<div class="card"><h2>Summen</h2><div id="sumbox">${sumBox(b)}</div></div>`}
     ${V_&&!ohneP&&b.typ!=='GS'?`<div class="card"><h2>Kalkulation DB II</h2><div id="kalkbox">${kalkBox(b)}</div></div>`:''}
+    ${b.typ==='AN'?revHistorie(b):''}
     <div class="card"><h2>Belegkette${b.auftragId&&V_?` · <a href="#/auftrag/${b.auftragId}">Auftrag</a>`:''}</h2><div class="chain">${kette.map(x=>`<a href="#/beleg/${x.id}" class="${x.id===b.id?'cur':''}">${T[x.typ].bez} ${esc(bNr(x))} · ${dAT(x.datum)} ${x.storno?'(storniert)':x.status==='ersetzt'?'(ersetzt)':''}</a>`).join('')}</div></div>
     ${(b.versand||[]).length?`<div class="card"><h2>Versand</h2>${b.versand.map(v=>`<div style="margin-bottom:4px">✉ ${new Date(v.datum).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'})} an ${esc(v.an)}</div>`).join('')}</div>`:''}
     ${k?`<div class="card"><h2>${V_?'Kunde':'Lieferant'}</h2><div>${esc(k.nr)} · <a href="#/kontakt/${k.id}">${esc(k.name)}</a><br>${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.uid?'<br>UID '+esc(k.uid):''}</div></div>`:''}`;
@@ -1319,15 +1335,41 @@ async function artikelPopup(v={},lid=''){
 }
 
 /* ---------- Angebote: Revision / Folgeangebot ---------- */
+/* Bearbeiten eines festgeschriebenen Angebots = neue Revision (eigener Datensatz AN-…-R1, R2 …); alle Stände bleiben unverändert erhalten (Historie) */
 function angebotRevision(src){
   const basis=src.basisNr||src.nr;
   const rev=Math.max(0,...DB.belege.filter(x=>x.typ==='AN'&&(x.basisNr===basis||x.nr===basis)).map(x=>x.rev||0))+1;
-  if(DB.belege.some(x=>x.typ==='AN'&&x.basisNr===basis&&!x.fest&&!x.storno)){alert('Es gibt bereits einen Revisions-Entwurf zu '+basis+'.');return}
+  const offen=DB.belege.find(x=>x.typ==='AN'&&x.basisNr===basis&&!x.fest&&!x.storno);
+  if(offen){alert(`Es gibt bereits einen Revisions-Entwurf zu ${basis} (${vorschlagNr(offen)}) – er wird geöffnet.`);go('beleg/'+offen.id);return}
+  const grund=prompt(`Angebot ${src.nr} bearbeiten → neue Revision ${basis}-R${rev}.\nDer bisherige Stand bleibt unverändert gespeichert.\n\nGrund der Änderung (optional, z. B. „Kundenwunsch: 2. Verteiler“):`,'');
+  if(grund===null)return;
   const b=neuBeleg('AN',{kontaktId:src.kontaktId,betreff:src.betreff,bezug:src.bezug,kopf:src.kopf,fuss:src.fuss,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,
-    auftragId:src.auftragId,vorgaengerId:src.id,basisNr:basis,rev});
-  b.pos=src.pos.map(p=>({...p,id:uid(),herkunftPosId:''}));
-  log('Revision angelegt',`${basis}-R${rev}`);persist();go('beleg/'+b.id);
+    auftragId:src.auftragId,vorgaengerId:src.id,basisNr:basis,rev,revGrund:grund.trim(),optRabatt:src.optRabatt,optLS:src.optLS,ltDruck:src.ltDruck,leistung:src.leistung});
+  b.pos=src.pos.map(p=>({...p,id:uid(),herkunftPosId:'',revPosId:p.id}));
+  log('Revision angelegt',`${basis}-R${rev}${grund.trim()?': '+grund.trim():''}`);persist();go('beleg/'+b.id);
 }
+// Alle Revisionen eines Angebots (Grundangebot + R1, R2 …), älteste zuerst
+const revListe=b=>{const basis=b.basisNr||b.nr;if(!basis)return[b];return DB.belege.filter(x=>x.typ==='AN'&&(x.nr===basis||x.basisNr===basis)).sort((x,y)=>(x.rev||0)-(y.rev||0))};
+// Änderungen zwischen zwei Ständen (Positionen über revPosId, sonst Nr+Bezeichnung zugeordnet)
+function revDiff(a,b){
+  const P=x=>x.pos.filter(p=>!isInfo(p)||p.art==='G'),key=p=>(p.nr||'')+'|'+(p.bez||'').trim(),A=P(a),rest=new Set(A),out=[];
+  const fm=p=>`${fmtQ(p.menge)} ${p.einheit||''} × ${fmt(+p.ep||0)}${+p.rabatt?` −${fmtQ(p.rabatt)} %`:''}`;
+  for(const p of P(b)){let q=A.find(x=>rest.has(x)&&p.revPosId&&x.id===p.revPosId)||A.find(x=>rest.has(x)&&key(x)===key(p));
+    if(!q){out.push(['+',p.bez||p.nr,fm(p)]);continue}rest.delete(q);
+    const d=[];if((q.bez||'')!==(p.bez||''))d.push(`Text: „${q.bez}“ → „${p.bez}“`);if(+q.menge!==+p.menge||q.einheit!==p.einheit)d.push(`Menge ${fmtQ(q.menge)} → ${fmtQ(p.menge)} ${p.einheit||''}`);
+    if(+q.ep!==+p.ep)d.push(`EP ${fmt(+q.ep||0)} → ${fmt(+p.ep||0)}`);if(+(q.rabatt||0)!==+(p.rabatt||0))d.push(`Rabatt ${fmtQ(q.rabatt||0)} → ${fmtQ(p.rabatt||0)} %`);
+    if((q.text||'')!==(p.text||''))d.push('Langtext geändert');if(d.length)out.push(['~',p.bez||p.nr,d.join(', ')])}
+  for(const q of rest)out.push(['−',q.bez||q.nr,fm(q)]);
+  for(const[f,l]of[['betreff','Betreff'],['kopf','Kopftext'],['fuss','Fußtext'],['zahlungsziel','Zahlungsziel'],['kontaktId','Kunde']])if((a[f]??'')!==(b[f]??''))out.push(['~',l,'geändert']);
+  return out}
+function revHistorie(b){
+  const L=revListe(b);if(L.length<2&&!b.rev)return'';
+  const zeilen=L.map((x,i)=>{const v=L[i-1],s=summen(x).netto,dn=v?s-summen(v).netto:0,D=v?revDiff(v,x):[];
+    const z=c=>D.filter(d=>d[0]===c).length,kurz=v?[z('~')&&z('~')+' geändert',z('+')&&z('+')+' neu',z('−')&&z('−')+' entfernt'].filter(Boolean).join(', ')||'keine Positionsänderung':'Grundangebot';
+    return`<div style="padding:6px 0;border-top:1px solid var(--line)${x.id===b.id?';font-weight:600':''}"><a href="#/beleg/${x.id}">${esc(x.nr||vorschlagNr(x)+' (Entwurf)')}</a> · ${dAT(x.datum)} ${x.status==='ersetzt'?tag('ersetzt'):x.fest?statusTag(x):tag('Entwurf','warn')}
+      <div class="mut" style="font-weight:400">Netto ${fmt(s)}${v&&Math.abs(dn)>0.005?` (${dn>0?'+':''}${fmt(dn)})`:''} · ${kurz}${x.revGrund?`<br>Grund: ${esc(x.revGrund)}`:''}</div>
+      ${D.length?`<details style="font-weight:400"><summary>Änderungen gegenüber ${esc(v.nr||'')}</summary>${D.map(([c,l,t])=>`<div style="font-size:12px"><b style="color:${c==='+'?'var(--ok,#1a7f37)':c==='−'?'var(--err,#c62828)':'inherit'}">${c}</b> ${esc(l)}: ${esc(t)}</div>`).join('')}</details>`:''}</div>`}).join('');
+  return`<div class="card"><h2>Revisionen (${L.length})</h2><p class="mut" style="margin:0 0 4px">Jede Revision ist ein eigener, unveränderter Stand.</p>${zeilen}</div>`}
 function folgeAngebot(src){
   const mitPos=confirm(`Positionen aus ${src.nr} übernehmen?\n\nOK = übernehmen · Abbrechen = leeres Folgeangebot`);
   const b=neuBeleg('AN',{kontaktId:src.kontaktId,betreff:src.betreff,bezug:`Folgeangebot zu Angebot ${src.nr} vom ${dAT(src.datum)}`,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,auftragId:src.auftragId,vorgaengerId:src.id});

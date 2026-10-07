@@ -376,7 +376,7 @@ function neueDB(){
       einheiten:['Stk','m','m²','m³','h','PA','kg','l','Krt','Rolle','Set','km','Tag','Wo','Mon'],
       tarife:[{kz:'SV',bez:'Sachverständigenleistung',kosten:0,vk:0},{kz:'MONT',bez:'Montage',kosten:0,vk:0},{kz:'FAHRT',bez:'Fahrtzeit',kosten:0,vk:0}],
       nk,texte,knr:{K:10000,L:70000},anr:0,
-      zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,lvnr:0
+      spalten:{},zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,lvnr:0
     },
     kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],fibu:fibuNeu(),log:[],papierkorb:[]
   };
@@ -884,6 +884,7 @@ async function festschreiben(b0){
   const b=beleg(b0.id);if(!b||b.fest)return;
   const k=kontakt(b.kontaktId),s=summen(b),err=[],warn=[],t=T[b.typ];
   if(!k)err.push(t.b==='V'?'Kein Kunde gewählt.':'Kein Lieferant gewählt.');
+  else if(kontaktFehlt(k).length)(t.re&&t.b==='V'?err:warn).push(`${t.b==='V'?'Kunde':'Lieferant'}: ${kontaktFehlt(k).join(', ')} fehlt${t.re&&t.b==='V'?' (§ 11 UStG: Name und Anschrift des Empfängers)':''} – über „✎ bearbeiten“ ergänzen.`);
   if(!b.pos.some(p=>!isInfo(p)))err.push('Keine Positionen.');
   if(b.pos.some(p=>!isInfo(p)&&!String(p.bez).trim()))err.push('Position ohne Bezeichnung.');
   if(t.b==='V'&&t.re){
@@ -964,7 +965,7 @@ function preisHistorie(b,p){
 function artikelInPos(b,p,a){
   Object.assign(p,{artikelId:a.id,nr:a.nr,bez:a.bez,text:a.text||'',einheit:a.einheit,faktor:1,steuer:a.steuer||S().stdSteuer,art:a.art||'W'});
   const h=preisHistorie(b,p).filter(x=>x.einheit===p.einheit);
-  if(T[b.typ].b==='V'){p.ek=+a.ek||0;p.ep=h.length?h[0].ep:(+a.vk||0);p.rabatt=h.length?h[0].rabatt:0}
+  if(T[b.typ].b==='V'){p.ek=+a.ek||0;p.ep=h.length?h[0].ep:(+a.vk||0);p.rabatt=h.length?h[0].rabatt:(+kontakt(b.kontaktId)?.rabatt||0)}
   else{p.ep=h.length?h[0].ep:(+a.ek||0);p.ek=p.ep;const l=(a.lieferanten||[]).find(x=>x.kontaktId===b.kontaktId);if(l?.artNr)p.text=(p.text?p.text+'\n':'')+'Ihre Art.-Nr.: '+l.artNr}
 }
 
@@ -1050,9 +1051,16 @@ V.belege=(bereich='V')=>{
     <span class="sp"></span>${bereich==='V'?'<button data-act="sammelre0">Rechnung aus Lieferscheinen …</button>':''}${bereich==='E'?'<label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>':''}
     <select data-act="neu">${opt('','+ Neuer Beleg …','')}${typen.filter(t=>t!=='GS').map(t=>opt(t,T[t].bez,'')).join('')}</select>
   </div>
-  <div class="card" style="padding:0"><table>
-  <thead><tr><th class="hm">Datum</th><th>Nummer</th><th class="hm">Art</th><th>${bereich==='V'?'Kunde':'Lieferant'}</th><th class="hm">Betreff</th><th class="n hm">Netto</th><th class="n">Brutto</th><th class="n hm">Offen</th><th>Status</th></tr></thead>
-  <tbody>${L.map(b=>{const s=summen(b),o=T[b.typ].re?offen(b):null;return`<tr class="click" onclick="nav('beleg/${b.id}')"><td class="hm">${dAT(b.datum)}</td><td>${esc(bNr(b))}<br><span class="mut">${b.typ} · ${dAT(b.datum)}</span>${b.fremdNr?`<br><span class="mut">${esc(b.fremdNr)}</span>`:''}</td><td class="hm">${b.typ}</td><td>${esc(kName(b.kontaktId))}</td><td class="hm">${esc(b.betreff)}</td><td class="n hm">${fmt(sgn(b)*s.netto)}</td><td class="n">${fmt(sgn(b)*s.zahlbar)}</td><td class="n hm">${o==null?'':fmt(o)}</td><td>${statusTag(b)}</td></tr>`}).join('')||'<tr><td colspan="9" class="mut">Keine Belege.</td></tr>'}</tbody></table></div>`;
+  ${tabelle('belege'+bereich,[
+    {k:'datum',l:'Datum',hm:1,f:b=>dAT(b.datum)},{k:'nr',l:'Nummer',f:b=>`${esc(bNr(b))}<br><span class="mut">${b.typ} · ${dAT(b.datum)}</span>`},
+    {k:'fremd',l:bereich==='V'?'Fremd-Nr.':'Beleg-Nr. Lieferant',f:b=>esc(b.fremdNr||''),std:bereich==='E'},{k:'art',l:'Art',hm:1,f:b=>T[b.typ].bez},
+    {k:'knr',l:bereich==='V'?'Kunden-Nr.':'Lief.-Nr.',f:b=>esc(kontakt(b.kontaktId)?.nr||''),std:false},{k:'kontakt',l:bereich==='V'?'Kunde':'Lieferant',f:b=>esc(kName(b.kontaktId))},
+    {k:'betreff',l:'Betreff',hm:1,f:b=>esc(b.betreff)},{k:'auftrag',l:'Auftrag',f:b=>b.auftragId&&b.auftragId!==b.id?esc(bNr(beleg(b.auftragId))):'',std:false},
+    {k:'leistung',l:'Leistung',f:b=>esc(b.leistung||''),std:false},{k:'netto',l:'Netto',n:1,hm:1,f:b=>fmt(sgn(b)*summen(b).netto)},{k:'ust',l:'USt',n:1,f:b=>fmt(sgn(b)*sum(summen(b).steuern,x=>x.betrag)),std:false},
+    {k:'brutto',l:'Brutto',n:1,f:b=>fmt(sgn(b)*summen(b).zahlbar)},{k:'offen',l:'Offen',n:1,hm:1,f:b=>T[b.typ].re?fmt(offen(b)):''},
+    {k:'faellig',l:'Fällig',f:b=>T[b.typ].re&&b.fest?dAT(faellig(b)):'',std:false},{k:'versand',l:'Versendet',f:b=>(b.versand||[]).length?'✉ '+dAT(b.versand[b.versand.length-1].datum.slice(0,10)):'',std:false},
+    {k:'anh',l:'Anhänge',n:1,f:b=>(b.anhaenge||[]).length||'',std:false},{k:'status',l:'Status',f:b=>statusTag(b)}],L,
+    {zeile:b=>`class="click" onclick="nav('beleg/${b.id}')"`,leer:'Keine Belege.'})}`;
 };
 
 /* ---------- Beleg-Editor ---------- */
@@ -1112,7 +1120,7 @@ V.beleg=id=>{
   const formHTML=`
   <div class="card">
     <div class="row">
-      <label class="w2">${V_?'Kunde':'Lieferant'}<select data-h="kontaktId" ${dis}>${opt('','– wählen –',b.kontaktId)}${kont.map(k=>opt(k.id,k.name+(k.ort?' · '+k.ort:''),b.kontaktId)).join('')}${opt('__neu',V_?'+ Neuer Kunde …':'+ Neuer Lieferant …','')}</select></label>
+      <label class="w2">${V_?'Kunde':'Lieferant'}<select data-h="kontaktId" ${dis}>${opt('','– wählen –',b.kontaktId)}${kont.map(k=>opt(k.id,k.name+(k.ort?' · '+k.ort:''),b.kontaktId)).join('')}${opt('__neu',V_?'+ Neuer Kunde …':'+ Neuer Lieferant …','')}</select>${b.kontaktId&&!b.fest?`<span style="display:flex;gap:6px;align-items:center;margin-top:4px"><button class="s" data-act="kedit">✎ ${V_?'Kundendaten':'Lieferantendaten'} bearbeiten</button>${kontaktFehlt(kontakt(b.kontaktId)).length?`<span class="err" style="font-size:12px">fehlt: ${kontaktFehlt(kontakt(b.kontaktId)).join(', ')}</span>`:''}${kontakt(b.kontaktId)?.kundenart==='privat'?tag('Privat'):''}</span>`:''}</label>
       <label class="w05">Datum<input type="date" data-h="datum" value="${b.datum}" ${dis}></label>
       ${b.typ==='AN'?`<label class="w05">Gültig bis<input type="date" data-h="gueltigBis" value="${b.gueltigBis}" ${dis}></label>`:''}
       ${['AB','BE'].includes(b.typ)?`<label class="w05">Liefertermin<input type="date" data-h="liefertermin" value="${b.liefertermin}" ${dis}></label>`:''}
@@ -1218,19 +1226,25 @@ function formDialog({titel,felder,ok='Anlegen',breit=false}){
     d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#m-ok').onclick=okf;
   });
 }
-async function kontaktPopup(typ,v={}){ // typ K | L
-  const s=S(),nrV=String((s.knr[typ]||0)+1);
-  const o=await formDialog({titel:typ==='K'?'Neuer Kunde':'Neuer Lieferant',felder:[
-    {k:'name',l:'Name / Firma',wert:v.name,cls:'w2',pflicht:true},{k:'nr',l:typ==='K'?'Kunden-Nr.':'Lieferanten-Nr.',wert:nrV,cls:'w05'},
-    {k:'zusatz',l:'Zusatz / z. H.',wert:v.zusatz,neu:1},{k:'strasse',l:'Straße',wert:v.strasse,neu:1,cls:'w2'},
-    {k:'plz',l:'PLZ',wert:v.plz,neu:1,cls:'w05'},{k:'ort',l:'Ort',wert:v.ort},{k:'land',l:'Land',wert:v.land||'Österreich'},
-    {k:'uid',l:'UID-Nr.',wert:v.uid,neu:1},{k:'email',l:'E-Mail',wert:v.email},{k:'tel',l:'Telefon',wert:v.tel},
-    {k:'zahlungsziel',l:'Zahlungsziel Tage',typ:'number',wert:s.zahlungsziel,neu:1,cls:'w05'}]});
+// Kontakt anlegen oder bearbeiten (k = bestehender Kontakt). Pflicht: Name, Straße, PLZ, Ort, Land (§ 11 UStG: Name und Anschrift)
+async function kontaktPopup(typ,v={},k=null){ // typ K | L
+  const s=S(),nrV=k?k.nr:String((s.knr[typ]||0)+1),src={...v,...(k||{})},istK=typ!=='L';
+  const o=await formDialog({titel:k?`${istK?'Kunde':'Lieferant'} bearbeiten`:(istK?'Neuer Kunde':'Neuer Lieferant'),ok:k?'Speichern':'Anlegen',breit:true,felder:[
+    {k:'kundenart',l:'Art',wert:src.kundenart||(src.uid||typ==='L'?'B2B':'B2B'),opts:[['B2B','Unternehmen (B2B)'],['privat','Privat (B2C)']],cls:'w05'},
+    {k:'name',l:'Name / Firma',wert:src.name,cls:'w2',pflicht:true},{k:'nr',l:istK?'Kunden-Nr.':'Lieferanten-Nr.',wert:nrV,cls:'w05',pflicht:true},
+    {k:'zusatz',l:'Zusatz / z. H.',wert:src.zusatz,neu:1},{k:'strasse',l:'Straße',wert:src.strasse,cls:'w2',pflicht:true},
+    {k:'plz',l:'PLZ',wert:src.plz,neu:1,cls:'w05',pflicht:true},{k:'ort',l:'Ort',wert:src.ort,pflicht:true},{k:'land',l:'Land',wert:src.land||'Österreich',pflicht:true},
+    {k:'uid',l:'UID-Nr. (B2B)',wert:src.uid,neu:1},{k:'email',l:'E-Mail',wert:src.email},{k:'tel',l:'Telefon',wert:src.tel},
+    {k:'zahlungsziel',l:'Zahlungsziel Tage',typ:'number',wert:src.zahlungsziel??s.zahlungsziel,neu:1,cls:'w05'},{k:'skonto',l:'Skonto %',typ:'number',wert:src.skonto||'',cls:'w05'},{k:'skontoTage',l:'Skonto Tage',typ:'number',wert:src.skontoTage||'',cls:'w05'},
+    ...(istK?[{k:'rabatt',l:'Kundenrabatt %',typ:'number',wert:src.rabatt||'',cls:'w05'}]:[])]});
   if(!o)return null;
-  if(DB.kontakte.some(k=>k.nr===o.nr)){alert('Nummer '+o.nr+' ist bereits vergeben.');return null}
-  if(/^\d+$/.test(o.nr)&&+o.nr>(s.knr[typ]||0)&&+o.nr<(s.knr[typ]||0)+100000)s.knr[typ]=+o.nr; // nächste automatische Nummer folgt
-  const k={id:uid(),typ,notiz:'',...o};DB.kontakte.push(k);log(typ==='K'?'Kunde angelegt':'Lieferant angelegt',k.name);return k;
+  if(o.kundenart==='B2B'&&!o.uid&&istK&&!confirm('Für Unternehmenskunden ist die UID-Nr. bei Rechnungen über 10.000 € brutto und bei Reverse Charge Pflicht.\nOhne UID-Nr. speichern?'))return null;
+  if(DB.kontakte.some(x=>x!==k&&x.nr===o.nr)){alert('Nummer '+o.nr+' ist bereits vergeben.');return null}
+  if(/^\d+$/.test(o.nr)&&+o.nr>(s.knr[typ==='L'?'L':'K']||0)&&+o.nr<(s.knr[typ==='L'?'L':'K']||0)+100000)s.knr[typ==='L'?'L':'K']=+o.nr; // nächste automatische Nummer folgt
+  if(k){const alt=JSON.stringify(k);Object.assign(k,o);if(JSON.stringify(k)!==alt)log('Kontakt geändert',`${k.nr} ${k.name}`);return k}
+  const n={id:uid(),typ,notiz:'',...o};DB.kontakte.push(n);log(istK?'Kunde angelegt':'Lieferant angelegt',n.name);return n;
 }
+const kontaktFehlt=k=>!k?['Kontakt']:[['name','Name'],['strasse','Straße'],['plz','PLZ'],['ort','Ort']].filter(([f])=>!String(k[f]||'').trim()).map(([,l])=>l);
 async function artikelPopup(v={},lid=''){
   const s=S(),nrV=String(s.anr+1).padStart(5,'0'),lief=DB.kontakte.filter(k=>k.typ!=='K');
   const o=await formDialog({titel:'Neuer Artikel',breit:true,felder:[
@@ -1333,10 +1347,14 @@ V.auftraege=()=>{
   const L=auftragsListe().filter(a=>!a.docs.every(d=>d.storno));
   return`<h1>Aufträge &amp; Kalkulation DB II</h1>
   <p class="mut">Ein Auftrag umfasst alle Belege einer Belegkette (Angebot → … → Rechnung) sowie zugeordnete Eingangsrechnungen und Stunden. Ziel-DB II: ${fmtQ(S().zielDB2)} % vom Umsatz nach Skonto.</p>
-  <div class="card" style="padding:0"><table><thead><tr><th>Auftrag</th><th>Kunde</th><th>Betreff</th><th>Phase</th><th class="n">Vorkalk. Umsatz</th><th class="n">Vorkalk. DB II</th><th class="n">Ist-Umsatz</th><th class="n">Ist-HK</th><th class="n">Ist-DB II</th></tr></thead><tbody>
-  ${L.map(a=>{const vb=a.docs.filter(d=>['AB','AN'].includes(d.typ)&&!d.storno&&d.status!=='ersetzt').sort((x,y)=>(x.typ==='AB'?-1:1)-(y.typ==='AB'?-1:1))[0];const v=vb?vorkalk(vb):null,n=nachkalk(a.id);
-  return`<tr class="click" onclick="nav('auftrag/${a.id}')"><td>${esc(bNr(a.root))}</td><td>${esc(kName(a.root.kontaktId))}</td><td>${esc(a.root.betreff)}</td><td>${phase(a.docs)}</td><td class="n">${v?fmt(v.uS):''}</td><td class="n">${v?dbTag(v.db2p):''}</td><td class="n">${n.uN?fmt(n.uN):''}</td><td class="n">${n.hk?fmt(n.hk):''}</td><td class="n">${n.uN?fmt(n.db2)+' '+dbTag(n.db2p):''}</td></tr>`}).join('')||'<tr><td colspan="9" class="mut">Noch keine Aufträge.</td></tr>'}
-  </tbody></table></div>`;
+  ${(()=>{const K=new Map(L.map(a=>{const vb=a.docs.filter(d=>['AB','AN'].includes(d.typ)&&!d.storno&&d.status!=='ersetzt').sort((x,y)=>(x.typ==='AB'?-1:1)-(y.typ==='AB'?-1:1))[0];return[a.id,{v:vb?vorkalk(vb):null,n:nachkalk(a.id)}]}));const v=a=>K.get(a.id).v,n=a=>K.get(a.id).n;
+  return tabelle('auftraege',[
+    {k:'nr',l:'Auftrag',f:a=>esc(bNr(a.root))},{k:'datum',l:'Datum',f:a=>dAT(a.root.datum),std:false},{k:'kunde',l:'Kunde',f:a=>esc(kName(a.root.kontaktId))},{k:'betreff',l:'Betreff',f:a=>esc(a.root.betreff)},{k:'phase',l:'Phase',f:a=>phase(a.docs)},
+    {k:'vu',l:'Vorkalk. Umsatz',n:1,f:a=>v(a)?fmt(v(a).uS):''},{k:'vdb',l:'Vorkalk. DB II',n:1,f:a=>v(a)?dbTag(v(a).db2p):''},{k:'iu',l:'Ist-Umsatz',n:1,f:a=>n(a).uN?fmt(n(a).uN):''},
+    {k:'mat',l:'Material',n:1,f:a=>n(a).material?fmt(n(a).material):'',std:false},{k:'fremd',l:'Fremdleistung',n:1,f:a=>n(a).fremd?fmt(n(a).fremd):'',std:false},{k:'std',l:'Stunden',n:1,f:a=>n(a).std?fmtQ(n(a).std):'',std:false},
+    {k:'ihk',l:'Ist-HK',n:1,f:a=>n(a).hk?fmt(n(a).hk):''},{k:'idb',l:'Ist-DB II',n:1,f:a=>n(a).uN?fmt(n(a).db2)+' '+dbTag(n(a).db2p):''},
+    {k:'offen',l:'Offen (Forderung)',n:1,f:a=>{const o=sum(a.docs.filter(d=>T[d.typ].re&&T[d.typ].b==='V'),offen);return o?fmt(o):''},std:false}],L,
+    {zeile:a=>`class="click" onclick="nav('auftrag/${a.id}')"`,leer:'Noch keine Aufträge.'})})()}`;
 };
 V.auftrag=aid=>{
   const docs=DB.belege.filter(b=>b.auftragId===aid).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
@@ -1400,9 +1418,12 @@ V.zeiten=()=>{
     <label class="w2">Tätigkeit<input id="zt-x"></label>
     <button class="p" data-act="ztadd">Erfassen</button></div>
     ${auf.length?'':'<p class="hint">Zuerst ein Angebot oder einen Auftrag anlegen.</p>'}</div>
-  <div class="card" style="padding:0"><table><thead><tr><th>Datum</th><th>Auftrag</th><th>Tarif</th><th>Tätigkeit</th><th class="n">Std.</th><th class="n">Kosten/h</th><th class="n">VK/h</th><th>Status</th><th></th></tr></thead><tbody>
-  ${L.map(z=>`<tr><td>${dAT(z.datum)}</td><td><a href="#/auftrag/${z.auftragId}">${esc(auftragLabel(z.auftragId))}</a></td><td>${esc(z.tarif)}</td><td>${esc(z.text)}</td><td class="n">${fmtQ(z.stunden)}</td><td class="n">${fmt(z.kosten)}</td><td class="n">${fmt(z.vk)}</td><td>${z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn')}</td><td>${z.belegId?'':`<button class="s d" data-act="ztdel" data-id="${z.id}">✕</button>`}</td></tr>`).join('')||'<tr><td colspan="9" class="mut">Keine Einträge.</td></tr>'}
-  </tbody></table></div>`;
+  ${tabelle('zeiten',[
+    {k:'datum',l:'Datum',f:z=>dAT(z.datum)},{k:'auftrag',l:'Auftrag',f:z=>`<a href="#/auftrag/${z.auftragId}">${esc(auftragLabel(z.auftragId))}</a>`},{k:'kunde',l:'Kunde',f:z=>esc(kName((beleg(z.auftragId)||{}).kontaktId)),std:false},
+    {k:'tarif',l:'Tarif',f:z=>esc(z.tarif)},{k:'text',l:'Tätigkeit',f:z=>esc(z.text)},{k:'std',l:'Std.',n:1,f:z=>fmtQ(z.stunden)},{k:'kosten',l:'Kosten/h',n:1,f:z=>fmt(z.kosten)},{k:'vk',l:'VK/h',n:1,f:z=>fmt(z.vk)},
+    {k:'kges',l:'Kosten gesamt',n:1,f:z=>fmt(z.stunden*z.kosten),std:false},{k:'vges',l:'VK gesamt',n:1,f:z=>fmt(z.stunden*z.vk),std:false},
+    {k:'status',l:'Status',f:z=>z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn')}],L,
+    {nach:z=>`<td>${z.belegId?'':`<button class="s d" data-act="ztdel" data-id="${z.id}">✕</button>`}</td>`,leer:'Keine Einträge.'})}`;
 };
 
 /* ---------- Kontakte ---------- */
@@ -1410,9 +1431,13 @@ V.kontakte=()=>{
   const q=UI.kQ.toLowerCase();
   const L=DB.kontakte.filter(k=>!q||[k.nr,k.name,k.ort,k.uid].join(' ').toLowerCase().includes(q)).sort((a,c)=>a.name.localeCompare(c.name));
   return`<h1>Kunden &amp; Lieferanten</h1><div class="bar"><input data-o="ui" data-f="kQ" placeholder="Suche" value="${esc(UI.kQ)}" style="width:260px"><span class="sp"></span><button class="p" data-act="knew" data-t="K">+ Kunde</button><button data-act="knew" data-t="L">+ Lieferant</button></div>
-  <div class="card" style="padding:0"><table><thead><tr><th>Nr</th><th>Name</th><th>Typ</th><th>Ort</th><th>UID</th><th class="n">Offene Posten</th></tr></thead><tbody>
-  ${L.map(k=>{const op=sum(DB.belege.filter(b=>b.kontaktId===k.id),b=>T[b.typ].b==='V'?offen(b):-offen(b));return`<tr class="click" onclick="nav('kontakt/${k.id}')"><td>${esc(k.nr)}</td><td>${esc(k.name)}</td><td>${{K:'Kunde',L:'Lieferant',KL:'Kunde + Lieferant'}[k.typ]}</td><td>${esc(k.plz)} ${esc(k.ort)}</td><td>${esc(k.uid)}</td><td class="n">${op?fmt(op):''}</td></tr>`}).join('')||'<tr><td colspan="6" class="mut">Keine Kontakte.</td></tr>'}
-  </tbody></table></div>`;
+  ${tabelle('kontakte',[
+    {k:'nr',l:'Nr',f:k=>esc(k.nr)},{k:'name',l:'Name',f:k=>esc(k.name)},{k:'zusatz',l:'Zusatz',f:k=>esc(k.zusatz||''),std:false},{k:'typ',l:'Typ',f:k=>({K:'Kunde',L:'Lieferant',KL:'Kunde + Lieferant'}[k.typ])},{k:'kart',l:'Art',f:k=>k.kundenart==='privat'?'Privat':'B2B'},
+    {k:'strasse',l:'Straße',f:k=>esc(k.strasse||''),std:false},{k:'ort',l:'Ort',f:k=>`${esc(k.plz)} ${esc(k.ort)}`},{k:'land',l:'Land',f:k=>esc(k.land||''),std:false},{k:'uid',l:'UID',f:k=>esc(k.uid)},
+    {k:'email',l:'E-Mail',f:k=>esc(k.email||''),std:false},{k:'tel',l:'Telefon',f:k=>esc(k.tel||''),std:false},{k:'ziel',l:'Zahlungsziel',n:1,f:k=>k.zahlungsziel!==''&&k.zahlungsziel!=null?k.zahlungsziel+' T.':'',std:false},{k:'skonto',l:'Skonto',n:1,f:k=>+k.skonto?`${fmtQ(k.skonto)} % / ${k.skontoTage||0} T.`:'',std:false},{k:'rabatt',l:'Kundenrabatt',n:1,f:k=>+k.rabatt?fmtQ(k.rabatt)+' %':'',std:false},
+    {k:'umsatz',l:'Umsatz lfd. Jahr',n:1,f:k=>{const j=String(new Date().getFullYear()),u=sum(DB.belege.filter(b=>b.kontaktId===k.id&&zaehltUmsatz(b)&&b.datum.startsWith(j)),b=>sgn(b)*summen(b).nettoEff);return u?fmt(u):''},std:false},
+    {k:'op',l:'Offene Posten',n:1,f:k=>{const op=sum(DB.belege.filter(b=>b.kontaktId===k.id),b=>T[b.typ].b==='V'?offen(b):-offen(b));return op?fmt(op):''}},
+    {k:'notiz',l:'Notiz',f:k=>esc(String(k.notiz||'').slice(0,60)),std:false}],L,{zeile:k=>`class="click" onclick="nav('kontakt/${k.id}')"`,leer:'Keine Kontakte.'})}`;
 };
 V.kontakt=id=>{
   const k=kontakt(id);if(!k)return'<p>Nicht gefunden.</p>';
@@ -1423,9 +1448,11 @@ V.kontakt=id=>{
   ${k.typ!=='K'?`<button data-act="kbel" data-t="BE" data-id="${k.id}">+ Bestellung</button><button data-act="kbel" data-t="ER" data-id="${k.id}">+ Eingangsrechnung</button>`:''}
   <button class="d" data-act="kdel" data-id="${k.id}">Löschen</button></div>
   <div class="card">
-  <div class="row">${f('nr',k.typ==='L'?'Lieferanten-Nr.':k.typ==='KL'?'Kunden-/Lief.-Nr.':'Kunden-Nr.','w05')}<label class="w05">Typ<select data-o="k" data-id="${k.id}" data-f="typ">${opt('K','Kunde',k.typ)}${opt('L','Lieferant',k.typ)}${opt('KL','Kunde + Lieferant',k.typ)}</select></label>${f('name','Name / Firma','w2')}${f('zusatz','Zusatz / z. H.')}</div>
-  <div class="row">${f('strasse','Straße','w2')}${f('plz','PLZ','w05')}${f('ort','Ort')}${f('land','Land','w05')}</div>
-  <div class="row">${f('uid','UID-Nr.')}${f('email','E-Mail')}${f('tel','Telefon')}${f('zahlungsziel','Zahlungsziel Tage','w05','number')}</div>
+  <div class="row">${f('nr',k.typ==='L'?'Lieferanten-Nr.':k.typ==='KL'?'Kunden-/Lief.-Nr.':'Kunden-Nr.','w05')}<label class="w05">Typ<select data-o="k" data-id="${k.id}" data-f="typ">${opt('K','Kunde',k.typ)}${opt('L','Lieferant',k.typ)}${opt('KL','Kunde + Lieferant',k.typ)}</select></label>${f('name','Name / Firma *','w2')}${f('zusatz','Zusatz / z. H.')}</div>
+  <div class="row">${f('strasse','Straße *','w2')}${f('plz','PLZ *','w05')}${f('ort','Ort *')}${f('land','Land *','w05')}</div>
+  <div class="row"><label class="w05">Art<select data-o="k" data-id="${k.id}" data-f="kundenart">${opt('B2B','Unternehmen (B2B)',k.kundenart||'B2B')}${opt('privat','Privat (B2C)',k.kundenart||'B2B')}</select></label>${f('uid',k.kundenart==='privat'?'UID-Nr.':'UID-Nr. (B2B)')}${f('email','E-Mail')}${f('tel','Telefon')}</div>
+  <div class="row">${f('zahlungsziel','Zahlungsziel Tage','w05','number')}${f('skonto','Skonto %','w05','number')}${f('skontoTage','Skonto Tage','w05','number')}${k.typ!=='L'?f('rabatt','Kundenrabatt %','w05','number'):''}<span style="flex:2" class="mut">Optional: werden in neue Belege übernommen.</span></div>
+  ${kontaktFehlt(k).length?`<div class="hint">Pflichtangaben fehlen: ${kontaktFehlt(k).join(', ')} (für Rechnungen nötig).</div>`:''}
   <div class="row"><label>Notiz<textarea data-o="k" data-id="${k.id}" data-f="notiz">${esc(k.notiz)}</textarea></label></div>
   </div>
   <div class="card" style="padding:0"><table><thead><tr><th>Datum</th><th>Beleg</th><th>Betreff</th><th class="n">Brutto</th><th class="n">Offen</th><th>Status</th></tr></thead><tbody>
@@ -1455,9 +1482,15 @@ V.artikel=id=>{
   return`<h1>Artikel &amp; Leistungen</h1><div class="bar"><input data-o="ui" data-f="aQ" placeholder="Suche (auch Lief.-Art.-Nr.)" value="${esc(UI.aQ)}" style="width:260px">
     <label class="chk" style="margin:0"><input type="checkbox" data-act="ainakt" ${lsGet('erp-aInaktiv')==='1'?'checked':''}> deaktivierte anzeigen${nInaktiv?` (${nInaktiv})`:''}</label><span class="sp"></span>
     ${sel.size?`<span><b>${sel.size}</b> ausgewählt</span><button data-act="amakt" data-v="0">Deaktivieren</button><button data-act="amakt" data-v="1">Aktivieren</button><button class="d" data-act="amdel">Löschen …</button>`:''}<button class="p" data-act="anew">+ Artikel</button></div>
-  <div class="card" style="padding:0"><table><thead><tr><th style="width:28px"><input type="checkbox" data-act="aselall" title="Alle (gefilterten) auswählen" ${L.length&&L.every(a=>sel.has(a.id))?'checked':''}></th><th>Nr</th><th>Bezeichnung</th><th>Art</th><th>Einh.</th><th class="n">EK</th><th class="n">VK</th><th>Lager</th><th class="n">Bestand</th></tr></thead><tbody>
-  ${L.map(a=>`<tr class="click" onclick="nav('artikel/${a.id}')" style="${a.aktiv===false?'opacity:.5':''}"><td onclick="event.stopPropagation()"><input type="checkbox" data-asel="${a.id}" ${sel.has(a.id)?'checked':''}></td><td>${esc(a.nr)}</td><td>${esc(a.bez)}</td><td>${ART[a.art]}</td><td>${esc(a.einheit)}</td><td class="n">${fmt(a.ek)}</td><td class="n">${fmt(a.vk)}</td><td>${a.lager?'✓':''}</td><td class="n">${a.lager?fmtQ(bestand(a.id).menge):''}</td></tr>`).join('')||'<tr><td colspan="9" class="mut">Keine Artikel. Positionen können auch frei erfasst und mit „+A“ als Artikel gespeichert werden.</td></tr>'}
-  </tbody></table></div>`;
+  ${tabelle('artikel',[
+    {k:'nr',l:'Nr',f:a=>esc(a.nr)},{k:'bez',l:'Bezeichnung',f:a=>esc(a.bez)},{k:'lnr',l:'Lief.-Art.-Nr.',f:a=>esc(lfNr(a))},{k:'lief',l:'Lieferant',f:a=>esc(lfNamen(a)),std:false},
+    {k:'art',l:'Art',f:a=>ART[a.art]},{k:'einheit',l:'Einh.',f:a=>esc(a.einheit)},{k:'lp',l:'Listenpreis',n:1,f:a=>+lf1(a).lp?fmt(lf1(a).lp):'',std:false},{k:'rabatt',l:'Rabatt %',n:1,f:a=>+lf1(a).rabatt?fmtQ(lf1(a).rabatt):'',std:false},
+    {k:'ek',l:'EK',n:1,f:a=>fmt(a.ek)},{k:'vk',l:'VK',n:1,f:a=>fmt(a.vk)},{k:'aufschlag',l:'Aufschlag %',n:1,f:a=>+a.ek&&+a.vk?fmtQ(r2((a.vk/a.ek-1)*100)):'',std:false},
+    {k:'steuer',l:'USt',f:a=>esc(steuerDef(a.steuer)?.bez||a.steuer),std:false},{k:'ean',l:'EAN',f:a=>esc(a.ean||''),std:false},
+    {k:'lager',l:'Lager',f:a=>a.lager?'✓':''},{k:'bestand',l:'Bestand',n:1,f:a=>a.lager?fmtQ(bestand(a.id).menge):''},{k:'min',l:'Mindestbestand',n:1,f:a=>+a.minBestand?fmtQ(a.minBestand):'',std:false},
+    {k:'text',l:'Langtext',f:a=>esc(String(a.text||'').replace(/<[^>]+>/g,' ').slice(0,80)),std:false},{k:'aktiv',l:'aktiv',f:a=>a.aktiv===false?'nein':'',std:false}],L,
+    {zeile:a=>`class="click" onclick="nav('artikel/${a.id}')" style="${a.aktiv===false?'opacity:.5':''}"`,vor:{kopf:`<input type="checkbox" data-act="aselall" title="Alle (gefilterten) auswählen" ${L.length&&L.every(a=>sel.has(a.id))?'checked':''}>`,zelle:a=>`<td onclick="event.stopPropagation()"><input type="checkbox" data-asel="${a.id}" ${sel.has(a.id)?'checked':''}></td>`},
+     leer:'Keine Artikel. Positionen können auch frei erfasst und mit „+A“ als Artikel gespeichert werden.'})}`;
 };
 function artikelEdit(id){
   const a=artikel(id);if(!a)return'<p>Nicht gefunden.</p>';
@@ -1495,9 +1528,13 @@ V.lager=()=>{
     <label class="w05">EK je Einh. (Zugang)<input type="number" step="any" id="lg-p" placeholder="Ø-EK"></label>
     <label>Text<input id="lg-t" placeholder="z. B. Inventur 31.12., Bruch"></label>
     <button class="p" data-act="lgbook">Buchen</button></div></div>
-  <div class="card" style="padding:0"><table><thead><tr><th>Nr</th><th>Artikel</th><th class="n">Bestand</th><th>Einh.</th><th class="n">Ø-EK</th><th class="n">Wert</th><th class="n">Mindestbestand</th></tr></thead><tbody>
-  ${L.map(a=>{const b=bestand(a.id),low=+a.minBestand>0&&b.menge<+a.minBestand;return`<tr class="click" onclick="nav('artikel/${a.id}')"><td>${esc(a.nr)}</td><td>${esc(a.bez)}</td><td class="n ${low?'err':''}">${fmtQ(b.menge)}</td><td>${esc(a.einheit)}</td><td class="n">${fmt(avgEK(a.id))}</td><td class="n">${fmt(b.wert)}</td><td class="n">${a.minBestand?fmtQ(a.minBestand):''}</td></tr>`}).join('')||'<tr><td colspan="7" class="mut">Keine Lagerartikel (Häkchen „Lagerartikel“ im Artikel setzen).</td></tr>'}
-  </tbody><tfoot><tr><td colspan="5">Lagerwert gesamt</td><td class="n">${fmt(tot)}</td><td></td></tr></tfoot></table></div>
+  ${tabelle('lager',[
+    {k:'nr',l:'Nr',f:a=>esc(a.nr)},{k:'bez',l:'Artikel',f:a=>esc(a.bez)},{k:'lnr',l:'Lief.-Art.-Nr.',f:a=>esc(lfNr(a)),std:false},{k:'lief',l:'Lieferant',f:a=>esc(lfNamen(a)),std:false},
+    {k:'bestand',l:'Bestand',n:1,f:a=>fmtQ(bestand(a.id).menge),cls:a=>+a.minBestand>0&&bestand(a.id).menge<+a.minBestand?'err':''},{k:'einheit',l:'Einh.',f:a=>esc(a.einheit)},
+    {k:'avg',l:'Ø-EK',n:1,f:a=>fmt(avgEK(a.id))},{k:'wert',l:'Wert',n:1,f:a=>fmt(bestand(a.id).wert)},{k:'min',l:'Mindestbestand',n:1,f:a=>a.minBestand?fmtQ(a.minBestand):''},
+    {k:'fehl',l:'Fehlmenge',n:1,f:a=>+a.minBestand>bestand(a.id).menge?fmtQ(r3(a.minBestand-bestand(a.id).menge)):'',std:false}],L,
+    {zeile:a=>`class="click" onclick="nav('artikel/${a.id}')"`,leer:'Keine Lagerartikel (Häkchen „Lagerartikel“ im Artikel setzen).',
+     fuss:vis=>`<tfoot><tr>${vis.map((c,j)=>`<td class="${c.n?'n':''}">${c.k==='wert'?fmt(tot):j===0?'Lagerwert gesamt':''}</td>`).join('')}<td></td></tr></tfoot>`})}
   <div class="card" style="padding:0"><table><thead><tr><th>Datum</th><th>Artikel</th><th class="n">Menge</th><th class="n">Wert</th><th>Vorgang</th></tr></thead><tbody>
   ${J.map(e=>{const a=artikel(e.artikelId);return`<tr${e.belegId?` class="click" onclick="nav('beleg/${e.belegId}')"`:''}><td>${dAT(e.datum)}</td><td>${esc(a?.nr)} ${esc(a?.bez)}</td><td class="n">${fmtQ(e.menge)}</td><td class="n">${fmt(e.wert)}</td><td>${esc(e.text)}</td></tr>`}).join('')||'<tr><td colspan="5" class="mut">Keine Bewegungen.</td></tr>'}
   </tbody></table></div>`;
@@ -1645,9 +1682,9 @@ V.kbs=id=>{
   if(id)return kbEdit(id);
   return`<div class="bar"><h1 style="margin:0">K-Blätter (ÖNORM B 2061)</h1><span class="sp"></span><button class="p" data-act="kbneu" data-a="eigen">+ Eigene Kalkulation</button><button data-act="kbneu" data-a="bieter">+ K-Blätter eines Bieters (Prüfung)</button></div>
   <p class="mut">Eine Kalkulationsbasis enthält K2 (Gesamtzuschlag), K3 (Personalpreise), K4 (Materialpreise), K5 (zusammengesetzte Preiskomponenten) und K6 (Gerätepreise). K7 entsteht je Position im Leistungsverzeichnis.</p>
-  <div class="card" style="padding:0"><table><thead><tr><th>Bezeichnung</th><th>Art</th><th>Bieter / Projekt</th><th class="n">GZ Lohn</th><th class="n">GZ Sonst.</th><th class="n">Mittellohnpreis</th></tr></thead><tbody>
-  ${DB.kalk.map(kb=>{const g=k2gz(kb),k3=kb.k3[0];return`<tr class="click" onclick="nav('kbs/${kb.id}')"><td>${esc(kb.name)}</td><td>${kb.art==='bieter'?tag('Prüfung Bieter','warn'):tag('eigen','acc')}</td><td>${esc(kb.bieter)} ${esc(kb.projekt)}</td><td class="n">${fmt(g.l)} %</td><td class="n">${fmt(g.s)} %</td><td class="n">${k3?fmt(k3calc(kb,k3).mlp):''}</td></tr>`}).join('')||'<tr><td colspan="6" class="mut">Noch keine K-Blätter.</td></tr>'}
-  </tbody></table></div>`;
+  ${tabelle('kbs',[{k:'name',l:'Bezeichnung',f:kb=>esc(kb.name)},{k:'art',l:'Art',f:kb=>kb.art==='bieter'?tag('Prüfung Bieter','warn'):tag('eigen','acc')},{k:'bp',l:'Bieter / Projekt',f:kb=>`${esc(kb.bieter)} ${esc(kb.projekt)}`},
+    {k:'gzl',l:'GZ Lohn',n:1,f:kb=>fmt(k2gz(kb).l)+' %'},{k:'gzs',l:'GZ Sonst.',n:1,f:kb=>fmt(k2gz(kb).s)+' %'},{k:'mlp',l:'Mittellohnpreis',n:1,f:kb=>kb.k3[0]?fmt(k3calc(kb,kb.k3[0]).mlp):''},
+    {k:'k4',l:'K4-Zeilen',n:1,f:kb=>kb.k4.length,std:false}],DB.kalk,{zeile:kb=>`class="click" onclick="nav('kbs/${kb.id}')"`,leer:'Noch keine K-Blätter.'})}`;
 };
 function kbEdit(id){
   const kb=ROOT.kb(id);if(!kb)return'<p>Nicht gefunden.</p>';
@@ -1748,9 +1785,9 @@ V.lvbib=()=>{
 V.lvs=id=>{
   if(id)return lvEdit(id);
   return`<div class="bar"><h1 style="margin:0">Leistungsverzeichnisse</h1><span class="sp"></span><button class="p" data-act="lvneu" data-a="angebot">+ LV für Angebot</button><button data-act="lvneu" data-a="ausschreibung">+ LV für Ausschreibung</button></div>
-  <div class="card" style="padding:0"><table><thead><tr><th>Nr</th><th>Titel</th><th>Art</th><th>Auftraggeber</th><th class="n">Positionen</th><th class="n">Summe netto</th><th class="n">Bieter</th></tr></thead><tbody>
-  ${DB.lv.map(lv=>`<tr class="click" onclick="nav('lvs/${lv.id}')"><td>${esc(lv.nr)}</td><td>${esc(lv.titel)}</td><td>${lv.art==='ausschreibung'?tag('Ausschreibung','warn'):tag('Angebot','acc')}</td><td>${esc(kName(lv.kontaktId))}</td><td class="n">${lv.items.filter(i=>i.typ==='POS').length}</td><td class="n">${fmt(lvSummen(lv).gesamt)}</td><td class="n">${lv.bieter.length||''}</td></tr>`).join('')||'<tr><td colspan="7" class="mut">Noch keine LVs.</td></tr>'}
-  </tbody></table></div>`;
+  ${tabelle('lvs',[{k:'nr',l:'Nr',f:lv=>esc(lv.nr)},{k:'titel',l:'Titel',f:lv=>esc(lv.titel)},{k:'art',l:'Art',f:lv=>lv.art==='ausschreibung'?tag('Ausschreibung','warn'):tag('Angebot','acc')},
+    {k:'ag',l:'Auftraggeber',f:lv=>esc(kName(lv.kontaktId))},{k:'datum',l:'Datum',f:lv=>dAT(lv.datum),std:false},{k:'pos',l:'Positionen',n:1,f:lv=>lv.items.filter(i=>i.typ==='POS').length},
+    {k:'summe',l:'Summe netto',n:1,f:lv=>fmt(lvSummen(lv).gesamt)},{k:'bieter',l:'Bieter',n:1,f:lv=>lv.bieter.length||''}],DB.lv,{zeile:lv=>`class="click" onclick="nav('lvs/${lv.id}')"`,leer:'Noch keine LVs.'})}`;
 };
 function lvEdit(id){
   const lv=ROOT.lv(id);if(!lv)return'<p>Nicht gefunden.</p>';
@@ -2303,6 +2340,32 @@ V.export=()=>{
     <div class="bar" style="margin-top:8px"><button data-act="pkrestall">Alle wiederherstellen</button><button class="d" data-act="pkleer">Papierkorb leeren …</button></div>`:'<p class="mut" style="margin:0">leer</p>'}</div>
   <div class="card"><h2>Protokoll (letzte 100)</h2><table>${DB.log.slice(-100).reverse().map(l=>`<tr><td style="white-space:nowrap">${new Date(l.ts).toLocaleString('de-AT')}</td><td>${esc(l.aktion)}</td><td>${esc(l.info)}</td></tr>`).join('')||'<tr><td class="mut">leer</td></tr>'}</table></div>`;
 };
+
+/* ---------- Einstellbare Tabellenspalten (je Liste, in den Einstellungen gespeichert) ---------- */
+const TABS={};
+function tabelle(id,cols,rows,{zeile,vor,nach,leer='Keine Einträge.',fuss}={}){
+  TABS[id]=cols;const w=S().spalten?.[id],vis=(w?w.map(k=>cols.find(c=>c.k===k)).filter(Boolean):cols.filter(c=>c.std!==false));if(!vis.length)vis.push(cols[0]);
+  const cl=c=>[c.n?'n':'',c.hm?'hm':''].join(' ').trim();
+  return`<div class="card" style="padding:0;overflow-x:auto"><table data-tab="${id}"><thead><tr>${vor?`<th style="width:28px">${vor.kopf||''}</th>`:''}${vis.map(c=>`<th class="${cl(c)}">${c.l}</th>`).join('')}${nach?'<th></th>':''}<th style="width:30px;text-align:right"><button class="s" data-act="spalten" data-id="${id}" title="Spalten auswählen">⚙</button></th></tr></thead><tbody>
+  ${rows.map(r=>`<tr ${zeile?zeile(r):''}>${vor?vor.zelle(r):''}${vis.map(c=>`<td class="${cl(c)} ${c.cls?c.cls(r):''}">${c.f(r)??''}</td>`).join('')}${nach?nach(r):''}<td></td></tr>`).join('')||`<tr><td colspan="${vis.length+3}" class="mut">${leer}</td></tr>`}</tbody>${fuss?fuss(vis,!!vor):''}</table></div>`;
+}
+function spaltenDialog(id){
+  const cols=TABS[id];if(!cols)return;const w=S().spalten?.[id];let ord=[...(w?w.filter(k=>cols.some(c=>c.k===k)):cols.filter(c=>c.std!==false).map(c=>c.k)),...cols.map(c=>c.k)].filter((k,i,a)=>a.indexOf(k)===i);
+  const an=new Set(w?w:cols.filter(c=>c.std!==false).map(c=>c.k));
+  const d=document.createElement('div');d.className='modal';
+  const zeich=()=>{d.querySelector('#sp-l').innerHTML=ord.map((k,i)=>{const c=cols.find(x=>x.k===k);return`<div class="att" style="padding:3px 0"><label class="chk" style="margin:0;flex:1"><input type="checkbox" data-sp="${k}" ${an.has(k)?'checked':''}> ${c.l.replace(/<[^>]+>/g,'')}${c.info?` <span class="mut" style="font-size:12px">${c.info}</span>`:''}</label><button class="s" data-sm="${i}" data-d="-1" ${i?'':'disabled'}>▲</button><button class="s" data-sm="${i}" data-d="1" ${i<ord.length-1?'':'disabled'}>▼</button></div>`}).join('')};
+  d.innerHTML=`<div class="mbox"><h2>Spalten auswählen</h2><p class="mut" style="margin-top:0">Haken = anzeigen, ▲▼ = Reihenfolge.</p><div id="sp-l" style="max-height:55vh;overflow:auto"></div>
+    <div class="bar" style="margin:12px 0 0"><button id="sp-std">Standard</button><span class="sp"></span><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Übernehmen</button></div></div>`;
+  document.body.appendChild(d);zeich();
+  d.addEventListener('click',e=>{const m=e.target.closest('[data-sm]');if(m){const i=+m.dataset.sm,j=i+ +m.dataset.d;[ord[i],ord[j]]=[ord[j],ord[i]];zeich()}});
+  d.addEventListener('change',e=>{const c=e.target.dataset.sp;if(c){e.target.checked?an.add(c):an.delete(c)}});
+  d.querySelector('#m-no').onclick=()=>d.remove();
+  d.querySelector('#sp-std').onclick=()=>{d.remove();delete S().spalten[id];commit();render()};
+  d.querySelector('#m-ok').onclick=()=>{const k=ord.filter(x=>an.has(x));if(!k.length){alert('Mindestens eine Spalte auswählen.');return}(S().spalten=S().spalten||{})[id]=k;d.remove();commit();render()};
+}
+const lfNamen=a=>(a.lieferanten||[]).map(l=>kName(l.kontaktId)).filter(x=>x&&x!=='–').join(', ');
+const lfNr=a=>(a.lieferanten||[]).map(l=>l.artNr).filter(Boolean).join(', ');
+const lf1=a=>(a.lieferanten||[]).find(l=>+l.lp>0)||(a.lieferanten||[])[0]||{};
 
 /* ---------- Einstellungen ---------- */
 V.einstellungen=()=>{
@@ -3154,7 +3217,7 @@ const ACT={
   dup:()=>duplizieren(curBeleg()),
   reopen:()=>{const b=curBeleg();if(!confirm('Beleg wieder bearbeiten? Die Nummer bleibt erhalten.'))return;b.fest=false;log('wieder geöffnet',`${T[b.typ].bez} ${b.nr}`);commit();render()},
   anst:el=>{const b=curBeleg();b.status=el.dataset.v;log('Angebotsstatus',`${b.nr}: ${b.status||'offen'}`);commit();render()},
-  padd:el=>{const b=curBeleg(),a=el.dataset.art,i=b.pos.length;b.pos.push(neuPos({art:a,einheit:a==='L'?'h':'Stk',menge:a==='T'||a==='G'?0:1,...(a==='G'?{pauschal:0,ohneEP:false}:{})}));persist();
+  padd:el=>{const b=curBeleg(),a=el.dataset.art,i=b.pos.length,kr=T[b.typ].b==='V'&&['W','L','F'].includes(a)?+kontakt(b.kontaktId)?.rabatt||0:0;b.pos.push(neuPos({art:a,einheit:a==='L'?'h':'Stk',menge:a==='T'||a==='G'?0:1,rabatt:kr,...(a==='G'?{pauschal:0,ohneEP:false}:{})}));persist();
     if(a==='T')render(),setTimeout(()=>document.querySelector(`.rte[data-ed="p:${i}:text"]`)?.focus(),0);else renderFocus(`[data-p="${i}"][data-f="${a==='G'?'bez':'artikel'}"]`)},
   pdel:el=>{const b=curBeleg();b.pos.splice(+el.dataset.i,1);persist();render()},
   pup:el=>{const b=curBeleg(),i=+el.dataset.i;if(i>0){[b.pos[i-1],b.pos[i]]=[b.pos[i],b.pos[i-1]];persist();render()}},
@@ -3183,7 +3246,7 @@ const ACT={
     const tf=S().tarife.find(x=>x.kz===t)||{kosten:0,vk:0};lsSet('erp-lastA',a);lsSet('erp-lastT',t);
     DB.zeiten.push({id:uid(),datum:$('#zt-d').value||isoD(),auftragId:a,tarif:t,stunden:h,text:$('#zt-x').value,kosten:+tf.kosten||0,vk:+tf.vk||0,belegId:''});commit();render()},
   ztdel:el=>{const z=DB.zeiten.find(z=>z.id===el.dataset.id);if(z&&confirm('Eintrag löschen?')){wegwerfen('zeiten',[z]);render()}},
-  knew:el=>{const t=el.dataset.t,s=S();const k={id:uid(),nr:String(++s.knr[t]),typ:t,name:'',zusatz:'',strasse:'',plz:'',ort:'',land:'Österreich',uid:'',email:'',tel:'',zahlungsziel:s.zahlungsziel,notiz:''};DB.kontakte.push(k);persist();go('kontakt/'+k.id);setTimeout(()=>$('[data-f="name"]')?.focus(),30)},
+  knew:async el=>{const k=await kontaktPopup(el.dataset.t);if(k){commit();go('kontakt/'+k.id)}},
   kdel:el=>{const id=el.dataset.id;if(DB.belege.some(b=>b.kontaktId===id)){alert('Kontakt hat Belege und kann nicht gelöscht werden.');return}if(!confirm('Kontakt löschen?'))return;wegwerfen('kontakte',[kontakt(id)]);go('kontakte')},
   kbel:el=>{const b=neuBeleg(el.dataset.t,{kontaktId:el.dataset.id,zahlungsziel:+kontakt(el.dataset.id).zahlungsziel||S().zahlungsziel});persist();go('beleg/'+b.id)},
   anew:()=>{const s=S(),nr=String(++s.anr).padStart(5,'0');const a={id:uid(),nr,bez:'',text:'',art:'W',einheit:'Stk',einheiten:[],ek:0,vk:0,steuer:s.stdSteuer,lager:false,minBestand:0,lieferanten:[],aktiv:true};DB.artikel.push(a);persist();go('artikel/'+a.id)},
@@ -3197,6 +3260,8 @@ const ACT={
   pkrest:el=>wiederherstellen([el.dataset.id]),pkrestall:()=>wiederherstellen(DB.papierkorb.map(e=>e.id)),
   pkdel:el=>{const e=DB.papierkorb.find(x=>x.id===el.dataset.id);if(!e||!confirm(`„${e.info}“ endgültig löschen? Das kann nicht rückgängig gemacht werden.`))return;DB.papierkorb=DB.papierkorb.filter(x=>x!==e);log(PK[e.c].n+' endgültig gelöscht',e.info);commit();render()},
   pkleer:()=>{const n=DB.papierkorb.length;if(!n||!confirm(`Papierkorb mit ${n} Einträgen endgültig leeren? Das kann nicht rückgängig gemacht werden.`))return;for(const e of DB.papierkorb)log(PK[e.c].n+' endgültig gelöscht',e.info);DB.papierkorb=[];commit();render()},
+  spalten:el=>spaltenDialog(el.dataset.id),
+  kedit:async()=>{const b=curBeleg(),k=kontakt(b.kontaktId);if(!k)return;const r=await kontaktPopup(k.typ==='L'||(k.typ==='KL'&&T[b.typ].b==='E')?'L':'K',{},k);if(r){konditionenUebernehmen(b,r,true);persist()}render()},
   aopen:async el=>{const u=artikel(el.dataset.id).unterlagen[+el.dataset.i];try{await STORE.openFile(u)}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
   aldel:el=>{artikel(el.dataset.id).lieferanten.splice(+el.dataset.i,1);persist();render()},
   lgbook:()=>{const a=$('#lg-a').value,m=$('#lg-m').value,q=num($('#lg-q').value),p=$('#lg-p').value,t=$('#lg-t').value;if(!a){alert('Artikel wählen.');return}
@@ -3272,9 +3337,16 @@ document.addEventListener('change',e=>{
 function onHead(b,f,v){
   b[f]=v;
   if(f==='optRabatt'||f==='optLS'){if(f==='optLS'&&v)for(const p of b.pos)if(!isInfo(p)&&p.epL==null&&p.epS==null){p.epL=p.art==='L'?+p.ep||0:0;p.epS=p.art==='L'?0:+p.ep||0}render();return}
-  if(f==='kontaktId'){const k=kontakt(v);if(k&&k.zahlungsziel!==''&&k.zahlungsziel!=null&&T[b.typ].b==='V')b.zahlungsziel=+k.zahlungsziel;render()}
+  if(f==='kontaktId'){const k=kontakt(v);if(k)konditionenUebernehmen(b,k);render()}
   if(f==='datum'&&b.typ==='AN'){b.gueltigBis=addDays(v,S().angebotGueltig);render()}
   updateCalc(b);
+}
+// Zahlungskonditionen und Kundenrabatt des Kontakts in den Beleg übernehmen (nur wo eingetragen)
+function konditionenUebernehmen(b,k,frage=false){
+  if(k.zahlungsziel!==''&&k.zahlungsziel!=null&&!isNaN(+k.zahlungsziel))b.zahlungsziel=+k.zahlungsziel;
+  if(+k.skonto>0){b.skonto=+k.skonto;b.skontoTage=+k.skontoTage||0}
+  if(T[b.typ].b==='V'&&+k.rabatt>0){const P=b.pos.filter(p=>!isInfo(p)&&!+p.rabatt);
+    if(P.length&&(!frage||confirm(`Kundenrabatt ${fmtQ(k.rabatt)} % auf ${P.length} Position(en) ohne Rabatt übernehmen?`)))for(const p of P)p.rabatt=+k.rabatt;b.optRabatt=true}
 }
 function onPos(b,i,f,v){
   const p=b.pos[i];

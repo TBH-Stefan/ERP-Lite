@@ -1022,7 +1022,7 @@ function artikelInPos(b,p,a){
   Object.assign(p,{artikelId:a.id,nr:a.nr,bez:a.bez,text:a.text||'',einheit:a.einheit,faktor:1,steuer:a.steuer||S().stdSteuer,art:a.art||'W'});
   const h=preisHistorie(b,p).filter(x=>x.einheit===p.einheit);
   // Verkauf: Preis/Rabatt nur aus früheren Belegen DIESES Kunden, sonst VK des Artikels und Kundenrabatt (Preise anderer Kunden nur über die Preishistorie wählbar)
-  if(T[b.typ].b==='V'){const g=h.find(x=>x.gleich);p.ek=+a.ek||0;p.ep=g?g.ep:(+a.vk||0);p.rabatt=g?g.rabatt:(+kontakt(b.kontaktId)?.rabatt||0)}
+  if(T[b.typ].b==='V'){const g=h.find(x=>x.gleich);p.ek=+(a.hk||a.ek)||0;p.ep=g?g.ep:(+a.vk||0);p.rabatt=g?g.rabatt:(+kontakt(b.kontaktId)?.rabatt||0)}
   else{p.ep=h.length?h[0].ep:(+a.ek||0);p.ek=p.ep;const l=(a.lieferanten||[]).find(x=>x.kontaktId===b.kontaktId);if(l?.artNr)p.text=(p.text?p.text+'\n':'')+'Ihre Art.-Nr.: '+l.artNr}
 }
 
@@ -1168,7 +1168,7 @@ V.beleg=id=>{
   const rte=(key,val,ph)=>`<div class="rte" ${b.fest?'':'contenteditable="true"'} data-ed="${key}" data-ph="${esc(ph)}">${rt(val)}</div>`;
   const rows=b.pos.map((p,i)=>{
     const artSel=`<td data-l="Art"><select data-p="${i}" data-f="art" ${dis} style="width:72px">${Object.keys(ART).map(k=>opt(k,ART[k],p.art)).join('')}</select></td>`;
-    const akt=`<td class="fw" style="white-space:nowrap">${b.fest?'':`<button class="s" data-act="pup" data-i="${i}" title="nach oben">↑</button><button class="s" data-act="pdown" data-i="${i}" title="nach unten">↓</button>${isInfo(p)?'':`<button class="s" data-act="hist" data-i="${i}" title="Preisverlauf">€</button>${p.artikelId?'':`<button class="s" data-act="mkart" data-i="${i}" title="als Artikel speichern">+A</button>`}`}<button class="s d" data-act="pdel" data-i="${i}" title="löschen">✕</button>`}</td>`;
+    const akt=`<td class="fw" style="white-space:nowrap">${b.fest?'':`<button class="s" data-act="pup" data-i="${i}" title="nach oben">↑</button><button class="s" data-act="pdown" data-i="${i}" title="nach unten">↓</button>${isInfo(p)?'':`<button class="s" data-act="hist" data-i="${i}" title="Preisverlauf">€</button>${V_?`<button class="s" data-act="partik" data-i="${i}" title="Artikel bearbeiten: Texte, Preise, Einkauf, Herstellkosten; im Artikelstamm speichern">✎</button>`:p.artikelId?'':`<button class="s" data-act="mkart" data-i="${i}" title="als Artikel speichern">+A</button>`}`}<button class="s d" data-act="pdel" data-i="${i}" title="löschen">✕</button>`}</td>`;
     if(p.art==='T')return`<tr class="t"><td></td>${artSel}<td class="fw" colspan="${nSp}">${rte(`p:${i}:text`,p.text,'Text …')}</td>${akt}</tr>`;
     if(p.art==='G')return`<tr class="grp"><td class="mut" data-l="Gr.">${pnr[p.id]||''}</td>${artSel}
       <td class="fw" colspan="${nSp-(ohneP?1:4)}"><input data-p="${i}" data-f="bez" value="${esc(p.bez)}" ${dis} placeholder="Gruppenbezeichnung" style="font-weight:600">${rte(`p:${i}:text`,p.text,'Gruppentext …')}
@@ -1357,6 +1357,60 @@ async function artikelPopup(v={},lid=''){
   const a={id:uid(),nr:o.nr,bez:o.bez,gruppe:o.gruppe||'',lagerplatz:o.lagerplatz||'',text:v.text||'',art:o.art,einheit:o.einheit,einheiten:[],ek:r2(o.ek),vk:r2(o.vk),steuer:v.steuer||s.stdSteuer,lager:o.lager,minBestand:0,
     lieferanten:o.lid?[{kontaktId:o.lid,artNr:o.artNr,lp:o.lp||0,rabatt:o.rabatt||0,ek:r2(o.ek),stand:isoD()}]:[],aktiv:true};
   DB.artikel.push(a);artDatalist();log('Artikel angelegt',a.nr+' '+a.bez);return a;
+}
+
+/* Artikel einer Verkaufsposition im Pop-up bearbeiten: Texte, Verkaufspreis/Rabatt, Einkauf (Lieferant, Listenpreis, Rabatt → EK) und Herstellkosten;
+   wahlweise in den Artikelstamm speichern (bestehender Artikel ändern bzw. neu anlegen). Herstellkosten = Kostenwert der Position (p.ek) für Kalkulation/DB. */
+function posArtikelPopup(b,i){
+  const p=b.pos[i],a=artikel(p.artikelId),s=S(),lief=DB.kontakte.filter(k=>k.typ!=='K').sort((x,y)=>x.name.localeCompare(y.name));
+  const e0=p.einkauf||{},lf0=a?((a.lieferanten||[]).find(l=>l.kontaktId===e0.lid)||(a.lieferanten||[])[0]||{}):{};
+  const lid=e0.lid??lf0.kontaktId??'',lp=e0.lp??lf0.lp??'',rab=e0.rabatt??lf0.rabatt??'',ekv=e0.ek??(a?+a.ek||0:+p.ek||0),hk=+p.ek||(a?+(a.hk||a.ek)||0:0)||ekv;
+  const nrV=String(s.anr+1).padStart(5,'0'),inp=(k,v,t='number',x='')=>`<input data-k="${k}" ${t==='number'?'type="number" step="any" inputmode="decimal"':''} value="${esc(v??'')}" ${x}>`;
+  return new Promise(res=>{
+    const d=document.createElement('div');d.className='modal';
+    d.innerHTML=`<div class="mbox" style="max-width:780px"><h2>Artikel bearbeiten</h2>
+      <p class="mut" style="margin-top:0">${a?`Artikel <b>${esc(a.nr)}</b> aus dem Artikelstamm – Änderungen gelten für diese Position; Speichern im Stamm unten wählbar.`:'Freie Position (nicht im Artikelstamm).'}</p>
+      <div class="row"><label class="w2">Bezeichnung *${inp('bez',p.bez,'text')}</label><label class="w05">Art<select data-k="art">${['W','L','F'].map(x=>opt(x,ART[x],p.art)).join('')}</select></label>
+        <label class="w05">Einheit<select data-k="einheit">${[...new Set([p.einheit,...s.einheiten])].map(x=>opt(x,x,p.einheit)).join('')}</select></label></div>
+      <div class="row"><label class="w2" style="flex:1">Langtext<textarea data-k="text" style="height:70px">${esc(p.text||'')}</textarea></label></div>
+      <h3 style="margin:10px 0 4px;font-size:14px">Einkauf / Kosten (je Einheit, netto)</h3>
+      <div class="row"><label class="w2">Lieferant<select data-k="lid">${opt('','–',lid)}${lief.map(k=>opt(k.id,k.name,lid)).join('')}</select></label><label>Art.-Nr. Lieferant${inp('artNr',e0.artNr??lf0.artNr??'','text')}</label></div>
+      <div class="row"><label class="w05">Listenpreis${inp('lp',lp)}</label><label class="w05">Rabatt Einkauf %${inp('rab',rab)}</label><label class="w05">EK netto${inp('ek',ekv)}</label>
+        <label class="w05" title="Kostenwert für Kalkulation und DB II (z. B. EK + Bezugs-/Bearbeitungskosten)">Herstellkosten${inp('hk',hk)}</label></div>
+      <h3 style="margin:10px 0 4px;font-size:14px">Verkauf (diese Position)</h3>
+      <div class="row"><label class="w05">VK / EP netto${inp('ep',+p.ep||0)}</label><label class="w05">Rabatt Kunde %${inp('vrab',+p.rabatt||'')}</label><label class="w2"><span>Ergebnis je Einheit</span><div id="pa-db" style="padding:8px 0"></div></label></div>
+      <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:6px">
+        <label class="chk"><input type="checkbox" id="pa-st"> ${a?`Änderungen im Artikelstamm speichern (Artikel ${esc(a.nr)})`:'Als neuen Artikel im Artikelstamm speichern'}</label>
+        <div class="row" id="pa-stx" style="display:none;margin-left:26px">${a?'':`<label class="w05">Artikel-Nr.${inp('nr',nrV,'text')}</label><label class="w2">Artikelgruppe<div data-k="gruppe" data-wert="">${ketteHTML('gr','','data-fk="1"')}</div></label>`}
+          <label class="chk" style="margin-top:0"><input type="checkbox" id="pa-vk" ${a?'':'checked'}> VK in den Stamm übernehmen</label></div></div>
+      <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Übernehmen</button></div></div>`;
+    document.body.appendChild(d);
+    const q=k=>d.querySelector(`[data-k="${k}"]`),n=k=>num(q(k).value);let hkFrei=Math.abs(hk-ekv)>0.005;
+    const db=()=>{const vk=n('ep')*(1-n('vrab')/100),h=n('hk'),x=vk-h;d.querySelector('#pa-db').innerHTML=`VK ${fmt(vk)} − HK ${fmt(h)} = <b class="${x<0?'err':''}">${fmt(x)}</b>${vk?` (${pct(x/vk)})`:''}`};
+    d.addEventListener('input',e=>{const k=e.target.dataset.k;
+      if((k==='lp'||k==='rab')&&n('lp')>0)q('ek').value=r2(n('lp')*(1-n('rab')/100));
+      if(k==='ek'&&n('lp')>0)q('rab').value=r2((1-n('ek')/n('lp'))*100);
+      if(k==='hk')hkFrei=true;if(['lp','rab','ek'].includes(k)&&!hkFrei)q('hk').value=q('ek').value;db()});
+    d.querySelector('#pa-st').onchange=e=>{d.querySelector('#pa-stx').style.display=e.target.checked?'flex':'none'};
+    d.addEventListener('click',async e=>{const t=e.target.closest('[data-bw]');if(!t)return;e.preventDefault();const box=t.closest('[data-k]'),v=await baumWahl('gr',box.dataset.wert);if(v!==null){box.dataset.wert=v;box.innerHTML=ketteHTML('gr',v,'data-fk="1"')}});
+    const fin=v=>{d.remove();document.removeEventListener('keydown',kd,true);res(v)};
+    const kd=e=>{if(e.key==='Escape'&&!document.querySelector('#bw-l')){e.stopPropagation();fin(false)}};document.addEventListener('keydown',kd,true);
+    d.querySelector('#m-no').onclick=()=>fin(false);
+    d.querySelector('#m-ok').onclick=()=>{const bez=q('bez').value.trim();if(!bez){d.querySelector('#m-err').textContent='Bitte Bezeichnung ausfüllen.';return}
+      const stamm=d.querySelector('#pa-st').checked,vkSt=d.querySelector('#pa-vk').checked,ein={lid:q('lid').value,artNr:q('artNr').value.trim(),lp:n('lp'),rabatt:n('rab'),ek:r2(n('ek'))};
+      let A=a;
+      if(stamm&&!A){const nr=q('nr').value.trim();if(!nr){d.querySelector('#m-err').textContent='Bitte Artikel-Nr. angeben.';return}
+        if(DB.artikel.some(x=>x.nr===nr)){d.querySelector('#m-err').textContent='Artikel-Nr. '+nr+' existiert bereits.';return}
+        if(nr===nrV)s.anr++;A={id:uid(),nr,bez,gruppe:q('gruppe').dataset.wert||'',lagerplatz:'',text:'',art:q('art').value,einheit:q('einheit').value,einheiten:[],ek:0,vk:0,steuer:p.steuer||s.stdSteuer,lager:false,minBestand:0,lieferanten:[],aktiv:true};
+        DB.artikel.push(A);log('Artikel angelegt',`${nr} ${bez} (aus ${bNr(b)})`)}
+      Object.assign(p,{bez,text:q('text').value,art:q('art').value,einheit:q('einheit').value,ep:r2(n('ep')),rabatt:n('vrab'),ek:r2(n('hk')),einkauf:ein});
+      if(+p.rabatt)b.optRabatt=true;
+      if(stamm){Object.assign(A,{bez,text:p.text,art:p.art,einheit:p.einheit,ek:ein.ek});if(Math.abs(n('hk')-ein.ek)>0.005)A.hk=r2(n('hk'));else delete A.hk;if(vkSt)A.vk=p.ep;
+        if(ein.lid){A.lieferanten=A.lieferanten||[];let l=A.lieferanten.find(x=>x.kontaktId===ein.lid);if(!l)A.lieferanten.push(l={kontaktId:ein.lid});Object.assign(l,{artNr:ein.artNr,lp:ein.lp,rabatt:ein.rabatt,ek:ein.ek,stand:isoD()})}
+        p.artikelId=A.id;p.nr=A.nr;artDatalist();if(a)log('Artikel geändert',`${A.nr} ${A.bez} (aus ${bNr(b)})`)}
+      fin(true)};
+    db();setTimeout(()=>q('bez').focus(),0);
+  });
 }
 
 /* ---------- Angebote: Revision / Folgeangebot ---------- */
@@ -1635,7 +1689,7 @@ function artikelEdit(id){
   <div class="row"><label>Langtext<textarea data-o="a" data-id="${a.id}" data-f="text">${esc(a.text)}</textarea></label></div>
   <div class="row"><label class="w05">Basiseinheit<select data-o="a" data-id="${a.id}" data-f="einheit">${S().einheiten.map(e=>opt(e,e,a.einheit)).join('')}</select></label>
     <label>Weitere Einheiten (z. B. Krt=10; Rolle=100)<input data-o="a" data-id="${a.id}" data-f="einheitenStr" value="${esc((a.einheiten||[]).map(x=>x.e+'='+x.f).join('; '))}"></label>
-    ${f('ek','EK je Basiseinheit','w05','number')}${f('vk','VK je Basiseinheit','w05','number')}
+    ${f('ek','EK je Basiseinheit','w05','number')}${f('hk','Herstellkosten (0 = EK)','w05','number')}${f('vk','VK je Basiseinheit','w05','number')}
     <label class="w05">USt<select data-o="a" data-id="${a.id}" data-f="steuer">${S().steuer.map(s=>opt(s.code,s.bez,a.steuer)).join('')}</select></label></div>
   <div class="row"><label class="w05">Lagerartikel<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="lager" ${a.lager?'checked':''}></label><label class="w2">Lagerplatz${ketteHTML('lp',a.lagerplatz,`data-act="bwahl" data-aid="${a.id}"`)}</label>${a.lager?f('minBestand','Mindestbestand','w05','number')+`<label class="w05">Bestand<input disabled value="${fmtQ(bs.menge)} ${esc(a.einheit)}"></label><label class="w05">Ø-EK<input disabled value="${fmt(avgEK(a.id))}"></label><label class="w05">Lagerwert<input disabled value="${fmt(bs.wert)}"></label>`:'<span style="flex:4"></span>'}</div>
   </div>
@@ -3544,6 +3598,7 @@ const ACT={
   hist:el=>showHist(curBeleg(),+el.dataset.i,el),
   hclose:()=>closePop(),
   hset:el=>{const{b,i,h}=HIST,x=h[+el.dataset.j],p=b.pos[i];p.ep=x.ep;if(T[b.typ].b==='V'){p.rabatt=x.rabatt;if(x.ek)p.ek=x.ek}else p.ek=x.ep;if(x.einheit&&x.einheit!==p.einheit&&!p.artikelId)p.einheit=x.einheit;persist();render()},
+  partik:async el=>{const b=curBeleg();if(!b||b.fest)return;if(await posArtikelPopup(b,+el.dataset.i)){persist();render()}},
   mkart:async el=>{const b=curBeleg(),p=b.pos[+el.dataset.i];const f=+p.faktor||1,V_=T[b.typ].b==='V';
     const a=await artikelPopup({bez:p.bez,text:p.text,art:isInfo(p)?'W':p.art,einheit:p.einheit,ek:r2((V_?+p.ek:+p.ep)/f),vk:V_?r2(+p.ep/f):0,steuer:p.steuer,artNr:p.lnr||''},V_?'':b.kontaktId);if(!a)return;
     p.artikelId=a.id;p.nr=a.nr;if(!p.bez)p.bez=a.bez;persist();render()},

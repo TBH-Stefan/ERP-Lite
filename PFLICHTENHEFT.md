@@ -186,6 +186,7 @@ Struktur nach Grundaufbau der ÖNORM B 2061 – Zeilen frei anpassbar; Abgleich 
 
 ## Preise und Rabatt in Verkaufsbelegen
 - Artikel in Position: Einzelpreis und Rabatt nur aus früheren Belegen **desselben Kunden**; sonst VK des Artikels und Kundenrabatt (Kontakt). Preise anderer Kunden nur bewusst über die Preishistorie (Klick) übernehmen.
+- **Artikel in der Position bearbeiten (✎, Verkaufsbelege):** Pop-up mit Bezeichnung, Art, Einheit, Langtext; Einkauf: Lieferant, Art.-Nr. Lieferant, Listenpreis, Rabatt Einkauf % → EK netto (rechnet in beide Richtungen), **Herstellkosten** je Einheit (Kostenwert für Kalkulation/DB II, Vorgabe = EK); Verkauf: VK/EP und Kundenrabatt mit Ergebnis je Einheit (VK − HK, %). Gilt zunächst nur für die Position; optional „im Artikelstamm speichern“ (bestehenden Artikel ändern inkl. Lieferantenkonditionen, VK nur auf Wunsch) bzw. als neuen Artikel anlegen (Nr., Gruppe). Artikelstamm: neues Feld Herstellkosten (0 = EK).
 - Schalter „Rabatt“ jederzeit bedienbar: Abwählen bei Positionen mit Rabatt fragt nach und setzt den Rabatt aller Positionen auf 0 (Spalte ausgeblendet).
 
 ## Belegliste Verkauf / Einkauf

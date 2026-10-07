@@ -18,7 +18,7 @@ Anwender: Stefan Horvath. Sprache in Code-Kommentaren, Oberfläche und Antworten
 - Finanzbuchhaltung: `fibuAuto()` leitet Buchungen aus Belegen ab, `fibuManuell()`, `salden()`, `guv()`.
 - Abgleich zwischen Geräten: `merge3()` (3-Wege je Datensatz).
 - Belege einlesen: `belegScan()` → `belegLokal()` (E-Rechnung, PDF-Text, Texterkennung; KI nur mit Schlüssel) → `textBeleg()` → Abgleich `scanBox()`/`scanUebernehmen()`. Originale unverändert über `anhaengeHochladen(…,true)`.
-- Popups für Neuanlage: `formDialog()`, `kontaktPopup()`, `artikelPopup()`.
+- Popups für Neuanlage: `formDialog()`, `kontaktPopup()`, `artikelPopup()`. Artikel einer Verkaufsposition: `posArtikelPopup(b,i)` (`ACT.partik`; Position `einkauf{lid,artNr,lp,rabatt,ek}`, `p.ek` = Herstellkosten; Artikel `hk` optional).
 - Papierformat `S().papier` → `PAPIER`/`papier()` (Skalierfaktor k, nutzbare Höhe hc), Druck über `papierCSS()`; Seitenansicht der Vorschau `vorschauSeiten()` (nach `render()`/`updateCalc()`, fügt `.pgsp`-Abstände mit Fußzeile/Seitenzahl ein).
 - PDF ohne Bibliothek: `pdfAusBeleg()` misst die Belegvorschau (`docHTML`) aus und schreibt Helvetica-Text, Linien, Logo; Umbruch an Zeilengrenzen, Tabellenkopf wiederholt. Versand: `versenden()` über Graph `/me/sendMail` (Scope Mail.Send, eigener Token `mailToken()`); ohne O365: PDF speichern + mailto.
 - Angebots-Revisionen: `angebotRevision()` (Felder `basisNr`, `rev`, `revGrund`, Position `revPosId`), `revListe()`, `revDiff()`, Karte `revHistorie()`. Belegliste gruppiert über `belegGruppen()` (vorgaengerId/stornoVon), Auf-/Zuklappen `grpAuf()`/`UI.auf`. Projektname `projektName(rid)` (Feld `projekt` am Ausgangsbeleg, Überschrift über `tabelle(…,{zwischen})`), Zeitraum `UI.vJahr/vQrt/vMon` (bzw. `e…`), Piktogramme `BICON`.

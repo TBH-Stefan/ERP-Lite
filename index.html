@@ -2591,6 +2591,7 @@ function textBeleg(Z,art){
     if(lp!=null&&rab==null&&ep!=null&&lp>0&&ep<lp)rab=r2((1-ep/lp)*100);
     let artNr=row.artnr||'',bez=row.bez||'';if(!bez&&!/\d/.test(artNr)){bez=artNr;artNr=''}
     if(!artNr){const mm=bez.match(/^([A-Z0-9][A-Z0-9\-\.\/]{3,})\s+(.{3,})$/i);if(mm&&/\d/.test(mm[1])&&!/^\d{1,3}$/.test(mm[1])){artNr=mm[1];bez=mm[2]}}
+    if(artNr&&bez.startsWith(artNr+' '))bez=bez.slice(artNr.length+1);
     d.positionen.push({artNr,ean:'',bez,text:'',menge,einheit:(row.einheit||'').replace(/\.$/,''),ep:ep||0,gp:gp||0,lp:lp||0,rabatt:rab||0,ust:zahlDE(String(row.ust||'').replace('%',''))||0});
   }
   // Ersatz ohne Tabellenkopf: „Menge Einheit Bezeichnung … Preis“ bzw. „Bezeichnung … Menge Einheit … Preis“
@@ -2860,6 +2861,8 @@ async function scanUebernehmen(b,nurStamm=false){ // nurStamm: Angebot nur in de
         if(k==='lp')lf.lp=r2(z.lp/fak);if(k==='rabatt')lf.rabatt=+z.rabatt;if(k==='ek')lf.ek=r2(z.ep/fak);lf.stand=d.datum||isoD()}
     }
     if(w.modus==='neu'){
+      if(z.artNr&&String(z.bez).startsWith(z.artNr+' '))z.bez=z.bez.slice(z.artNr.length+1);
+      if(String(z.bez).length>80){const cut=z.bez.lastIndexOf(' ',80)>40?z.bez.lastIndexOf(' ',80):80;z.text=(z.bez.slice(cut).trim()+(z.text?'\n'+z.text:'')).trim();z.bez=z.bez.slice(0,cut).trim()} // Bezeichnung kurz, Rest Langtext
       const nr=String(++S().anr).padStart(5,'0'),eh=z.einheit||'Stk';
       a={id:uid(),nr,bez:z.bez,text:z.text||'',art:'W',einheit:eh,einheiten:[],ek:r2(+z.ep||0),vk:0,steuer:S().stdSteuer,lager:!!w.lager,minBestand:0,lieferanten:lid?[{kontaktId:lid,artNr:z.artNr||'',lp:+z.lp||0,rabatt:+z.rabatt||0,ek:r2(+z.ep||0),stand:d.datum||isoD()}]:[],aktiv:true,ean:z.ean||''};
       DB.artikel.push(a);if(!S().einheiten.includes(eh))S().einheiten.push(eh);

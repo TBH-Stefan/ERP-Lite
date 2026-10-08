@@ -951,6 +951,8 @@ function folgeGo(src,typ){const b=folge(src,typ);if(b){log('Folgebeleg',`${T[typ
 function adressSnapshot(k){return k?{nr:k.nr,name:k.name,zusatz:k.zusatz,strasse:k.strasse,plz:k.plz,ort:k.ort,land:k.land,uid:k.uid}:{}}
 // verwendete Steuer-Codes (wie summen(): Gruppen nur mit Pauschalpreis; Optionen/Alternativen zählen mit, ihr Satz steht in der USt-Spalte)
 const steuerCodes=b=>[...new Set(b.pos.filter(p=>p.art!=='T'&&(p.art!=='G'||+p.pauschal>0)).map(p=>p.art==='G'?p.steuer||S().stdSteuer:p.steuer).filter(Boolean))];
+// Steuersätze schützen: Codes aus festgeschriebenen Belegen sind gesperrt (Code, Satz, Bezeichnung, Hinweis) – schützt Nachdruck, FiBu und UVA alter Rechnungen
+const stGesperrt=()=>new Set(DB.belege.filter(b=>b.fest).flatMap(steuerCodes));
 // Lieferanten-Art.-Nr. einer Einkaufsposition: Artikelstamm bzw. Einkaufsdaten der Position (nur beim selben Lieferanten)
 const lnrStamm=(b,p)=>artikel(p.artikelId)?.lieferanten?.find(l=>l.kontaktId===b.kontaktId)?.artNr||'';
 const lnrEk=(b,p)=>p.einkauf?.artNr&&p.einkauf.lid===b.kontaktId?p.einkauf.artNr:'';
@@ -2832,7 +2834,7 @@ const lf1=a=>(a.lieferanten||[]).find(l=>+l.lp>0)||(a.lieferanten||[])[0]||{};
 
 /* ---------- Einstellungen ---------- */
 V.einstellungen=()=>{
-  const s=S(),f=s.firma,j=String(new Date().getFullYear());
+  const s=S(),f=s.firma,j=String(new Date().getFullYear()),stG=stGesperrt();
   const ff=(fl,l,cls='')=>`<label class="${cls}">${l}<input data-o="s" data-f="firma.${fl}" value="${esc(f[fl])}"></label>`;
   const sf=(fl,l,cls='w05',type='number')=>`<label class="${cls}">${l}<input type="${type}" step="any" data-o="s" data-f="${fl}" value="${esc(s[fl])}"></label>`;
   return`<h1>Einstellungen</h1>
@@ -2856,8 +2858,8 @@ V.einstellungen=()=>{
     <label class="w05">Standard-USt<select data-o="s" data-f="stdSteuer">${s.steuer.map(x=>opt(x.code,x.bez,s.stdSteuer)).join('')}</select></label></div>
   <div class="row"><label>Mengeneinheiten (durch Komma getrennt)<input data-o="s" data-f="einheitenStr" value="${esc(s.einheiten.join(', '))}"></label></div></div>
   <div class="card"><h2>Steuersätze</h2><table><thead><tr><th>Code</th><th>Satz %</th><th>Bezeichnung</th><th>Hinweistext auf Rechnung</th><th></th></tr></thead><tbody>
-  ${s.steuer.map((x,i)=>`<tr><td style="width:80px"><input data-o="st" data-i="${i}" data-f="code" value="${esc(x.code)}"></td><td style="width:80px"><input type="number" step="any" data-o="st" data-i="${i}" data-f="satz" value="${x.satz}"></td><td><input data-o="st" data-i="${i}" data-f="bez" value="${esc(x.bez)}"></td><td><input data-o="st" data-i="${i}" data-f="hinweis" value="${esc(x.hinweis)}"></td><td><button class="s d" data-act="stdel" data-i="${i}">✕</button></td></tr>`).join('')}
-  </tbody></table><button style="margin-top:8px" data-act="stadd">+ Steuersatz</button></div>
+  ${s.steuer.map((x,i)=>{const ds=stG.has(x.code)?' disabled title="In festgeschriebenen Belegen verwendet – nicht änderbar"':'';return`<tr><td style="width:80px"><input data-o="st" data-i="${i}" data-f="code" value="${esc(x.code)}"${ds}></td><td style="width:80px"><input type="number" step="any" data-o="st" data-i="${i}" data-f="satz" value="${x.satz}"${ds}></td><td><input data-o="st" data-i="${i}" data-f="bez" value="${esc(x.bez)}"${ds}></td><td><input data-o="st" data-i="${i}" data-f="hinweis" value="${esc(x.hinweis)}"${ds}></td><td>${ds?tag('gesperrt'):`<button class="s d" data-act="stdel" data-i="${i}">✕</button>`}</td></tr>`}).join('')}
+  </tbody></table>${stG.size?'<p class="mut" style="margin:6px 0 0;font-size:13px">Gesperrte Steuersätze werden in festgeschriebenen Belegen verwendet; Code, Satz, Bezeichnung und Hinweistext bleiben deshalb unverändert (§ 11 UStG, § 131 BAO). Für einen neuen Satz einen neuen Code anlegen und ihn als Standard-USt bzw. im Artikel wählen.</p>':''}<button style="margin-top:8px" data-act="stadd">+ Steuersatz</button></div>
   <div class="card"><h2>Stundentarife</h2><table><thead><tr><th>Kürzel</th><th>Bezeichnung</th><th>Kostensatz €/h (intern)</th><th>Verkauf €/h</th><th></th></tr></thead><tbody>
   ${s.tarife.map((x,i)=>`<tr><td style="width:100px"><input data-o="tf" data-i="${i}" data-f="kz" value="${esc(x.kz)}"></td><td><input data-o="tf" data-i="${i}" data-f="bez" value="${esc(x.bez)}"></td><td><input type="number" step="any" data-o="tf" data-i="${i}" data-f="kosten" value="${x.kosten}"></td><td><input type="number" step="any" data-o="tf" data-i="${i}" data-f="vk" value="${x.vk}"></td><td><button class="s d" data-act="tfdel" data-i="${i}">✕</button></td></tr>`).join('')}
   </tbody></table><button style="margin-top:8px" data-act="tfadd">+ Tarif</button></div>
@@ -3871,7 +3873,7 @@ document.addEventListener('change',e=>{
       if(d.f==='gruppe'&&(v==='__neu'||v==='__sub')){gruppeNeu(v==='__sub'?a.gruppe:'').then(g=>{if(g){a.gruppe=g;persist()}render()});return}if(d.f==='einheitenStr'){a.einheiten=String(v).split(/[;,]/).map(x=>x.split('=')).filter(x=>x.length===2&&x[0].trim()&&num(x[1])>0).map(([e,f])=>({e:e.trim(),f:num(f)}));for(const x of a.einheiten)if(!S().einheiten.includes(x.e))S().einheiten.push(x.e)}else a[d.f]=nv;if(['nr','bez','aktiv'].includes(d.f))artDatalist();if(['lager','einheitenStr'].includes(d.f)){persist();render();return}break}
     case'al':artikel(d.id).lieferanten[+d.i][d.f]=v;break;
     case's':if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()]??={};o[pth[0]]=d.t==='b'?v===true||v==='true':nv;if(d.f.startsWith('erw.')){persist();render();return}}break;
-    case'st':{const x=S().steuer[+d.i];if(d.f==='code'){const alt=x.code;if(S().steuer.some((y,j)=>j!==+d.i&&y.code===v)){alert('Code existiert bereits.');render();return}if(DB.belege.some(b=>b.pos.some(p=>p.steuer===alt))){alert('Code wird verwendet und kann nicht geändert werden.');render();return}}x[d.f]=nv;break}
+    case'st':{const x=S().steuer[+d.i];if(stGesperrt().has(x.code)){alert(`Steuersatz „${x.bez||x.code}“ wird in festgeschriebenen Belegen verwendet und kann nicht geändert werden (§ 11 UStG, § 131 BAO).\nFür einen neuen Satz bitte einen neuen Code anlegen.`);render();return}if(d.f==='code'){const alt=x.code;if(S().steuer.some((y,j)=>j!==+d.i&&y.code===v)){alert('Code existiert bereits.');render();return}if(DB.belege.some(b=>b.pos.some(p=>p.steuer===alt))){alert('Code wird verwendet und kann nicht geändert werden.');render();return}}x[d.f]=nv;break}
     case'tf':S().tarife[+d.i][d.f]=nv;break;
     case'fbk':FB().konten[+d.i][d.f]=v;break;
     case'fbmap':{if(d.f==='!sperre'){FB().sperre=v;log('Periodensperre',v)}else setP(FB().map,d.f,v);break}

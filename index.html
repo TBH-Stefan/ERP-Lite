@@ -2897,7 +2897,8 @@ V.einstellungen=()=>{
 };
 // Karte „Erweiterungen“: alle Funktionsschalter mit Beschreibung, Abweichungen vom Standard, Zurücksetzen je Paket bzw. alle
 function erwKarte(){
-  const ab=ERW.filter(x=>erw(x.k)!==x.std),P=[...new Set(ERW.map(x=>x.p))];
+  const pNr=p=>{const m=String(p).match(/\(P(\d+)\s*([a-z]?)/);return m?+m[1]*100+(m[2]?m[2].charCodeAt(0)-96:0):1e6}; // Pakete nach Nummer ordnen (P0 b … P19), unabhängig von der Reihenfolge in ERW
+  const ab=ERW.filter(x=>erw(x.k)!==x.std),P=[...new Set(ERW.map(x=>x.p))].sort((a,c)=>pNr(a)-pNr(c));
   return`<div class="card" id="erw"><h2>Erweiterungen</h2><p class="mut" style="margin-top:0">Zusätzliche Funktionen, einzeln ein- und ausschaltbar. Der Standard entspricht dem bisherigen Verhalten (außer Fehlerbehebungen). Ausschalten wirkt sofort; gespeicherte Angaben bleiben erhalten und gelten beim Wiedereinschalten wieder.</p>
   <div class="bar"><span>${ab.length?`${tag(ab.length+' vom Standard abweichend','warn')} ${ab.map(x=>esc(x.l)).join(' · ')}`:tag('alle Schalter auf Standard','ok')}</span><span class="sp"></span><button data-act="erwstd" ${ab.length?'':'disabled'}>Alle Schalter auf Standard</button></div>
   ${ERW.length?P.map(p=>{const L=ERW.filter(x=>x.p===p);return`<div style="border-top:1px solid var(--line);margin-top:10px;padding-top:6px"><div class="bar" style="margin:0"><b>${esc(p)}</b><span class="sp"></span><button class="s" data-act="erwpk" data-p="${esc(p)}" ${L.some(x=>erw(x.k)!==x.std)?'':'disabled'}>Standard wiederherstellen</button></div>

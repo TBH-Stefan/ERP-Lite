@@ -142,12 +142,12 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
     - `summen()` und die Steuerhinweise in `docHTML` verwenden bei `b.fest` die Werte aus `b.fix.steuer`.
     - Alte Belege ohne `b.fix` bleiben wie bisher.
   - d) ✅ umgesetzt (Commit a86ff40; gesperrt sind auch Code und Löschen, `stGesperrt()`; nutzt `steuerCodes()` aus c), Rücknahme daher vor c). **Steuersätze schützen:** `case'st'` sperrt `satz`, `bez` und `hinweis` von Codes, die in festgeschriebenen Belegen verwendet werden, wie heute schon den Code. Dazu der Hinweis „Für einen neuen Satz einen neuen Code anlegen“. Das schützt auch FiBu und UVA alter Rechnungen, die nicht über `b.fix` laufen.
-  - e) `duplizieren()` übernimmt `optLS`, `optRabatt` und `ltDruck`.
-  - f) `ACT.kbel` ruft `konditionenUebernehmen(b,k)` auf.
-  - g) `onPos('einheit')` rechnet `epL` und `epS` mit demselben Faktor um. P13 ergänzt `ekL` und `zeit`.
-  - h) `posArtikelPopup`: Bei `optLS` setzt Übernehmen `epS=r2(ep−(+p.epL||0))`.
-  - i) `lagerBeiFest()` und `folge()` verwenden `effKz(p,gruppenInfo(b))` statt `p.kz`. Die Ausnahme AN→AB/PR in `folge()` bleibt. Ebenso der Hinweis in `festschreiben()` „Rechnung enthält Options-/Alternativpositionen“.
-  - j) `artikelInPos()` schreibt die Lieferanten-Art.-Nr. künftig in `p.lnr` und nicht mehr in `p.text`. Alte Positionen bleiben unverändert; P4 kann die Zeile im Druck ausblenden.
+  - e) ✅ umgesetzt (Commit 1c61540). `duplizieren()` übernimmt `optLS`, `optRabatt` und `ltDruck`.
+  - f) ✅ umgesetzt (Commit a57eace; Zahlungsziel 0 Tage bleibt 0, Skonto und Kundenrabatt wie bei der Kontaktwahl im Beleg). `ACT.kbel` ruft `konditionenUebernehmen(b,k)` auf.
+  - g) ✅ umgesetzt (Commit 1da5180; bei `optLS` `epS=r2(ep−epL)`, damit `ep = epL+epS` trotz Rundung; Positionen ohne `epL`/`epS` unverändert). `onPos('einheit')` rechnet `epL` und `epS` mit demselben Faktor um. P13 ergänzt `ekL` und `zeit`.
+  - h) ✅ umgesetzt (Commit 5c2836b; Lohn höchstens bis zum neuen EP, kein negativer Sonstiges-Wert; Positionen ohne Werte wie beim Einschalten der Spalten vorbelegt). `posArtikelPopup`: Bei `optLS` setzt Übernehmen `epS=r2(ep−(+p.epL||0))`.
+  - i) ✅ umgesetzt (Commit 6147889; zusätzlich `erledigung()`, sonst bliebe ein Auftrag mit Optionsgruppe „teilweise“; Hinweis in `festschreiben()` unverändert, greift weiter über den Gruppenkopf). `lagerBeiFest()` und `folge()` verwenden `effKz(p,gruppenInfo(b))` statt `p.kz`. Die Ausnahme AN→AB/PR in `folge()` bleibt. Ebenso der Hinweis in `festschreiben()` „Rechnung enthält Options-/Alternativpositionen“.
+  - j) ✅ umgesetzt (Commit 7de8798; beim Artikelwechsel wird die Nummer des bisherigen Artikels entfernt, beim Lieferantenwechsel in `onHead()` ersetzt; Tabellen-Editor zeigt „Lief.: …“). `artikelInPos()` schreibt die Lieferanten-Art.-Nr. künftig in `p.lnr` und nicht mehr in `p.text`. Alte Positionen bleiben unverändert; P4 kann die Zeile im Druck ausblenden.
   - k) ✅ umgesetzt (Commit fbdaef7). `pdfAusBeleg()`: `const kopfH=box.querySelector('table.p thead')` wird einmal bestimmt. An beiden Stellen gilt dann `el.closest('thead')===kopfH` bzw. `pe.closest('thead')===kopfH`. Bekannte Einschränkung: Eine mehrseitige Optionen-Tabelle bekommt auf der Folgeseite keinen wiederholten Kopf.
   - l) ✅ umgesetzt (Commit 66bc2b7). **Nur `table.p` wird zeilenweise geteilt:** in `vorschauSeiten()` `c.matches('table.p')` statt `table`, in `brk` `table.p tbody>tr:not(.grpz)`. `.tot` und die neue Zusammenfassung (P2) bleiben in Vorschau und PDF ein Block, wie im Druck. Bei bestehenden Belegen ändert sich dadurch nur die Stelle eines Seitenumbruchs, wenn der Summenblock genau auf der Seitengrenze liegt; der Inhalt bleibt gleich.
   - m) ✅ umgesetzt (Commit abdf44c; nichts eingetragen, `FIRMA_TBH` unverändert). **Pflichtangaben prüfen:** Hinweis in Einstellungen → Firma und vor dem Festschreiben von Rechnungen, wenn `f.gericht`, `f.fn` oder `f.uid` leer ist.
@@ -925,7 +925,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 **Sofort (vor allem anderen):** ✅ erledigt (Commit 757b5ed) – P0 a) Doppelte Aktionen `kedit`/`kdel`. Der Fehler ist online. Nach dem Test als eigener Commit direkt nach `main`.
 
 **Stufe 1: schnell und mit hohem Nutzen (ca. 5–6 Tage)**
-1. P0 b)–n) Fehlerkorrekturen und Nachdruck-Treue (M)
+1. P0 b)–n) Fehlerkorrekturen und Nachdruck-Treue (M) – ✅ b)–n) umgesetzt
 2. P1 Druckprofil-Grundgerüst (M)
 3. P2 Zusammenfassung der Titel und Gruppensummen (S)
 4. P5 Infoblock, Grußformel, Fußzeilen-Zusatz, Kostenvoranschlag (S)

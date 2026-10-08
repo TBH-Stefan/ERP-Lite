@@ -87,6 +87,8 @@ nav .logo,nav a.logo:hover{font-weight:700;color:#fff;padding:14px 18px 10px;fon
 .logo-tbh{display:inline-flex}.logo-tbh svg{height:34px;width:auto}.topbar .logo-tbh svg{height:26px}.topbar b{white-space:nowrap}#start h1 .logo-tbh svg{height:46px}#start h1{display:flex;align-items:center;gap:12px}
 nav a{display:block;padding:6px 18px;color:#cfd6e4;text-decoration:none}
 nav a:hover,nav a.on{background:#2c3446;color:#fff}
+nav button.zl{display:block;width:100%;text-align:left;background:none;border:0;border-radius:0;color:#cfd6e4;padding:6px 18px;font:inherit}nav button.zl:hover{background:#2c3446;color:#fff}
+.zlaus .zl{display:none!important}.pop.zlpop{z-index:45;padding:8px}.zlpop .bwz{border-radius:5px} /* Zuletzt geöffnet (P19 a) */
 nav .grp{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#8792a8;padding:12px 18px 3px}
 #savestate{font-size:12px;color:#8fd3a8;padding:4px 18px 12px}
 #undobtn{margin:auto 18px 0;background:#2c3446;color:#fff;border:0}#undobtn:disabled{opacity:.4}
@@ -145,7 +147,7 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
   .topbar #sync2{font-size:12px;color:#8fd3a8}.topbar #sync2.bad{color:#ffb4ab}
   nav{position:fixed;left:-240px;top:0;z-index:40;transition:left .2s;width:230px}
   body.nav nav{left:0;box-shadow:0 0 0 100vmax rgba(0,0,0,.4)}
-  nav a{padding:10px 18px}
+  nav a,nav button.zl{padding:10px 18px}
   main{padding:12px 12px 90px}
   h1{font-size:18px}
   input,select,textarea{font-size:16px}
@@ -216,10 +218,11 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
 <body>
 <div id="start"></div>
 <div id="app">
-  <div class="topbar"><button id="menu" aria-label="Menü">☰</button><a href="#/dash" class="home" title="Überblick" style="display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none"><span class="logo-tbh"></span><b>ERP-Lite</b></a><span class="sp"></span><span id="sync2"></span></div>
+  <div class="topbar"><button id="menu" aria-label="Menü">☰</button><a href="#/dash" class="home" title="Überblick" style="display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none"><span class="logo-tbh"></span><b>ERP-Lite</b></a><span class="sp"></span><span id="sync2"></span><button class="zl" data-act="zuletzt" title="Zuletzt geöffnet" aria-label="Zuletzt geöffnet">🕘</button></div>
   <nav>
     <a class="logo" href="#/dash" title="Überblick"><span class="logo-tbh"></span>ERP-Lite</a>
     <a href="#/dash" data-n="dash">Überblick</a>
+    <button class="zl" data-act="zuletzt" title="Zuletzt geöffnete Belege, Kontakte, Artikel …">🕘 Zuletzt ▾</button>
     <div class="grp">Vorgänge</div>
     <a href="#/belege/V" data-n="belege/V">Verkauf</a>
     <a href="#/belege/E" data-n="belege/E">Einkauf</a>
@@ -340,6 +343,7 @@ const ERW=[
   {k:'snapshot',std:true,p:'Nachdruck (P0 c)',l:'Nachdruck wie das Original',info:'Beim Festschreiben werden Fußzeile, Ansprechperson, E-Mail, Telefon, Unterzeichner und die verwendeten Steuersätze im Beleg eingefroren. Nachdruck, PDF, Summen, FiBu und UVA festgeschriebener Belege verwenden diese Werte statt der aktuellen Einstellungen; Bestellungen drucken die Lieferanten-Art.-Nr. aus der Position bzw. aus dem Artikelstamm beim Festschreiben. Das Logo wird nicht eingefroren. Ältere Belege ohne eingefrorene Werte bleiben unverändert. Aus: wie bisher die aktuellen Einstellungen (eingefrorene Werte bleiben gespeichert). Fehlerbehebung, daher Standard ein.'},
   {k:'scanPE',std:true,p:'Einlesen (P14)',l:'Preiseinheit beim Einlesen prüfen',info:'Beim Einlesen von PDF-Text und Scans wird je Zeile Menge × Einzelpreis gegen den Gesamtpreis geprüft. Ergibt sich genau ein Faktor 10, 100 oder 1000 (±2 %), galt der Einzelpreis je 10/100/1000 Einheiten (z. B. Kabel „Preis/100“): er wird auf je Einheit umgerechnet; ohne Gesamtpreis gilt eine Spalte „PE“ bzw. der Spaltenkopf („Preis/100“). Im Abgleich ist die Umrechnung je Zeile markiert und abwählbar, der EK-Vorschlag für den Artikelstamm hat dann mehr Nachkommastellen (z. B. 0,4537 €/m). Zeilen, bei denen Menge × Einzelpreis nicht zum Gesamtpreis passt, werden markiert. E-Rechnungen sind nicht betroffen. Aus: wie bisher. Fehlerbehebung (sonst 100-fach zu hoher EK im Artikelstamm), daher Standard ein.'},
   {k:'duplikat',std:false,p:'Duplikat (P0 n)',l:'Vermerk „DUPLIKAT“ bei erneuter Ausgabe von Rechnungen',info:'Druck, PDF und E-Mail-Versand festgeschriebener Rechnungen (auch Anzahlungs-, Teil-, Schlussrechnungen und Gutschriften) werden gezählt. Ab der zweiten Ausgabe fragt das Programm „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja), der Vermerk steht dann über dem Belegtitel; beim Druck über das Browsermenü wird ohne Rückfrage gekennzeichnet. Das erste Original bleibt unverändert. Gezählt wird nur bei eingeschaltetem Schalter (bei älteren Rechnungen zählen bereits per E-Mail versendete mit). Eine zweite gleichlautende Rechnung ohne Vermerk kann eine zusätzliche Steuerschuld auslösen (§ 11 Abs. 12 und 14 UStG).'},
+  {k:'zuletzt',std:true,p:'Navigation (P19)',l:'„Zuletzt geöffnet“ in Seitenleiste und Kopfzeile',info:'Merkt sich auf diesem Gerät die 12 zuletzt geöffneten Belege, Kontakte, Artikel, Aufträge, LVs und K-Blätter (im Browser nur interne Kennungen, keine Namen; nicht in den Daten, Öffnen ist keine Änderung). „🕘 Zuletzt“ in der Seitenleiste bzw. 🕘 in der Kopfzeile am Handy zeigt sie mit Belegart, Nummer, Kunde und Status; Gelöschtes wird übersprungen, „Liste leeren“ löscht die Liste. Reine Bedienhilfe, daher Standard ein. Aus: Knopf ausgeblendet, es wird nichts gemerkt.'},
   {k:'druckprofil',std:true,p:'Druckprofil (P1)',l:'Druckprofil je Belegart',info:'Darstellungsoptionen für Vorschau, Druck, PDF und E-Mail je Belegart (unten unter „Druck & Belegdarstellung“) und je Beleg über „Druckoptionen …“ (dort nur Abweichungen). Beim Festschreiben wird die Darstellung im Beleg eingefroren, ein Nachdruck sieht wie das Original aus; „Bearbeiten“ hebt das wieder auf. Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG). Aus: Entwürfe im Standard-Aussehen, festgeschriebene Belege weiter mit ihrem eingefrorenen Stand; alle Einstellungen bleiben gespeichert. Die Vorgaben entsprechen dem bisherigen Aussehen.'},
 ];
 const ERW_STD=Object.fromEntries(ERW.map(x=>[x.k,x.std]));
@@ -1085,6 +1089,7 @@ function render(){
   closePop();
   const f=V[view]||V.dash;
   $('#main').innerHTML=f(arg);
+  document.body.classList.toggle('zlaus',!erw('zuletzt'));if(arg&&ZL_V.includes(view))zuletztMerk(view+'/'+arg); // Zuletzt geöffnet (P19 a)
   requestAnimationFrame(vorschauSeiten);
 }
 window.addEventListener('hashchange',async()=>{
@@ -1100,6 +1105,29 @@ window.addEventListener('hashchange',async()=>{
   }
   CURHASH=location.hash;snap();render();
 });
+/* Zuletzt geöffnet (P19 a, erw.zuletzt): höchstens 12 Einträge „Ansicht/ID“ in localStorage (erp-zuletzt) – nur interne Kennungen, nicht in der DB
+   (Öffnen löst keine Änderung aus); Beschriftung erst beim Öffnen der Liste, Gelöschtes/Papierkorb wird übersprungen */
+const ZL_V=['beleg','kontakt','artikel','auftrag','lvs','kbs'];
+function zlInfo(h){const[v,id]=String(h).split('/');let x;
+  if(v==='beleg'&&(x=beleg(id)))return{ic:BICON[x.typ]||'📄',t:`${T[x.typ].bez} ${bNr(x)}`,u:[kName(x.kontaktId),x.betreff].filter(y=>y&&y!=='–').join(' · '),s:statusTag(x)};
+  if(v==='kontakt'&&(x=kontakt(id)))return{ic:'👤',t:`${x.nr} ${x.name}`,u:{K:'Kunde',L:'Lieferant',KL:'Kunde + Lieferant'}[x.typ]||'',s:''};
+  if(v==='artikel'&&(x=artikel(id)))return{ic:'📦',t:`${x.nr} ${x.bez}`,u:x.aktiv===false?'Artikel (deaktiviert)':'Artikel',s:''};
+  if(v==='auftrag'&&DB.belege.some(b=>b.auftragId===id))return{ic:'📊',t:'Auftrag '+auftragLabel(id),u:'Aufträge & DB II',s:''};
+  if(v==='lvs'&&(x=DB.lv.find(y=>y.id===id)))return{ic:'📋',t:`${x.nr||''} ${x.titel||''}`.trim()||'LV',u:'Leistungsverzeichnis',s:''};
+  if(v==='kbs'&&(x=DB.kalk.find(y=>y.id===id)))return{ic:'🧮',t:x.name||'K-Blatt',u:'K-Blätter',s:''};
+  return null}
+const zlListe=()=>{try{const l=JSON.parse(lsGet('erp-zuletzt')||'[]');return Array.isArray(l)?l.filter(x=>typeof x==='string'):[]}catch(e){return[]}};
+function zuletztMerk(h){if(!erw('zuletzt')||!zlInfo(h))return;const l=zlListe();if(l[0]===h)return;lsSet('erp-zuletzt',JSON.stringify([h,...l.filter(x=>x!==h)].slice(0,12)))}
+function zuletztPop(btn){
+  closePop();const alle=zlListe().filter(h=>zlInfo(h));lsSet('erp-zuletzt',JSON.stringify(alle)); // Gelöschtes entfernen
+  const cur=location.hash.replace(/^#\/?/,''),L=alle.filter(h=>h!==cur).map(h=>[h,zlInfo(h)]);
+  const d=document.createElement('div');d.className='pop zlpop';const r=btn.getBoundingClientRect(),w=Math.min(400,innerWidth-16);d.style.width=w+'px';
+  d.style.top=(r.bottom+scrollY+4)+'px';d.style.left=Math.max(8,Math.min(r.left+scrollX,innerWidth+scrollX-w-8))+'px';
+  d.innerHTML=`<div class="bar" style="margin-bottom:4px"><b>Zuletzt geöffnet</b><span class="sp"></span><button class="s" data-act="hclose" title="Schließen">✕</button></div>
+  ${L.length?L.map(([h,x])=>`<a class="bwz" href="#/${h}" style="color:inherit;text-decoration:none"><span>${x.ic}</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis"><b>${esc(x.t)}</b>${x.u?`<br><span class="mut" style="font-size:12px">${esc(x.u)}</span>`:''}</span>${x.s}</a>`).join(''):'<p class="mut" style="margin:4px 0">Noch nichts geöffnet.</p>'}
+  ${alle.length?'<div class="bar" style="margin:8px 0 0"><span class="sp"></span><button class="s" data-act="zlleer">Liste leeren</button></div>':''}`;
+  document.body.appendChild(d);
+}
 function renderFocus(sel){render();const e=$(sel);if(e){e.focus();e.select?.()}}
 
 /* ---------- Überblick ---------- */
@@ -3908,6 +3936,7 @@ const ACT={
   pdown:el=>{const b=curBeleg(),i=+el.dataset.i;if(i<b.pos.length-1){[b.pos[i+1],b.pos[i]]=[b.pos[i],b.pos[i+1]];persist();render()}},
   hist:el=>showHist(curBeleg(),+el.dataset.i,el),
   hclose:()=>closePop(),
+  zuletzt:el=>{if(document.querySelector('.zlpop')){closePop();return}zuletztPop(el)},zlleer:()=>{lsSet('erp-zuletzt',null);closePop()}, // Zuletzt geöffnet (P19 a)
   hset:el=>{const{b,i,h}=HIST,x=h[+el.dataset.j],p=b.pos[i];p.ep=x.ep;if(T[b.typ].b==='V'){p.rabatt=x.rabatt;if(x.ek)p.ek=x.ek}else p.ek=x.ep;if(x.einheit&&x.einheit!==p.einheit&&!p.artikelId)p.einheit=x.einheit;persist();render()},
   partik:async el=>{const b=curBeleg();if(!b||b.fest)return;if(await posArtikelPopup(b,+el.dataset.i)){persist();render()}},
   mkart:async el=>{const b=curBeleg(),p=b.pos[+el.dataset.i];const f=+p.faktor||1,V_=T[b.typ].b==='V';

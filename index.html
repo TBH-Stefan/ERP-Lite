@@ -3573,8 +3573,9 @@ async function pdfAusBeleg(b){
   await Promise.all([...box.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
   const B=box.getBoundingClientRect(),X=v=>v-B.left,Y=v=>v-B.top,farbe=c=>{const m=String(c).match(/[\d.]+/g)||[0,0,0];return m.slice(0,3).map(v=>(+v/255).toFixed(3)).join(' ')};
   const it=[],thead=[]; // Zeichenelemente in px relativ zum Belegkopf
+  const kopfH=box.querySelector('table.p')?.tHead||null; // nur der Kopf der Haupttabelle wird auf Folgeseiten wiederholt (nicht der der Optionen-Tabelle)
   for(const el of box.querySelectorAll('*')){const cs=getComputedStyle(el);if(cs.visibility==='hidden'||cs.display==='none')continue;const r=el.getBoundingClientRect();if(!r.width&&!r.height)continue;
-    const ziel=el.closest('table.p thead')?thead:it;
+    const ziel=kopfH&&el.closest('thead')===kopfH?thead:it;
     if(cs.backgroundColor&&!/rgba?\(0, 0, 0, 0\)|transparent|rgb\(255, 255, 255\)/.test(cs.backgroundColor))ziel.push({t:'rect',x:X(r.left),y:Y(r.top),w:r.width,h:r.height,c:farbe(cs.backgroundColor)});
     for(const [s,x1,y1,x2,y2] of [['Top',r.left,r.top,r.right,r.top],['Bottom',r.left,r.bottom,r.right,r.bottom],['Left',r.left,r.top,r.left,r.bottom],['Right',r.right,r.top,r.right,r.bottom]]){
       const w=parseFloat(cs['border'+s+'Width']);if(w>0&&cs['border'+s+'Style']!=='none'){const o=(s==='Top'||s==='Left'?1:-1)*w/2,v=s==='Top'||s==='Bottom';
@@ -3583,7 +3584,7 @@ async function pdfAusBeleg(b){
   const tw=document.createTreeWalker(box,NodeFilter.SHOW_TEXT);let n;
   while((n=tw.nextNode())){const txt=n.nodeValue;if(!txt.trim())continue;const pe=n.parentElement,cs=getComputedStyle(pe);if(cs.visibility==='hidden'||cs.display==='none')continue;
     const fs=parseFloat(cs.fontSize),fett=+cs.fontWeight>=600||cs.fontWeight==='bold',kurs=cs.fontStyle==='italic',c=farbe(cs.color),ul=/underline/.test(cs.textDecorationLine||cs.textDecoration)||!!pe.closest('u');
-    const ziel=pe.closest('table.p thead')?thead:it,rg=document.createRange();let lauf=null;
+    const ziel=kopfH&&pe.closest('thead')===kopfH?thead:it,rg=document.createRange();let lauf=null;
     const fertig=()=>{if(lauf&&lauf.s.trim()){lauf.s=lauf.s.replace(/\s+$/,'');ziel.push(lauf);if(ul)ziel.push({t:'line',x1:lauf.x,y1:lauf.y+fs*0.12,x2:lauf.x2,y2:lauf.y+fs*0.12,dx:0,w:Math.max(0.6,fs/14),c})}lauf=null};
     for(const m of txt.matchAll(/\S+\s*/g)){rg.setStart(n,m.index);rg.setEnd(n,m.index+m[0].trimEnd().length);const r=rg.getClientRects()[0];if(!r)continue;
       const base=Y(r.bottom)-r.height*0.19;

@@ -1055,11 +1055,13 @@ function preisHistorie(b,p){
   return out.slice(0,15);
 }
 function artikelInPos(b,p,a){
+  const lAlt=lnrStamm(b,p); // Lieferanten-Art.-Nr. des bisherigen Artikels (wird beim Artikelwechsel entfernt)
   Object.assign(p,{artikelId:a.id,nr:a.nr,bez:a.bez,text:a.text||'',einheit:a.einheit,faktor:1,steuer:a.steuer||S().stdSteuer,art:a.art||'W'});
   const h=preisHistorie(b,p).filter(x=>x.einheit===p.einheit);
   // Verkauf: Preis/Rabatt nur aus früheren Belegen DIESES Kunden, sonst VK des Artikels und Kundenrabatt (Preise anderer Kunden nur über die Preishistorie wählbar)
   if(T[b.typ].b==='V'){const g=h.find(x=>x.gleich);p.ek=+(a.hk||a.ek)||0;p.ep=g?g.ep:(+a.vk||0);p.rabatt=g?g.rabatt:(+kontakt(b.kontaktId)?.rabatt||0)}
-  else{p.ep=h.length?h[0].ep:(+a.ek||0);p.ek=p.ep;const l=(a.lieferanten||[]).find(x=>x.kontaktId===b.kontaktId);if(l?.artNr)p.text=(p.text?p.text+'\n':'')+'Ihre Art.-Nr.: '+l.artNr}
+  // Einkauf: Lieferanten-Art.-Nr. in p.lnr (Druck einmal als „Ihre Art.-Nr.“ hinter der Bezeichnung), nicht mehr zusätzlich im Langtext
+  else{p.ep=h.length?h[0].ep:(+a.ek||0);p.ek=p.ep;const l=(a.lieferanten||[]).find(x=>x.kontaktId===b.kontaktId);if(l?.artNr)p.lnr=l.artNr;else if(p.lnr&&p.lnr===lAlt)p.lnr=''}
 }
 
 /* ---------- Router & Render ---------- */
@@ -1217,7 +1219,7 @@ V.beleg=id=>{
     const g=gi.grp[p.id],pausch=g&&+g.pauschal>0;
     return`<tr class="${g?'ing':''}">
       <td class="mut" data-l="Pos">${pnr[p.id]}</td>${artSel}
-      <td class="c2" data-l="Artikel" style="width:110px"><input list="dl-art" data-p="${i}" data-f="artikel" value="${esc(p.nr)}" ${dis} placeholder="Art.-Nr."></td>
+      <td class="c2" data-l="Artikel" style="width:110px"><input list="dl-art" data-p="${i}" data-f="artikel" value="${esc(p.nr)}" ${dis} placeholder="Art.-Nr.">${!V_&&p.lnr?`<div class="mut" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px" title="Art.-Nr. des Lieferanten (Druck: „Ihre Art.-Nr.“): ${esc(p.lnr)}">Lief.: ${esc(p.lnr)}</div>`:''}</td>
       <td class="fw" data-l="Bezeichnung" style="min-width:220px"><input data-p="${i}" data-f="bez" value="${esc(p.bez)}" ${dis} placeholder="Bezeichnung">${rte(`p:${i}:text`,p.text,'Langtext …')}</td>
       <td data-l="Menge" style="width:78px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="menge" value="${p.menge}" ${dis}></td>
       <td data-l="Einheit" style="width:72px"><select data-p="${i}" data-f="einheit" ${dis}>${einhOpts(p)}</select></td>
@@ -3915,11 +3917,13 @@ document.addEventListener('change',e=>{
   persist();
 });
 function onHead(b,f,v){
-  b[f]=v;
+  const alt=b[f];b[f]=v;
   if(f==='ltDruck'){render();return}
   if(f==='optRabatt'&&!v){const P=b.pos.filter(p=>+p.rabatt);if(P.length){if(confirm(`${P.length} Position(en) haben einen Rabatt (${[...new Set(P.map(p=>fmtQ(p.rabatt)+' %'))].join(', ')}).\nRabatt bei allen Positionen entfernen und Spalte ausblenden?`))for(const p of P)p.rabatt=0;else b.optRabatt=true}}
   if(f==='optRabatt'||f==='optLS'){if(f==='optLS'&&v)for(const p of b.pos)if(!isInfo(p)&&p.epL==null&&p.epS==null){p.epL=p.art==='L'?+p.ep||0:0;p.epS=p.art==='L'?0:+p.ep||0}render();return}
-  if(f==='kontaktId'){const k=kontakt(v);if(k)konditionenUebernehmen(b,k);render()}
+  if(f==='kontaktId'){const k=kontakt(v);if(k)konditionenUebernehmen(b,k);
+    if(T[b.typ].b==='E')for(const p of b.pos)if(p.lnr&&p.lnr===lnrStamm({kontaktId:alt},p))p.lnr=lnrStamm(b,p); // Art.-Nr. des bisherigen Lieferanten ersetzen
+    render()}
   if(f==='datum'&&b.typ==='AN'){b.gueltigBis=addDays(v,S().angebotGueltig);render()}
   updateCalc(b);
 }

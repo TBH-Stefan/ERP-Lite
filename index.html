@@ -1030,8 +1030,9 @@ function stornieren(b){
   if(b.typ==='GS'&&b.stornoVon){const o=beleg(b.stornoVon);if(o)o.storno=false}
   b.storno=true;log('storniert',`${t.bez} ${b.nr}`);commit();render();
 }
-function duplizieren(b){
-  const n=neuBeleg(b.typ,{kontaktId:b.kontaktId,betreff:b.betreff,kopf:b.kopf,fuss:b.fuss,zahlungsziel:b.zahlungsziel,skonto:b.skonto,skontoTage:b.skontoTage,auftragId:T[b.typ].b==='E'?b.auftragId:''});
+function duplizieren(b){ // Darstellung (Langtext, Rabatt-, Lohn/Sonstiges-Spalten) wie in folge() mitnehmen
+  const n=neuBeleg(b.typ,{kontaktId:b.kontaktId,betreff:b.betreff,kopf:b.kopf,fuss:b.fuss,zahlungsziel:b.zahlungsziel,skonto:b.skonto,skontoTage:b.skontoTage,auftragId:T[b.typ].b==='E'?b.auftragId:'',
+    ltDruck:b.ltDruck!==false,optRabatt:!!b.optRabatt,optLS:!!b.optLS});
   n.pos=b.pos.map(p=>({...p,id:uid(),herkunftPosId:''}));persist();go('beleg/'+n.id);
 }
 

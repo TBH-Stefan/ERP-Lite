@@ -218,6 +218,7 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
     <a href="#/belege/E" data-n="belege/E">Einkauf</a>
     <a href="#/verrechnung" data-n="verrechnung">Zu verrechnen</a>
     <a href="#/auftraege" data-n="auftraege">Aufträge &amp; DB II</a>
+    <a href="#/kosten" data-n="kosten">Laufende Kosten</a>
     <a href="#/zeiten" data-n="zeiten">Zeiterfassung</a>
     <div class="grp">Stammdaten</div>
     <a href="#/kontakte" data-n="kontakte">Kunden &amp; Lieferanten</a>
@@ -329,7 +330,7 @@ const steuerDef=c=>S().steuer.find(s=>s.code===c)||{code:c,satz:0,bez:c,hinweis:
 const opt=(v,t,sel)=>`<option value="${esc(v)}"${String(v)===String(sel)?' selected':''}>${esc(t)}</option>`;
 function log(aktion,info){DB.log.push({ts:new Date().toISOString(),aktion,info})}
 /* Papierkorb: Gelöschtes bleibt wiederherstellbar (Rückgängig) */
-const PK={artikel:{n:'Artikel',info:a=>`${a.nr} ${a.bez}`},kontakte:{n:'Kontakt',info:k=>`${k.nr} ${k.name}`},belege:{n:'Belegentwurf',info:b=>`${T[b.typ]?.bez} ${kName(b.kontaktId)} ${dAT(b.datum)}`},zeiten:{n:'Zeiteintrag',info:z=>`${dAT(z.datum)} ${fmtQ(z.stunden)} h ${z.text||''}`}};
+const PK={artikel:{n:'Artikel',info:a=>`${a.nr} ${a.bez}`},kontakte:{n:'Kontakt',info:k=>`${k.nr} ${k.name}`},belege:{n:'Belegentwurf',info:b=>`${T[b.typ]?.bez} ${kName(b.kontaktId)} ${dAT(b.datum)}`},kosten:{n:'Kostenposition',info:k=>`${k.bez} ${k.partner||''}`.trim()},zeiten:{n:'Zeiteintrag',info:z=>`${dAT(z.datum)} ${fmtQ(z.stunden)} h ${z.text||''}`}};
 function wegwerfen(c,objs){ // c: Sammlung in DB; Einträge entfernen, im Papierkorb ablegen, protokollieren
   const ids=new Set(objs.map(o=>o.id)),ts=new Date().toISOString(),neu=[];
   DB[c]=DB[c].filter(o=>!ids.has(o.id));
@@ -388,7 +389,7 @@ function neueDB(){
       nk,texte,knr:{K:10000,L:70000},anr:0,
       spalten:{},artgruppen:[],lagerplaetze:[],zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,papier:'A4',lvnr:0
     },
-    kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],fibu:fibuNeu(),log:[],papierkorb:[]
+    kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],kosten:[],fibu:fibuNeu(),log:[],papierkorb:[]
   };
 }
 // Firmendaten laut Briefpapier (Fußzeile der Vorlagen); füllen nur leere Felder
@@ -400,6 +401,7 @@ function migrate(d){
   for(const k in n.settings.firma)if(d.settings.firma[k]===undefined)d.settings.firma[k]=n.settings.firma[k];
   for(const k in FIRMA_TBH)if(!d.settings.firma[k])d.settings.firma[k]=FIRMA_TBH[k];
   for(const t in T){if(!d.settings.nk[t])d.settings.nk[t]={prefix:t,zaehler:{}};if(!d.settings.texte[t])d.settings.texte[t]={kopf:'',fuss:''}}
+  if(d.fibu&&(d.fibu.kv||1)<2){for(const[nr,bez,kz]of KONTEN_STD)if(!d.fibu.konten.some(k=>k.nr===nr))d.fibu.konten.push({nr,bez,kz:kz||''});d.fibu.konten.sort((a,c)=>a.nr.localeCompare(c.nr));d.fibu.kv=2} // neue Standardkonten (Nebenkosten, Abgaben) einmalig ergänzen
   return d;
 }
 function nextNr(typ,datum){
@@ -429,7 +431,7 @@ function undoBtn(){const e=document.getElementById('undobtn');if(e){e.disabled=!
 // Was unterscheidet zwei Stände? (für den Hinweis)
 function aenderungText(a,b){
   for(const[k,n]of[['lagerplaetze','Lagerplätze'],['artgruppen','Artikelgruppen']])if(JSON.stringify(a.settings?.[k])!==JSON.stringify(b.settings?.[k]))return n;
-  const L=[['belege','Beleg',x=>bNr(x)],['artikel','Artikel',x=>x.nr+' '+x.bez],['kontakte','Kontakt',x=>x.name],['lager','Lagerbuchung',()=>''],['zeiten','Zeiterfassung',()=>''],['kalk','K-Blatt',x=>x.bez||x.name||''],['lv','LV',x=>x.bez||x.name||''],['lvbib','Textbaustein',x=>x.bez||x.kurz||''],['papierkorb','Papierkorb',()=>'']];
+  const L=[['belege','Beleg',x=>bNr(x)],['artikel','Artikel',x=>x.nr+' '+x.bez],['kontakte','Kontakt',x=>x.name],['lager','Lagerbuchung',()=>''],['zeiten','Zeiterfassung',()=>''],['kalk','K-Blatt',x=>x.bez||x.name||''],['lv','LV',x=>x.bez||x.name||''],['lvbib','Textbaustein',x=>x.bez||x.kurz||''],['kosten','Laufende Kosten',x=>x.bez||''],['papierkorb','Papierkorb',()=>'']];
   for(const[k,n,f]of L){const A=a[k]||[],B=b[k]||[];if(JSON.stringify(A)===JSON.stringify(B))continue;
     const m=new Map(A.map(x=>[x.id,JSON.stringify(x)])),bi=new Set(B.map(x=>x.id));
     const x=B.find(x=>m.get(x.id)!==JSON.stringify(x))||A.find(x=>!bi.has(x.id));let t='';try{t=x?f(x):''}catch(e){}return(n+' '+(t||'')).trim()}
@@ -627,7 +629,7 @@ function loginHinweis(){for(const e of [$('#savestate'),$('#sync2')])if(e){e.sty
 /* Zusammenführen, wenn auf einem anderen Gerät zwischenzeitlich gespeichert wurde (3-Wege-Abgleich je Datensatz) */
 function merge3(base,local,remote){
   const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b),konfl=[],out=remote;
-  for(const c of ['kontakte','artikel','belege','lager','zeiten','kalk','lv','lvbib','papierkorb']){
+  for(const c of ['kontakte','artikel','belege','lager','zeiten','kalk','lv','lvbib','kosten','papierkorb']){
     out[c]=out[c]||[];
     const B=new Map((base?.[c]||[]).map(x=>[x.id,x])),R=new Map(out[c].map(x=>[x.id,x]));
     for(const l of local[c]||[]){
@@ -1081,6 +1083,7 @@ V.dash=()=>{
     <div class="kpi click" onclick="nav('auftraege')" title="Aufträge &amp; DB II">DB II Aufträge ${j}<b>${fmt(db)} € ${u2?dbTag(db/u2):''}</b></div>
     <div class="kpi click" onclick="zuListe('V','','offenRe')" title="Offene Rechnungen im Verkauf">Offene Forderungen<b>${fmt(ford)} €</b><span class="${ueber.length?'err':'mut'}" ${ueber.length?`onclick="event.stopPropagation();zuListe('V','','ueber')" title="Überfällige Rechnungen" style="text-decoration:underline"`:''}>${ueber.length} überfällig</span></div>
     <div class="kpi click" onclick="zuListe('E','','offenRe')" title="Offene Rechnungen im Einkauf">Offene Verbindlichkeiten<b>${fmt(verb)} €</b></div>
+    ${(()=>{const x=kostenStand();return`<div class="kpi click" onclick="nav('kosten')" title="Laufende Kosten">Laufende Kosten / Monat<b>${fmt(x.mon)} €</b><span class="${x.ueber.length?'err':'mut'}">${x.ueber.length?x.ueber.length+' fällig zu buchen ('+fmt(sum(x.ueber,y=>y.k.betrag))+' €)':'nichts fällig'}</span></div>`})()}
     <div class="kpi click" onclick="nav('verrechnung')">Noch zu verrechnen (EK)<b>${fmt(sum(wv,x=>x.offen*(+x.p.ep||+x.p.ek||0)))} €</b><span class="mut">${new Set(wv.map(x=>x.b.id)).size} Wareneingänge</span></div>
     <div class="kpi click" onclick="zuListe('V','AN','offen')" title="Offene Angebote im Verkauf">Offene Angebote<b>${fmt(sum(ang,b=>summen(b).netto))} €</b><span class="mut">${ang.length} Stück</span></div>
   </div>
@@ -1591,6 +1594,107 @@ function zeitenInPos(b,zt){
 }
 
 /* ---------- Zeiterfassung ---------- */
+/* ---------- Laufende Kosten: Nebenkosten, Versicherungen, Miete, Energie, Kfz, Beratung, Kammer, Steuern & Abgaben ----------
+   Register wiederkehrender Zahlungen (DB.kosten), Fälligkeiten, Kündigungstermine, Buchung in die FiBu (manuelle Buchung mit kostenId/termin);
+   Buchungshilfen für Lohn (Lohnjournal), USt-Zahllast und Zahlungen an Finanzamt / ÖGK / Gemeinde über Verrechnungskonten. */
+const KKAT={vers:['Versicherungen','7700'],miete:['Miete & Betriebskosten','7400'],energie:['Energie','7420'],kfz:['Kfz & Leasing','7320'],tel:['Telefon, Internet & IT','7380'],
+  berat:['Steuerberatung & Recht','7750'],beitr:['Kammer, Beiträge & Gebühren','7780'],abg:['Steuern & Abgaben','8500'],sv:['Sozialversicherung','6500'],bank:['Bank & Zahlungsverkehr','7790'],werb:['Werbung','7650'],sonst:['Sonstiges','7890']};
+const KINT={M:['monatlich',1],Q:['vierteljährlich',3],H:['halbjährlich',6],J:['jährlich',12],E:['einmalig',0]};
+const KV={fa:'3540',sv:'3600',gem:'3610',lohn:'3620',db:'6560',dz:'6570',ks:'6580',sozDG:'6500'};
+const addMon=(iso,m)=>{const[y,mo,d]=iso.split('-').map(Number),t=new Date(Date.UTC(y,mo-1+m,1)),l=new Date(Date.UTC(t.getUTCFullYear(),t.getUTCMonth()+1,0)).getUTCDate();return`${t.getUTCFullYear()}-${String(t.getUTCMonth()+1).padStart(2,'0')}-${String(Math.min(d,l)).padStart(2,'0')}`};
+const kMonat=k=>KINT[k.intervall]?.[1]?(+k.betrag||0)/KINT[k.intervall][1]:0;
+function kTermine(k,bis){const o=[],n=KINT[k.intervall]?.[1]||0;if(!k.ab)return o;for(let i=0,d=k.ab;d<=bis&&(!k.bis||d<=k.bis)&&i<600;i++,d=addMon(k.ab,n*i)){o.push(d);if(!n)break}return o}
+const kGebucht=(k,d)=>{const id=k.gebucht?.[d];return!!id&&FB().buchungen.some(m=>m.id===id&&!m.storno)};
+const kKuend=k=>k.bis&&+k.kuendFrist?addMon(k.bis,-(+k.kuendFrist)):''; // letzter Kündigungstermin
+const kKonto=k=>k.konto||KKAT[k.kat]?.[1]||'7890';
+function kostenStand(bisTage=45){const heute=isoD(),bis=addDays(heute,bisTage),akt=(DB.kosten||[]).filter(k=>k.aktiv!==false),offen=[];
+  for(const k of akt)for(const d of kTermine(k,bis))if(d>=(k.buchenAb||'')&&!kGebucht(k,d))offen.push({k,d});
+  offen.sort((a,c)=>a.d.localeCompare(c.d));return{akt,offen,ueber:offen.filter(x=>x.d<=heute),mon:r2(sum(akt,kMonat))}}
+function kostenBuchen(k,termin,betrag,datum){const fb=FB(),d=datum||termin;if(fb.sperre&&d<=fb.sperre){alert('Periode bis '+dAT(fb.sperre)+' ist gesperrt.');return false}
+  const m={id:uid(),datum:d,beleg:k.vertragNr||'',text:`${k.bez}${k.partner?' – '+k.partner:''}`,soll:kKonto(k),haben:k.gegen||fb.map.bank,betrag:r2(betrag??k.betrag),stArt:k.stArt||'',satz:k.stArt?+k.satz||0:0,kostenId:k.id,termin,erfasst:new Date().toISOString()};
+  fb.buchungen.push(m);(k.gebucht=k.gebucht||{})[termin]=m.id;log('Kosten gebucht',`${dAT(d)} ${m.text} ${fmt(m.betrag)}`);return true}
+// offener Betrag eines Verrechnungs-/Verbindlichkeitskontos (Haben − Soll) bis heute
+const kontoOffen=nr=>{let x=0;const h=isoD();for(const e of journal())if(e.datum<=h){if(e.haben===nr)x+=e.betrag;if(e.soll===nr)x-=e.betrag}return r2(x)};
+async function kostenDialog(k){const neu=!k;k=k||{};const fb=FB();
+  const o=await formDialog({titel:neu?'Neue Kostenposition':'Kostenposition bearbeiten',ok:neu?'Anlegen':'Speichern',breit:true,felder:[
+    {k:'bez',l:'Bezeichnung (z. B. Betriebshaftpflicht, Büromiete, Strom)',wert:k.bez||'',cls:'w2',pflicht:true},{k:'kat',l:'Kategorie',wert:k.kat||'vers',opts:Object.entries(KKAT).map(([a,[b]])=>[a,b])},
+    {k:'partner',l:'Partner (Versicherung, Vermieter, Behörde …)',wert:k.partner||'',cls:'w2',neu:1},{k:'vertragNr',l:'Vertrags-/Polizzen-/Steuer-Nr.',wert:k.vertragNr||''},
+    {k:'betrag',l:'Betrag je Zahlung (Zahlbetrag)',typ:'number',wert:k.betrag??'',pflicht:true,neu:1},{k:'intervall',l:'Intervall',wert:k.intervall||'M',opts:Object.entries(KINT).map(([a,[b]])=>[a,b])},
+    {k:'ab',l:'Erste Fälligkeit',typ:'date',wert:k.ab||isoD()},{k:'bis',l:'Laufzeit bis (leer = unbefristet)',typ:'date',wert:k.bis||''},{k:'kuendFrist',l:'Kündigungsfrist (Monate)',typ:'number',wert:k.kuendFrist||''},
+    {k:'stArt',l:'Vorsteuer',wert:k.stArt||'',opts:[['','keine (Versicherung, Abgaben, Gebühren, Miete ohne USt)'],['VSt','Vorsteuer abziehbar (Rechnung mit USt)']],neu:1},{k:'satz',l:'USt %',typ:'number',wert:k.satz??20},
+    {k:'konto',l:'Aufwandskonto',wert:k.konto||'',opts:[['','automatisch nach Kategorie'],...fb.konten.map(x=>[x.nr,x.nr+' '+x.bez])],neu:1},
+    {k:'gegen',l:'Bezahlt über',wert:k.gegen||'',opts:[['','Bank'],['2700','Kassa'],[KV.fa,'Verrechnung Finanzamt (Abgabenkonto)'],[KV.sv,'Verrechnung Sozialversicherung'],[KV.gem,'Verrechnung Gemeinde']]},
+    {k:'buchenAb',l:'Fälligkeiten buchen ab',typ:'date',wert:k.buchenAb||isoD().slice(0,8)+'01'},
+    {k:'notiz',l:'Notiz (Deckung, Ansprechperson …)',wert:k.notiz||'',cls:'w2',neu:1},{k:'aktiv',l:'aktiv',typ:'checkbox',wert:k.aktiv!==false}]});
+  if(!o)return;if(!(o.betrag>0)){alert('Bitte einen Betrag größer 0 angeben.');return}
+  if(neu){k={id:uid(),gebucht:{},...o};DB.kosten.push(k);log('Kostenposition angelegt',`${k.bez} ${fmt(k.betrag)} ${KINT[k.intervall][0]}`)}else{Object.assign(k,o);log('Kostenposition geändert',k.bez)}
+  commit();render()}
+// Lohnbuchung aus dem Lohnjournal (Lohnverrechnung extern)
+async function lohnBuchung(){const fb=FB(),vm=addDays(isoD().slice(0,8)+'01',-1);
+  const o=await formDialog({titel:'Lohnbuchung (Monat laut Lohnjournal)',ok:'Buchen',breit:true,felder:[
+    {k:'datum',l:'Monatsletzter',typ:'date',wert:vm},{k:'konto',l:'Konto',wert:'6200',opts:[['6200','6200 Gehälter'],['6000','6000 Löhne']]},{k:'beleg',l:'Beleg (z. B. Lohnjournal 09/2026)',wert:'Lohnjournal '+vm.slice(5,7)+'/'+vm.slice(0,4)},
+    {k:'brutto',l:'Bruttobezüge',typ:'number',wert:'',neu:1,pflicht:true},{k:'svdn',l:'SV Dienstnehmer',typ:'number',wert:''},{k:'lst',l:'Lohnsteuer',typ:'number',wert:''},
+    {k:'svdg',l:'SV Dienstgeber (inkl. BV)',typ:'number',wert:'',neu:1},{k:'db',l:'DB',typ:'number',wert:''},{k:'dz',l:'DZ',typ:'number',wert:''},{k:'ks',l:'Kommunalsteuer',typ:'number',wert:''}]});
+  if(!o)return;const netto=r2(o.brutto-o.svdn-o.lst);if(netto<0){alert('Abzüge größer als Bruttobezüge.');return}
+  if(fb.sperre&&o.datum<=fb.sperre){alert('Periode gesperrt.');return}
+  const B=[[o.konto,KV.sv,o.svdn,'SV Dienstnehmer'],[o.konto,KV.fa,o.lst,'Lohnsteuer'],[o.konto,KV.lohn,netto,'Nettobezüge'],[KV.sozDG,KV.sv,o.svdg,'SV Dienstgeber'],[KV.db,KV.fa,o.db,'DB'],[KV.dz,KV.fa,o.dz,'DZ'],[KV.ks,KV.gem,o.ks,'Kommunalsteuer']].filter(x=>+x[2]>0);
+  if(!confirm(`Lohnbuchung ${o.beleg}:\n\n${B.map(([s,h,b,t])=>`${s} an ${h}  ${fmt(b)}  ${t}`).join('\n')}\n\nBuchen?`))return;
+  for(const[soll,haben,b,t]of B)fb.buchungen.push({id:uid(),datum:o.datum,beleg:o.beleg,text:`${t} ${o.beleg}`,soll,haben,betrag:r2(b),stArt:'',satz:0,lohn:true,erfasst:new Date().toISOString()});
+  log('Lohnbuchung',`${o.beleg}: brutto ${fmt(o.brutto)}, netto ${fmt(netto)}`);commit();render()}
+// USt-Zahllast: Umsatzsteuer und Vorsteuer des Zeitraums auf das Abgabenkonto umbuchen
+async function uvaZahllast(){const fb=FB(),M=fb.map,h=isoD(),vm=addDays(h.slice(0,8)+'01',-1);
+  const o=await formDialog({titel:'USt-Zahllast umbuchen (UVA)',ok:'Umbuchen',felder:[{k:'jahr',l:'Jahr',wert:vm.slice(0,4)},{k:'zr',l:'Zeitraum',wert:vm.slice(5,7),opts:[...MONATE.map((m,i)=>[String(i+1).padStart(2,'0'),m]),...['Q1','Q2','Q3','Q4'].map(q=>[q,q])]}]});
+  if(!o)return;const j=o.jahr,a=o.zr.startsWith('Q')?(+o.zr[1]-1)*3+1:+o.zr,e=o.zr.startsWith('Q')?a+2:a,von=`${j}-${String(a).padStart(2,'0')}-01`,bis=addDays(addMon(`${j}-${String(e).padStart(2,'0')}-01`,1),-1),lbl=`${o.zr}/${j}`;
+  if(fb.buchungen.some(m=>m.uva&&m.uvaZr===lbl&&!m.storno)){alert('Für '+lbl+' wurde die Zahllast bereits umgebucht.');return}
+  let ust=0,vst=0;for(const x of journal())if(!x.uvaUmb&&x.datum>=von&&x.datum<=bis){if(x.haben===M.ust)ust+=x.betrag;if(x.soll===M.ust)ust-=x.betrag;if(x.soll===M.vst)vst+=x.betrag;if(x.haben===M.vst)vst-=x.betrag}
+  ust=r2(ust);vst=r2(vst);
+  if(!confirm(`UVA ${lbl} (${dAT(von)}–${dAT(bis)}):\nUmsatzsteuer ${fmt(ust)} €\nVorsteuer ${fmt(vst)} €\n${ust-vst>=0?'Zahllast':'Gutschrift'} ${fmt(Math.abs(ust-vst))} €\n\nAuf ${KV.fa} Verrechnung Finanzamt umbuchen?`))return;
+  const add=(soll,haben,b,t)=>{if(Math.abs(b)<0.005)return;if(b<0)[soll,haben,b]=[haben,soll,-b];fb.buchungen.push({id:uid(),datum:bis,beleg:'UVA '+lbl,text:t+' '+lbl,soll,haben,betrag:r2(b),stArt:'',satz:0,uva:true,uvaZr:lbl,erfasst:new Date().toISOString()})};
+  add(M.ust,KV.fa,ust,'Umsatzsteuer UVA');add(KV.fa,M.vst,vst,'Vorsteuer UVA');
+  log('USt-Zahllast umgebucht',`${lbl}: ${fmt(ust-vst)}`);commit();render()}
+// Zahlung an Finanzamt / ÖGK / Gemeinde / Nettolöhne
+async function abgabeZahlen(){const fb=FB(),K=[[KV.fa,'Finanzamt (Abgabenkonto)'],[KV.sv,'Sozialversicherung (ÖGK)'],[KV.gem,'Gemeinde (Kommunalsteuer)'],[KV.lohn,'Nettolöhne an Mitarbeiter']];
+  const o=await formDialog({titel:'Zahlung von Abgaben / Löhnen',ok:'Buchen',breit:true,felder:[{k:'konto',l:'An',wert:KV.fa,opts:K.map(([nr,t])=>[nr,`${t} – offen ${fmt(kontoOffen(nr))} €`]),cls:'w2'},
+    {k:'datum',l:'Zahlungsdatum',typ:'date',wert:isoD(),neu:1},{k:'betrag',l:'Betrag (leer = offener Saldo)',typ:'number',wert:''},{k:'ueber',l:'Über',wert:fb.map.bank,opts:[[fb.map.bank,'Bank'],[fb.map.kassa,'Kassa']]},{k:'beleg',l:'Beleg / Zahlungsreferenz',wert:''}]});
+  if(!o)return;const b=r2(o.betrag||kontoOffen(o.konto));if(!(b>0)){alert('Kein offener Betrag.');return}if(fb.sperre&&o.datum<=fb.sperre){alert('Periode gesperrt.');return}
+  fb.buchungen.push({id:uid(),datum:o.datum,beleg:o.beleg,text:'Zahlung '+K.find(x=>x[0]===o.konto)[1],soll:o.konto,haben:o.ueber,betrag:b,stArt:'',satz:0,erfasst:new Date().toISOString()});
+  log('Abgabenzahlung',`${o.konto} ${fmt(b)}`);commit();render()}
+V.kosten=()=>{
+  const heute=isoD(),j=UI.kJahr||heute.slice(0,4),{akt,offen,ueber,mon}=kostenStand(),alle=DB.kosten||[];
+  const kuend=akt.filter(k=>{const t=kKuend(k);return t&&t>=heute&&t<=addDays(heute,90)});
+  const plan={},ist={};for(const k of akt)plan[k.kat]=(plan[k.kat]||0)+kTermine(k,j+'-12-31').filter(d=>d.startsWith(j)).length*(+k.betrag||0);
+  for(const m of FB().buchungen)if(m.kostenId&&!m.storno&&m.datum.startsWith(j)){const c=alle.find(x=>x.id===m.kostenId)?.kat||'sonst';ist[c]=(ist[c]||0)+m.betrag}
+  const jahre=[...new Set([heute.slice(0,4),...FB().buchungen.filter(m=>m.kostenId).map(m=>m.datum.slice(0,4))])].sort().reverse();
+  const naechste=k=>kTermine(k,addDays(heute,800)).find(d=>d>=heute&&!kGebucht(k,d))||'';
+  const zeile=x=>`<tr class="${x.d<=heute?'err':''}"><td>${dAT(x.d)}</td><td><a href="javascript:void 0" data-act="kedit" data-id="${x.k.id}">${esc(x.k.bez)}</a></td><td>${esc(x.k.partner||'')}</td><td>${esc(KKAT[x.k.kat]?.[0]||'')}</td><td class="n">${fmt(x.k.betrag)}</td><td>${kKonto(x.k)}</td><td><button class="s ${x.d<=heute?'p':''}" data-act="kbuch" data-id="${x.k.id}" data-d="${x.d}">Buchen</button></td></tr>`;
+  const reg=Object.entries(KKAT).map(([c,[n]])=>{const L=alle.filter(k=>k.kat===c);if(!L.length)return'';
+    return`<tr class="prjz"><td colspan="9"><b>${esc(n)}</b> <span class="mut">· ${fmt(sum(L.filter(k=>k.aktiv!==false),kMonat))} € / Monat · ${fmt(sum(L.filter(k=>k.aktiv!==false),kMonat)*12)} € / Jahr</span></td></tr>
+    ${L.map(k=>{const t=kKuend(k);return`<tr style="${k.aktiv===false?'opacity:.5':''}"><td><a href="javascript:void 0" data-act="kedit" data-id="${k.id}">${esc(k.bez)}</a>${k.notiz?`<br><span class="mut" style="font-size:12px">${esc(k.notiz)}</span>`:''}</td><td>${esc(k.partner||'')}${k.vertragNr?`<br><span class="mut" style="font-size:12px">${esc(k.vertragNr)}</span>`:''}</td>
+      <td>${KINT[k.intervall]?.[0]||''}</td><td class="n">${fmt(k.betrag)}${k.stArt?'<br><span class="mut" style="font-size:12px">inkl. '+fmtQ(k.satz)+' % USt</span>':''}</td><td class="n">${KINT[k.intervall]?.[1]?fmt(kMonat(k)):''}</td><td>${k.aktiv===false?'inaktiv':dAT(naechste(k))}</td>
+      <td>${k.bis?'bis '+dAT(k.bis):'unbefristet'}${t?`<br><span class="${t<=addDays(heute,90)?'err':'mut'}" style="font-size:12px">kündbar bis ${dAT(t)}</span>`:''}</td><td>${kKonto(k)} <span class="mut" style="font-size:12px">${esc(kontoBez(kKonto(k)))}</span></td>
+      <td style="white-space:nowrap"><button class="s" data-act="kedit" data-id="${k.id}" title="bearbeiten">✎</button><button class="s d" data-act="kdel" data-id="${k.id}" title="löschen">✕</button></td></tr>`}).join('')}`}).join('');
+  return`<div class="bar"><h1 style="margin:0">Laufende Kosten</h1><span class="sp"></span><button class="p" data-act="kneu">+ Kostenposition</button></div>
+  <p class="mut" style="margin-top:0">Versicherungen, Miete, Energie, Kfz/Leasing, Telefon/IT, Steuerberatung, Kammer, Steuern & Abgaben … einmal erfassen – Fälligkeiten und Kündigungstermine im Blick, Buchung in die Finanzbuchhaltung mit einem Klick.</p>
+  <div class="grid">
+    <div class="kpi">Laufende Kosten / Monat<b>${fmt(mon)} €</b><span class="mut">${fmt(mon*12)} € / Jahr · ${akt.length} Position(en)</span></div>
+    <div class="kpi">Fällig, noch nicht gebucht<b class="${ueber.length?'err':''}">${fmt(sum(ueber,x=>x.k.betrag))} €</b><span class="mut">${ueber.length} Zahlung(en)</span></div>
+    <div class="kpi">Nächste 45 Tage<b>${fmt(sum(offen.filter(x=>x.d>heute),x=>x.k.betrag))} €</b><span class="mut">${offen.filter(x=>x.d>heute).length} Zahlung(en)</span></div>
+    <div class="kpi">Offen an Finanzamt / ÖGK<b>${fmt(kontoOffen(KV.fa))} € / ${fmt(kontoOffen(KV.sv))} €</b><span class="mut">Saldo Verrechnungskonten</span></div>
+  </div>
+  <div class="card" style="overflow-x:auto"><h2>Fällig &amp; demnächst (45 Tage) ${ueber.length?`<button class="s p" data-act="kbuchalle" style="margin-left:8px">Alle fälligen buchen (${ueber.length})</button>`:''}</h2>
+    ${offen.length?`<table><thead><tr><th>Fällig</th><th>Kosten</th><th>Partner</th><th>Kategorie</th><th class="n">Betrag</th><th>Konto</th><th></th></tr></thead><tbody>${offen.map(zeile).join('')}</tbody></table>`:'<p class="mut">Nichts fällig.</p>'}</div>
+  ${kuend.length?`<div class="card"><h2>⚠ Kündigungstermine (90 Tage)</h2><table>${kuend.map(k=>`<tr><td>${dAT(kKuend(k))}</td><td><a href="javascript:void 0" data-act="kedit" data-id="${k.id}">${esc(k.bez)}</a></td><td>${esc(k.partner||'')}</td><td>Laufzeit bis ${dAT(k.bis)}, Frist ${k.kuendFrist} Monat(e)</td></tr>`).join('')}</table></div>`:''}
+  <div class="card"><h2>Abgaben &amp; Löhne buchen</h2><p class="mut" style="margin-top:0">Über Verrechnungskonten: Vorschreibung bzw. Lohnjournal buchen, später die Zahlung – der Saldo entspricht dann dem Abgabenkonto (FinanzOnline) bzw. dem Beitragskonto der ÖGK.</p>
+    <div class="bar" style="flex-wrap:wrap"><button data-act="klohn">👥 Lohnbuchung (Monat)</button><button data-act="kuva">🧾 USt-Zahllast umbuchen (UVA)</button><button data-act="kabg">🏦 Zahlung Finanzamt / ÖGK / Gemeinde / Löhne</button></div>
+    <table style="margin-top:8px">${[[KV.fa,'Verrechnung Finanzamt'],[KV.sv,'Verrechnung Sozialversicherung'],[KV.gem,'Verrechnung Gemeinde'],[KV.lohn,'Nettolöhne (noch auszuzahlen)']].map(([nr,t])=>`<tr><td>${nr} ${t}</td><td class="n">${fmt(kontoOffen(nr))} €</td></tr>`).join('')}</table></div>
+  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Kostenposition</th><th>Partner / Vertrag</th><th>Intervall</th><th class="n">Betrag</th><th class="n">je Monat</th><th>Nächste</th><th>Laufzeit</th><th>Konto</th><th></th></tr></thead><tbody>
+    ${reg||'<tr><td colspan="9" class="mut">Noch keine Kostenpositionen – mit „+ Kostenposition“ anlegen (z. B. Betriebshaftpflicht, Kfz-Versicherung, Büromiete, Strom, Telefon, Steuerberater, WKO-Grundumlage, KöSt-Vorauszahlung).</td></tr>'}</tbody></table></div>
+  <div class="card"><h2>Jahresübersicht <select data-o="ui" data-f="kJahr" style="width:auto;margin-left:8px">${jahre.map(x=>opt(x,x,j)).join('')}</select></h2>
+    <table><thead><tr><th>Kategorie</th><th class="n">Plan ${j} (Register)</th><th class="n">Gebucht ${j}</th><th class="n">Differenz</th></tr></thead><tbody>
+    ${Object.entries(KKAT).filter(([c])=>plan[c]||ist[c]).map(([c,[n]])=>`<tr><td>${esc(n)}</td><td class="n">${fmt(plan[c]||0)}</td><td class="n">${fmt(ist[c]||0)}</td><td class="n">${fmt((plan[c]||0)-(ist[c]||0))}</td></tr>`).join('')||'<tr><td colspan="4" class="mut">keine</td></tr>'}</tbody>
+    <tfoot><tr><td>Summe</td><td class="n">${fmt(sum(Object.values(plan),x=>x))}</td><td class="n">${fmt(sum(Object.values(ist),x=>x))}</td><td></td></tr></tfoot></table>
+    <p class="mut" style="font-size:12px;margin:6px 0 0">Beträge = Zahlbeträge (bei Vorsteuer brutto). Die Buchungen erscheinen im Journal der Finanzbuchhaltung und in der GuV.</p></div>`;
+};
 V.zeiten=()=>{
   const L=[...DB.zeiten].sort((a,c)=>c.datum.localeCompare(a.datum)).slice(0,300);
   const auf=auftragsListe().filter(a=>!a.docs.every(d=>d.storno));
@@ -2337,17 +2441,17 @@ const ACT_LB={
    österreichischen Einheitskontenrahmen – mit dem Steuerberater abstimmen.
    ===================================================================== */
 const KONTEN_STD=[
-  ['0600','Betriebs- und Geschäftsausstattung'],['0630','PKW'],['1600','Handelswarenvorrat'],
+  ['0600','Betriebs- und Geschäftsausstattung'],['0630','PKW'],['0810','Beteiligungen'],['1600','Handelswarenvorrat'],
   ['2000','Lieferforderungen'],['2500','Vorsteuer','060'],['2700','Kassa'],['2800','Bank'],['2890','Geldverrechnung'],
-  ['3200','Erhaltene Anzahlungen'],['3300','Lieferverbindlichkeiten'],['3500','Umsatzsteuer'],['3540','Verrechnung Finanzamt'],['3600','Verrechnung Sozialversicherung'],
+  ['3200','Erhaltene Anzahlungen'],['3300','Lieferverbindlichkeiten'],['3500','Umsatzsteuer'],['3540','Verrechnung Finanzamt'],['3600','Verrechnung Sozialversicherung'],['3610','Verrechnung Gemeinde (Kommunalsteuer)'],['3620','Verbindlichkeiten Löhne/Gehälter (netto)'],
   ['4000','Erlöse 20 %','022'],['4010','Erlöse 10 %','029'],['4020','Erlöse 13 %','006'],['4050','Erlöse steuerfrei',''],['4060','Erlöse Reverse Charge (§ 19 UStG)',''],['4070','Erlöse ig. Lieferungen','017'],['4400','Erlösschmälerungen / Kundenskonti'],
   ['5000','Wareneinsatz'],['5800','Fremdleistungen'],['5880','Lieferantenskonti'],
-  ['6000','Löhne'],['6200','Gehälter'],['6500','Gesetzlicher Sozialaufwand'],
-  ['7000','Abschreibungen'],['7200','Instandhaltung'],['7320','Kfz-Aufwand'],['7380','Telefon / Internet'],['7400','Miete'],['7600','Büromaterial'],['7700','Versicherungen'],['7750','Rechts- und Beratungsaufwand'],['7790','Spesen des Geldverkehrs'],['7890','Sonstiger betrieblicher Aufwand'],
-  ['8100','Zinserträge'],['8280','Zinsen und ähnliche Aufwendungen'],['8500','Körperschaftsteuer'],
+  ['6000','Löhne'],['6200','Gehälter'],['6500','Gesetzlicher Sozialaufwand'],['6560','Dienstgeberbeitrag (DB)'],['6570','Zuschlag zum DB (DZ)'],['6580','Kommunalsteuer'],
+  ['7000','Abschreibungen'],['7200','Instandhaltung'],['7320','Kfz-Aufwand'],['7340','Leasing'],['7380','Telefon / Internet'],['7390','Software / IT-Dienste'],['7400','Miete'],['7410','Betriebskosten (Miete)'],['7420','Energie (Strom, Gas, Heizung)'],['7600','Büromaterial'],['7650','Werbung'],['7700','Versicherungen'],['7750','Rechts- und Beratungsaufwand'],['7780','Kammer- und Mitgliedsbeiträge'],['7785','Gebühren und Abgaben'],['7790','Spesen des Geldverkehrs'],['7880','Nicht abzugsfähige Aufwendungen (Säumniszuschläge, Strafen)'],['7890','Sonstiger betrieblicher Aufwand'],
+  ['8100','Zinserträge'],['8280','Zinsen und ähnliche Aufwendungen'],['8300','Erträge aus dem Abgang von Finanzanlagen'],['8350','Aufwand aus dem Abgang von Finanzanlagen'],['8500','Körperschaftsteuer'],
   ['9000','Stammkapital'],['9390','Ergebnisvortrag'],['9800','Eröffnungsbilanzkonto'],
 ];
-function fibuNeu(){return{konten:KONTEN_STD.map(([nr,bez,kz])=>({nr,bez,kz:kz||''})),buchungen:[],sperre:'',
+function fibuNeu(){return{konten:KONTEN_STD.map(([nr,bez,kz])=>({nr,bez,kz:kz||''})),buchungen:[],sperre:'',kv:2,
   map:{ford:'2000',verb:'3300',ust:'3500',vst:'2500',bank:'2800',kassa:'2700',verr:'2890',anz:'3200',kdSkonto:'4400',liefSkonto:'5880',
     erl:{'20':'4000','10':'4010','13':'4020','0':'4050','RC':'4060','IGL':'4070'},aufw:{W:'5000',F:'5800',L:'5800'}}}}
 const FB=()=>DB.fibu||(DB.fibu=fibuNeu());
@@ -2387,7 +2491,7 @@ function fibuAuto(){
 function fibuManuell(){
   const M=FB().map,out=[];
   for(const m of FB().buchungen){
-    const st=+m.satz||0,br=r2(+m.betrag||0),base={datum:m.datum,beleg:m.beleg,text:m.text+(m.storno?' (storniert)':''),ref:m.id,manuell:true};
+    const st=+m.satz||0,br=r2(+m.betrag||0),base={datum:m.datum,beleg:m.beleg,text:m.text+(m.storno?' (storniert)':''),ref:m.id,manuell:true,uvaUmb:!!m.uva};
     const push=(soll,haben,b)=>{if(Math.abs(b)<0.005)return;out.push({...base,soll,haben,betrag:r2(b)});if(m.storno)out.push({...base,datum:m.stornoDatum||m.datum,text:'Storno '+m.text,soll:haben,haben:soll,betrag:r2(b)})};
     if(m.stArt&&st){const net=r2(br/(1+st/100)),tax=r2(br-net);
       if(m.stArt==='VSt'){push(m.soll,m.haben,net);push(M.vst,m.haben,tax)}else{push(m.soll,m.haben,net);push(m.soll,M.ust,tax)}}
@@ -2453,7 +2557,7 @@ V.fibu=()=>{
     </tbody><tfoot><tr><td colspan="3">Summen (Soll = Haben)</td><td class="n">${fmt(sum(nrs,n=>S_[n].soll))}</td><td class="n">${fmt(sum(nrs,n=>S_[n].haben))}</td><td></td></tr></tfoot></table></div>`;
   }
   if(tab==='uva'){
-    const S_=salden(J,z.von,z.bis),mv=nr=>S_[nr]?r2(S_[nr].haben-S_[nr].soll):0,M=fb.map;
+    const S_=salden(J.filter(e=>!e.uvaUmb),z.von,z.bis),mv=nr=>S_[nr]?r2(S_[nr].haben-S_[nr].soll):0,M=fb.map;
     const erl=fb.konten.filter(k=>k.nr[0]==='4'&&S_[k.nr]);
     const ust=mv(M.ust),vst=-mv(M.vst);
     body=`<div class="bar">${filt}<span class="mut">Zeitraum ${dAT(z.von)} – ${dAT(z.bis)}</span></div>
@@ -3663,6 +3767,14 @@ const ACT={
   wechseln:()=>{if(pending&&!confirm('Nicht gespeicherte Änderungen gehen verloren. Fortfahren?'))return;lsSet('erp-modus',null);location.hash='';location.reload()},
   attopen:async el=>{const a=curBeleg().anhaenge[+el.dataset.i];try{await STORE.openFile(a)}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
   attdel:el=>{const b=curBeleg(),a=b.anhaenge[+el.dataset.i];if(!confirm(`Verknüpfung zu „${a.name}“ entfernen?\n(Die Datei selbst bleibt im Speicherort erhalten.)`))return;b.anhaenge.splice(+el.dataset.i,1);log('Anhang entfernt',`${bNr(b)}: ${a.name}`);persist();render()},
+  kneu:()=>kostenDialog(),kedit:el=>kostenDialog(DB.kosten.find(k=>k.id===el.dataset.id)),
+  kdel:el=>{const k=DB.kosten.find(x=>x.id===el.dataset.id);if(!k||!confirm(`Kostenposition „${k.bez}“ löschen?\nBereits gebuchte Zahlungen bleiben in der Finanzbuchhaltung.`))return;wegwerfen('kosten',[k]);render()},
+  kbuch:async el=>{const k=DB.kosten.find(x=>x.id===el.dataset.id),d=el.dataset.d;if(!k)return;
+    const o=await formDialog({titel:`Buchen: ${k.bez}`,ok:'Buchen',felder:[{k:'datum',l:'Zahlungs-/Buchungsdatum',typ:'date',wert:d<=isoD()?d:isoD()},{k:'betrag',l:'Betrag (Zahlbetrag)',typ:'number',wert:k.betrag}]});
+    if(o&&o.betrag>0&&kostenBuchen(k,d,o.betrag,o.datum)){commit();render()}},
+  kbuchalle:()=>{const{ueber}=kostenStand();if(!ueber.length||!confirm(`${ueber.length} fällige Zahlung(en) mit dem Standardbetrag und Fälligkeitsdatum buchen?\n\n${ueber.map(x=>`${dAT(x.d)}  ${x.k.bez}  ${fmt(x.k.betrag)} €`).join('\n')}`))return;
+    let n=0;for(const x of ueber)if(kostenBuchen(x.k,x.d))n++;if(n){commit();render()}},
+  klohn:()=>lohnBuchung(),kuva:()=>uvaZahllast(),kabg:()=>abgabeZahlen(),
   btyp:el=>{UI[el.dataset.k+'Typ']=el.dataset.t;render()},
   qneu:el=>{const b=neuBeleg(el.dataset.t);persist();go('beleg/'+b.id)},
 };

@@ -35,7 +35,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 
 ## 2. Prinzip „umschaltbar und rückgängig“
 
-1. **Ein Ort für alle Schalter:** Einstellungen → neue Karte **„Erweiterungen“**. ✅ Grundgerüst umgesetzt (Commit 4094cd5): Karte mit Liste, Abweichungsanzeige und Zurücksetzen, `ERW`/`ERW_STD`/`erw()`, Pfad-Setter mit Zwischenobjekten und `data-t="b"`, `formDialog` mit `dis:true`; das Druckprofil folgt mit P1.
+1. **Ein Ort für alle Schalter:** Einstellungen → neue Karte **„Erweiterungen“**. ✅ Grundgerüst umgesetzt (Commit 4094cd5): Karte mit Liste, Abweichungsanzeige und Zurücksetzen, `ERW`/`ERW_STD`/`erw()`, Pfad-Setter mit Zwischenobjekten und `data-t="b"`, `formDialog` mit `dis:true`; Druckprofil ✅ mit P1 (Commit d5237b2).
    - **Funktionsschalter** liegen in `S().erw.<name>`. Die Vorgaben stehen in der Konstante `ERW_STD`, gelesen wird über `erw(k)=S().erw?.[k]??ERW_STD[k]`.
    - **Darstellungsoptionen (Druckprofil, einschließlich der Texte)** liegen getrennt davon in `S().druckprofil.<Belegart>.<name>`, die Vorgaben in `DRUCK_STD`. Je Beleg gibt es Abweichungen in `b.druck` und einen Schnappschuss in `b.druckFix` (siehe 3.).
    - **Werte, die keine Schalter sind** (z. B. die DEL-Notiz), bekommen eigene Einstellungen (`S().metall`). So löscht „Alle Schalter auf Standard“ keine Inhalte.
@@ -171,6 +171,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - § 14 UGB verlangt das Firmenbuchgericht.
 
 ### P1 – Druckprofil je Belegart (Grundgerüst)
+- **Stand:** ✅ umgesetzt (Commit d5237b2). Abweichungen vom Plan: Die Optionsliste heißt `DRUCKOPT` (`DRUCK` ist schon der Druck-Merker aus P0 b); Felder je Belegart über `nur`/`preis` (`dGilt()`). `preise`/`summen` stehen bereits in `DRUCK_STD` und werden bei `RE_V` über `DRUCK_RE` erzwungen, als Felder erscheinen sie erst mit P3. Der Knopf „Druckoptionen …“/„Druckformat …“ erscheint nur bei eingeschaltetem Schalter und vorhandenen Optionen, bei festgeschriebenen Belegen ist er gesperrt. Die Unterkarte speichert nur Abweichungen (Standardwert löscht den Schlüssel) und zeigt Hinweise widersprüchlicher Einstellungen (`warn`). `formDialog()` bekam Platzhalter, Zeichenzähler, Beschreibung, Hinweiszeilen, dritten Knopf und Bildlauf.
 - **Ziel:** Ein zentraler Ort für Darstellungsoptionen, verschieden je Belegart, je Beleg änderbar und beim Festschreiben eingefroren.
 - **ETU-Vorbild:** „Einstellungen: Druckvorschau Angebot“ mit den Reitern Drucker, Formular und Positionen; Knopf „Druckformat einstellen“ in der Vorschau.
 - **Heute:** Es gibt nur einzelne Schalter: `b.ltDruck`/`S().ltDruck`, `b.optRabatt`, `b.optLS`, `p.ohneEP`/`p.pauschal` und das Papierformat `S().papier`. Alles andere ist fest in `docHTML()` eingebaut. `drucken()`, `pdfAusBeleg()` und `vorschauSeiten()` bauen auf `docHTML()` auf, eine Änderung dort wirkt also in Vorschau, Druck und PDF.
@@ -193,6 +194,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - Bei Rechnungen lassen sich Gesamtpreise und Summenblock (Entgelt, Steuersatz, Steuerbetrag) nicht abschalten (§ 11 Abs. 1 Z 3 lit. e/f UStG). Einzelpreise verlangt das Gesetz nicht.
 
 ### P2 – Zusammenfassung der Titel und Gruppensummen
+- **Stand:** ✅ umgesetzt (Commit 2dc2fa0). `'immer'` = ab einer Gruppe; Options- und Alternativgruppen behalten bei `grpSumme='aus'` ihre Summe am Ende (sie fehlen in der Zusammenfassung); leere Beschriftung = Standard; „keine“ ohne Zusammenfassung ergibt im Dialog eine Rückfrage und in der Unterkarte einen Hinweis.
 - **Ziel:** Bei mehrseitigen Angeboten sieht der Kunde alle Gewerke-Summen auf einen Blick.
 - **ETU-Vorbild:**
   - Bild 8: Tabelle „Zusammenfassung:“ (1 Heizung / 2 Elektro / 3 Dienstleistung, Spalte „Gesamt €“) vor dem Summenblock.
@@ -319,6 +321,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Nutzen** mittel (Art.-Nr.-Spalte für Bestellungen, ETU-Spaltenbild) · **Aufwand** M–L · **Abhängig von:** P1, P0 j) · **Recht:** Menge und handelsübliche Bezeichnung (§ 11 Abs. 1 Z 3 lit. c UStG) bleiben bei Rechnungen in allen Varianten erhalten.
 
 ### P5 – Infoblock, Grußformel, Fußzeilen-Zusatz, Kostenvoranschlag
+- **Stand:** ✅ umgesetzt (Commit 7bca588). Beschriftung der Nummer je Belegart (`NRL`: Angebots-, Auftrags-, Rechnungs-, Gutschrift-, Bestell-Nr. …). Der KV-Text steht nach den Zahlungsbedingungen. Die Kundenart wird schon jetzt in `adressSnapshot()` gespeichert (Teil von P6), ältere festgeschriebene Belege lesen sie aus dem Kontakt. Zusatzzeile: 90 Zeichen gemischte Schreibung ≈ 320 pt, nur Großbuchstaben ≈ 414 pt (Abstand zur Seitenzahl dann noch ca. 10 pt im PDF, 13 pt im Druck); ab ca. 400 pt Breite erscheint ein Hinweis (`fzBreite()`), die Seitenzahl bleibt an ihrem Platz.
 - **ETU-Vorbild:**
   - Bild 9: Angebots-Nr. im Infoblock mit „Bei Rückfragen bitte angeben“ und „Bindefrist“.
   - Bild 8: „Mit freundlichen Grüßen“ und Firmenname; Fußzeile mit „Gerichtsstand Wels · Es gelten unsere AGB“; Nachtext zu Änderungen des Leistungsumfangs.
@@ -926,9 +929,9 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 
 **Stufe 1: schnell und mit hohem Nutzen (ca. 5–6 Tage)**
 1. P0 b)–n) Fehlerkorrekturen und Nachdruck-Treue (M) – ✅ b)–n) umgesetzt
-2. P1 Druckprofil-Grundgerüst (M)
-3. P2 Zusammenfassung der Titel und Gruppensummen (S)
-4. P5 Infoblock, Grußformel, Fußzeilen-Zusatz, Kostenvoranschlag (S)
+2. P1 Druckprofil-Grundgerüst (M) – ✅ umgesetzt (Commit d5237b2)
+3. P2 Zusammenfassung der Titel und Gruppensummen (S) – ✅ umgesetzt (Commit 2dc2fa0)
+4. P5 Infoblock, Grußformel, Fußzeilen-Zusatz, Kostenvoranschlag (S) – ✅ umgesetzt (Commit 7bca588)
 5. P14, nur der Teil „Prüfung beim Einlesen“ (behebt den 100-fach zu hohen EP) (S)
 6. P11, nur das Popup-Feld „Aufschlag %“ und der VK-Vorschlag bei EK-Änderung (S)
 7. P19 a/c/d: Zuletzt, Statuszeile, Markierung in der Seitenleiste (S)

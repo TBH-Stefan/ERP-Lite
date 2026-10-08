@@ -1441,6 +1441,8 @@ function posArtikelPopup(b,i){
         if(nr===nrV)s.anr++;A={id:uid(),nr,bez,gruppe:q('gruppe').dataset.wert||'',lagerplatz:'',text:'',art:q('art').value,einheit:q('einheit').value,einheiten:[],ek:0,vk:0,steuer:p.steuer||s.stdSteuer,lager:false,minBestand:0,lieferanten:[],aktiv:true};
         DB.artikel.push(A);log('Artikel angelegt',`${nr} ${bez} (aus ${bNr(b)})`)}
       Object.assign(p,{bez,text:q('text').value,art:q('art').value,einheit:q('einheit').value,ep:r2(n('ep')),rabatt:n('vrab'),ek:r2(n('hk')),einkauf:ein});
+      if(b.optLS&&!isInfo(p)){if(p.epL==null&&p.epS==null)p.epL=p.art==='L'?p.ep:0; // Lohn/Sonstiges: EP = Lohn + Sonstiges, Änderung geht auf Sonstiges (Lohn höchstens EP)
+        if(p.ep>=0&&+p.epL>p.ep)p.epL=p.ep;p.epS=r2(p.ep-(+p.epL||0))}
       if(+p.rabatt)b.optRabatt=true;
       if(stamm){Object.assign(A,{bez,text:p.text,art:p.art,einheit:p.einheit,ek:ein.ek});if(Math.abs(n('hk')-ein.ek)>0.005)A.hk=r2(n('hk'));else delete A.hk;if(vkSt)A.vk=p.ep;
         if(ein.lid){A.lieferanten=A.lieferanten||[];let l=A.lieferanten.find(x=>x.kontaktId===ein.lid);if(!l)A.lieferanten.push(l={kontaktId:ein.lid});Object.assign(l,{artNr:ein.artNr,lp:ein.lp,rabatt:ein.rabatt,ek:ein.ek,stand:isoD()})}

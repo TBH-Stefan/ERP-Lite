@@ -842,8 +842,8 @@ function zaehltUmsatz(b){return RE_V.includes(b.typ)&&b.fest&&!b.storno&&!(b.typ
 function kinderMenge(posId,typen){let m=0;for(const b of DB.belege){if(b.storno||!typen.includes(b.typ))continue;for(const p of b.pos)if(p.herkunftPosId===posId)m+=(+p.menge||0)}return m}
 function erledigung(b){
   const cat=b.typ==='BE'?['WE']:['LS'],cat2=b.typ==='BE'?['ER']:['RE','TR','SR'];
-  let soll=0,ist=0;
-  for(const p of b.pos){if(isInfo(p)||p.kz)continue;const m=+p.menge||0;soll+=m;ist+=Math.min(m,Math.max(kinderMenge(p.id,cat),kinderMenge(p.id,cat2)))}
+  let soll=0,ist=0;const gi=gruppenInfo(b); // Options-/Alternativpositionen (auch über die Gruppe) werden nicht geliefert
+  for(const p of b.pos){if(isInfo(p)||effKz(p,gi))continue;const m=+p.menge||0;soll+=m;ist+=Math.min(m,Math.max(kinderMenge(p.id,cat),kinderMenge(p.id,cat2)))}
   return soll?ist/soll:0;
 }
 function statusTag(b){
@@ -896,7 +896,7 @@ function bereitsGebucht(p,via,pm){
 }
 function lagerBeiFest(b){
   if(b.typ==='WE'&&b.lagerBuchen===false)return; // Direktlieferung auf Baustelle
-  const kand=b.pos.filter(p=>!isInfo(p)&&!p.kz&&artikel(p.artikelId)?.lager);
+  const gi=gruppenInfo(b),kand=b.pos.filter(p=>!isInfo(p)&&!effKz(p,gi)&&artikel(p.artikelId)?.lager); // Options-/Alternativpositionen (auch über die Gruppe) nicht buchen
   if(!kand.length)return;
   let dir=0,list=kand;
   if(b.typ==='LS')dir=-1;else if(b.typ==='WE')dir=1;
@@ -938,8 +938,9 @@ function folge(src,typ,extra={}){
   }
   const b=neuBeleg(typ,o);
   const cat={LS:['LS'],WE:['WE'],RE:['RE','TR','SR'],TR:['RE','TR','SR'],ER:['ER']}[typ];
+  const gi=gruppenInfo(src);
   for(const p of src.pos){
-    if(p.kz&&!(src.typ==='AN'&&['AB','PR'].includes(typ)))continue;
+    if(effKz(p,gi)&&!(src.typ==='AN'&&['AB','PR'].includes(typ)))continue; // Option/Alternative auch über die Gruppe; AN → AB/PR übernimmt alles
     if(typ==='BE'&&(p.art==='L'||isInfo(p)))continue;
     let menge=+p.menge||0;
     if(!isInfo(p)&&cat){menge=r3(menge-kinderMenge(p.id,cat));if(menge<=0)continue}

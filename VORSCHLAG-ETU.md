@@ -35,7 +35,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 
 ## 2. Prinzip „umschaltbar und rückgängig“
 
-1. **Ein Ort für alle Schalter:** Einstellungen → neue Karte **„Erweiterungen“**.
+1. **Ein Ort für alle Schalter:** Einstellungen → neue Karte **„Erweiterungen“**. ✅ Grundgerüst umgesetzt (Commit 4094cd5): Karte mit Liste, Abweichungsanzeige und Zurücksetzen, `ERW`/`ERW_STD`/`erw()`, Pfad-Setter mit Zwischenobjekten und `data-t="b"`, `formDialog` mit `dis:true`; das Druckprofil folgt mit P1.
    - **Funktionsschalter** liegen in `S().erw.<name>`. Die Vorgaben stehen in der Konstante `ERW_STD`, gelesen wird über `erw(k)=S().erw?.[k]??ERW_STD[k]`.
    - **Darstellungsoptionen (Druckprofil, einschließlich der Texte)** liegen getrennt davon in `S().druckprofil.<Belegart>.<name>`, die Vorgaben in `DRUCK_STD`. Je Beleg gibt es Abweichungen in `b.druck` und einen Schnappschuss in `b.druckFix` (siehe 3.).
    - **Werte, die keine Schalter sind** (z. B. die DEL-Notiz), bekommen eigene Einstellungen (`S().metall`). So löscht „Alle Schalter auf Standard“ keine Inhalte.
@@ -117,13 +117,13 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - **Kleinere Lücken:**
     - `duplizieren()` übernimmt `optLS`, `optRabatt` und `ltDruck` nicht.
     - `ACT.kbel` übernimmt nur das Zahlungsziel, und `+k.zahlungsziel||S().zahlungsziel` macht aus 0 Tagen den Standardwert. Skonto fehlt.
-  - **PDF-Tabellenkopf:** `pdfAusBeleg()` ordnet an zwei Stellen alles mit `closest('table.p thead')` dem Kopf zu: Flächen, Linien und Bilder sowie Text. Damit wird auch der Kopf der Optionen-Tabelle erfasst. Auf Folgeseiten der Haupttabelle (`s.off`) wird er verschoben um `y−thTop` gezeichnet und fehlt an seiner richtigen Stelle. Das ist aus dem Code gelesen und im Browser noch zu bestätigen.
+  - **PDF-Tabellenkopf:** `pdfAusBeleg()` ordnet an zwei Stellen alles mit `closest('table.p thead')` dem Kopf zu: Flächen, Linien und Bilder sowie Text. Damit wird auch der Kopf der Optionen-Tabelle erfasst. Auf Folgeseiten der Haupttabelle (`s.off`) wird er verschoben um `y−thTop` gezeichnet und fehlt an seiner richtigen Stelle. Das ist aus dem Code gelesen und im Browser noch zu bestätigen. *Bestätigt am 08.10.2026: Der Kopf der Optionen-Tabelle wurde auf Folgeseiten außerhalb der Seite gezeichnet und fehlte über der Tabelle.*
   - **Summenblock:** Im Druck gilt für `.tot` `break-inside:avoid`. `vorschauSeiten()` teilt aber die Zeilen jeder Tabelle, und die Umbruchliste `brk` in `pdfAusBeleg` enthält `tbody>tr`. Vorschau und PDF können den Summenblock deshalb teilen, der Druck nicht.
   - **Firmenbuchgericht:** `fussZeilen()` druckt es nur, wenn `f.gericht` gesetzt ist. `FIRMA_TBH` (Z. 396) enthält kein `gericht`.
   - **Zweitausfertigungen** von Rechnungen tragen keinen Vermerk (kein Treffer für „Duplikat“).
 - **Umsetzung** (jeder Buchstabe ein eigener Commit):
   - a) ✅ **Erledigt** (Commit 757b5ed, Namen `kpneu`/`kpedit`/`kpdel`). **Aktionen der Laufenden Kosten umbenennen** in `kkedit`/`kkdel`, in `ACT` und in `V.kosten` (Z. 1669, 1672, 1675, 1686). Vor jedem Commit kurz prüfen, dass keine Aktionsnamen doppelt vorkommen (`grep`). Test: Kundendaten im Beleg bearbeiten, Kontakt löschen, Kostenposition bearbeiten und löschen.
-  - b) **Druckvorbereitung an einer Stelle:**
+  - b) ✅ umgesetzt (Commit af99b8d). **Druckvorbereitung an einer Stelle:**
     - `druckVorbereiten(b)` wird aus `drucken()` ausgelagert. Es setzt papierCSS, `#print`, `.mb`, `#pgfuss` und den Titel bei jedem Druck neu.
     - `druckHTML()` leert `.mb` und `#pgfuss`.
     - Strg+P auf der Route `beleg`: `preventDefault()` im `keydown`-Handler, danach `drucken(curBeleg())`.
@@ -148,8 +148,8 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - h) `posArtikelPopup`: Bei `optLS` setzt Übernehmen `epS=r2(ep−(+p.epL||0))`.
   - i) `lagerBeiFest()` und `folge()` verwenden `effKz(p,gruppenInfo(b))` statt `p.kz`. Die Ausnahme AN→AB/PR in `folge()` bleibt. Ebenso der Hinweis in `festschreiben()` „Rechnung enthält Options-/Alternativpositionen“.
   - j) `artikelInPos()` schreibt die Lieferanten-Art.-Nr. künftig in `p.lnr` und nicht mehr in `p.text`. Alte Positionen bleiben unverändert; P4 kann die Zeile im Druck ausblenden.
-  - k) `pdfAusBeleg()`: `const kopfH=box.querySelector('table.p thead')` wird einmal bestimmt. An beiden Stellen gilt dann `el.closest('thead')===kopfH` bzw. `pe.closest('thead')===kopfH`. Bekannte Einschränkung: Eine mehrseitige Optionen-Tabelle bekommt auf der Folgeseite keinen wiederholten Kopf.
-  - l) **Nur `table.p` wird zeilenweise geteilt:** in `vorschauSeiten()` `c.matches('table.p')` statt `table`, in `brk` `table.p tbody>tr:not(.grpz)`. `.tot` und die neue Zusammenfassung (P2) bleiben in Vorschau und PDF ein Block, wie im Druck. Bei bestehenden Belegen ändert sich dadurch nur die Stelle eines Seitenumbruchs, wenn der Summenblock genau auf der Seitengrenze liegt; der Inhalt bleibt gleich.
+  - k) ✅ umgesetzt (Commit fbdaef7). `pdfAusBeleg()`: `const kopfH=box.querySelector('table.p thead')` wird einmal bestimmt. An beiden Stellen gilt dann `el.closest('thead')===kopfH` bzw. `pe.closest('thead')===kopfH`. Bekannte Einschränkung: Eine mehrseitige Optionen-Tabelle bekommt auf der Folgeseite keinen wiederholten Kopf.
+  - l) ✅ umgesetzt (Commit 66bc2b7). **Nur `table.p` wird zeilenweise geteilt:** in `vorschauSeiten()` `c.matches('table.p')` statt `table`, in `brk` `table.p tbody>tr:not(.grpz)`. `.tot` und die neue Zusammenfassung (P2) bleiben in Vorschau und PDF ein Block, wie im Druck. Bei bestehenden Belegen ändert sich dadurch nur die Stelle eines Seitenumbruchs, wenn der Summenblock genau auf der Seitengrenze liegt; der Inhalt bleibt gleich.
   - m) **Pflichtangaben prüfen:** Hinweis in Einstellungen → Firma und vor dem Festschreiben von Rechnungen, wenn `f.gericht`, `f.fn` oder `f.uid` leer ist.
     - Das Firmenbuchgericht tragen Sie in den Einstellungen ein. Vermutlich ist es das LG Wiener Neustadt; bitte bestätigen.
     - Ein Eintrag in `FIRMA_TBH` ist nur optional. `migrate()` füllt leere Firmenfelder aus `FIRMA_TBH` und ändert damit auch Nachdrucke alter Belege ohne `b.fix`.

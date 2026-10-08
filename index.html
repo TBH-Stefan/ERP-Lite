@@ -203,6 +203,7 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
 .doc .txt{white-space:pre-wrap;margin:3mm 0}
 .doc .sig{break-inside:avoid;margin:30mm 0 0 auto;width:75mm;text-align:center;line-height:2.2;font-size:9pt}
 .doc .ft{position:fixed;bottom:0;left:-2.2mm;right:4.7mm;font:7.5pt/1.3 Arial,Helvetica,sans-serif;color:#000;border-top:1mm solid #80704d;padding-top:1mm;text-align:center}
+.doc .dupl{font-size:14pt;font-weight:700;letter-spacing:.35em;margin:-8mm 0 1mm} /* Vermerk erneute Ausgabe (P0 n), steht im Abstand unter der Anschrift */
 .doc .wm{position:absolute;top:1mm;left:0;color:#b42318;font-weight:700;font-size:12pt;margin-bottom:3mm}
 </style>
 </head>
@@ -327,6 +328,7 @@ const S=()=>DB.settings;
 const ERW=[
   {k:'strgP',std:true,p:'Druck (P0 b)',l:'Strg+P druckt den geöffneten Beleg',info:'Strg+P und der Druck über das Browsermenü drucken immer den gerade geöffneten Beleg, außerhalb eines Belegs bleibt der Ausdruck leer (kein alter Beleg eines anderen Kunden). LV- und K-Blatt-Ausdrucke übernehmen nicht mehr die Firmenfußzeile eines zuvor gedruckten Belegs. Fehlerbehebung, daher Standard ein.'},
   {k:'snapshot',std:true,p:'Nachdruck (P0 c)',l:'Nachdruck wie das Original',info:'Beim Festschreiben werden Fußzeile, Ansprechperson, E-Mail, Telefon, Unterzeichner und die verwendeten Steuersätze im Beleg eingefroren. Nachdruck, PDF, Summen, FiBu und UVA festgeschriebener Belege verwenden diese Werte statt der aktuellen Einstellungen; Bestellungen drucken die Lieferanten-Art.-Nr. aus der Position bzw. aus dem Artikelstamm beim Festschreiben. Das Logo wird nicht eingefroren. Ältere Belege ohne eingefrorene Werte bleiben unverändert. Aus: wie bisher die aktuellen Einstellungen (eingefrorene Werte bleiben gespeichert). Fehlerbehebung, daher Standard ein.'},
+  {k:'duplikat',std:false,p:'Duplikat (P0 n)',l:'Vermerk „DUPLIKAT“ bei erneuter Ausgabe von Rechnungen',info:'Druck, PDF und E-Mail-Versand festgeschriebener Rechnungen (auch Anzahlungs-, Teil-, Schlussrechnungen und Gutschriften) werden gezählt. Ab der zweiten Ausgabe fragt das Programm „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja), der Vermerk steht dann über dem Belegtitel; beim Druck über das Browsermenü wird ohne Rückfrage gekennzeichnet. Das erste Original bleibt unverändert. Gezählt wird nur bei eingeschaltetem Schalter (bei älteren Rechnungen zählen bereits per E-Mail versendete mit). Eine zweite gleichlautende Rechnung ohne Vermerk kann eine zusätzliche Steuerschuld auslösen (§ 11 Abs. 12 und 14 UStG).'},
 ];
 const ERW_STD=Object.fromEntries(ERW.map(x=>[x.k,x.std]));
 const erw=k=>DB?.settings?.erw?.[k]??ERW_STD[k];
@@ -457,7 +459,7 @@ function undoSperre(alt){const A=new Map((alt.belege||[]).map(b=>[b.id,b]));
   for(const b of DB.belege)if(b.fest){const o=A.get(b.id);if(!o||!o.fest)return`${bNr(b)} wurde inzwischen festgeschrieben – Korrektur nur per Storno/Gutschrift.`}
   if(JSON.stringify(alt.settings?.nk)!==JSON.stringify(S().nk))return'Seither wurde eine Belegnummer vergeben (Nummernkreise bleiben lückenlos).';
   return''}
-function undoAnwenden(j,h){DB=migrate(JSON.parse(j));LAST=JSON.stringify(DB);DIRTY=LAST!==SNAP;dirtyBar();artDatalist();
+function undoAnwenden(j,h){const az=new Map(DB.belege.map(b=>[b.id,b.ausgaben]));DB=migrate(JSON.parse(j));for(const b of DB.belege){const n=az.get(b.id);if(n>(b.ausgaben??0))b.ausgaben=n} /* Ausgabezähler (DUPLIKAT) wird nie zurückgedreht */LAST=JSON.stringify(DB);DIRTY=LAST!==SNAP;dirtyBar();artDatalist();
   if(h&&location.hash!==h){SKIP=true;location.hash=h}else render();undoBtn()}
 function zurueck(nurSeite){
   const e=UNDO[UNDO.length-1];if(!e)return false;if(nurSeite&&e.h!==(location.hash||'#/dash'))return false;
@@ -658,6 +660,7 @@ function merge3(base,local,remote){
     const L=new Set((local[c]||[]).map(x=>x.id));
     for(const [id,b] of B)if(!L.has(id)&&R.has(id)&&eq(R.get(id),b))out[c].splice(out[c].indexOf(R.get(id)),1);
   }
+  for(const l of local.belege||[]){const r=out.belege.find(x=>x.id===l.id);if(r&&l.ausgaben>(r.ausgaben??0))r.ausgaben=l.ausgaben} // Ausgabezähler (DUPLIKAT) nie verkleinern
   const seen=new Set((out.log||[]).map(x=>x.ts+x.aktion));
   out.log=[...(out.log||[]),...(local.log||[]).filter(x=>!seen.has(x.ts+x.aktion))].sort((a,b)=>a.ts.localeCompare(b.ts));
   if(!eq(local.settings,base?.settings)){if(eq(out.settings,base?.settings))out.settings=local.settings;else konfl.push('Einstellungen')}
@@ -1227,7 +1230,7 @@ V.beleg=id=>{
   const auftragOpts=()=>opt('','– kein Auftrag (Lager/Gemeinkosten) –',b.auftragId)+auftragsListe().map(a=>opt(a.id,auftragLabel(a.id),b.auftragId)).join('');
   const k=kontakt(b.kontaktId),scan=['WE','ER','BE'].includes(b.typ)?scanBox(b):'';
   const ans=ansicht();
-  const kopfbar=`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
+  const kopfbar=`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
     ${b.fest?'':`<button class="p" data-act="fest">Festschreiben …</button>`}
     <button data-act="druck">PDF / Drucken</button>
@@ -3469,7 +3472,7 @@ const fussZeilen=f=>[[f.name,f.strasse,(f.plz+' '+f.ort).trim()].filter(Boolean)
 // Fußzeile aus einer Quelle: docHTML schreibt die Zeilen (bei festgeschriebenen Belegen eingefroren) als data-fz; Vorschau, Druck und PDF lesen sie dort
 const fusszeile=fz=>`<div class="ft" data-fz="${esc(JSON.stringify(fz))}">${fz.map(esc).join('<br>')}</div>`;
 const ftZeilen=el=>{const e=el?.querySelector('.ft');if(!e)return null;try{return JSON.parse(e.dataset.fz)}catch(x){return fussZeilen(S().firma)}};
-function docHTML(b,edit=false){
+function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute Ausgabe, P0 n)
   const f=S().firma,k=b.fest&&b.adresse?b.adresse:adressSnapshot(kontakt(b.kontaktId)),s=summen(b),t=T[b.typ],ohneP=OHNE_PREIS.includes(b.typ);
   const fx=fixAktiv(b),fv=x=>fx?fx[x]||'':x==='bearbeiter'?S().bearbeiter:f[x]; // eingefrorene Werte ohne Rückfall auf die aktuellen Einstellungen
   edit=edit&&!b.fest;
@@ -3507,7 +3510,7 @@ function docHTML(b,edit=false){
   ${briefkopf(f)}
   <div class="adr"><div class="to">${esc(k.name)}<br>${k.zusatz?esc(k.zusatz)+'<br>':''}${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.land&&k.land!=='Österreich'?'<br>'+esc(k.land):''}</div>
   <div class="info">${info.map(([a,v])=>`<div>${a}: ${v&&v.h!=null?v.h:esc(v)}</div>`).join('')}</div></div>
-  <h3>${esc(t.bez.toUpperCase())} NR.: ${esc(nrTxt)}</h3>
+  ${o.dup?'<div class="dupl">DUPLIKAT</div>':''}<h3>${esc(t.bez.toUpperCase())} NR.: ${esc(nrTxt)}</h3>
   ${b.betreff||edit?`<div>Projekt: ${ed('h:betreff',b.betreff,'Betreff / Projekt')}</div>`:''}${b.bezug||edit?`<div>Bezug: ${ed('h:bezug',b.bezug,'z. B. Ihre Anfrage vom …')}</div>`:''}
   ${b.kopf||edit?`<div class="txt">${ed('h:kopf',b.kopf,'Kopftext …',true)}</div>`:''}
   <table class="p"><thead>${th}</thead><tbody>${tr(haupt)}</tbody></table>
@@ -3565,33 +3568,50 @@ window.addEventListener('resize',()=>{clearTimeout(vorschauSeiten.t);vorschauSei
    erw.strgP: Strg+P bzw. Browsermenü drucken den geöffneten Beleg (beforeprint); #print wird erst beim nächsten Routenwechsel geleert,
    nicht in afterprint (Android/iOS lösen es sofort oder gar nicht aus → leere Ausdrucke). DRUCK={h:Route,an:drucken()/druckHTML() druckt gerade,t:alter Titel} */
 let DRUCK=null;
-function druckVorbereiten(b){
+function druckVorbereiten(b,o={}){
   papierCSS();
   // tfoot wiederholt sich auf jeder Druckseite und hält Platz für die feste Fußzeile frei
-  $('#print').innerHTML=`<table class="pgw"><tbody><tr><td>${docHTML(b)}</td></tr></tbody><tfoot><tr><td><div class="pgf"></div></td></tr></tfoot></table>`;
+  $('#print').innerHTML=`<table class="pgw"><tbody><tr><td>${docHTML(b,false,o)}</td></tr></tbody><tfoot><tr><td><div class="pgf"></div></td></tr></tfoot></table>`;
   // Fußzeile als Seitenrand-Feld (@page): wiederholt sich zuverlässig auf jeder Seite; ältere/andere Browser: feste Fußzeile
   const mb=!!navigator.userAgentData?.brands?.some(x=>x.brand==='Chromium'&&+x.version>=131);$('#print').classList.toggle('mb',mb);
   const css=(ftZeilen($('#print'))||fussZeilen(S().firma)).join('\n').replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\A ');
   ($('#pgfuss')||document.head.appendChild(Object.assign(document.createElement('style'),{id:'pgfuss'}))).textContent=mb?`@media print{@page{@bottom-left{content:"${css}";white-space:pre;text-align:center;font:7.5pt/1.3 Arial,sans-serif;color:#000;border-top:1mm solid #80704d;vertical-align:top;padding-top:1mm;width:173.5mm;margin-left:-2.2mm}}}`:'';
-  const alt=document.title;document.title=`${T[b.typ].bez} ${bNr(b)} ${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]/g,'-');return alt}
-function drucken(b){
-  const t0=DRUCK?.t,alt=druckVorbereiten(b);DRUCK={h:location.hash,an:1};
+  const alt=document.title;document.title=`${T[b.typ].bez} ${bNr(b)}${o.dup?' DUPLIKAT':''} ${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]/g,'-');return alt}
+function drucken(b,o={}){
+  const t0=DRUCK?.t,alt=druckVorbereiten(b,o);DRUCK={h:location.hash,an:1};
   setTimeout(()=>{window.print();document.title=t0??alt;if(DRUCK)DRUCK.an=0},50);
 }
 function druckLeeren(){const p=$('#print');if(p){p.innerHTML='';p.classList.remove('mb')}const s=$('#pgfuss');if(s)s.textContent='';if(DRUCK?.t!=null)document.title=DRUCK.t;DRUCK=null}
 // Druck über das Browsermenü (oder Strg+P ohne Abfangen): aktuellen Beleg drucken, sonst nichts Fremdes
 window.addEventListener('beforeprint',()=>{if(!DB||!erw('strgP')||DRUCK?.an)return;const b=curBeleg();
-  if(b){const t=druckVorbereiten(b);DRUCK={h:location.hash,an:0,t:DRUCK?.t??t}}else if(DRUCK?.h!==location.hash)druckLeeren()});
+  if(b){const a=dupAuto(b),t=druckVorbereiten(b,a);DRUCK={h:location.hash,an:0,t:DRUCK?.t??t};ausgabeZaehlen(b,a)}else if(DRUCK?.h!==location.hash)druckLeeren()});
+/* Vermerk „DUPLIKAT“ (erw.duplikat): Zähler b.ausgaben für Druck, PDF und Versand festgeschriebener Rechnungsarten (RE_V); ältere Belege ohne Zähler: Anzahl Versand.
+   Ab der zweiten Ausgabe Rückfrage (vorbelegt Ja), docHTML setzt den Vermerk über den Titel; das erste Original bleibt unverändert.
+   Ausgabe-Info a={dup,z:zählt,n:bisherige Ausgaben}. Der Zähler wird nach der Ausgabe per commit() erhöht, ohne eigenen Rückgängig-Schritt, und nie zurückgedreht (undoAnwenden, merge3). */
+const dupAktiv=b=>!!(erw('duplikat')&&b?.fest&&RE_V.includes(b.typ));
+const ausgabenN=b=>b.ausgaben??(b.versand||[]).length;
+const dupAuto=b=>dupAktiv(b)?{dup:ausgabenN(b)>0,z:1,n:ausgabenN(b)}:{dup:false}; // Druck über das Browsermenü: keine Rückfrage möglich
+function dupFrage(b){ // → Promise mit Ausgabe-Info oder null (abgebrochen)
+  if(!dupAktiv(b))return Promise.resolve({dup:false});const n=ausgabenN(b);if(!n)return Promise.resolve({dup:false,z:1,n});if($('#dupf'))return Promise.resolve(null);
+  return new Promise(res=>{const d=document.createElement('div');d.className='modal';d.id='dupf';
+    d.innerHTML=`<div class="mbox"><h2>Als DUPLIKAT kennzeichnen?</h2><p style="margin-top:0">${esc(T[b.typ].bez)} ${esc(b.nr)} wurde bereits ${n}× ausgegeben (Druck, PDF oder E-Mail). Eine weitere Ausfertigung ohne Vermerk kann als zweite Rechnung gelten und eine zusätzliche Steuerschuld auslösen (§ 11 Abs. 12 und 14 UStG).</p>
+      <div class="bar" style="justify-content:flex-end;margin:16px 0 0"><button id="m-no">Abbrechen</button><button id="m-ohne">Ohne Vermerk</button><button class="p" id="m-ok">Ja, als DUPLIKAT</button></div></div>`;
+    document.body.appendChild(d);const fin=v=>{d.remove();document.removeEventListener('keydown',kd,true);res(v)};
+    const kd=e=>{if(e.key==='Escape'){e.stopPropagation();fin(null)}};document.addEventListener('keydown',kd,true);
+    d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#m-ohne').onclick=()=>fin({dup:false,z:1,n});d.querySelector('#m-ok').onclick=()=>fin({dup:true,z:1,n});setTimeout(()=>d.querySelector('#m-ok').focus(),0)})}
+function ausgabeZaehlen(b,a,speichern=true){if(!a?.z)return;b.ausgaben=a.n+1;if(!speichern)return;LAST=JSON.stringify(DB);commit();if(curBeleg()?.id===b.id)render()}
+async function belegDrucken(b){const a=await dupFrage(b);if(!a)return;drucken(b,a);ausgabeZaehlen(b,a)}
+async function belegPDF(b){const a=await dupFrage(b);if(!a)return;await pdfHerunterladen(b,a);ausgabeZaehlen(b,a)}
 window.addEventListener('afterprint',()=>{if(DRUCK&&!DRUCK.an&&DRUCK.t!=null){document.title=DRUCK.t;DRUCK.t=null}});
 
 /* ---------- PDF-Erzeugung ohne Fremdbibliothek: Layout aus der Belegvorschau (Arial ≙ Helvetica) ---------- */
 const WINANSI={0x20AC:128,0x201A:130,0x201E:132,0x2026:133,0x2018:145,0x2019:146,0x201C:147,0x201D:148,0x2022:149,0x2013:150,0x2014:151,0x2122:153,0x160:138,0x161:154,0x17D:142,0x17E:158,0x2212:45,0xA0:32,0x202F:32,0x2009:32,0x2007:32};
 const pdfStr=t=>{let o='';for(const ch of t){const c=ch.codePointAt(0),w=c<128||(c>=160&&c<256&&!WINANSI[c])?c:WINANSI[c]??63;o+=w===40||w===41||w===92?'\\'+String.fromCharCode(w):w<32||w>126?'\\'+w.toString(8).padStart(3,'0'):String.fromCharCode(w)}return o};
 async function deflate(u8){const cs=new CompressionStream('deflate');const r=new Response(new Blob([u8]).stream().pipeThrough(cs));return new Uint8Array(await r.arrayBuffer())}
-async function pdfAusBeleg(b){
+async function pdfAusBeleg(b,o={}){
   const P=papier(),K=P.k,PX=0.75*K,MX=56.69*K,MT=28.35*K,MB=49.04*K,PW=+(P.w/25.4*72).toFixed(2),PH=+(P.h/25.4*72).toFixed(2),HC=(PH-MT-MB)/PX; // px→pt, Ränder wie Druck (auf das Papierformat skaliert)
   const box=document.createElement('div');box.style.cssText='position:fixed;left:-10000px;top:0;width:665px;background:#fff';box.className='pdfmess';
-  box.innerHTML=docHTML(b);const fz=ftZeilen(box)||fussZeilen(S().firma);box.querySelector('.ft')?.remove();document.body.appendChild(box);
+  box.innerHTML=docHTML(b,false,o);const fz=ftZeilen(box)||fussZeilen(S().firma);box.querySelector('.ft')?.remove();document.body.appendChild(box);
   await Promise.all([...box.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
   const B=box.getBoundingClientRect(),X=v=>v-B.left,Y=v=>v-B.top,farbe=c=>{const m=String(c).match(/[\d.]+/g)||[0,0,0];return m.slice(0,3).map(v=>(+v/255).toFixed(3)).join(' ')};
   const it=[],thead=[]; // Zeichenelemente in px relativ zum Belegkopf
@@ -3661,7 +3681,7 @@ async function pdfAusBeleg(b){
   return new Blob(teile,{type:'application/pdf'});
 }
 const pdfName=b=>`${T[b.typ].bez}-${bNr(b)}-${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_')+'.pdf';
-async function pdfHerunterladen(b){const bl=await pdfAusBeleg(b),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=pdfName(b);document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+async function pdfHerunterladen(b,o={}){const bl=await pdfAusBeleg(b,o),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=pdfName(b);document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
 
 /* ---------- Versand per E-Mail über Office 365 (Microsoft Graph, Mail.Send) ---------- */
 const MAILSCOPE='https://graph.microsoft.com/Mail.Send offline_access';
@@ -3689,8 +3709,9 @@ async function versenden(b){
   if(!o)return;
   const an=o.an.split(/[;,]\s*/).filter(Boolean),cc=o.cc.split(/[;,]\s*/).filter(Boolean);
   if(an.some(x=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x))){alert('Bitte gültige E-Mail-Adresse(n) angeben.');return}
-  saveState('PDF wird erstellt …');const pdf=await pdfAusBeleg(b),name=pdfName(b);
-  if(!od){pdfHerunterladen(b);location.href=`mailto:${an.join(';')}?${new URLSearchParams({cc:cc.join(';'),subject:o.betreff,body:o.text}).toString().replace(/\+/g,'%20')}`;
+  const da=await dupFrage(b);if(!da)return;
+  saveState('PDF wird erstellt …');const pdf=await pdfAusBeleg(b,da),name=pdfName(b);
+  if(!od){pdfHerunterladen(b,da);ausgabeZaehlen(b,da);location.href=`mailto:${an.join(';')}?${new URLSearchParams({cc:cc.join(';'),subject:o.betreff,body:o.text}).toString().replace(/\+/g,'%20')}`;
     alert('Das PDF wurde gespeichert – bitte in der E-Mail anhängen.\n(Direkter Versand nur mit Office-365-Anmeldung.)');return}
   saveState('wird gesendet …');
   let tok=await mailToken();
@@ -3701,7 +3722,7 @@ async function versenden(b){
       toRecipients:an.map(a=>({emailAddress:{address:a}})),ccRecipients:cc.map(a=>({emailAddress:{address:a}})),bccRecipients:o.kopie&&lsGet('erp-user')?[{emailAddress:{address:lsGet('erp-user')}}]:[],
       attachments:[{'@odata.type':'#microsoft.graph.fileAttachment',name,contentType:'application/pdf',contentBytes:await b64aus(pdf)}]},saveToSentItems:true})});
   if(!r.ok){const j=await r.json().catch(()=>({}));saveState('');alert('Senden fehlgeschlagen:\n'+(j.error?.message||r.status));return}
-  (b.versand=b.versand||[]).push({datum:new Date().toISOString(),an:an.join('; '),cc:cc.join('; '),betreff:o.betreff,datei:name});
+  ausgabeZaehlen(b,da,false);(b.versand=b.versand||[]).push({datum:new Date().toISOString(),an:an.join('; '),cc:cc.join('; '),betreff:o.betreff,datei:name});
   log('per E-Mail versendet',`${T[b.typ].bez} ${bNr(b)} an ${an.join(', ')}`);
   const vn=name.replace(/\.pdf$/,'')+'_versendet'+((b.versand.length>1)?'_'+b.versand.length:'')+'.pdf';
   try{await anhaengeHochladen(b,[new File([pdf],vn,{type:'application/pdf'})],true,vn)}catch(e){commit()}
@@ -3735,13 +3756,13 @@ function sammelRechnung(kid0=''){
 const ACT={
   neu:el=>{if(!el.value)return;const b=neuBeleg(el.value);persist();go('beleg/'+b.id)},
   fest:()=>festschreiben(curBeleg()),
-  druck:()=>drucken(curBeleg()),
+  druck:()=>belegDrucken(curBeleg()),
   folge:async el=>{const typ=el.value;if(!typ)return;el.value='';const b=curBeleg();
     if(!b.fest){if(!confirm(`Für den Folgebeleg „${T[typ].bez}“ muss ${T[b.typ].bez} zuerst festgeschrieben werden.\nJetzt festschreiben?`))return;await festschreiben(b);if(!beleg(b.id)?.fest)return}
     folgeGo(beleg(b.id),typ)},
   folgere:el=>{el.value='RE';ACT.folge(el)},
   sammelre:()=>sammelRechnung(curBeleg().kontaktId),sammelre0:()=>sammelRechnung(),
-  senden:()=>versenden(curBeleg()),pdfdl:()=>pdfHerunterladen(curBeleg()),
+  senden:()=>versenden(curBeleg()),pdfdl:()=>belegPDF(curBeleg()),
   storno:()=>stornieren(curBeleg()),
   dup:()=>duplizieren(curBeleg()),
   reopen:()=>{const b=curBeleg();if(!confirm('Beleg wieder bearbeiten? Die Nummer bleibt erhalten.'))return;b.fest=false;log('wieder geöffnet',`${T[b.typ].bez} ${b.nr}`);commit();render()},
@@ -3949,7 +3970,7 @@ function importJSON(el){
   };r.readAsText(file);
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();commit()}
-  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='p'&&DB&&erw('strgP')&&curBeleg()){e.preventDefault();document.activeElement?.blur?.();drucken(curBeleg())}}); // Strg+P: geöffneten Beleg drucken (offene Eingabe vorher übernehmen)
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='p'&&DB&&erw('strgP')&&curBeleg()){e.preventDefault();document.activeElement?.blur?.();belegDrucken(curBeleg())}}); // Strg+P: geöffneten Beleg drucken (offene Eingabe vorher übernehmen)
 $('#menu').onclick=e=>{e.stopPropagation();document.body.classList.toggle('nav')};
 document.querySelector('nav').addEventListener('click',e=>{if(e.target.closest('a'))document.body.classList.remove('nav')});
 document.addEventListener('click',e=>{if(document.body.classList.contains('nav')&&!e.target.closest('nav'))document.body.classList.remove('nav')});

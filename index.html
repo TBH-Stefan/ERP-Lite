@@ -646,21 +646,23 @@ function loginHinweis(){for(const e of [$('#savestate'),$('#sync2')])if(e){e.sty
 /* Zusammenführen, wenn auf einem anderen Gerät zwischenzeitlich gespeichert wurde (3-Wege-Abgleich je Datensatz) */
 function merge3(base,local,remote){
   const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b),konfl=[],out=remote;
+  // Ausgabezähler (DUPLIKAT) allein ist keine Änderung und kein Konflikt; es gilt der höhere Stand beider Geräte
+  const ohneZ=({ausgaben,...x})=>x,AZ=new Map();for(const x of [...(remote.belege||[]),...(local.belege||[])])if(x.ausgaben>(AZ.get(x.id)??0))AZ.set(x.id,x.ausgaben);
   for(const c of ['kontakte','artikel','belege','lager','zeiten','kalk','lv','lvbib','kosten','papierkorb']){
-    out[c]=out[c]||[];
+    out[c]=out[c]||[];const gl=c==='belege'?(a,b)=>eq(ohneZ(a),ohneZ(b)):eq;
     const B=new Map((base?.[c]||[]).map(x=>[x.id,x])),R=new Map(out[c].map(x=>[x.id,x]));
     for(const l of local[c]||[]){
       const b=B.get(l.id),r=R.get(l.id);
       if(!b){if(!r)out[c].push(l);continue}
-      if(eq(l,b))continue;
+      if(gl(l,b))continue;
       if(!r){out[c].push(l);continue}
-      if(eq(r,b))out[c][out[c].indexOf(r)]=l;
-      else if(!eq(r,l))konfl.push(c==='belege'?`${T[l.typ]?.bez} ${bNr(l)}`:c==='kontakte'?l.name:c==='artikel'?l.nr:c);
+      if(gl(r,b))out[c][out[c].indexOf(r)]=l;
+      else if(!gl(r,l))konfl.push(c==='belege'?`${T[l.typ]?.bez} ${bNr(l)}`:c==='kontakte'?l.name:c==='artikel'?l.nr:c);
     }
     const L=new Set((local[c]||[]).map(x=>x.id));
     for(const [id,b] of B)if(!L.has(id)&&R.has(id)&&eq(R.get(id),b))out[c].splice(out[c].indexOf(R.get(id)),1);
   }
-  for(const l of local.belege||[]){const r=out.belege.find(x=>x.id===l.id);if(r&&l.ausgaben>(r.ausgaben??0))r.ausgaben=l.ausgaben} // Ausgabezähler (DUPLIKAT) nie verkleinern
+  for(const r of out.belege){const n=AZ.get(r.id);if(n>(r.ausgaben??0))r.ausgaben=n} // Ausgabezähler (DUPLIKAT) nie verkleinern
   const seen=new Set((out.log||[]).map(x=>x.ts+x.aktion));
   out.log=[...(out.log||[]),...(local.log||[]).filter(x=>!seen.has(x.ts+x.aktion))].sort((a,b)=>a.ts.localeCompare(b.ts));
   if(!eq(local.settings,base?.settings)){if(eq(out.settings,base?.settings))out.settings=local.settings;else konfl.push('Einstellungen')}

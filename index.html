@@ -321,6 +321,12 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const sum=(a,f)=>r2(a.reduce((s,x)=>s+(+f(x)||0),0));
 const tag=(t,c='')=>`<span class="tag ${c}">${t}</span>`;
 const S=()=>DB.settings;
+/* Erweiterungen (Einstellungen → Erweiterungen): Funktionsschalter in S().erw.<k>, Vorgaben in ERW_STD, gelesen wird immer über erw(k).
+   Standard = bisheriges Verhalten (Ausnahme: Fehlerbehebungen). Ausschalten wirkt sofort, gespeicherte Daten bleiben erhalten.
+   ERW: {k:Schlüssel, std:Vorgabe, p:Paket (für „Standard wiederherstellen“), l:Bezeichnung, info:Beschreibung} */
+const ERW=[];
+const ERW_STD=Object.fromEntries(ERW.map(x=>[x.k,x.std]));
+const erw=k=>DB?.settings?.erw?.[k]??ERW_STD[k];
 const kontakt=id=>DB.kontakte.find(k=>k.id===id);
 const artikel=id=>id?DB.artikel.find(a=>a.id===id):null;
 const beleg=id=>id?DB.belege.find(b=>b.id===id):null;
@@ -387,7 +393,7 @@ function neueDB(){
       einheiten:['Stk','m','m²','m³','h','PA','kg','l','Krt','Rolle','Set','km','Tag','Wo','Mon'],
       tarife:[{kz:'SV',bez:'Sachverständigenleistung',kosten:0,vk:0},{kz:'MONT',bez:'Montage',kosten:0,vk:0},{kz:'FAHRT',bez:'Fahrtzeit',kosten:0,vk:0}],
       nk,texte,knr:{K:10000,L:70000},anr:0,
-      spalten:{},artgruppen:[],lagerplaetze:[],zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,papier:'A4',lvnr:0
+      spalten:{},artgruppen:[],lagerplaetze:[],zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,papier:'A4',lvnr:0,erw:{}
     },
     kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],kosten:[],fibu:fibuNeu(),log:[],papierkorb:[]
   };
@@ -1307,15 +1313,15 @@ function dialog({titel,html,ok='OK',check='',gefahr=false}){
   });
 }
 
-/* Formular im Popup: felder=[{k,l,wert,typ,opts,cls,pflicht}] → Objekt mit Werten oder null */
+/* Formular im Popup: felder=[{k,l,wert,typ,opts,cls,pflicht,dis}] → Objekt mit Werten oder null (dis:true = gesperrt, Wert bleibt) */
 function formDialog({titel,felder,ok='Anlegen',breit=false}){
   return new Promise(res=>{
     const d=document.createElement('div');d.className='modal';
-    const fld=f=>f.typ==='kette'?`<label class="${f.cls||''}">${f.l}<div data-k="${f.k}" data-wert="${esc(f.wert||'')}">${ketteHTML(f.baum,f.wert||'','data-fk="1"')}</div></label>`:`<label class="${f.cls||''}">${f.l}${f.pflicht?' *':''}${f.opts?`<select data-k="${f.k}">${f.opts.map(([v,t])=>opt(v,t,f.wert??'')).join('')}</select>`:f.typ==='checkbox'?`<br><input type="checkbox" data-k="${f.k}" ${f.wert?'checked':''}>`:f.typ==='textarea'?`<textarea data-k="${f.k}" style="height:190px">${esc(f.wert??'')}</textarea>`:`<input data-k="${f.k}" type="${f.typ||'text'}" ${f.typ==='number'?'step="any"':''} value="${esc(f.wert??'')}">`}</label>`;
+    const fld=f=>{const ds=f.dis?' disabled':'';return f.typ==='kette'?`<label class="${f.cls||''}">${f.l}<div data-k="${f.k}" data-wert="${esc(f.wert||'')}">${ketteHTML(f.baum,f.wert||'','data-fk="1"'+ds)}</div></label>`:`<label class="${f.cls||''}">${f.l}${f.pflicht?' *':''}${f.opts?`<select data-k="${f.k}"${ds}>${f.opts.map(([v,t])=>opt(v,t,f.wert??'')).join('')}</select>`:f.typ==='checkbox'?`<br><input type="checkbox" data-k="${f.k}" ${f.wert?'checked':''}${ds}>`:f.typ==='textarea'?`<textarea data-k="${f.k}" style="height:190px"${ds}>${esc(f.wert??'')}</textarea>`:`<input data-k="${f.k}" type="${f.typ||'text'}" ${f.typ==='number'?'step="any"':''} value="${esc(f.wert??'')}"${ds}>`}</label>`};
     const zeilen=[];let z=[];for(const f of felder){if(f.neu&&z.length){zeilen.push(z);z=[]}z.push(f)}if(z.length)zeilen.push(z);
     d.innerHTML=`<div class="mbox" style="${breit?'max-width:760px':''}"><h2>${titel}</h2>${zeilen.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('')}
       <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">${ok}</button></div></div>`;
-    document.body.appendChild(d);setTimeout(()=>d.querySelector('input,select')?.focus(),0);
+    document.body.appendChild(d);setTimeout(()=>d.querySelector('input:not([disabled]),select:not([disabled])')?.focus(),0);
     const fin=v=>{d.remove();document.removeEventListener('keydown',kd);res(v)};
     d.addEventListener('click',async e=>{const t=e.target.closest('[data-bw]');if(!t)return;e.preventDefault();const box=t.closest('[data-k]'),f=felder.find(x=>x.k===box.dataset.k),v=await baumWahl(f.baum,box.dataset.wert);
       if(v!==null){box.dataset.wert=v;box.innerHTML=ketteHTML(f.baum,v,'data-fk="1"')}});
@@ -2825,7 +2831,7 @@ V.einstellungen=()=>{
   <div class="card"><h2>Kaufmännisch</h2><div class="row">
     <label class="w05">Letzte Kunden-Nr.<input type="number" data-o="s" data-f="knr.K" value="${s.knr.K}" title="Nächster Kunde erhält diese Nummer + 1"></label><label class="w05">Letzte Lieferanten-Nr.<input type="number" data-o="s" data-f="knr.L" value="${s.knr.L}"></label>
     ${sf('zahlungsziel','Zahlungsziel Tage')}${sf('skonto','Skonto %')}${sf('skontoTage','Skonto Tage')}${sf('angebotGueltig','Angebot gültig Tage')}
-    <label class="w05">Langtext drucken<select data-o="s" data-f="ltDruck">${opt('true','ja (Standard)',String(s.ltDruck!==false))}${opt('false','nein',String(s.ltDruck!==false))}</select></label>
+    <label class="w05">Langtext drucken<select data-o="s" data-f="ltDruck" data-t="b">${opt('true','ja (Standard)',String(s.ltDruck!==false))}${opt('false','nein',String(s.ltDruck!==false))}</select></label>
     ${sf('zielDB2','Ziel-DB II %')}${sf('mgz','MGZ % auf Material')}${sf('abwGrenze','Prüfgrenze Abweichung %')}
     <label class="w05">USt-Besteuerung<select data-o="s" data-f="besteuerung">${opt('soll','Soll (vereinbarte Entgelte)',s.besteuerung)}${opt('ist','Ist (vereinnahmte Entgelte)',s.besteuerung)}</select></label>
     <label class="w05">Standard-USt<select data-o="s" data-f="stdSteuer">${s.steuer.map(x=>opt(x.code,x.bez,s.stdSteuer)).join('')}</select></label></div>
@@ -2838,8 +2844,16 @@ V.einstellungen=()=>{
   </tbody></table><button style="margin-top:8px" data-act="tfadd">+ Tarif</button></div>
   <div class="card"><h2>Nummernkreise ${j}</h2><p class="mut" style="margin-top:0">Format PRÄFIX-JAHR-0001. „Letzte Nummer“ nur bei Umstieg setzen (z. B. letzte Rechnungsnummer aus Excel).</p><table><thead><tr><th>Beleg</th><th>Präfix</th><th>Letzte Nummer ${j}</th><th>Kopftext</th><th>Fußtext</th></tr></thead><tbody>
   ${Object.keys(T).map(t=>`<tr><td>${T[t].bez}</td><td style="width:80px"><input data-o="nk" data-t="${t}" data-f="prefix" value="${esc(s.nk[t].prefix)}"></td><td style="width:90px"><input type="number" data-o="nk" data-t="${t}" data-f="z" value="${s.nk[t].zaehler[j]||0}"></td><td><textarea data-o="tx" data-t="${t}" data-f="kopf">${esc(s.texte[t].kopf)}</textarea></td><td><textarea data-o="tx" data-t="${t}" data-f="fuss">${esc(s.texte[t].fuss)}</textarea></td></tr>`).join('')}
-  </tbody></table></div>`;
+  </tbody></table></div>
+  ${erwKarte()}`;
 };
+// Karte „Erweiterungen“: alle Funktionsschalter mit Beschreibung, Abweichungen vom Standard, Zurücksetzen je Paket bzw. alle
+function erwKarte(){
+  const ab=ERW.filter(x=>erw(x.k)!==x.std),P=[...new Set(ERW.map(x=>x.p))];
+  return`<div class="card" id="erw"><h2>Erweiterungen</h2><p class="mut" style="margin-top:0">Zusätzliche Funktionen, einzeln ein- und ausschaltbar. Der Standard entspricht dem bisherigen Verhalten (außer Fehlerbehebungen). Ausschalten wirkt sofort; gespeicherte Angaben bleiben erhalten und gelten beim Wiedereinschalten wieder.</p>
+  <div class="bar"><span>${ab.length?`${tag(ab.length+' vom Standard abweichend','warn')} ${ab.map(x=>esc(x.l)).join(' · ')}`:tag('alle Schalter auf Standard','ok')}</span><span class="sp"></span><button data-act="erwstd" ${ab.length?'':'disabled'}>Alle Schalter auf Standard</button></div>
+  ${ERW.length?P.map(p=>{const L=ERW.filter(x=>x.p===p);return`<div style="border-top:1px solid var(--line);margin-top:10px;padding-top:6px"><div class="bar" style="margin:0"><b>${esc(p)}</b><span class="sp"></span><button class="s" data-act="erwpk" data-p="${esc(p)}" ${L.some(x=>erw(x.k)!==x.std)?'':'disabled'}>Standard wiederherstellen</button></div>
+    ${L.map(x=>`<label class="chk" style="margin-top:6px"><input type="checkbox" data-o="s" data-f="erw.${x.k}" ${erw(x.k)?'checked':''}> <span><b>${esc(x.l)}</b> <span class="mut">(Standard: ${x.std?'ein':'aus'})</span>${erw(x.k)!==x.std?' '+tag('geändert','warn'):''}<br><span class="mut" style="font-size:13px">${esc(x.info)}</span></span></label>`).join('')}</div>`}).join(''):'<p class="mut">Noch keine Schalter vorhanden.</p>'}</div>`}
 
 /* ---------- Belege kostenlos auslesen: PDF-Textebene und E-Rechnung (ohne Fremdbibliothek) ---------- */
 async function inflate(u8){ // FlateDecode; toleriert Restbytes nach dem Datenende
@@ -3760,6 +3774,8 @@ const ACT={
   tfadd:()=>{S().tarife.push({kz:'NEU',bez:'',kosten:0,vk:0});persist();render()},
   tfdel:el=>{S().tarife.splice(+el.dataset.i,1);persist();render()},
   logodel:()=>{S().firma.logo='';persist();render()},
+  erwstd:()=>{S().erw={};log('Erweiterungen','alle Schalter auf Standard');persist();render()},
+  erwpk:el=>{const e=S().erw||{};for(const x of ERW)if(x.p===el.dataset.p)delete e[x.k];log('Erweiterungen',`${el.dataset.p}: Standard wiederhergestellt`);persist();render()},
   abmelden:()=>AUTH.abmelden(),
   ansicht:el=>{lsSet('erp-ansicht',el.dataset.m);render()},
   anrev:()=>angebotRevision(curBeleg()),
@@ -3821,7 +3837,7 @@ document.addEventListener('change',e=>{
       if(d.f==='lagerplatz'&&v==='__lp'){render();baumDialog(LP);return}
       if(d.f==='gruppe'&&(v==='__neu'||v==='__sub')){gruppeNeu(v==='__sub'?a.gruppe:'').then(g=>{if(g){a.gruppe=g;persist()}render()});return}if(d.f==='einheitenStr'){a.einheiten=String(v).split(/[;,]/).map(x=>x.split('=')).filter(x=>x.length===2&&x[0].trim()&&num(x[1])>0).map(([e,f])=>({e:e.trim(),f:num(f)}));for(const x of a.einheiten)if(!S().einheiten.includes(x.e))S().einheiten.push(x.e)}else a[d.f]=nv;if(['nr','bez','aktiv'].includes(d.f))artDatalist();if(['lager','einheitenStr'].includes(d.f)){persist();render();return}break}
     case'al':artikel(d.id).lieferanten[+d.i][d.f]=v;break;
-    case's':if(d.f==='ltDruck')S().ltDruck=v==='true';else if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()];o[pth[0]]=nv}break;
+    case's':if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()]??={};o[pth[0]]=d.t==='b'?v===true||v==='true':nv;if(d.f.startsWith('erw.')){persist();render();return}}break;
     case'st':{const x=S().steuer[+d.i];if(d.f==='code'){const alt=x.code;if(S().steuer.some((y,j)=>j!==+d.i&&y.code===v)){alert('Code existiert bereits.');render();return}if(DB.belege.some(b=>b.pos.some(p=>p.steuer===alt))){alert('Code wird verwendet und kann nicht geändert werden.');render();return}}x[d.f]=nv;break}
     case'tf':S().tarife[+d.i][d.f]=nv;break;
     case'fbk':FB().konten[+d.i][d.f]=v;break;

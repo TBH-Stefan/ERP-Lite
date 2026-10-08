@@ -68,6 +68,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
    - **Code:**
      - Ein Git-Commit je Paket, bei großen Paketen je Teilfunktion, mit deutscher Nachricht (z. B. „ETU P2: Zusammenfassung der Titel am Belegende“).
      - Zurückgenommen wird per `git revert <commit>`, abhängige Pakete zuerst (siehe „Abhängig von“).
+     - Damit ein Commit auch ohne die späteren einzeln rücknehmbar bleibt, liegen die Änderungen verschiedener Commits nicht in unmittelbar benachbarten Zeilen (sonst meldet `git revert` einen Konflikt). Die Karte „Erweiterungen“ ordnet die Pakete deshalb nach Nummer (Commit 05429d5), neue Schalter stehen an getrennten Stellen in `ERW`. Geprüft für U5: jeder Commit einzeln per `git revert` sauber rücknehmbar, Programm danach ohne Konsolenfehler.
      - Vor Beginn wird der Tag `vor-etu` gesetzt.
      - Gearbeitet wird auf einem Zweig `main-b4f5uz` (Pull Request #1), paketweise nach `main` übernommen, denn jeder Push auf `main` ist nach etwa einer Minute online.
      - Ausnahme: P0 a) behebt einen Fehler, der schon online ist, und geht nach dem Test sofort nach `main`.
@@ -363,6 +364,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - AGB gelten nur, wenn sie vor oder bei Vertragsschluss vereinbart werden (§§ 861 ff. ABGB). Ungewöhnliche nachteilige Klauseln werden nicht Vertragsinhalt (§ 864a ABGB), gegenüber Verbrauchern gilt zusätzlich § 6 KSchG. Der Hinweis gehört deshalb auf Angebot und AB; auf der Rechnung allein reicht er nicht.
 
 ### P6 – Anrede, Kontaktfelder, Kunden/Lieferanten-Filter
+- **Stand:** ✅ Teil umgesetzt (Commit 072ff14): Kunden/Lieferanten-Filter und „Unsere Kunden-Nr.“. Chips mit Anzahl über `erw.kFilter` (Standard ein = „Alle“, aus = Liste und Suche wie bisher), Suche zusätzlich in `zusatz`, `email`, `tel`, `kdNrLief`, Spalte „Unsere Kd.-Nr.“ (`std:false`); `erw.navKL` (Standard aus) wirkt nur mit `kFilter`. `adressSnapshot()` speichert `kdNrLief` nur, wenn eingetragen; Infoblock aller Einkaufsbelege (BE, WE, ER) „Unsere Kunden-Nr.“ statt „Lieferanten-Nr.“, festgeschriebene nur aus dem Schnappschuss (ältere unverändert); die Lieferanten-Karte im Beleg zeigt die Nummer. Offen (Stufe 2): Anrede, Titel, Vor-/Nachname, Briefanrede, Spalte „Person“, Favoriten.
 - **ETU-Vorbild:** Bild 9, Adressblock „Herr / Max Mustermann“ und „Sehr geehrter Hr. Max Mustermann,“; Bild 11, „Meine Kontakte“ und „Meine Lieferanten“.
 - **Heute:**
   - Der Kontakt hat `name`, `zusatz` und `kundenart`, aber keine Felder für Anrede, Titel, Vor- oder Nachname.
@@ -515,6 +517,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Nutzen** hoch · **Aufwand** L · **Abhängig von:** – (P11, P12 und P13 ergänzen es) · **Recht:** nur Entwürfe; festgeschriebene Belege werden nur über eine Revision geändert.
 
 ### P11 – Aufschlag je Position (intern)
+- **Stand:** ✅ Teil umgesetzt (Commit 3e041e7, dazu Korrektur 8452dbd: `.modal` scrollbar, weil das Artikel-Pop-up am Handy höher als der Bildschirm war): Pop-up-Feld „Aufschlag %“ (`erw.gkAufsFeld`, Formel mit Kundenrabatt, nie gespeichert) und VK-Vorschlag. Abweichung: eigener Schalter `erw.vkVorschlag` (Standard ein) für Artikelfeld `vkAufschlag` und Vorschlag; außer in `scanDiffs()` (Zeile `vk`, Standard angehakt, gerechnet aus dem ggf. eben übernommenen EK) erscheint er im Artikel als Knopf „VK-Vorschlag … übernehmen“ (statt Rückfrage beim Speichern). Offen: Spalten „Aufschl. %“/„DB %“ im Editor (`b.optKalk`).
 - **Heute:**
   - `posArtikelPopup` zeigt nur „VK − HK = Ergebnis (x %)“.
   - Die Artikelliste hat eine Spalte „Aufschlag“, nur zur Anzeige.
@@ -584,6 +587,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Nutzen** mittel · **Aufwand** M–L · **Abhängig von:** P12 (Auswertung), P0 g); nützt P9 und P10 · **Recht:** getrennter Ausweis der Arbeitsleistung (z. B. für Förderungen).
 
 ### P14 – Preiseinheit (PE) und Prüfung beim Einlesen
+- **Stand:** ✅ Prüfung beim Einlesen umgesetzt (Commit d926b4e, Schalter `erw.scanPE`, Standard ein): `scanPE()`; mit GP entscheidet nur die Prüfung (auch Faktor mit Rabatt, ±2 %), ohne GP Spalte `pe` bzw. Spaltenkopf „Preis/100“; passt der GP zu keinem Faktor, wird nicht umgerechnet, sondern die Zeile markiert. Scan-Zeile `pe`, `peQ`, `epRoh`, `lpRoh`, Abwahl `peAus`; `rp()` schon jetzt für EK-Vorschlag/Übernahme bei PE > 1, `fmtP()` für die Anzeige. Offen (Stufe 2): Feld `pe` an Artikel und Position, Anzeige/Druck je PE, Umstellung der übrigen Rundungsstellen, `xmlBeleg()`.
 - **ETU-Vorbild:** „Einzelpreis pro Preiseinheit drucken“ (z. B. Kabel € je 100 m).
 - **Heute:**
   - `faktor` dient nur zur Umrechnung von Einheiten, eine Preiseinheit gibt es nicht.
@@ -676,6 +680,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Nutzen** hoch · **Aufwand** M · **Abhängig von:** – · **Recht:** –
 
 ### P19 – Navigation: „Zuletzt“, Vor/Zurück, Statuszeile, Seitenleiste
+- **Stand:** ✅ a) umgesetzt (Commit 506e52e), c) (Commit 2aa2bf6), d) Markierung (Commit 2b77577). a) Knopf „🕘 Zuletzt ▾“ in der Seitenleiste, 🕘 in der `.topbar`; der geöffnete Datensatz selbst steht nicht in der Liste. c) Statuszeile unter der `kopfbar`: Belegdatum und „angelegt {erstellt mit Uhrzeit}“ bzw. „festgeschrieben {festAm}“ getrennt; der Status steht weiter neben dem Titel und nur bei `erw.kopfFix` (fixierte Zeile mit Nummer) zusätzlich in der Zeile; Netto über `updateCalc()`. d) zusätzlich Kontakt → „Kunden & Lieferanten“, Auftrag → „Aufträge & DB II“. Offen: b) Vor/Zurück-Pfeile und einklappbare Seitenleiste (Stufe 3).
 - **ETU-Vorbild:** Bild 11: „Zuletzt …“, grüne Pfeile Zurück/Vor, Statuszeile „[Angebote] Angebot: <AN2026/0005> vom 22.09.2026 19:42 (Offen)“.
 - **Heute:**
   - Eine Liste der zuletzt geöffneten Datensätze gibt es nicht.
@@ -932,10 +937,10 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 2. P1 Druckprofil-Grundgerüst (M) – ✅ umgesetzt (Commit d5237b2)
 3. P2 Zusammenfassung der Titel und Gruppensummen (S) – ✅ umgesetzt (Commit 2dc2fa0)
 4. P5 Infoblock, Grußformel, Fußzeilen-Zusatz, Kostenvoranschlag (S) – ✅ umgesetzt (Commit 7bca588)
-5. P14, nur der Teil „Prüfung beim Einlesen“ (behebt den 100-fach zu hohen EP) (S)
-6. P11, nur das Popup-Feld „Aufschlag %“ und der VK-Vorschlag bei EK-Änderung (S)
-7. P19 a/c/d: Zuletzt, Statuszeile, Markierung in der Seitenleiste (S)
-8. P6, nur Kunden/Lieferanten-Filter und „Unsere Kunden-Nr.“ (S)
+5. P14, nur der Teil „Prüfung beim Einlesen“ (behebt den 100-fach zu hohen EP) (S) – ✅ umgesetzt (Commit d926b4e)
+6. P11, nur das Popup-Feld „Aufschlag %“ und der VK-Vorschlag bei EK-Änderung (S) – ✅ umgesetzt (Commit 3e041e7)
+7. P19 a/c/d: Zuletzt, Statuszeile, Markierung in der Seitenleiste (S) – ✅ umgesetzt (Commits 506e52e, 2aa2bf6, 2b77577)
+8. P6, nur Kunden/Lieferanten-Filter und „Unsere Kunden-Nr.“ (S) – ✅ umgesetzt (Commit 072ff14)
 
 **Stufe 2: Kernfunktionen nach ETU (ca. 12–13 Tage)**
 - P10 Gesamtkalkulation mit Rücknahme (L)

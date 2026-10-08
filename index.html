@@ -3520,7 +3520,7 @@ function vorschauSeiten(){
     bl.classList.add('seiten');
     const doc=bl.querySelector('.doc')||bl,H=papier().hc*MMPX,fz=bl.querySelector('.ft')?fussZeilen(S().firma):[];
     const band=(fill,letzte)=>`<div style="height:${Math.max(0,fill).toFixed(1)}px"></div><div class="pgband"><div class="pf${fz.length?' l':''}">${fz.map(esc).join('<br>')}</div><span class="pz"></span>${letzte?'':'<div class="gap"></div><div class="pt"></div>'}</div>`;
-    const bloecke=[];for(const c of doc.children){if(c.matches('.wm,.ft,.pgsp'))continue;const R=c.matches('table')?[...c.querySelectorAll(':scope>tbody>tr')]:[];
+    const bloecke=[];for(const c of doc.children){if(c.matches('.wm,.ft,.pgsp'))continue;const R=c.matches('table.p')?[...c.querySelectorAll(':scope>tbody>tr')]:[]; // nur Positionstabellen zeilenweise teilen; Summenblock bleibt ganz (wie im Druck)
       if(R.length)R.forEach((r,i)=>bloecke.push({el:r,tab:c,erst:i===0}));else bloecke.push({el:c})}
     const t0=()=>bl.getBoundingClientRect().top+parseFloat(getComputedStyle(bl).paddingTop);
     let start=0,n=1;
@@ -3591,8 +3591,8 @@ async function pdfAusBeleg(b){
       if(lauf&&Math.abs(lauf.y-base)<1)lauf.s+=m[0],lauf.x2=X(r.right);else{fertig();lauf={t:'text',x:X(r.left),x2:X(r.right),y:base,top:Y(r.top),s:m[0],fs,fett,kurs,c}}}
     fertig()}
   // Seitenumbrüche an Zeilen-/Blockgrenzen; Tabellenkopf auf Folgeseiten wiederholen
-  // Umbruch nur nach ganzen Zeilen (Position = Bezeichnung + Langtext), nicht nach Tabellen- oder Gruppenkopf
-  const brk=[...box.querySelectorAll('tbody>tr:not(.grpz),.doc>div:not(.hd),.doc>table,.txt,.sig')].map(e=>Y(e.getBoundingClientRect().bottom)).sort((a,c)=>a-c);
+  // Umbruch nur nach ganzen Zeilen (Position = Bezeichnung + Langtext), nicht nach Tabellen- oder Gruppenkopf; Summenblock (.tot) bleibt ein Block wie im Druck
+  const brk=[...box.querySelectorAll('table.p tbody>tr:not(.grpz),.doc>div:not(.hd),.doc>table,.txt,.sig')].map(e=>Y(e.getBoundingClientRect().bottom)).sort((a,c)=>a-c);
   const tab=box.querySelector('table.p'),tR=tab?.getBoundingClientRect(),thR=tab?.querySelector('thead')?.getBoundingClientRect(),thH=thR?thR.height:0,thTop=thR?Y(thR.top):0;
   const hoehe=Math.max(...[...it].map(x=>x.t==='text'?x.y+4:x.t==='line'?Math.max(x.y1,x.y2):x.y+x.h),0);
   const seiten=[];let st=0;

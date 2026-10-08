@@ -979,6 +979,13 @@ Jedes Paket wird erst nach Ihrem Test im Browser nach `main` übernommen. Bis da
 
 ---
 
+## Entscheidungen des Anwenders (08.10.2026)
+- **Umfang:** Stufe 1 umsetzen (P0 b–n, P1, P2, P5, P14 nur Prüfung beim Einlesen, P11 nur Aufschlag % im Pop-up, P19 a/c/d, P6 nur Filter und „Unsere Kunden-Nr.“).
+- **Gesamtkalkulation (P10, später):** proportional als Standard; einheitlicher Aufschlag im Dialog wählbar.
+- **Lohnkostennachweis (P9, später):** nur auf Wunsch je Beleg (Standard aus).
+- **Briefanrede (P6, später):** österreichische Form „Sehr geehrter Herr Ing. Mustermann,“, je Kontakt überschreibbar.
+- Noch offen: Firmenbuchgericht (Frage 8), Duplikat-Vermerk Standard (bis zur Antwort aus), Fragen 5, 6, 7, 9, 10, 11.
+
 ## 6. Offene Fragen
 
 1. **Umfang und Arbeitsweise:** Soll ich zuerst P0 a) als Sofortkorrektur umsetzen und danach Stufe 1 wie beschrieben (Zweig `main-b4f5uz` (Pull Request #1), Tag `vor-etu`, ein Commit je Paket, Übernahme nach `main` erst nach Ihrem Test)?

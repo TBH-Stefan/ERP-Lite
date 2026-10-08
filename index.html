@@ -3936,7 +3936,8 @@ function onPos(b,i,f,v){
   }
   if(f==='einheit'){
     const a=artikel(p.artikelId),alt=a?.einheiten?.find(x=>x.e===v),nf=alt?+alt.f:1;
-    if(a){const r=nf/(+p.faktor||1);p.ep=r2(p.ep*r);p.ek=r2(p.ek*r)}
+    if(a){const r=nf/(+p.faktor||1);p.ep=r2(p.ep*r);p.ek=r2(p.ek*r);
+      if(p.epL!=null||p.epS!=null){p.epL=r2((+p.epL||0)*r);p.epS=b.optLS?r2(p.ep-p.epL):r2((+p.epS||0)*r)}} // Lohn/Sonstiges mit umrechnen; bei optLS bleibt ep = epL + epS (Rundungsrest auf Sonstiges)
     p.einheit=v;p.faktor=nf;render();return;
   }
   p[f]=['menge','ep','rabatt','ek','pauschal','epL','epS'].includes(f)?num(v):v;

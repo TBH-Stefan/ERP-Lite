@@ -1089,7 +1089,8 @@ const V={};
 function render(){
   if(!DB)return;
   const h=location.hash.replace(/^#\/?/,'')||'dash',[view,arg]=h.split('/');
-  document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('on',a.dataset.n===h||a.dataset.n===view));
+  const nz=view==='beleg'?(beleg(arg)?'belege/'+T[beleg(arg).typ].b:''):{kontakt:'kontakte',auftrag:'auftraege'}[view]||''; // Seitenleiste: Bereich des geöffneten Datensatzes markieren (P19 d)
+  document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('on',a.dataset.n===h||a.dataset.n===view||(!!nz&&a.dataset.n===nz)));
   closePop();
   const f=V[view]||V.dash;
   $('#main').innerHTML=f(arg);

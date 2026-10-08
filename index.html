@@ -326,6 +326,7 @@ const S=()=>DB.settings;
    ERW: {k:Schlüssel, std:Vorgabe, p:Paket (für „Standard wiederherstellen“), l:Bezeichnung, info:Beschreibung} */
 const ERW=[
   {k:'strgP',std:true,p:'Druck (P0 b)',l:'Strg+P druckt den geöffneten Beleg',info:'Strg+P und der Druck über das Browsermenü drucken immer den gerade geöffneten Beleg, außerhalb eines Belegs bleibt der Ausdruck leer (kein alter Beleg eines anderen Kunden). LV- und K-Blatt-Ausdrucke übernehmen nicht mehr die Firmenfußzeile eines zuvor gedruckten Belegs. Fehlerbehebung, daher Standard ein.'},
+  {k:'snapshot',std:true,p:'Nachdruck (P0 c)',l:'Nachdruck wie das Original',info:'Beim Festschreiben werden Fußzeile, Ansprechperson, E-Mail, Telefon, Unterzeichner und die verwendeten Steuersätze im Beleg eingefroren. Nachdruck, PDF, Summen, FiBu und UVA festgeschriebener Belege verwenden diese Werte statt der aktuellen Einstellungen; Bestellungen drucken die Lieferanten-Art.-Nr. aus der Position bzw. aus dem Artikelstamm beim Festschreiben. Das Logo wird nicht eingefroren. Ältere Belege ohne eingefrorene Werte bleiben unverändert. Aus: wie bisher die aktuellen Einstellungen (eingefrorene Werte bleiben gespeichert). Fehlerbehebung, daher Standard ein.'},
 ];
 const ERW_STD=Object.fromEntries(ERW.map(x=>[x.k,x.std]));
 const erw=k=>DB?.settings?.erw?.[k]??ERW_STD[k];
@@ -335,6 +336,9 @@ const beleg=id=>id?DB.belege.find(b=>b.id===id):null;
 const kName=id=>kontakt(id)?.name||'–';
 const bNr=b=>b?(b.nr||'Entwurf'):'';
 const steuerDef=c=>S().steuer.find(s=>s.code===c)||{code:c,satz:0,bez:c,hinweis:''};
+// Nachdruck-Treue (erw.snapshot): beim Festschreiben eingefrorene Firmen-/Steuerwerte b.fix, gelesen nur bei festgeschriebenen Belegen (Entwurf: aktuelle Einstellungen)
+const fixAktiv=b=>b?.fest&&b.fix&&erw('snapshot')?b.fix:null;
+const stDef=(b,c)=>fixAktiv(b)?.steuer?.find(x=>x.code===c)||steuerDef(c);
 const opt=(v,t,sel)=>`<option value="${esc(v)}"${String(v)===String(sel)?' selected':''}>${esc(t)}</option>`;
 function log(aktion,info){DB.log.push({ts:new Date().toISOString(),aktion,info})}
 /* Papierkorb: Gelöschtes bleibt wiederherstellbar (Rückgängig) */
@@ -810,7 +814,7 @@ function summen(b){
     netto+=gp;m[p.steuer]=(m[p.steuer]||0)+gp;
     const f=(+p.menge||0)*(1-(+p.rabatt||0)/100);lohn+=f*(+p.epL||0);sonst+=f*(+p.epS||0);
   }
-  const steuern=Object.keys(m).map(code=>{const d=steuerDef(code),basis=r2(m[code]);return{code,bez:d.bez,satz:+d.satz,basis,betrag:r2(basis*d.satz/100)}});
+  const steuern=Object.keys(m).map(code=>{const d=stDef(b,code),basis=r2(m[code]);return{code,bez:d.bez,satz:+d.satz,basis,betrag:r2(basis*d.satz/100)}});
   netto=r2(netto);const steuer=sum(steuern,x=>x.betrag),brutto=r2(netto+steuer);
   const abz=b.typ==='SR'?(b.fest?(b.abzuege||[]):abzuegeLive(b)):[];
   const steuernEff=steuern.map(t=>{const a=abz.flatMap(x=>x.steuern).filter(x=>x.code===t.code);return{...t,basis:r2(t.basis-sum(a,x=>x.basis)),betrag:r2(t.betrag-sum(a,x=>x.betrag))}});
@@ -945,6 +949,16 @@ function folgeGo(src,typ){const b=folge(src,typ);if(b){log('Folgebeleg',`${T[typ
 
 /* ---------- Festschreiben / Storno ---------- */
 function adressSnapshot(k){return k?{nr:k.nr,name:k.name,zusatz:k.zusatz,strasse:k.strasse,plz:k.plz,ort:k.ort,land:k.land,uid:k.uid}:{}}
+// verwendete Steuer-Codes (wie summen(): Gruppen nur mit Pauschalpreis; Optionen/Alternativen zählen mit, ihr Satz steht in der USt-Spalte)
+const steuerCodes=b=>[...new Set(b.pos.filter(p=>p.art!=='T'&&(p.art!=='G'||+p.pauschal>0)).map(p=>p.art==='G'?p.steuer||S().stdSteuer:p.steuer).filter(Boolean))];
+// Lieferanten-Art.-Nr. einer Einkaufsposition: Artikelstamm bzw. Einkaufsdaten der Position (nur beim selben Lieferanten)
+const lnrStamm=(b,p)=>artikel(p.artikelId)?.lieferanten?.find(l=>l.kontaktId===b.kontaktId)?.artNr||'';
+const lnrEk=(b,p)=>p.einkauf?.artNr&&p.einkauf.lid===b.kontaktId?p.einkauf.artNr:'';
+// Schnappschuss beim Festschreiben (immer gespeichert, gelesen nur bei erw.snapshot): Fußzeile, Bearbeiter, Kontakt, Unterzeichner, Steuersätze; Logo wegen der Größe nicht
+function belegFix(b){const f=S().firma,fx={fz:fussZeilen(f),bearbeiter:S().bearbeiter||'',name:f.name||'',mail:f.mail||'',tel:f.tel||'',zeichner:f.zeichner||'',zeichnerFkt:f.zeichnerFkt||'',
+  steuer:steuerCodes(b).map(c=>{const d=steuerDef(c);return{code:c,satz:+d.satz||0,bez:d.bez||'',hinweis:d.hinweis||''}})};
+  if(T[b.typ].b==='E'){const ln={};for(const p of b.pos){const x=!p.lnr&&lnrStamm(b,p);if(x)ln[p.id]=x}if(Object.keys(ln).length)fx.lnr=ln}
+  return fx}
 async function festschreiben(b0){
   if(!await vorFest())return;
   const b=beleg(b0.id);if(!b||b.fest)return;
@@ -978,7 +992,7 @@ async function festschreiben(b0){
   if(!ok)return;
   if(!b.nr)b.nr=b.typ==='AN'&&b.rev?`${b.basisNr}-R${b.rev}`:nextNr(b.typ,b.datum);
   if(b.typ==='AN'&&b.basisNr)for(const x of DB.belege)if(x!==b&&x.typ==='AN'&&x.fest&&(x.nr===b.basisNr||x.basisNr===b.basisNr)&&(x.rev||0)<b.rev){x.status='ersetzt';log('Angebot ersetzt',`${x.nr} durch ${b.nr}`)}
-  b.fest=true;b.festAm=new Date().toISOString();b.adresse=adressSnapshot(k);
+  b.fix=belegFix(b);b.fest=true;b.festAm=new Date().toISOString();b.adresse=adressSnapshot(k);
   if(b.typ==='SR')b.abzuege=abzuegeLive(b);
   if(b.stornoVon){const o=beleg(b.stornoVon);if(o){o.storno=true;log('storniert',`${T[o.typ].bez} ${o.nr} durch ${b.nr}`)}}
   lagerBeiFest(b);
@@ -3447,9 +3461,12 @@ document.head.insertAdjacentHTML('beforeend',`<link rel="icon" href="${LOGO_TBH}
 const briefkopf=f=>`<div class="hd">${f.logo?`<div class="logo"><img src="${f.logo}" alt="">${f.slogan?`<div class="slg">${String(f.slogan).split('\n').map(z=>`<div>${esc(z)}</div>`).join('')}</div>`:''}</div>`:`<img class="kopf" src="${KOPF_TBH}" alt="TBH Technisch Büro für Elektrotechnik">`}</div>`;
 const fussZeilen=f=>[[f.name,f.strasse,(f.plz+' '+f.ort).trim()].filter(Boolean).map(x=>x.toUpperCase()).concat(f.mail?[f.mail]:[],f.bank?[f.bank.toUpperCase()]:[]).join(' | ')+(f.iban||f.fn||f.uid?' |':''),
   [f.iban?'IBAN: '+f.iban:'',f.bic?'BIC: '+f.bic:'',f.fn?'FIRMENBUCHNUMMER: FN '+f.fn+(f.gericht?', '+(f.gericht.toUpperCase()):''):'',f.uid?'UID: '+f.uid:''].filter(Boolean).join(' | ')].filter(Boolean);
-const fusszeile=f=>`<div class="ft">${fussZeilen(f).map(esc).join('<br>')}</div>`;
+// Fußzeile aus einer Quelle: docHTML schreibt die Zeilen (bei festgeschriebenen Belegen eingefroren) als data-fz; Vorschau, Druck und PDF lesen sie dort
+const fusszeile=fz=>`<div class="ft" data-fz="${esc(JSON.stringify(fz))}">${fz.map(esc).join('<br>')}</div>`;
+const ftZeilen=el=>{const e=el?.querySelector('.ft');if(!e)return null;try{return JSON.parse(e.dataset.fz)}catch(x){return fussZeilen(S().firma)}};
 function docHTML(b,edit=false){
   const f=S().firma,k=b.fest&&b.adresse?b.adresse:adressSnapshot(kontakt(b.kontaktId)),s=summen(b),t=T[b.typ],ohneP=OHNE_PREIS.includes(b.typ);
+  const fx=fixAktiv(b),fv=x=>fx?fx[x]||'':x==='bearbeiter'?S().bearbeiter:f[x]; // eingefrorene Werte ohne Rückfall auf die aktuellen Einstellungen
   edit=edit&&!b.fest;
   // bearbeitbares Feld in der Vorschau (key: h:<feld> | p:<index>:<feld>)
   const ed=(key,val,ph='',ml=false)=>edit?`<span class="ed${ml?' ml':''}" contenteditable="true" spellcheck="true" data-ed="${key}" data-ph="${esc(ph)}">${ml?rt(val):esc(val)}</span>`:(ml?rt(val):esc(val));
@@ -3464,19 +3481,19 @@ function docHTML(b,edit=false){
     if(p.art==='G'){const zeigP=!ohneP&&(+p.pauschal>0||p.ohneEP);
       return`<tr class="grpz"><td><b>${pnr[p.id]}</b></td><td colspan="${ncol-(zeigP?2:1)}"><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Gruppe')}</b>${p.text||edit?`<div class="lt">${ed(`p:${i}:text`,p.text,'Gruppentext …',true)}</div>`:''}</td>${zeigP?`<td class="n"><b>${fmt(gruppePreis(p,gi))}</b></td>`:''}</tr>`}
     const g=gi.grp[p.id],ohne=ohneP||(g&&(+g.pauschal>0||g.ohneEP));
-    const pr=ohneP?'':ohne?`<td colspan="${ncol-4}"></td>`:`${ls?`<td class="n">${edit?ed(`p:${i}:epL`,fmt(p.epL)):fmt(p.epL)}</td><td class="n">${edit?ed(`p:${i}:epS`,fmt(p.epS)):fmt(p.epS)}</td>`:''}<td class="n">${edit&&!ls?ed(`p:${i}:ep`,fmt(p.ep)):fmt(p.ep)}</td>${rab?`<td class="n">${edit?ed(`p:${i}:rabatt`,+p.rabatt?fmtQ(p.rabatt):'','%'):(+p.rabatt?fmtQ(p.rabatt)+' %':'')}</td>`:''}${mehrSt?`<td class="n">${esc(steuerDef(p.steuer).satz)} %</td>`:''}<td class="n">${fmt(posGP(p))}</td>`;
-    return`<tr><td>${pnr[p.id]}</td><td><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Bezeichnung')}</b>${(()=>{const ln=t.b==='E'?(p.lnr||artikel(p.artikelId)?.lieferanten?.find(l=>l.kontaktId===b.kontaktId)?.artNr||''):'';return ln?` <span style="color:#555">(Ihre Art.-Nr. ${esc(ln)})</span>`:p.nr?` <span style="color:#555">(${esc(p.nr)})</span>`:''})()}${b.ltDruck!==false&&(p.text||edit)?`<div class="lt">${ed(`p:${i}:text`,p.text,'Langtext …',true)}</div>`:''}</td>
+    const pr=ohneP?'':ohne?`<td colspan="${ncol-4}"></td>`:`${ls?`<td class="n">${edit?ed(`p:${i}:epL`,fmt(p.epL)):fmt(p.epL)}</td><td class="n">${edit?ed(`p:${i}:epS`,fmt(p.epS)):fmt(p.epS)}</td>`:''}<td class="n">${edit&&!ls?ed(`p:${i}:ep`,fmt(p.ep)):fmt(p.ep)}</td>${rab?`<td class="n">${edit?ed(`p:${i}:rabatt`,+p.rabatt?fmtQ(p.rabatt):'','%'):(+p.rabatt?fmtQ(p.rabatt)+' %':'')}</td>`:''}${mehrSt?`<td class="n">${esc(stDef(b,p.steuer).satz)} %</td>`:''}<td class="n">${fmt(posGP(p))}</td>`;
+    return`<tr><td>${pnr[p.id]}</td><td><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Bezeichnung')}</b>${(()=>{const ln=t.b==='E'?(fx?p.lnr||fx.lnr?.[p.id]||lnrEk(b,p):p.lnr||lnrStamm(b,p)||(!b.fest&&erw('snapshot')?lnrEk(b,p):'')):'';return ln?` <span style="color:#555">(Ihre Art.-Nr. ${esc(ln)})</span>`:p.nr?` <span style="color:#555">(${esc(p.nr)})</span>`:''})()}${b.ltDruck!==false&&(p.text||edit)?`<div class="lt">${ed(`p:${i}:text`,p.text,'Langtext …',true)}</div>`:''}</td>
     <td class="c">${edit?ed(`p:${i}:menge`,fmtQ(p.menge)):fmtQ(p.menge)}</td><td class="c">${esc(p.einheit)}</td>${pr}</tr>`;
   };
   // Zeilen inkl. Gruppensummen (bei Gruppen ohne Pauschalpreis und mit Einzelpreisen)
   const tr=liste=>{let o='',g=null;const ende=()=>{if(g&&!ohneP&&!(+g.pauschal>0)&&!g.ohneEP)o+=`<tr class="gsum"><td></td><td colspan="${ncol-2}">Summe ${pnr[g.id]} ${esc(g.bez)}</td><td class="n">${fmt(gi.sumG[g.id])}</td></tr>`};
     for(const p of liste){if(p.art==='G'){ende();g=p}o+=zeile(p)}ende();return o};
   const th=`<tr><th>Pos</th><th>Bezeichnung</th><th>Menge</th><th>Einheit</th>${ohneP?'':`${ls?'<th class="n">Lohn</th><th class="n">Sonstiges</th>':''}<th class="n">${ls?'PP':'Einzelpreis'}</th>${rab?'<th class="n">Rabatt %</th>':''}${mehrSt?'<th class="n">USt</th>':''}<th class="n">${ls?'GP':'Gesamtpreis'}</th>`}</tr>`;
-  const hinweise=[...new Set(s.steuern.map(x=>steuerDef(x.code).hinweis).filter(Boolean))];
+  const hinweise=[...new Set(s.steuern.map(x=>stDef(b,x.code).hinweis).filter(Boolean))];
   const nrTxt=b.nr||(edit?vorschlagNr(b)+' (Vorschlag)':'ENTWURF');
   const mitLeistung=(t.re&&t.b==='V')||b.typ==='LS';
   const datLbl=b.typ==='AN'?'Angebotsdatum':t.re&&t.b==='V'&&b.typ!=='GS'?'Rechnungsdatum':'Datum';
-  const info=[[datLbl,dAT(b.datum)],[t.b==='V'?'Kunden-Nr.':'Lieferanten-Nr.',k.nr],k.uid?['Ihre UID',k.uid]:null,b.typ==='ER'?['Rechnung Lief.',b.fremdNr]:null,b.fremdNr&&b.typ==='BE'?['Ihr Angebot',b.fremdNr]:null,b.leistung||(edit&&mitLeistung)?['Leistung',{h:ed('h:leistung',b.leistung,'TT.MM.JJJJ')}]:null,b.gueltigBis?['Gültig bis',dAT(b.gueltigBis)]:null,b.liefertermin?['Liefertermin',dAT(b.liefertermin)]:null,S().bearbeiter?['Ansprechperson',S().bearbeiter]:null,f.mail?['E-Mail',f.mail]:null,f.tel?['Telefon',f.tel]:null].filter(Boolean);
+  const info=[[datLbl,dAT(b.datum)],[t.b==='V'?'Kunden-Nr.':'Lieferanten-Nr.',k.nr],k.uid?['Ihre UID',k.uid]:null,b.typ==='ER'?['Rechnung Lief.',b.fremdNr]:null,b.fremdNr&&b.typ==='BE'?['Ihr Angebot',b.fremdNr]:null,b.leistung||(edit&&mitLeistung)?['Leistung',{h:ed('h:leistung',b.leistung,'TT.MM.JJJJ')}]:null,b.gueltigBis?['Gültig bis',dAT(b.gueltigBis)]:null,b.liefertermin?['Liefertermin',dAT(b.liefertermin)]:null,fv('bearbeiter')?['Ansprechperson',fv('bearbeiter')]:null,fv('mail')?['E-Mail',fv('mail')]:null,fv('tel')?['Telefon',fv('tel')]:null].filter(Boolean);
   let zb='';
   if(t.re&&t.b==='V'&&b.typ!=='GS'){zb=`Zahlbar bis ${dAT(faellig(b))} ohne Abzug`+(+b.skonto?`, bei Zahlung bis ${dAT(addDays(b.datum,b.skontoTage))} abzüglich ${fmtQ(b.skonto)} % Skonto`:'')+'.'}
   else if(['AN','AB','PR'].includes(b.typ)){zb=`Zahlungsbedingungen: ${b.zahlungsziel} Tage netto`+(+b.skonto?`, ${b.skontoTage} Tage ${fmtQ(b.skonto)} % Skonto`:'')+'. Alle Preise in EUR zuzüglich gesetzlicher Umsatzsteuer.'}
@@ -3499,8 +3516,8 @@ function docHTML(b,edit=false){
   ${zb?`<div class="txt">${zb}</div>`:''}
   ${b.typ==='LS'?'<div class="txt" style="margin-top:12mm">Ware vollständig und unbeschädigt erhalten:<br><br><br>______________________________<br>Datum, Unterschrift</div>':''}
   ${b.fuss||edit?`<div class="txt">${ed('h:fuss',b.fuss,'Fußtext …',true)}</div>`:''}
-  ${f.zeichner&&t.b==='V'?`<div class="sig"><b>${esc(f.zeichner)}</b>${f.zeichnerFkt?`<div>${esc(f.zeichnerFkt)}</div>`:''}</div>`:''}
-  ${fusszeile(f)}
+  ${fv('zeichner')&&t.b==='V'?`<div class="sig"><b>${esc(fv('zeichner'))}</b>${fv('zeichnerFkt')?`<div>${esc(fv('zeichnerFkt'))}</div>`:''}</div>`:''}
+  ${fusszeile(fx?fx.fz||[]:fussZeilen(f))}
   </div>`;
 }
 /* Papierformat (Einstellungen): das Layout bleibt im A4-Maß und wird für Druck und PDF auf das Format skaliert */
@@ -3518,7 +3535,7 @@ function vorschauSeiten(){
     // Handy/schmale Spalte: Blatt in voller A4-Breite aufbauen und danach verkleinert anzeigen (wie gedruckt)
     const m=$('#main'),ms=m?getComputedStyle(m):null,av=Math.min(bl.parentElement.clientWidth,m?m.clientWidth-parseFloat(ms.paddingLeft)-parseFloat(ms.paddingRight):1e9),eng=av<Math.round(210*MMPX);if(eng)bl.style.width='210mm';
     bl.classList.add('seiten');
-    const doc=bl.querySelector('.doc')||bl,H=papier().hc*MMPX,fz=bl.querySelector('.ft')?fussZeilen(S().firma):[];
+    const doc=bl.querySelector('.doc')||bl,H=papier().hc*MMPX,fz=ftZeilen(bl)||[];
     const band=(fill,letzte)=>`<div style="height:${Math.max(0,fill).toFixed(1)}px"></div><div class="pgband"><div class="pf${fz.length?' l':''}">${fz.map(esc).join('<br>')}</div><span class="pz"></span>${letzte?'':'<div class="gap"></div><div class="pt"></div>'}</div>`;
     const bloecke=[];for(const c of doc.children){if(c.matches('.wm,.ft,.pgsp'))continue;const R=c.matches('table.p')?[...c.querySelectorAll(':scope>tbody>tr')]:[]; // nur Positionstabellen zeilenweise teilen; Summenblock bleibt ganz (wie im Druck)
       if(R.length)R.forEach((r,i)=>bloecke.push({el:r,tab:c,erst:i===0}));else bloecke.push({el:c})}
@@ -3549,7 +3566,7 @@ function druckVorbereiten(b){
   $('#print').innerHTML=`<table class="pgw"><tbody><tr><td>${docHTML(b)}</td></tr></tbody><tfoot><tr><td><div class="pgf"></div></td></tr></tfoot></table>`;
   // Fußzeile als Seitenrand-Feld (@page): wiederholt sich zuverlässig auf jeder Seite; ältere/andere Browser: feste Fußzeile
   const mb=!!navigator.userAgentData?.brands?.some(x=>x.brand==='Chromium'&&+x.version>=131);$('#print').classList.toggle('mb',mb);
-  const css=fussZeilen(S().firma).join('\n').replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\A ');
+  const css=(ftZeilen($('#print'))||fussZeilen(S().firma)).join('\n').replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\A ');
   ($('#pgfuss')||document.head.appendChild(Object.assign(document.createElement('style'),{id:'pgfuss'}))).textContent=mb?`@media print{@page{@bottom-left{content:"${css}";white-space:pre;text-align:center;font:7.5pt/1.3 Arial,sans-serif;color:#000;border-top:1mm solid #80704d;vertical-align:top;padding-top:1mm;width:173.5mm;margin-left:-2.2mm}}}`:'';
   const alt=document.title;document.title=`${T[b.typ].bez} ${bNr(b)} ${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]/g,'-');return alt}
 function drucken(b){
@@ -3569,7 +3586,7 @@ async function deflate(u8){const cs=new CompressionStream('deflate');const r=new
 async function pdfAusBeleg(b){
   const P=papier(),K=P.k,PX=0.75*K,MX=56.69*K,MT=28.35*K,MB=49.04*K,PW=+(P.w/25.4*72).toFixed(2),PH=+(P.h/25.4*72).toFixed(2),HC=(PH-MT-MB)/PX; // px→pt, Ränder wie Druck (auf das Papierformat skaliert)
   const box=document.createElement('div');box.style.cssText='position:fixed;left:-10000px;top:0;width:665px;background:#fff';box.className='pdfmess';
-  box.innerHTML=docHTML(b);box.querySelector('.ft')?.remove();document.body.appendChild(box);
+  box.innerHTML=docHTML(b);const fz=ftZeilen(box)||fussZeilen(S().firma);box.querySelector('.ft')?.remove();document.body.appendChild(box);
   await Promise.all([...box.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
   const B=box.getBoundingClientRect(),X=v=>v-B.left,Y=v=>v-B.top,farbe=c=>{const m=String(c).match(/[\d.]+/g)||[0,0,0];return m.slice(0,3).map(v=>(+v/255).toFixed(3)).join(' ')};
   const it=[],thead=[]; // Zeichenelemente in px relativ zum Belegkopf
@@ -3601,7 +3618,6 @@ async function pdfAusBeleg(b){
   if(!seiten.length)seiten.push({st:0,en:hoehe+1,off:0});
   const bilder=[],bildNr=new Map();
   const pt=(x,y,s)=>[(MX+x*PX).toFixed(2),(PH-MT-(y-s.st+s.off)*PX).toFixed(2)];
-  const f=S().firma,fz=fussZeilen(f);
   const strom=s=>{const o=[];const zeichne=(x,dy)=>{if(x.t==='rect'){const [a,bb]=pt(x.x,x.y+x.h+dy,s);o.push(`${x.c} rg ${a} ${bb} ${(x.w*PX).toFixed(2)} ${(x.h*PX).toFixed(2)} re f`)}
       else if(x.t==='line'){const [a1,b1]=pt(x.x1+x.dx,x.y1+dy,s),[a2,b2]=pt(x.x2+x.dx,x.y2+dy,s);o.push(`${x.c} RG ${(x.w*PX).toFixed(2)} w ${a1} ${b1} m ${a2} ${b2} l S`)}
       else if(x.t==='img'){if(!bildNr.has(x.el)){bildNr.set(x.el,bilder.length);bilder.push(x.el)}const [a,bb]=pt(x.x,x.y+x.h+dy,s);o.push(`q ${(x.w*PX).toFixed(2)} 0 0 ${(x.h*PX).toFixed(2)} ${a} ${bb} cm /Im${bildNr.get(x.el)} Do Q`)}

@@ -139,6 +139,8 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
 .chain a{display:block;padding:2px 0;color:var(--acc);text-decoration:none}
 .chain a.cur{font-weight:700;color:var(--ink)}
 .hint{background:#fff8e6;border:1px solid #f3dca5;border-radius:6px;padding:8px 10px;margin-bottom:12px;font-size:13px}
+.bstat{font-size:13px;color:var(--mut);margin:-6px 0 12px;line-height:1.6}.bstat a{color:var(--acc);text-decoration:none}.bstat a:hover{text-decoration:underline}.bstat b{color:var(--ink)}.bstat .tag{margin-left:4px} /* Statuszeile im Beleg (P19 c) */
+.bstat.fix{position:sticky;z-index:25;background:var(--bg);margin:-6px -4px 12px;padding:4px;border-bottom:1px solid var(--line)}main:has(.bstat.fix) .split .sticky{top:48px;max-height:calc(100vh - 58px)}
 #start{max-width:620px;margin:8vh auto;padding:0 16px}
 @media(max-width:760px){
   body.loaded #app{display:block}
@@ -345,6 +347,8 @@ const ERW=[
   {k:'duplikat',std:false,p:'Duplikat (P0 n)',l:'Vermerk „DUPLIKAT“ bei erneuter Ausgabe von Rechnungen',info:'Druck, PDF und E-Mail-Versand festgeschriebener Rechnungen (auch Anzahlungs-, Teil-, Schlussrechnungen und Gutschriften) werden gezählt. Ab der zweiten Ausgabe fragt das Programm „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja), der Vermerk steht dann über dem Belegtitel; beim Druck über das Browsermenü wird ohne Rückfrage gekennzeichnet. Das erste Original bleibt unverändert. Gezählt wird nur bei eingeschaltetem Schalter (bei älteren Rechnungen zählen bereits per E-Mail versendete mit). Eine zweite gleichlautende Rechnung ohne Vermerk kann eine zusätzliche Steuerschuld auslösen (§ 11 Abs. 12 und 14 UStG).'},
   {k:'zuletzt',std:true,p:'Navigation (P19)',l:'„Zuletzt geöffnet“ in Seitenleiste und Kopfzeile',info:'Merkt sich auf diesem Gerät die 12 zuletzt geöffneten Belege, Kontakte, Artikel, Aufträge, LVs und K-Blätter (im Browser nur interne Kennungen, keine Namen; nicht in den Daten, Öffnen ist keine Änderung). „🕘 Zuletzt“ in der Seitenleiste bzw. 🕘 in der Kopfzeile am Handy zeigt sie mit Belegart, Nummer, Kunde und Status; Gelöschtes wird übersprungen, „Liste leeren“ löscht die Liste. Reine Bedienhilfe, daher Standard ein. Aus: Knopf ausgeblendet, es wird nichts gemerkt.'},
   {k:'druckprofil',std:true,p:'Druckprofil (P1)',l:'Druckprofil je Belegart',info:'Darstellungsoptionen für Vorschau, Druck, PDF und E-Mail je Belegart (unten unter „Druck & Belegdarstellung“) und je Beleg über „Druckoptionen …“ (dort nur Abweichungen). Beim Festschreiben wird die Darstellung im Beleg eingefroren, ein Nachdruck sieht wie das Original aus; „Bearbeiten“ hebt das wieder auf. Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG). Aus: Entwürfe im Standard-Aussehen, festgeschriebene Belege weiter mit ihrem eingefrorenen Stand; alle Einstellungen bleiben gespeichert. Die Vorgaben entsprechen dem bisherigen Aussehen.'},
+  {k:'statuszeile',std:true,p:'Navigation (P19)',l:'Statuszeile unter dem Belegtitel',info:'Zeigt unter dem Titel eines Belegs den Pfad „Verkauf › Angebote“ (anklickbar, führt zur gefilterten Liste), das Belegdatum, den Kunden bzw. Lieferanten, den Nettobetrag (läuft bei Änderungen mit) und wann der Beleg angelegt bzw. festgeschrieben wurde (mit Uhrzeit). Reine Anzeige, daher Standard ein.'},
+  {k:'kopfFix',std:false,p:'Navigation (P19)',l:'Statuszeile beim Scrollen oben festhalten',info:'Die Statuszeile bleibt mit Nummer und Status beim Scrollen am oberen Rand stehen (am Handy unter der Kopfzeile). Standard aus, weil sie am Handy eine Zeile Platz kostet. Wirkt nur mit eingeschalteter Statuszeile.'},
 ];
 const ERW_STD=Object.fromEntries(ERW.map(x=>[x.k,x.std]));
 const erw=k=>DB?.settings?.erw?.[k]??ERW_STD[k];
@@ -1287,7 +1291,7 @@ V.beleg=id=>{
     ${b.fest&&!b.storno&&REOPEN.includes(b.typ)&&b.status!=='ersetzt'?`<button data-act="reopen">Bearbeiten</button>`:''}
     <button data-act="dup">Duplizieren</button>
     ${b.storno?'':`<button class="d" data-act="storno">${b.fest?'Stornieren':'Löschen'}</button>`}
-  </div>${b.status==='ersetzt'?`<div class="hint">Dieses Angebot wurde durch eine Revision ersetzt.</div>`:''}`;
+  </div>${belegStatus(b)}${b.status==='ersetzt'?`<div class="hint">Dieses Angebot wurde durch eine Revision ersetzt.</div>`:''}`;
   const dk=b.fest?'':dKnopf(b,'Druckformat …');
   const blatt=`${dk?`<div class="bar" style="margin:0 0 6px;justify-content:flex-end">${dk}</div>`:''}<div class="blatt" id="vorschau">${docHTML(b,true)}</div>${b.fest?'':'<p class="mut" style="font-size:12px;margin:-6px 0 14px">Gestrichelte Felder direkt im Blatt bearbeiten – Änderungen werden in die Eingabefelder übernommen.</p>'}`;
   const formHTML=`
@@ -1339,6 +1343,17 @@ V.beleg=id=>{
   if(ans==='vorschau')return`${kopfbar}${scan}<div class="cols"><div>${blatt}${extra}</div><div>${side}</div></div>`;
   return`${kopfbar}${scan}<div class="cols"><div>${formHTML}${extra}</div><div>${side}</div></div>`;
 };
+/* Statuszeile im Beleg (P19 c, erw.statuszeile): Bereich › Belegart (Klick → Liste), Belegdatum, Kontakt, Netto (#kopfsum), angelegt bzw. festgeschrieben mit Uhrzeit;
+   erw.kopfFix: bleibt beim Scrollen oben stehen (dann mit Nummer und Status); aktualisiert über updateCalc() */
+const BMZ={AN:'Angebote',AB:'Auftragsbestätigungen',PR:'Proformarechnungen',LS:'Lieferscheine',AR:'Anzahlungsrechnungen',TR:'Teilrechnungen',RE:'Rechnungen',SR:'Schlussrechnungen',GS:'Gutschriften',BE:'Bestellungen',WE:'Wareneingänge',ER:'Eingangsrechnungen'};
+const dtAT=iso=>{const d=iso?new Date(iso):null;return d&&!isNaN(d)?d.toLocaleString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):''};
+function belegStatus(b){
+  if(!erw('statuszeile'))return'';const t=T[b.typ],k=kontakt(b.kontaktId),fix=erw('kopfFix');
+  const teile=[`<a href="#/belege/${t.b}">${t.b==='V'?'Verkauf':'Einkauf'}</a> › <a href="javascript:void 0" onclick="zuListe('${t.b}','${b.typ}')" title="Liste der ${esc(BMZ[b.typ]||t.bez)}">${esc(BMZ[b.typ]||t.bez)}</a>${fix?` › <b>${esc(bNr(b))}</b>${statusTag(b)}`:''}`,
+    b.datum?`vom ${dAT(b.datum)}`:'',k?`<a href="#/kontakt/${k.id}">${esc(k.name)}</a>`:'',OHNE_PREIS.includes(b.typ)?'':`netto <b id="kopfsum">${fmt(summen(b).netto)} €</b>`,
+    b.fest?`festgeschrieben${b.festAm?' '+dtAT(b.festAm):''}`:b.erstellt?`angelegt ${dtAT(b.erstellt)}`:''].filter(Boolean);
+  return`<div class="bstat${fix?' fix':''}"${fix?` style="top:${$('.topbar')?.offsetHeight||0}px"`:''}>${teile.join('<span class="mut"> · </span>')}</div>`;
+}
 function ansicht(){const m=lsGet('erp-ansicht')||'form';return m==='beides'&&window.innerWidth<1000?'form':m}
 function vorschlagNr(b){
   if(b.nr)return b.nr;
@@ -1586,6 +1601,7 @@ function zahlBox(b){
 function updateCalc(b){
   b.pos.forEach((p,i)=>{const e=$('#gp'+i);if(e)e.textContent=fmt(posGP(p))});
   const s=$('#sumbox');if(s)s.innerHTML=sumBox(b);const k=$('#kalkbox');if(k)k.innerHTML=kalkBox(b);
+  const st=$('.bstat');if(st)st.outerHTML=belegStatus(b); // Statuszeile (P19 c): Datum, Netto
   const v=$('#vorschau');if(v){v.innerHTML=docHTML(b,true);vorschauSeiten()}
 }
 function curBeleg(){const h=location.hash.replace(/^#\/?/,'').split('/');return h[0]==='beleg'?beleg(h[1]):null}

@@ -1379,7 +1379,8 @@ function edUebernehmen(el,next){
   else{
     const p=b.pos[+a];if(!p)return;
     const v=['menge','ep','rabatt','epL','epS'].includes(f)?deNum(txt):txt;
-    if(p[f]===v)return;p[f]=val=v;
+    if(p[f]===v)return;if(['menge','ep','rabatt','epL','epS'].includes(f)&&v===({menge:r3,rabatt:r3}[f]||r2)(+p[f]||0))return; // Zahl wie angezeigt (gerundet): nichts ändern – sonst kürzte schon ein Klick ins Feld z. B. einen eingelesenen EP 0,4537 auf 0,45
+    p[f]=val=v;
     if(f==='epL'||f==='epS'){p.ep=r2((+p.epL||0)+(+p.epS||0));const e=document.querySelector(`[data-p="${a}"][data-f="ep"]`);if(e)e.value=p.ep}
     const i=document.querySelector(`[data-p="${a}"][data-f="${f}"]`);if(i)i.value=v;
   }

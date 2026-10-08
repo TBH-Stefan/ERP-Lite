@@ -405,6 +405,9 @@ function neueDB(){
   };
 }
 // Firmendaten laut Briefpapier (Fußzeile der Vorlagen); füllen nur leere Felder
+// Pflichtangaben der eigenen Firma (§ 14 UGB: Firmenbuchnummer und Firmenbuchgericht, § 11 UStG: UID-Nr.) – nur Hinweis, es wird nichts eingetragen
+const pflichtFehlt=f=>[[f.fn,'Firmenbuch-Nr.'],[f.gericht,'Firmenbuchgericht'],[f.uid,'UID-Nr.']].filter(x=>!String(x[0]||'').trim()).map(x=>x[1]);
+const pflichtHinweis=()=>{const p=pflichtFehlt(S().firma);return`<div id="pflicht"${p.length?' class="hint" style="margin:0 0 10px"':''}>${p.length?`<b>Pflichtangaben fehlen:</b> ${p.join(', ')} – bitte hier eintragen. Firmenbuch-Nr. und Firmenbuchgericht verlangt §&nbsp;14&nbsp;UGB auf Geschäftsbriefen, Bestellscheinen und Rechnungen, die eigene UID-Nr. §&nbsp;11&nbsp;UStG auf Rechnungen; beides steht in der Fußzeile aller Belege.`:''}</div>`};
 const FIRMA_TBH={name:'TBH GmbH',strasse:'Satzäcker 25',plz:'A-2752',ort:'Wöllersdorf',mail:'office@tbh.co.at',tel:'+43 664 / 37 47 066',bank:'Raiffeisenregionalbank Wiener Neustadt',iban:'AT11 3293 7000 0067 4200',fn:'650221 h',uid:'ATU83015425',zeichner:'Horvath Stefan, BSc.',zeichnerFkt:'Geschäftsführung'};
 function migrate(d){
   const n=neueDB();
@@ -970,7 +973,7 @@ async function festschreiben(b0){
   if(!b.pos.some(p=>!isInfo(p)))err.push('Keine Positionen.');
   if(b.pos.some(p=>!isInfo(p)&&!String(p.bez).trim()))err.push('Position ohne Bezeichnung.');
   if(t.b==='V'&&t.re){
-    if(!S().firma.uid)warn.push('Eigene UID-Nr. fehlt (Einstellungen).');
+    {const pf=pflichtFehlt(S().firma);if(pf.length)warn.push(`Pflichtangaben der Firma fehlen: ${pf.join(', ')} (§ 14 UGB, § 11 UStG) – bitte unter Einstellungen → Firma ergänzen.`)}
     if(b.pos.some(p=>!isInfo(p)&&!p.kz&&['RC','IGL'].includes(p.steuer))&&!k?.uid)err.push('Reverse Charge / ig. Lieferung erfordert die UID-Nr. des Kunden.');
     if(s.brutto>10000&&!k?.uid)warn.push('Rechnung über 10.000 € brutto: UID-Nr. des Empfängers ist Pflichtangabe (wenn Unternehmer).');
     if(!String(b.leistung).trim()){if(confirm('Liefer-/Leistungsdatum fehlt (§ 11 UStG).\nRechnungsdatum übernehmen?'))b.leistung=dAT(b.datum);else err.push('Liefer-/Leistungsdatum fehlt.')}
@@ -2841,7 +2844,7 @@ V.einstellungen=()=>{
   <div class="card"><h2>Firma (erscheint auf allen Belegen)</h2>
   <div class="row">${ff('name','Firmenname','w2')}${ff('zusatz','Zusatz (z. B. Inhaber, Gewerbe)','w2')}</div>
   <div class="row">${ff('strasse','Straße','w2')}${ff('plz','PLZ')}${ff('ort','Ort')}${ff('land','Land')}</div>
-  <div class="row">${ff('uid','UID-Nr.')}${ff('fn','Firmenbuch-Nr.')}${ff('gericht','Firmenbuchgericht')}${ff('tel','Telefon')}${ff('mail','E-Mail')}${ff('web','Web')}</div>
+  <div class="row">${ff('uid','UID-Nr.')}${ff('fn','Firmenbuch-Nr.')}${ff('gericht','Firmenbuchgericht')}${ff('tel','Telefon')}${ff('mail','E-Mail')}${ff('web','Web')}</div>${pflichtHinweis()}
   <div class="row">${ff('bank','Bank')}${ff('iban','IBAN','w2')}${ff('bic','BIC')}<label>Bearbeiter<input data-o="s" data-f="bearbeiter" value="${esc(s.bearbeiter)}"></label><label title="Druck, PDF und Vorschau (Seitenumbruch, Seitenzahl)">Papierformat<select data-o="s" data-f="papier">${Object.entries(PAPIER).map(([k,x])=>opt(k,x.l,s.papier||'A4')).join('')}</select></label></div>
   <div class="row">${ff('zeichner','Unterzeichner (z. B. Horvath Stefan, BSc.)','w2')}${ff('zeichnerFkt','Funktion')}<label class="w2">Untertitel (nur bei eigenem Logo)<textarea data-o="s" data-f="firma.slogan" style="height:44px">${esc(f.slogan)}</textarea></label></div>
   <div class="row"><label>Logo (PNG/JPG/SVG, max. 300 kB; leer = TBH-Briefkopf)<input type="file" id="logo" accept="image/*"></label><img src="${f.logo||KOPF_TBH}" style="max-height:50px">${f.logo?`<button data-act="logodel">Logo entfernen</button>`:''}<span style="flex:2"></span></div></div>
@@ -3881,6 +3884,7 @@ document.addEventListener('change',e=>{
     case'tx':S().texte[d.t][d.f]=v;break;
     default:return;
   }
+  if(d.o==='s'&&/^firma\.(fn|gericht|uid)$/.test(d.f)){const e=$('#pflicht');if(e)e.outerHTML=pflichtHinweis()} // Pflichtangaben-Hinweis sofort aktualisieren
   persist();
 });
 function onHead(b,f,v){

@@ -3534,7 +3534,7 @@ async function scanUebernehmen(b,nurStamm=false){ // nurStamm: Angebot nur in de
       if(k==='ek')a.ek=rp(z.ep/fak,pe);
       if(k==='einheit'){a.einheit=z.einheit;if(!S().einheiten.includes(z.einheit))S().einheiten.push(z.einheit)}
       if(k==='bez')a.bez=z.bez;
-      if(k==='vk'){const v=vkVorschlag(a);if(v!=null)a.vk=v} // VK-Vorschlag (P11): aus dem ggf. eben übernommenen EK bzw. den Herstellkosten
+      if(k==='vk'){const v=vkVorschlag(a,rp(z.ep/fak,pe));if(v!=null)a.vk=v} // VK-Vorschlag (P11): wie im Abgleich angezeigt (neuer EK bzw. Herstellkosten), auch wenn der EK selbst abgewählt ist
       if(k==='lief'&&!(a.lieferanten=a.lieferanten||[]).some(l=>l.kontaktId===lid))a.lieferanten.push({kontaktId:lid,artNr:z.artNr||''});
       if(k==='lartnr')a.lieferanten.find(l=>l.kontaktId===lid).artNr=z.artNr;
       if(['lp','rabatt','ek'].includes(k)&&lid){a.lieferanten=a.lieferanten||[];let lf=a.lieferanten.find(l=>l.kontaktId===lid);if(!lf)a.lieferanten.push(lf={kontaktId:lid,artNr:z.artNr||''});

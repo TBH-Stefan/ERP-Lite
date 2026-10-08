@@ -3803,7 +3803,7 @@ const ACT={
   ztdel:el=>{const z=DB.zeiten.find(z=>z.id===el.dataset.id);if(z&&confirm('Eintrag löschen?')){wegwerfen('zeiten',[z]);render()}},
   knew:async el=>{const k=await kontaktPopup(el.dataset.t);if(k){commit();go('kontakt/'+k.id)}},
   kdel:el=>{const id=el.dataset.id;if(DB.belege.some(b=>b.kontaktId===id)){alert('Kontakt hat Belege und kann nicht gelöscht werden.');return}if(!confirm('Kontakt löschen?'))return;wegwerfen('kontakte',[kontakt(id)]);go('kontakte')},
-  kbel:el=>{const b=neuBeleg(el.dataset.t,{kontaktId:el.dataset.id,zahlungsziel:+kontakt(el.dataset.id).zahlungsziel||S().zahlungsziel});persist();go('beleg/'+b.id)},
+  kbel:el=>{const k=kontakt(el.dataset.id),b=neuBeleg(el.dataset.t,{kontaktId:el.dataset.id});if(k)konditionenUebernehmen(b,k);persist();go('beleg/'+b.id)}, // Konditionen wie bei Kontaktwahl im Beleg (auch 0 Tage, Skonto, Rabatt)
   anew:async()=>{const a=await artikelPopup({});if(a){commit();go('artikel/'+a.id)}},
   adel:el=>{if(artikelLoeschen([el.dataset.id]))go('artikel')},
   bwahl:async el=>{const a=artikel(el.dataset.aid),k=el.dataset.bw,B=k==='lp'?LP:GR;if(!a)return;const v=await baumWahl(k,a[B.c.feld]);

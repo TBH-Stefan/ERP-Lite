@@ -1326,7 +1326,7 @@ function formDialog({titel,felder,ok='Anlegen',breit=false}){
       <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">${ok}</button></div></div>`;
     document.body.appendChild(d);setTimeout(()=>d.querySelector('input:not([disabled]),select:not([disabled])')?.focus(),0);
     const fin=v=>{d.remove();document.removeEventListener('keydown',kd);res(v)};
-    d.addEventListener('click',async e=>{const t=e.target.closest('[data-bw]');if(!t)return;e.preventDefault();const box=t.closest('[data-k]'),f=felder.find(x=>x.k===box.dataset.k),v=await baumWahl(f.baum,box.dataset.wert);
+    d.addEventListener('click',async e=>{const t=e.target.closest('[data-bw]');if(!t||t.disabled)return;e.preventDefault();const box=t.closest('[data-k]'),f=felder.find(x=>x.k===box.dataset.k),v=await baumWahl(f.baum,box.dataset.wert);
       if(v!==null){box.dataset.wert=v;box.innerHTML=ketteHTML(f.baum,v,'data-fk="1"')}});
     const lesen=()=>{const o={};for(const f of felder){const e=d.querySelector(`[data-k="${f.k}"]`);o[f.k]=f.typ==='kette'?e.dataset.wert:f.typ==='checkbox'?e.checked:f.typ==='number'?num(e.value):e.value.trim()}return o};
     const okf=()=>{const o=lesen(),fehlt=felder.find(f=>f.pflicht&&!o[f.k]);if(fehlt){d.querySelector('#m-err').textContent=`Bitte „${fehlt.l}“ ausfüllen.`;return}fin(o)};

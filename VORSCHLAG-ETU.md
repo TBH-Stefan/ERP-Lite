@@ -68,7 +68,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
    - **Code:**
      - Ein Git-Commit je Paket, bei großen Paketen je Teilfunktion, mit deutscher Nachricht (z. B. „ETU P2: Zusammenfassung der Titel am Belegende“).
      - Zurückgenommen wird per `git revert <commit>`, abhängige Pakete zuerst (siehe „Abhängig von“).
-     - Damit ein Commit auch ohne die späteren einzeln rücknehmbar bleibt, liegen die Änderungen verschiedener Commits nicht in unmittelbar benachbarten Zeilen (sonst meldet `git revert` einen Konflikt). Die Karte „Erweiterungen“ ordnet die Pakete deshalb nach Nummer (Commit 05429d5), neue Schalter stehen an getrennten Stellen in `ERW`. Geprüft für U5: jeder Commit einzeln per `git revert` sauber rücknehmbar, Programm danach ohne Konsolenfehler.
+     - Damit ein Commit auch ohne die späteren einzeln rücknehmbar bleibt, liegen die Änderungen verschiedener Commits nicht in unmittelbar benachbarten Zeilen (sonst meldet `git revert` einen Konflikt). Die Karte „Erweiterungen“ ordnet die Pakete deshalb nach Nummer (Commit 05429d5), neue Schalter stehen an getrennten Stellen in `ERW`. Geprüft für U5: jeder Commit einzeln per `git revert` sauber rücknehmbar, Programm danach ohne Konsolenfehler. Für Stufe 1 gesamt gilt die Rücknahme-Reihenfolge in Abschnitt 4 (einige Commits bauen auf späteren Zeilen bzw. Funktionen auf).
      - Vor Beginn wird der Tag `vor-etu` gesetzt.
      - Gearbeitet wird auf einem Zweig `main-b4f5uz` (Pull Request #1), paketweise nach `main` übernommen, denn jeder Push auf `main` ist nach etwa einer Minute online.
      - Ausnahme: P0 a) behebt einen Fehler, der schon online ist, und geht nach dem Test sofort nach `main`.
@@ -162,7 +162,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Schalter:**
   - `erw.strgP` = true und `erw.snapshot` = true. Beide beheben einen Fehler bzw. stellen die Nachdruck-Treue her.
   - `erw.duplikat` = false, Empfehlung: ein.
-  - Alle anderen Punkte sind reine Fehlerbehebungen ohne Schalter und lassen sich je Commit per `git revert` zurücknehmen.
+  - Alle anderen Punkte sind reine Fehlerbehebungen ohne Schalter und lassen sich per `git revert` zurücknehmen; f)–j) einzeln, d) und e) erst nach P1 (benachbarte Zeilen), c) erst nach j) (`lnrStamm()`), siehe Rücknahme-Reihenfolge in Abschnitt 4.
 - **Datenmodell:** Beleg `fix` (wird beim Festschreiben gesetzt) und `ausgaben` (Zähler); Position `lnr` (gibt es schon). Alle Felder sind optional.
 - **Nutzen** hoch · **Aufwand** M (die Einzelkorrekturen jeweils S oder kleiner) · **Abhängig von:** – · **Recht:**
   - DSGVO: kein fremder Beleg im Ausdruck.
@@ -941,6 +941,21 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 6. P11, nur das Popup-Feld „Aufschlag %“ und der VK-Vorschlag bei EK-Änderung (S) – ✅ umgesetzt (Commit 3e041e7)
 7. P19 a/c/d: Zuletzt, Statuszeile, Markierung in der Seitenleiste (S) – ✅ umgesetzt (Commits 506e52e, 2aa2bf6, 2b77577)
 8. P6, nur Kunden/Lieferanten-Filter und „Unsere Kunden-Nr.“ (S) – ✅ umgesetzt (Commit 072ff14)
+
+**Gesamttest nach Stufe 1 (08.10.2026):** ✅
+- Alle Browsertests (Chromium, 1400 px und 390 px) ohne Konsolenfehler: alle Hauptansichten (Übersicht, Verkauf, Einkauf, Belege in Eingabe und Vorschau, Kosten, Zeiten, Kontakte mit Filter, Artikel, Lager, Auswertung, LVs, K-Blätter, FiBu mit allen 8 Reitern, Einstellungen), jeder Schalter einzeln aus/an (Summen unverändert, Druck/PDF ohne Fehler), „Alle Schalter auf Standard“ (Druckprofile bleiben, Strg+Z stellt wieder her) und „Standard wiederherstellen“ je Paket. Keine doppelten Schlüssel in `ACT`, `ACT_LV`, `ACT_LB`, `ACT_FB`.
+- Bestehende Testskripte t2–t36: alle Ergebnisse gleich wie vor ETU (Commit 8eefb2d); zwei Skripte waren schon vor ETU veraltet (Struktur-Popup statt Auswahllisten, Belegansicht startet in „Eingabe“).
+- Regressionsvergleich mit dem Stand vor ETU (30 Belege mit Standardeinstellungen): `docHTML` 30/30 gleich. Abweichungen nur beabsichtigt: Summenblock nicht mehr geteilt (P0 l, 6 Belege in Vorschau und PDF), Kopf der Optionen-Tabelle im PDF (P0 k, 2 Belege, gleiche Texte).
+- **Rücknahme-Reihenfolge** (`git revert`, nur Code; geprüft: Rücknahme konfliktfrei, Programm danach ohne Konsolenfehler; die Doku-Commits werden nicht zurückgenommen):
+  - einzeln: P0 f, g, h, i, j, k, l, m, P2, P14, P19 a, c, d, P6 (Teil), Korrekturen f358a37, 10f3241, 05429d5, 8452dbd, 724e6b0, bec643e
+  - P11 (3e041e7): vorher 724e6b0
+  - Korrektur b626535: vorher P6 (072ff14); P5 (7bca588): vorher b626535 und P6
+  - P1 (d5237b2): vorher P2, P5, b626535, P19 a, P19 c, P6
+  - P0 d (a86ff40), P0 e (1c61540): vorher P1 samt Vorgängern
+  - P0 n (24362bd): vorher 10f3241, P14 und P1 samt Vorgängern
+  - P0 c (f6526f9): vorher P0 j (nutzt `lnrStamm()`), P0 d, P0 n, P11 samt 724e6b0 und deren Vorgänger
+  - P0 b (af99b8d): vorher zusätzlich P0 c; Grundgerüst (4094cd5): ganz zuletzt, nach allen Paketen mit Schaltern und 05429d5
+- Noch offen: Test an echten Geräten (Edge, Firefox, Android, iOS; Druck, Strg+P, Browsermenü), echter Mailversand und Abgleich über OneDrive mit zwei Geräten, Tag `vor-etu` (nicht gesetzt).
 
 **Stufe 2: Kernfunktionen nach ETU (ca. 12–13 Tage)**
 - P10 Gesamtkalkulation mit Rücknahme (L)

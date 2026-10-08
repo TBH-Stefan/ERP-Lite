@@ -324,7 +324,9 @@ const S=()=>DB.settings;
 /* Erweiterungen (Einstellungen → Erweiterungen): Funktionsschalter in S().erw.<k>, Vorgaben in ERW_STD, gelesen wird immer über erw(k).
    Standard = bisheriges Verhalten (Ausnahme: Fehlerbehebungen). Ausschalten wirkt sofort, gespeicherte Daten bleiben erhalten.
    ERW: {k:Schlüssel, std:Vorgabe, p:Paket (für „Standard wiederherstellen“), l:Bezeichnung, info:Beschreibung} */
-const ERW=[];
+const ERW=[
+  {k:'strgP',std:true,p:'Druck (P0 b)',l:'Strg+P druckt den geöffneten Beleg',info:'Strg+P und der Druck über das Browsermenü drucken immer den gerade geöffneten Beleg, außerhalb eines Belegs bleibt der Ausdruck leer (kein alter Beleg eines anderen Kunden). LV- und K-Blatt-Ausdrucke übernehmen nicht mehr die Firmenfußzeile eines zuvor gedruckten Belegs. Fehlerbehebung, daher Standard ein.'},
+];
 const ERW_STD=Object.fromEntries(ERW.map(x=>[x.k,x.std]));
 const erw=k=>DB?.settings?.erw?.[k]??ERW_STD[k];
 const kontakt=id=>DB.kontakte.find(k=>k.id===id);
@@ -1047,6 +1049,7 @@ function render(){
 }
 window.addEventListener('hashchange',async()=>{
   if(!DB)return;
+  if(erw('strgP'))druckLeeren(); // Druckbereich gehört zur verlassenen Seite
   if(SKIP){SKIP=false;CURHASH=location.hash;render();return}
   if(MAUS&&Math.abs(Date.now()-Math.abs(MAUS))<500){const r=MAUS>0?1:-1;MAUS=0;SKIP=true;history.go(r);return} // Maustaste hat bereits rückgängig gemacht → Navigation zurücknehmen
   if(DIRTY){
@@ -2230,8 +2233,10 @@ function preisspiegelDruck(lv){
   </tbody></table><table class="tot">${lv.bieter.map(b=>{let s=0;for(const p of pos)if(!p.art){const x=p.preise?.[b.id];if(x)s+=((+x.l||0)+(+x.s||0))*(+p.menge||0)}return`<tr><td>${esc(b.name)} (Nachlass ${fmtQ(b.nachlass||0)} %)</td><td class="n">${fmt(s*(1-(+b.nachlass||0)/100))} €</td></tr>`}).join('')}</table>`;
 }
 function druckHTML(html,titel){
-  papierCSS();$('#print').innerHTML=html;const alt=document.title;document.title=titel.replace(/[\\/:*?"<>|]/g,'-');
-  setTimeout(()=>{window.print();document.title=alt},50);
+  papierCSS();$('#print').innerHTML=html;
+  if(erw('strgP')){$('#print').classList.remove('mb');const s=$('#pgfuss');if(s)s.textContent=''} // keine Firmenfußzeile eines zuvor gedruckten Belegs
+  const alt=document.title;document.title=titel.replace(/[\\/:*?"<>|]/g,'-');DRUCK={h:location.hash,an:1};
+  setTimeout(()=>{window.print();document.title=alt;if(DRUCK)DRUCK.an=0},50);
 }
 function kbDocHTML(kb){
   const g=k2gz(kb),f=S().firma;
@@ -3534,7 +3539,11 @@ function vorschauSeiten(){
     if(eng)bl.style.zoom=(av/bl.offsetWidth).toFixed(4)}
 }
 window.addEventListener('resize',()=>{clearTimeout(vorschauSeiten.t);vorschauSeiten.t=setTimeout(vorschauSeiten,200)});
-function drucken(b){
+/* Druckvorbereitung an einer Stelle: Papierformat, #print, .mb, Fußzeile (#pgfuss) und Titel werden bei jedem Druck neu gesetzt.
+   erw.strgP: Strg+P bzw. Browsermenü drucken den geöffneten Beleg (beforeprint); #print wird erst beim nächsten Routenwechsel geleert,
+   nicht in afterprint (Android/iOS lösen es sofort oder gar nicht aus → leere Ausdrucke). DRUCK={h:Route,an:drucken()/druckHTML() druckt gerade,t:alter Titel} */
+let DRUCK=null;
+function druckVorbereiten(b){
   papierCSS();
   // tfoot wiederholt sich auf jeder Druckseite und hält Platz für die feste Fußzeile frei
   $('#print').innerHTML=`<table class="pgw"><tbody><tr><td>${docHTML(b)}</td></tr></tbody><tfoot><tr><td><div class="pgf"></div></td></tr></tfoot></table>`;
@@ -3542,9 +3551,16 @@ function drucken(b){
   const mb=!!navigator.userAgentData?.brands?.some(x=>x.brand==='Chromium'&&+x.version>=131);$('#print').classList.toggle('mb',mb);
   const css=fussZeilen(S().firma).join('\n').replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\A ');
   ($('#pgfuss')||document.head.appendChild(Object.assign(document.createElement('style'),{id:'pgfuss'}))).textContent=mb?`@media print{@page{@bottom-left{content:"${css}";white-space:pre;text-align:center;font:7.5pt/1.3 Arial,sans-serif;color:#000;border-top:1mm solid #80704d;vertical-align:top;padding-top:1mm;width:173.5mm;margin-left:-2.2mm}}}`:'';
-  const alt=document.title;document.title=`${T[b.typ].bez} ${bNr(b)} ${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]/g,'-');
-  setTimeout(()=>{window.print();document.title=alt},50);
+  const alt=document.title;document.title=`${T[b.typ].bez} ${bNr(b)} ${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]/g,'-');return alt}
+function drucken(b){
+  const t0=DRUCK?.t,alt=druckVorbereiten(b);DRUCK={h:location.hash,an:1};
+  setTimeout(()=>{window.print();document.title=t0??alt;if(DRUCK)DRUCK.an=0},50);
 }
+function druckLeeren(){const p=$('#print');if(p){p.innerHTML='';p.classList.remove('mb')}const s=$('#pgfuss');if(s)s.textContent='';if(DRUCK?.t!=null)document.title=DRUCK.t;DRUCK=null}
+// Druck über das Browsermenü (oder Strg+P ohne Abfangen): aktuellen Beleg drucken, sonst nichts Fremdes
+window.addEventListener('beforeprint',()=>{if(!DB||!erw('strgP')||DRUCK?.an)return;const b=curBeleg();
+  if(b){const t=druckVorbereiten(b);DRUCK={h:location.hash,an:0,t:DRUCK?.t??t}}else if(DRUCK?.h!==location.hash)druckLeeren()});
+window.addEventListener('afterprint',()=>{if(DRUCK&&!DRUCK.an&&DRUCK.t!=null){document.title=DRUCK.t;DRUCK.t=null}});
 
 /* ---------- PDF-Erzeugung ohne Fremdbibliothek: Layout aus der Belegvorschau (Arial ≙ Helvetica) ---------- */
 const WINANSI={0x20AC:128,0x201A:130,0x201E:132,0x2026:133,0x2018:145,0x2019:146,0x201C:147,0x201D:148,0x2022:149,0x2013:150,0x2014:151,0x2122:153,0x160:138,0x161:154,0x17D:142,0x17E:158,0x2212:45,0xA0:32,0x202F:32,0x2009:32,0x2007:32};
@@ -3909,7 +3925,8 @@ function importJSON(el){
     catch(e){alert('Import fehlgeschlagen: '+e.message)}
   };r.readAsText(file);
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();commit()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();commit()}
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='p'&&DB&&erw('strgP')&&curBeleg()){e.preventDefault();document.activeElement?.blur?.();drucken(curBeleg())}}); // Strg+P: geöffneten Beleg drucken (offene Eingabe vorher übernehmen)
 $('#menu').onclick=e=>{e.stopPropagation();document.body.classList.toggle('nav')};
 document.querySelector('nav').addEventListener('click',e=>{if(e.target.closest('a'))document.body.classList.remove('nav')});
 document.addEventListener('click',e=>{if(document.body.classList.contains('nav')&&!e.target.closest('nav'))document.body.classList.remove('nav')});

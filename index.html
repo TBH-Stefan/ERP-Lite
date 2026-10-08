@@ -317,9 +317,11 @@ const $=s=>document.querySelector(s);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const r2=x=>Math.round(((+x)||0)*100+Number.EPSILON*100)/100;
 const r3=x=>Math.round(((+x)||0)*1000)/1000;
+const rp=(x,pe)=>pe>1?+(+x||0).toFixed(2+Math.round(Math.log10(pe))):r2(x); // Preis je Einheit: bei Preiseinheit 10/100/1000 mit 3/4/5 Nachkommastellen, sonst auf Cent (P14)
 const num=v=>{const n=parseFloat(String(v??'').replace(',','.'));return isNaN(n)?0:n};
 const fmt=n=>(+n||0).toLocaleString('de-AT',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtQ=n=>(+n||0).toLocaleString('de-AT',{maximumFractionDigits:3});
+const fmtP=n=>(+n||0).toLocaleString('de-AT',{minimumFractionDigits:2,maximumFractionDigits:5}); // Preis je Einheit bei Preiseinheit > 1 (z. B. 0,4537)
 const pct=n=>isFinite(n)?(n*100).toLocaleString('de-AT',{minimumFractionDigits:1,maximumFractionDigits:1})+' %':'–';
 const isoD=(d=new Date())=>new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 const addDays=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+(+n||0));return isoD(d)};
@@ -334,6 +336,7 @@ const S=()=>DB.settings;
 const ERW=[
   {k:'strgP',std:true,p:'Druck (P0 b)',l:'Strg+P druckt den geöffneten Beleg',info:'Strg+P und der Druck über das Browsermenü drucken immer den gerade geöffneten Beleg, außerhalb eines Belegs bleibt der Ausdruck leer (kein alter Beleg eines anderen Kunden). LV- und K-Blatt-Ausdrucke übernehmen nicht mehr die Firmenfußzeile eines zuvor gedruckten Belegs. Fehlerbehebung, daher Standard ein.'},
   {k:'snapshot',std:true,p:'Nachdruck (P0 c)',l:'Nachdruck wie das Original',info:'Beim Festschreiben werden Fußzeile, Ansprechperson, E-Mail, Telefon, Unterzeichner und die verwendeten Steuersätze im Beleg eingefroren. Nachdruck, PDF, Summen, FiBu und UVA festgeschriebener Belege verwenden diese Werte statt der aktuellen Einstellungen; Bestellungen drucken die Lieferanten-Art.-Nr. aus der Position bzw. aus dem Artikelstamm beim Festschreiben. Das Logo wird nicht eingefroren. Ältere Belege ohne eingefrorene Werte bleiben unverändert. Aus: wie bisher die aktuellen Einstellungen (eingefrorene Werte bleiben gespeichert). Fehlerbehebung, daher Standard ein.'},
+  {k:'scanPE',std:true,p:'Einlesen (P14)',l:'Preiseinheit beim Einlesen prüfen',info:'Beim Einlesen von PDF-Text und Scans wird je Zeile Menge × Einzelpreis gegen den Gesamtpreis geprüft. Ergibt sich genau ein Faktor 10, 100 oder 1000 (±2 %), galt der Einzelpreis je 10/100/1000 Einheiten (z. B. Kabel „Preis/100“): er wird auf je Einheit umgerechnet; ohne Gesamtpreis gilt eine Spalte „PE“ bzw. der Spaltenkopf („Preis/100“). Im Abgleich ist die Umrechnung je Zeile markiert und abwählbar, der EK-Vorschlag für den Artikelstamm hat dann mehr Nachkommastellen (z. B. 0,4537 €/m). Zeilen, bei denen Menge × Einzelpreis nicht zum Gesamtpreis passt, werden markiert. E-Rechnungen sind nicht betroffen. Aus: wie bisher. Fehlerbehebung (sonst 100-fach zu hoher EK im Artikelstamm), daher Standard ein.'},
   {k:'duplikat',std:false,p:'Duplikat (P0 n)',l:'Vermerk „DUPLIKAT“ bei erneuter Ausgabe von Rechnungen',info:'Druck, PDF und E-Mail-Versand festgeschriebener Rechnungen (auch Anzahlungs-, Teil-, Schlussrechnungen und Gutschriften) werden gezählt. Ab der zweiten Ausgabe fragt das Programm „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja), der Vermerk steht dann über dem Belegtitel; beim Druck über das Browsermenü wird ohne Rückfrage gekennzeichnet. Das erste Original bleibt unverändert. Gezählt wird nur bei eingeschaltetem Schalter (bei älteren Rechnungen zählen bereits per E-Mail versendete mit). Eine zweite gleichlautende Rechnung ohne Vermerk kann eine zusätzliche Steuerschuld auslösen (§ 11 Abs. 12 und 14 UStG).'},
   {k:'druckprofil',std:true,p:'Druckprofil (P1)',l:'Druckprofil je Belegart',info:'Darstellungsoptionen für Vorschau, Druck, PDF und E-Mail je Belegart (unten unter „Druck & Belegdarstellung“) und je Beleg über „Druckoptionen …“ (dort nur Abweichungen). Beim Festschreiben wird die Darstellung im Beleg eingefroren, ein Nachdruck sieht wie das Original aus; „Bearbeiten“ hebt das wieder auf. Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG). Aus: Entwürfe im Standard-Aussehen, festgeschriebene Belege weiter mit ihrem eingefrorenen Stand; alle Einstellungen bleiben gespeichert. Die Vorgaben entsprechen dem bisherigen Aussehen.'},
 ];
@@ -3117,6 +3120,15 @@ async function pdfLesen(buf){
   const bb=[];if(zeilen.length<4)for(const n of bilder){try{bb.push(await bildBlob(n))}catch(e){bb.push(null)}}
   return{zeilen,xml,verschl:!!crypt,cfehler:!!crypt?.fehler,bilder:bb.filter(Boolean)};
 }
+/* Preiseinheit beim Einlesen (P14, erw.scanPE): Einzelpreis je 10/100/1000 Einheiten (z. B. Kabel „Preis/100“) erkennen → [PE, Quelle].
+   Mit GP entscheidet nur die Prüfung Menge × EP (ohne bzw. mit Rabatt) gegen den GP (±2 %); ohne GP gilt sp (Spalte „PE“ bzw. Spaltenkopf „Preis/100“). */
+function scanPE(menge,ep,gp,rab,sp,spQ){
+  if(!(menge>0&&ep>0))return[1,''];
+  if(gp>0){const rs=[menge*ep/gp];if(rab>0&&rab<100)rs.push(rs[0]*(1-rab/100));const nah=f=>rs.some(r=>Math.abs(r/f-1)<=0.02);
+    if(nah(1))return[1,''];for(const f of[10,100,1000])if(nah(f))return[f,'Gesamtpreis'];return[1,'']} // GP passt zu keinem Faktor: nicht umrechnen (Hinweis im Abgleich)
+  return[10,100,1000].includes(sp)?[sp,spQ]:[1,''];
+}
+const zPE=z=>z&&!z.peAus&&+z.pe>1?+z.pe:1; // wirksame Preiseinheit einer Scan-Zeile (1 = Preis je Einheit wie gelesen)
 /* Zahlen im deutschen Format: 1.234,56 · 4.750,- · 12,5 */
 const zahlDE=s=>{s=String(s||'').replace(/[€\s]/g,'').replace(/,-+$/,'');if(!/^-?[\d.,]+-?$/.test(s)||!/\d/.test(s))return null;const neg=/^-|-$/.test(s);s=s.replace(/-/g,'');
   if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');const n=parseFloat(s);return isNaN(n)?null:neg?-n:n};
@@ -3149,13 +3161,14 @@ function textBeleg(Z,art){
   // Positionstabelle über Kopfzeile erkennen
   const KOL=[['pos',/^(pos\.?|position|lfd\.?\s*nr\.?|nr\.?)$/i],['artnr',/art(ikel)?[\s.\-]*nr|artikelnummer|material(nr|nummer)?|^artikel$|^art\.?$|bestellnummer|best\.?-?nr/i],['bez',/bezeichnung|beschreibung|artikeltext|leistung|^text$/i],
     ['menge',/^(menge|anzahl|liefermenge|geliefert|lief\.?\s*menge|stück|qty)/i],['einheit',/^(einheit|einh\.?|me|eh|vpe)$/i],['lp',/listen-?preis|^lp\b|brutto-?preis|katalog-?preis|^liste\b|^lp\s*\//i],['ep',/einzelpreis|e-?preis|^ep\b|preis\s*\/|^preis\b|netto-?preis|^netto\s*\//i],['gp',/gesamt(preis|betrag)?|^betrag|^summe|^gp\b|^wert|positionswert/i],['rabatt',/rabatt|^rab/i],['ust',/^(ust|mwst|steuer)/i]];
+  if(erw('scanPE'))KOL.splice(5,0,['pe',/^(pe|preiseinh\w*\.?|pr\.?\s*einh\.?)$/i]); // Preiseinheit (P14), verankert (sonst träfe es z. B. „Periode“)
   KOL.push(['x',/^(gewicht|nachlieferung|rückstand|offen|bestellt|intrastat|ursprung|lagerort|lager|charge|serien|zolltarif|ean|vpe-?menge)/i]);
   const kind=t=>KOL.find(([,r])=>r.test(t.trim()))?.[0];
   let H=null,seite=null;const END=/^(summe|zwischensumme|gesamt|netto|übertrag|rabatt|zahlungs|mwst|ust|umsatzsteuer|endbetrag|rechnungsbetrag|seite\s+\d)/i,FUSS=/\b(iban|bic|amtsgericht|geschäftsführer|ust-?id|eigentumsvorbehalt|bankverbindung|firmenbuch|handelsregister)\b|datum\s*\/\s*name/i;
   for(const z of Z){
     if(z.s!==seite){seite=z.s;H=null} // jede Seite wiederholt den Tabellenkopf
     const ks=z.cells.map(c=>kind(c.t)),uniq=new Set(ks.filter(Boolean));
-    if(uniq.size>=3&&uniq.has('menge')&&(uniq.has('bez')||uniq.has('artnr'))){H=z.cells.map((c,j)=>({k:ks[j],c:(c.x+c.x2)/2,x:c.x,x2:c.x2})).filter(h=>h.k);continue}
+    if(uniq.size>=3&&uniq.has('menge')&&(uniq.has('bez')||uniq.has('artnr'))){H=z.cells.map((c,j)=>({k:ks[j],c:(c.x+c.x2)/2,x:c.x,x2:c.x2,t:c.t})).filter(h=>h.k);continue}
     if(!H)continue;
     if(END.test(z.cells[0].t)||END.test(z.text)&&z.cells.length<=3||FUSS.test(z.text)||(z.text.match(/\|/g)||[]).length>=2){H=null;continue}
     const row={};
@@ -3175,10 +3188,14 @@ function textBeleg(Z,art){
     if(ep==null&&gp!=null&&menge)ep=Math.round(gp/menge*10000)/10000;
     if(ep==null&&lp!=null)ep=Math.round(lp*(1-(rab||0)/100)*10000)/10000;
     if(lp!=null&&rab==null&&ep!=null&&lp>0&&ep<lp)rab=r2((1-ep/lp)*100);
+    let pe=1,peQ='';const epRoh=ep,lpRoh=lp;
+    if(erw('scanPE')&&ep>0){const sp=parseInt(String(row.pe||'').replace(/\./g,''),10)||0,hk=+((H.find(h=>h.k==='ep')?.t||'').match(/(?:\/|\bje|\bpro)\s*(10|100|1000)\b/i)?.[1])||0;
+      [pe,peQ]=scanPE(menge,ep,gp,rab,sp>1?sp:hk,sp>1?'Spalte PE':'Spaltenkopf');
+      if(pe>1){ep=Math.round(ep/pe*1e6)/1e6;if(lp>0&&lp>=epRoh)lp=Math.round(lp/pe*1e6)/1e6}} // Listenpreis nur, wenn er in derselben Preiseinheit steht
     let artNr=row.artnr||'',bez=row.bez||'';if(!bez&&!/\d/.test(artNr)){bez=artNr;artNr=''}
     if(!artNr){const mm=bez.match(/^([A-Z0-9][A-Z0-9\-\.\/]{3,})\s+(.{3,})$/i);if(mm&&/\d/.test(mm[1])&&!/^\d{1,3}$/.test(mm[1])){artNr=mm[1];bez=mm[2]}}
     if(artNr&&bez.startsWith(artNr+' '))bez=bez.slice(artNr.length+1);
-    d.positionen.push({artNr,ean:'',bez,text:'',menge,einheit:(row.einheit||'').replace(/\.$/,''),ep:ep||0,gp:gp||0,lp:lp||0,rabatt:rab||0,ust:zahlDE(String(row.ust||'').replace('%',''))||0});
+    d.positionen.push({artNr,ean:'',bez,text:'',menge,einheit:(row.einheit||'').replace(/\.$/,''),ep:ep||0,gp:gp||0,lp:lp||0,rabatt:rab||0,ust:zahlDE(String(row.ust||'').replace('%',''))||0,...(pe>1?{pe,peQ,epRoh,...(lp!==lpRoh?{lpRoh}:{})}:{})});
   }
   // Ersatz ohne Tabellenkopf: „Menge Einheit Bezeichnung … Preis“ bzw. „Bezeichnung … Menge Einheit … Preis“
   if(!d.positionen.length)for(const z of Z){const t=z.text;let m=t.match(/^(?:\d{1,3}\.?\s+)?(?:([A-Z0-9][A-Z0-9\-\.\/]{3,})\s+)?(.+?)\s+(\d+(?:[.,]\d+)?)\s+(Stk|Stück|St|m|lfm|PA|Pkg|Set|kg|l|h|Std|m²|m2|Rolle|Krt|VE)\.?(?:\s+(.*))?$/i);
@@ -3342,10 +3359,11 @@ const scanFak=(z,a)=>+(a?.einheiten||[]).find(e=>normT(e.e)===normT(z.einheit))?
 // Abweichungen erkannte Zeile ↔ Artikelstamm: [Schlüssel, Text, standardmäßig übernehmen]
 function scanDiffs(z,a,lid){
   if(!a)return[];
-  const d=[],lf=lid?(a.lieferanten||[]).find(l=>l.kontaktId===lid):null,k=kontakt(lid),epB=+z.ep>0?r2(z.ep/scanFak(z,a)):0;
-  if(epB&&Math.abs(epB-(+a.ek||0))>0.005)d.push(['ek',`EK ${fmt(a.ek)} → ${fmt(epB)} € je ${esc(a.einheit)}`,true]);
-  const lpB=+z.lp>0?r2(z.lp/scanFak(z,a)):0;
-  if(k&&lpB&&Math.abs(lpB-(+lf?.lp||0))>0.005)d.push(['lp',`Listenpreis ${esc(k.name)} ${lf?.lp?fmt(lf.lp):'–'} → ${fmt(lpB)} €`,true]);
+  const pe=zPE(z),fp=pe>1?fmtP:fmt; // Preiseinheit (P14): Vorschlag mit mehr Nachkommastellen
+  const d=[],lf=lid?(a.lieferanten||[]).find(l=>l.kontaktId===lid):null,k=kontakt(lid),epB=+z.ep>0?rp(z.ep/scanFak(z,a),pe):0;
+  if(epB&&Math.abs(epB-(+a.ek||0))>0.005/pe)d.push(['ek',`EK ${fp(a.ek)} → ${fp(epB)} € je ${esc(a.einheit)}`,true]);
+  const lpB=+z.lp>0?rp(z.lp/scanFak(z,a),pe):0;
+  if(k&&lpB&&Math.abs(lpB-(+lf?.lp||0))>0.005/pe)d.push(['lp',`Listenpreis ${esc(k.name)} ${lf?.lp?fp(lf.lp):'–'} → ${fp(lpB)} €`,true]);
   if(k&&+z.rabatt&&Math.abs(+z.rabatt-(+lf?.rabatt||0))>0.005)d.push(['rabatt',`Rabatt ${esc(k.name)} ${lf?.rabatt!=null&&lf.rabatt!==''?fmtQ(lf.rabatt)+' %':'–'} → ${fmtQ(z.rabatt)} %`,true]);
   if(z.einheit&&normT(z.einheit)!==normT(a.einheit)&&scanFak(z,a)===1)d.push(['einheit',`Einheit ${esc(a.einheit)} → ${esc(z.einheit)}`,false]);
   if(z.bez&&normT(z.bez)!==normT(a.bez))d.push(['bez',`Bezeichnung → „${esc(z.bez)}“`,false]);
@@ -3394,7 +3412,7 @@ function scanBox(b){
   const d=s.daten,lid=b.kontaktId,l=d.lieferant||{};
   const rows=(d.positionen||[]).map((z,i)=>{const w=s.wahl[i],a=w.modus==='zu'?artikel(w.artId):null,df=a?scanDiffs(z,a,lid):[];
     return`<tr><td>${esc(z.artNr)}${z.ean?`<br><span class="mut">EAN ${esc(z.ean)}</span>`:''}</td><td>${esc(z.bez)}</td>
-    <td style="width:80px"><input type="number" step="any" data-sc="${i}" data-k="menge" value="${w.menge}"></td><td>${esc(z.einheit)}</td><td class="n">${+z.ep?fmtQ(z.ep):''}${+z.lp?`<br><span class="mut" style="font-size:12px">LP ${fmtQ(z.lp)}${+z.rabatt?' − '+fmtQ(z.rabatt)+' %':''}</span>`:''}</td>
+    <td style="width:80px"><input type="number" step="any" data-sc="${i}" data-k="menge" value="${w.menge}"></td><td>${esc(z.einheit)}</td><td class="n">${+z.ep?(+z.pe>1?fmtP(z.ep):fmtQ(z.ep)):''}${+z.lp?`<br><span class="mut" style="font-size:12px">LP ${+z.pe>1?fmtP(z.lp):fmtQ(z.lp)}${+z.rabatt?' − '+fmtQ(z.rabatt)+' %':''}</span>`:''}${scanPruefung(z,i)}</td>
     <td style="min-width:240px"><select data-sc="${i}" data-k="modus">${opt('zu','Artikelstamm',w.modus)}${opt('neu','neuer Artikel',w.modus)}${opt('frei','ohne Artikel',w.modus)}</select>
       ${w.modus==='zu'?`<input list="dl-art" data-sc="${i}" data-k="art" value="${a?esc(a.nr+' – '+a.bez):''}" placeholder="Artikel suchen …" style="margin-top:4px">${a?`<div class="mut" style="font-size:12px">${w.wie?'erkannt über '+esc(w.wie):'manuell gewählt'}</div>`:'<div class="err" style="font-size:12px">kein Artikel gewählt</div>'}`:''}
       ${w.modus==='neu'?`<label class="chk" style="margin:4px 0 0;font-size:13px"><input type="checkbox" data-sc="${i}" data-k="lager" ${w.lager?'checked':''}> Lagerartikel</label>`:''}</td>
@@ -3409,10 +3427,19 @@ function scanBox(b){
   ${d.rohtext?`<details style="margin-top:6px"><summary class="mut">Gelesener Text anzeigen</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:300px;overflow:auto">${esc(d.rohtext)}</pre></details>`:''}
   <div class="bar" style="margin-top:8px"><button class="p" data-act="scanok">${b.typ==='BE'?'Als Bestellung übernehmen …':'Prüfen und übernehmen …'}</button>${b.typ==='BE'?'<button class="p" data-act="scanstamm">Nur Artikelstamm aktualisieren …</button>':''}<button data-act="scanweg">Verwerfen</button><span class="mut">Angehakte Änderungen werden nach Rückfrage in den Artikelstamm geschrieben.</span></div></div>`;
 }
+// Prüfung beim Einlesen (P14): umgerechnete Preiseinheit (abwählbar) und Hinweis, wenn Menge × EP nicht zum Gesamtpreis der Zeile passt
+function scanPruefung(z,i){
+  let h='';
+  if(+z.pe>1)h+=`<label class="chk" style="margin:3px 0 0;font-size:12px;justify-content:flex-end;white-space:nowrap" title="Gelesen: ${esc(fmtP(z.epRoh))} € je ${z.pe} ${esc(z.einheit||'Einheiten')} – erkannt über ${esc(z.peQ||'')}"><input type="checkbox" data-sc="${i}" data-k="pe" ${z.peAus?'':'checked'}> <span class="tag warn">÷ ${z.pe}</span> je ${z.pe}: ${fmtP(z.epRoh)}</label>`;
+  if(erw('scanPE')&&+z.gp>0&&+z.ep>0&&+z.menge>0){const r=+z.rabatt||0,a=z.menge*z.ep,t=Math.max(0.02,Math.abs(z.gp)*0.01);
+    if(Math.abs(a-z.gp)>t&&!(r>0&&r<100&&Math.abs(a*(1-r/100)-z.gp)<=t))h+=`<div class="err" style="font-size:12px;white-space:nowrap" title="Menge × Einzelpreis${r?' (mit bzw. ohne Rabatt)':''} ergibt nicht den Gesamtpreis der Zeile – Menge, Preis und Preiseinheit prüfen">Menge × EP ${fmt(a)} ≠ GP ${fmt(z.gp)}</div>`}
+  return h;
+}
 function scanSet(el){
   const b=curBeleg(),w=b?.scan?.wahl?.[+el.dataset.sc],k=el.dataset.k;if(!w||b.fest)return;
   if(k==='art'){const a=DB.artikel.find(a=>a.nr===el.value.split(' – ')[0].trim());w.artId=a?.id||'';w.wie='';w.an={}}
   else if(k==='menge')w.menge=num(el.value);
+  else if(k==='pe'){const z=b.scan.daten.positionen[+el.dataset.sc];z.peAus=!el.checked;z.ep=z.peAus?z.epRoh:Math.round(z.epRoh/z.pe*1e6)/1e6;if(z.lpRoh!=null)z.lp=z.peAus?z.lpRoh:Math.round(z.lpRoh/z.pe*1e6)/1e6} // Umrechnung der Preiseinheit (P14) zurücknehmen bzw. wieder anwenden
   else if(k.startsWith('an-'))w.an[k.slice(3)]=el.checked;
   else if(k==='modus'){w.modus=el.value;w.an={}}
   else w[k]=el.type==='checkbox'?el.checked:el.value;
@@ -3436,21 +3463,21 @@ async function scanUebernehmen(b,nurStamm=false){ // nurStamm: Angebot nur in de
   else if(!confirm(`${{ER:'Rechnung',BE:'Lieferantenangebot',WE:'Lieferschein'}[b.typ]} übernehmen?\n\n${plan.length} Position(en) in ${{ER:'die Eingangsrechnung',BE:'die Bestellung (Entwurf)',WE:'den Wareneingang'}[b.typ]}\n${neu.length} neue(r) Artikel\n${aend.length} Änderung(en) im Artikelstamm${aend.length?':\n'+aend.join('\n'):''}`))return;
   const we=b.typ==='ER'?beleg(b.vorgaengerId):null,genutzt=new Set();
   for(const x of plan){
-    let {z,w,a}=x;const fak=scanFak(z,a);
+    let {z,w,a}=x;const fak=scanFak(z,a),pe=zPE(z);
     for(const [k] of x.df){
-      if(k==='ek')a.ek=r2(z.ep/fak);
+      if(k==='ek')a.ek=rp(z.ep/fak,pe);
       if(k==='einheit'){a.einheit=z.einheit;if(!S().einheiten.includes(z.einheit))S().einheiten.push(z.einheit)}
       if(k==='bez')a.bez=z.bez;
       if(k==='lief'&&!(a.lieferanten=a.lieferanten||[]).some(l=>l.kontaktId===lid))a.lieferanten.push({kontaktId:lid,artNr:z.artNr||''});
       if(k==='lartnr')a.lieferanten.find(l=>l.kontaktId===lid).artNr=z.artNr;
       if(['lp','rabatt','ek'].includes(k)&&lid){a.lieferanten=a.lieferanten||[];let lf=a.lieferanten.find(l=>l.kontaktId===lid);if(!lf)a.lieferanten.push(lf={kontaktId:lid,artNr:z.artNr||''});
-        if(k==='lp')lf.lp=r2(z.lp/fak);if(k==='rabatt')lf.rabatt=+z.rabatt;if(k==='ek')lf.ek=r2(z.ep/fak);lf.stand=d.datum||isoD()}
+        if(k==='lp')lf.lp=rp(z.lp/fak,pe);if(k==='rabatt')lf.rabatt=+z.rabatt;if(k==='ek')lf.ek=rp(z.ep/fak,pe);lf.stand=d.datum||isoD()}
     }
     if(w.modus==='neu'){
       if(z.artNr&&String(z.bez).startsWith(z.artNr+' '))z.bez=z.bez.slice(z.artNr.length+1);
       if(String(z.bez).length>80){const cut=z.bez.lastIndexOf(' ',80)>40?z.bez.lastIndexOf(' ',80):80;z.text=(z.bez.slice(cut).trim()+(z.text?'\n'+z.text:'')).trim();z.bez=z.bez.slice(0,cut).trim()} // Bezeichnung kurz, Rest Langtext
       const nr=String(++S().anr).padStart(5,'0'),eh=z.einheit||'Stk';
-      a={id:uid(),nr,bez:z.bez,text:z.text||'',art:'W',einheit:eh,einheiten:[],ek:r2(+z.ep||0),vk:0,steuer:S().stdSteuer,lager:!!w.lager,minBestand:0,lieferanten:lid?[{kontaktId:lid,artNr:z.artNr||'',lp:+z.lp||0,rabatt:+z.rabatt||0,ek:r2(+z.ep||0),stand:d.datum||isoD()}]:[],aktiv:true,ean:z.ean||''};
+      a={id:uid(),nr,bez:z.bez,text:z.text||'',art:'W',einheit:eh,einheiten:[],ek:rp(+z.ep||0,pe),vk:0,steuer:S().stdSteuer,lager:!!w.lager,minBestand:0,lieferanten:lid?[{kontaktId:lid,artNr:z.artNr||'',lp:+z.lp||0,rabatt:+z.rabatt||0,ek:rp(+z.ep||0,pe),stand:d.datum||isoD()}]:[],aktiv:true,ean:z.ean||''};
       DB.artikel.push(a);if(!S().einheiten.includes(eh))S().einheiten.push(eh);
     }
     if(nurStamm){if(a){const qu=`${{BE:'Angebot',ER:'Rechnung',WE:'Lieferschein'}[b.typ]} ${d.lieferscheinNr||''} ${kName(lid)} ${dAT(d.datum||b.datum)}`.replace(/\s+/g,' ').trim();

@@ -934,7 +934,7 @@ function neuPos(o={}){return{id:uid(),art:'W',artikelId:'',nr:'',bez:'',text:'',
 function folge(src,typ,extra={}){
   if(!src.fest){alert('Bitte den Beleg zuerst festschreiben.');return null}
   const o={ltDruck:src.ltDruck!==false,optRabatt:!!src.optRabatt,optLS:!!src.optLS,auftragId:src.auftragId||'',vorgaengerId:src.id,betreff:src.betreff,bezug:`${T[src.typ].bez} ${src.nr} vom ${dAT(src.datum)}`,
-    kontaktId:typ==='BE'?'':src.kontaktId,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,...(src.druck?{druck:{...src.druck}}:{}),...extra};
+    kontaktId:typ==='BE'?'':src.kontaktId,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,...(src.druck&&typ!=='BE'?{druck:{...src.druck}}:{}),...extra}; // Druckabweichungen (P1) nicht auf die Bestellung an den Lieferanten
   if(typ==='BE'){o.zahlungsziel=S().zahlungsziel;o.skonto=0;o.skontoTage=0;o.betreff=src.betreff?'Projekt: '+src.betreff:''}
   if(typ==='AR'){
     const p=prompt('Anzahlung in % der Summe netto:','30');if(p===null)return null;
@@ -964,7 +964,7 @@ function folge(src,typ,extra={}){
 function folgeGo(src,typ){const b=folge(src,typ);if(b){log('Folgebeleg',`${T[typ].bez} aus ${src.nr}`);persist();go('beleg/'+b.id)}}
 
 /* ---------- Festschreiben / Storno ---------- */
-function adressSnapshot(k){return k?{nr:k.nr,name:k.name,zusatz:k.zusatz,strasse:k.strasse,plz:k.plz,ort:k.ort,land:k.land,uid:k.uid,kundenart:k.kundenart}:{}}
+function adressSnapshot(k){return k?{nr:k.nr,name:k.name,zusatz:k.zusatz,strasse:k.strasse,plz:k.plz,ort:k.ort,land:k.land,uid:k.uid,kundenart:k.kundenart||''}:{}} // kundenart immer speichern ('' = Unternehmen), sonst liest der Nachdruck den aktuellen Kontakt
 // verwendete Steuer-Codes (wie summen(): Gruppen nur mit Pauschalpreis; Optionen/Alternativen zählen mit, ihr Satz steht in der USt-Spalte)
 const steuerCodes=b=>[...new Set(b.pos.filter(p=>p.art!=='T'&&(p.art!=='G'||+p.pauschal>0)).map(p=>p.art==='G'?p.steuer||S().stdSteuer:p.steuer).filter(Boolean))];
 // Steuersätze schützen: Codes aus festgeschriebenen Belegen sind gesperrt (Code, Satz, Bezeichnung, Hinweis) – schützt Nachdruck, FiBu und UVA alter Rechnungen
@@ -3547,7 +3547,7 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   const nrTxt=b.nr||(edit?vorschlagNr(b)+' (Vorschlag)':'ENTWURF');
   const mitLeistung=(t.re&&t.b==='V')||b.typ==='LS';
   const datLbl=b.typ==='AN'?'Angebotsdatum':t.re&&t.b==='V'&&b.typ!=='GS'?'Rechnungsdatum':'Datum';
-  const privat=((b.fest&&b.adresse?.kundenart)||kontakt(b.kontaktId)?.kundenart)==='privat'; // Kundenart (P5): Kostenvoranschlag nur privat, Fußzeilen-Zusatz wahlweise nur B2B
+  const privat=(b.fest&&b.adresse&&'kundenart' in b.adresse?b.adresse.kundenart:kontakt(b.kontaktId)?.kundenart)==='privat'; // Kundenart (P5): Kostenvoranschlag nur privat, Fußzeilen-Zusatz wahlweise nur B2B
   const info=[[datLbl,dAT(b.datum)],[t.b==='V'?'Kunden-Nr.':'Lieferanten-Nr.',k.nr],dp.nrInfo?[NRL[b.typ]||'Beleg-Nr.',nrTxt,RE_V.includes(b.typ)?dp.nrHinweisRE:dp.nrHinweis]:null,k.uid?['Ihre UID',k.uid]:null,b.typ==='ER'?['Rechnung Lief.',b.fremdNr]:null,b.fremdNr&&b.typ==='BE'?['Ihr Angebot',b.fremdNr]:null,b.leistung||(edit&&mitLeistung)?['Leistung',{h:ed('h:leistung',b.leistung,'TT.MM.JJJJ')}]:null,b.gueltigBis?[dp.lblGueltig||'Gültig bis',dAT(b.gueltigBis)]:null,b.liefertermin?['Liefertermin',dAT(b.liefertermin)]:null,fv('bearbeiter')?['Ansprechperson',fv('bearbeiter')]:null,fv('mail')?['E-Mail',fv('mail')]:null,fv('tel')?['Telefon',fv('tel')]:null].filter(Boolean);
   let zb='';
   if(t.re&&t.b==='V'&&b.typ!=='GS'){zb=`Zahlbar bis ${dAT(faellig(b))} ohne Abzug`+(+b.skonto?`, bei Zahlung bis ${dAT(addDays(b.datum,b.skontoTage))} abzüglich ${fmtQ(b.skonto)} % Skonto`:'')+'.'}

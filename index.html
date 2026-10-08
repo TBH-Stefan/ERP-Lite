@@ -329,6 +329,7 @@ const ERW=[
   {k:'strgP',std:true,p:'Druck (P0 b)',l:'Strg+P druckt den geöffneten Beleg',info:'Strg+P und der Druck über das Browsermenü drucken immer den gerade geöffneten Beleg, außerhalb eines Belegs bleibt der Ausdruck leer (kein alter Beleg eines anderen Kunden). LV- und K-Blatt-Ausdrucke übernehmen nicht mehr die Firmenfußzeile eines zuvor gedruckten Belegs. Fehlerbehebung, daher Standard ein.'},
   {k:'snapshot',std:true,p:'Nachdruck (P0 c)',l:'Nachdruck wie das Original',info:'Beim Festschreiben werden Fußzeile, Ansprechperson, E-Mail, Telefon, Unterzeichner und die verwendeten Steuersätze im Beleg eingefroren. Nachdruck, PDF, Summen, FiBu und UVA festgeschriebener Belege verwenden diese Werte statt der aktuellen Einstellungen; Bestellungen drucken die Lieferanten-Art.-Nr. aus der Position bzw. aus dem Artikelstamm beim Festschreiben. Das Logo wird nicht eingefroren. Ältere Belege ohne eingefrorene Werte bleiben unverändert. Aus: wie bisher die aktuellen Einstellungen (eingefrorene Werte bleiben gespeichert). Fehlerbehebung, daher Standard ein.'},
   {k:'duplikat',std:false,p:'Duplikat (P0 n)',l:'Vermerk „DUPLIKAT“ bei erneuter Ausgabe von Rechnungen',info:'Druck, PDF und E-Mail-Versand festgeschriebener Rechnungen (auch Anzahlungs-, Teil-, Schlussrechnungen und Gutschriften) werden gezählt. Ab der zweiten Ausgabe fragt das Programm „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja), der Vermerk steht dann über dem Belegtitel; beim Druck über das Browsermenü wird ohne Rückfrage gekennzeichnet. Das erste Original bleibt unverändert. Gezählt wird nur bei eingeschaltetem Schalter (bei älteren Rechnungen zählen bereits per E-Mail versendete mit). Eine zweite gleichlautende Rechnung ohne Vermerk kann eine zusätzliche Steuerschuld auslösen (§ 11 Abs. 12 und 14 UStG).'},
+  {k:'druckprofil',std:true,p:'Druckprofil (P1)',l:'Druckprofil je Belegart',info:'Darstellungsoptionen für Vorschau, Druck, PDF und E-Mail je Belegart (unten unter „Druck & Belegdarstellung“) und je Beleg über „Druckoptionen …“ (dort nur Abweichungen). Beim Festschreiben wird die Darstellung im Beleg eingefroren, ein Nachdruck sieht wie das Original aus; „Bearbeiten“ hebt das wieder auf. Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG). Aus: Entwürfe im Standard-Aussehen, festgeschriebene Belege weiter mit ihrem eingefrorenen Stand; alle Einstellungen bleiben gespeichert. Die Vorgaben entsprechen dem bisherigen Aussehen.'},
 ];
 const ERW_STD=Object.fromEntries(ERW.map(x=>[x.k,x.std]));
 const erw=k=>DB?.settings?.erw?.[k]??ERW_STD[k];
@@ -401,7 +402,7 @@ function neueDB(){
       einheiten:['Stk','m','m²','m³','h','PA','kg','l','Krt','Rolle','Set','km','Tag','Wo','Mon'],
       tarife:[{kz:'SV',bez:'Sachverständigenleistung',kosten:0,vk:0},{kz:'MONT',bez:'Montage',kosten:0,vk:0},{kz:'FAHRT',bez:'Fahrtzeit',kosten:0,vk:0}],
       nk,texte,knr:{K:10000,L:70000},anr:0,
-      spalten:{},artgruppen:[],lagerplaetze:[],zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,papier:'A4',lvnr:0,erw:{}
+      spalten:{},artgruppen:[],lagerplaetze:[],zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,papier:'A4',lvnr:0,erw:{},druckprofil:{}
     },
     kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],kosten:[],fibu:fibuNeu(),log:[],papierkorb:[]
   };
@@ -927,7 +928,7 @@ function neuPos(o={}){return{id:uid(),art:'W',artikelId:'',nr:'',bez:'',text:'',
 function folge(src,typ,extra={}){
   if(!src.fest){alert('Bitte den Beleg zuerst festschreiben.');return null}
   const o={ltDruck:src.ltDruck!==false,optRabatt:!!src.optRabatt,optLS:!!src.optLS,auftragId:src.auftragId||'',vorgaengerId:src.id,betreff:src.betreff,bezug:`${T[src.typ].bez} ${src.nr} vom ${dAT(src.datum)}`,
-    kontaktId:typ==='BE'?'':src.kontaktId,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,...extra};
+    kontaktId:typ==='BE'?'':src.kontaktId,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,...(src.druck?{druck:{...src.druck}}:{}),...extra};
   if(typ==='BE'){o.zahlungsziel=S().zahlungsziel;o.skonto=0;o.skontoTage=0;o.betreff=src.betreff?'Projekt: '+src.betreff:''}
   if(typ==='AR'){
     const p=prompt('Anzahlung in % der Summe netto:','30');if(p===null)return null;
@@ -1003,7 +1004,7 @@ async function festschreiben(b0){
   if(!ok)return;
   if(!b.nr)b.nr=b.typ==='AN'&&b.rev?`${b.basisNr}-R${b.rev}`:nextNr(b.typ,b.datum);
   if(b.typ==='AN'&&b.basisNr)for(const x of DB.belege)if(x!==b&&x.typ==='AN'&&x.fest&&(x.nr===b.basisNr||x.basisNr===b.basisNr)&&(x.rev||0)<b.rev){x.status='ersetzt';log('Angebot ersetzt',`${x.nr} durch ${b.nr}`)}
-  b.fix=belegFix(b);b.fest=true;b.festAm=new Date().toISOString();b.adresse=adressSnapshot(k);
+  b.fix=belegFix(b);b.druckFix=dOpt(b);b.fest=true;b.festAm=new Date().toISOString();b.adresse=adressSnapshot(k);
   if(b.typ==='SR')b.abzuege=abzuegeLive(b);
   if(b.stornoVon){const o=beleg(b.stornoVon);if(o){o.storno=true;log('storniert',`${T[o.typ].bez} ${o.nr} durch ${b.nr}`)}}
   lagerBeiFest(b);
@@ -1033,7 +1034,7 @@ function stornieren(b){
 }
 function duplizieren(b){ // Darstellung (Langtext, Rabatt-, Lohn/Sonstiges-Spalten) wie in folge() mitnehmen
   const n=neuBeleg(b.typ,{kontaktId:b.kontaktId,betreff:b.betreff,kopf:b.kopf,fuss:b.fuss,zahlungsziel:b.zahlungsziel,skonto:b.skonto,skontoTage:b.skontoTage,auftragId:T[b.typ].b==='E'?b.auftragId:'',
-    ltDruck:b.ltDruck!==false,optRabatt:!!b.optRabatt,optLS:!!b.optLS});
+    ltDruck:b.ltDruck!==false,optRabatt:!!b.optRabatt,optLS:!!b.optLS,...(b.druck?{druck:{...b.druck}}:{})});
   n.pos=b.pos.map(p=>({...p,id:uid(),herkunftPosId:''}));persist();go('beleg/'+n.id);
 }
 
@@ -1248,7 +1249,8 @@ V.beleg=id=>{
     <button data-act="dup">Duplizieren</button>
     ${b.storno?'':`<button class="d" data-act="storno">${b.fest?'Stornieren':'Löschen'}</button>`}
   </div>${b.status==='ersetzt'?`<div class="hint">Dieses Angebot wurde durch eine Revision ersetzt.</div>`:''}`;
-  const blatt=`<div class="blatt" id="vorschau">${docHTML(b,true)}</div>${b.fest?'':'<p class="mut" style="font-size:12px;margin:-6px 0 14px">Gestrichelte Felder direkt im Blatt bearbeiten – Änderungen werden in die Eingabefelder übernommen.</p>'}`;
+  const dk=b.fest?'':dKnopf(b,'Druckformat …');
+  const blatt=`${dk?`<div class="bar" style="margin:0 0 6px;justify-content:flex-end">${dk}</div>`:''}<div class="blatt" id="vorschau">${docHTML(b,true)}</div>${b.fest?'':'<p class="mut" style="font-size:12px;margin:-6px 0 14px">Gestrichelte Felder direkt im Blatt bearbeiten – Änderungen werden in die Eingabefelder übernommen.</p>'}`;
   const formHTML=`
   <div class="card">
     <div class="row">
@@ -1278,7 +1280,7 @@ V.beleg=id=>{
     <div class="bar" style="margin:0 0 6px"><span class="mut">${ohneP?'Druck:':'Spalten einblenden:'}</span>
       ${ohneP?'':`<label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optRabatt" ${zRab?'checked':''} ${dis}> Rabatt</label>
       <label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optLS" ${zLS?'checked':''} ${dis}> Lohn / Sonstiges</label>`}
-      <label class="chk" style="margin:0;font-size:13px" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''} ${dis}> Langtext drucken</label></div>
+      <label class="chk" style="margin:0;font-size:13px" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''} ${dis}> Langtext drucken</label>${dKnopf(b,'Druckoptionen …')}</div>
     <table class="pos"><thead><tr><th></th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonstiges</th>':''}<th>${zLS?'PP':'EP netto'}</th>${zRab?'<th>Rab. %</th>':''}<th class="n">${zLS?'GP':'GP netto'}</th><th>USt</th><th title="Einstandspreis je Einheit">EK</th>`}<th>Kz</th><th></th></tr></thead>
     <tbody>${rows||`<tr><td colspan="14" class="mut">Noch keine Positionen.</td></tr>`}</tbody></table>
     ${b.fest?'':`<div class="bar" style="margin:8px 0 0"><button data-act="padd" data-art="G">+ Gruppe</button><button data-act="padd" data-art="W">+ Ware</button><button data-act="padd" data-art="L">+ Leistung</button><button data-act="padd" data-art="F">+ Fremdleistung</button><button data-act="padd" data-art="T">+ Text</button>${V_?`<button data-act="pzeit">+ Stunden aus Zeiterfassung</button>`:''}</div>`}
@@ -1344,22 +1346,27 @@ function dialog({titel,html,ok='OK',check='',gefahr=false}){
   });
 }
 
-/* Formular im Popup: felder=[{k,l,wert,typ,opts,cls,pflicht,dis}] → Objekt mit Werten oder null (dis:true = gesperrt, Wert bleibt) */
-function formDialog({titel,felder,ok='Anlegen',breit=false}){
+/* Formular im Popup: felder=[{k,l,wert,typ,opts,cls,pflicht,dis,ph,max,info,h}] → Objekt mit Werten oder null (dis:true = gesperrt, Wert bleibt;
+   ph = Platzhalter, max = höchste Zeichenzahl mit Zähler, info = Beschreibung unter dem Feld, h = Höhe Textfeld, typ 'hinweis' = nur Text l);
+   extra = Beschriftung eines dritten Knopfs (Ergebnis 'extra'), scroll = hohes Formular mit Bildlauf */
+function formDialog({titel,felder,ok='Anlegen',breit=false,extra='',scroll=false}){
   return new Promise(res=>{
     const d=document.createElement('div');d.className='modal';
-    const fld=f=>{const ds=f.dis?' disabled':'';return f.typ==='kette'?`<label class="${f.cls||''}">${f.l}<div data-k="${f.k}" data-wert="${esc(f.wert||'')}">${ketteHTML(f.baum,f.wert||'','data-fk="1"'+ds)}</div></label>`:`<label class="${f.cls||''}">${f.l}${f.pflicht?' *':''}${f.opts?`<select data-k="${f.k}"${ds}>${f.opts.map(([v,t])=>opt(v,t,f.wert??'')).join('')}</select>`:f.typ==='checkbox'?`<br><input type="checkbox" data-k="${f.k}" ${f.wert?'checked':''}${ds}>`:f.typ==='textarea'?`<textarea data-k="${f.k}" style="height:190px"${ds}>${esc(f.wert??'')}</textarea>`:`<input data-k="${f.k}" type="${f.typ||'text'}" ${f.typ==='number'?'step="any"':''} value="${esc(f.wert??'')}"${ds}>`}</label>`};
+    const fld=f=>{const ds=f.dis?' disabled':'',ph=f.ph?` placeholder="${esc(f.ph)}"`:'',mx=f.max?` maxlength="${f.max}"`:'',inf=f.info?`<span class="mut" style="display:block;font-size:11px;margin-top:2px">${esc(f.info)}</span>`:'';
+      if(f.typ==='hinweis')return`<p class="mut" style="margin:4px 0 0;flex-basis:100%">${f.l}</p>`;
+      return f.typ==='kette'?`<label class="${f.cls||''}">${f.l}<div data-k="${f.k}" data-wert="${esc(f.wert||'')}">${ketteHTML(f.baum,f.wert||'','data-fk="1"'+ds)}</div></label>`:`<label class="${f.cls||''}">${f.l}${f.pflicht?' *':''}${f.max?` <span data-cnt="${f.k}">(${String(f.wert??'').length}/${f.max})</span>`:''}${f.opts?`<select data-k="${f.k}"${ds}>${f.opts.map(([v,t])=>opt(v,t,f.wert??'')).join('')}</select>`:f.typ==='checkbox'?`<br><input type="checkbox" data-k="${f.k}" ${f.wert?'checked':''}${ds}>`:f.typ==='textarea'?`<textarea data-k="${f.k}" style="height:${f.h||190}px"${ph}${mx}${ds}>${esc(f.wert??'')}</textarea>`:`<input data-k="${f.k}" type="${f.typ||'text'}" ${f.typ==='number'?'step="any"':''} value="${esc(f.wert??'')}"${ph}${mx}${ds}>`}${inf}</label>`};
     const zeilen=[];let z=[];for(const f of felder){if(f.neu&&z.length){zeilen.push(z);z=[]}z.push(f)}if(z.length)zeilen.push(z);
-    d.innerHTML=`<div class="mbox" style="${breit?'max-width:760px':''}"><h2>${titel}</h2>${zeilen.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('')}
-      <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">${ok}</button></div></div>`;
+    d.innerHTML=`<div class="mbox" style="${breit?'max-width:760px':''}${scroll?';max-height:84vh;overflow:auto':''}"><h2>${titel}</h2>${zeilen.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('')}
+      <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0">${extra?`<button id="m-x">${esc(extra)}</button><span class="sp"></span>`:''}<button id="m-no">Abbrechen</button><button class="p" id="m-ok">${ok}</button></div></div>`;
     document.body.appendChild(d);setTimeout(()=>d.querySelector('input:not([disabled]),select:not([disabled])')?.focus(),0);
     const fin=v=>{d.remove();document.removeEventListener('keydown',kd);res(v)};
     d.addEventListener('click',async e=>{const t=e.target.closest('[data-bw]');if(!t||t.disabled)return;e.preventDefault();const box=t.closest('[data-k]'),f=felder.find(x=>x.k===box.dataset.k),v=await baumWahl(f.baum,box.dataset.wert);
       if(v!==null){box.dataset.wert=v;box.innerHTML=ketteHTML(f.baum,v,'data-fk="1"')}});
-    const lesen=()=>{const o={};for(const f of felder){const e=d.querySelector(`[data-k="${f.k}"]`);o[f.k]=f.typ==='kette'?e.dataset.wert:f.typ==='checkbox'?e.checked:f.typ==='number'?num(e.value):e.value.trim()}return o};
+    d.addEventListener('input',e=>{const f=felder.find(x=>x.max&&x.k===e.target.dataset.k),c=f&&d.querySelector(`[data-cnt="${f.k}"]`);if(c)c.textContent=`(${e.target.value.length}/${f.max})`});
+    const lesen=()=>{const o={};for(const f of felder){if(f.typ==='hinweis')continue;const e=d.querySelector(`[data-k="${f.k}"]`);o[f.k]=f.typ==='kette'?e.dataset.wert:f.typ==='checkbox'?e.checked:f.typ==='number'?num(e.value):e.value.trim()}return o};
     const okf=()=>{const o=lesen(),fehlt=felder.find(f=>f.pflicht&&!o[f.k]);if(fehlt){d.querySelector('#m-err').textContent=`Bitte „${fehlt.l}“ ausfüllen.`;return}fin(o)};
     const kd=e=>{if(e.key==='Escape')fin(null);if(e.key==='Enter'&&e.target.tagName==='INPUT')okf()};document.addEventListener('keydown',kd);
-    d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#m-ok').onclick=okf;
+    d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#m-ok').onclick=okf;if(extra)d.querySelector('#m-x').onclick=()=>fin('extra');
   });
 }
 // Kontakt anlegen oder bearbeiten (k = bestehender Kontakt). Pflicht: Name, Straße, PLZ, Ort, Land (§ 11 UStG: Name und Anschrift)
@@ -1465,7 +1472,7 @@ function angebotRevision(src){
   const grund=prompt(`Angebot ${src.nr} bearbeiten → neue Revision ${basis}-R${rev}.\nDer bisherige Stand bleibt unverändert gespeichert.\n\nGrund der Änderung (optional, z. B. „Kundenwunsch: 2. Verteiler“):`,'');
   if(grund===null)return;
   const b=neuBeleg('AN',{kontaktId:src.kontaktId,betreff:src.betreff,bezug:src.bezug,kopf:src.kopf,fuss:src.fuss,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,
-    auftragId:src.auftragId,vorgaengerId:src.id,basisNr:basis,rev,revGrund:grund.trim(),optRabatt:src.optRabatt,optLS:src.optLS,ltDruck:src.ltDruck,leistung:src.leistung});
+    auftragId:src.auftragId,vorgaengerId:src.id,basisNr:basis,rev,revGrund:grund.trim(),optRabatt:src.optRabatt,optLS:src.optLS,ltDruck:src.ltDruck,leistung:src.leistung,...(src.druck?{druck:{...src.druck}}:{})});
   b.pos=src.pos.map(p=>({...p,id:uid(),herkunftPosId:'',revPosId:p.id}));
   log('Revision angelegt',`${basis}-R${rev}${grund.trim()?': '+grund.trim():''}`);persist();go('beleg/'+b.id);
 }
@@ -2888,7 +2895,23 @@ function erwKarte(){
   return`<div class="card" id="erw"><h2>Erweiterungen</h2><p class="mut" style="margin-top:0">Zusätzliche Funktionen, einzeln ein- und ausschaltbar. Der Standard entspricht dem bisherigen Verhalten (außer Fehlerbehebungen). Ausschalten wirkt sofort; gespeicherte Angaben bleiben erhalten und gelten beim Wiedereinschalten wieder.</p>
   <div class="bar"><span>${ab.length?`${tag(ab.length+' vom Standard abweichend','warn')} ${ab.map(x=>esc(x.l)).join(' · ')}`:tag('alle Schalter auf Standard','ok')}</span><span class="sp"></span><button data-act="erwstd" ${ab.length?'':'disabled'}>Alle Schalter auf Standard</button></div>
   ${ERW.length?P.map(p=>{const L=ERW.filter(x=>x.p===p);return`<div style="border-top:1px solid var(--line);margin-top:10px;padding-top:6px"><div class="bar" style="margin:0"><b>${esc(p)}</b><span class="sp"></span><button class="s" data-act="erwpk" data-p="${esc(p)}" ${L.some(x=>erw(x.k)!==x.std)?'':'disabled'}>Standard wiederherstellen</button></div>
-    ${L.map(x=>`<label class="chk" style="margin-top:6px"><input type="checkbox" data-o="s" data-f="erw.${x.k}" ${erw(x.k)?'checked':''}> <span><b>${esc(x.l)}</b> <span class="mut">(Standard: ${x.std?'ein':'aus'})</span>${erw(x.k)!==x.std?' '+tag('geändert','warn'):''}<br><span class="mut" style="font-size:13px">${esc(x.info)}</span></span></label>`).join('')}</div>`}).join(''):'<p class="mut">Noch keine Schalter vorhanden.</p>'}</div>`}
+    ${L.map(x=>`<label class="chk" style="margin-top:6px"><input type="checkbox" data-o="s" data-f="erw.${x.k}" ${erw(x.k)?'checked':''}> <span><b>${esc(x.l)}</b> <span class="mut">(Standard: ${x.std?'ein':'aus'})</span>${erw(x.k)!==x.std?' '+tag('geändert','warn'):''}<br><span class="mut" style="font-size:13px">${esc(x.info)}</span></span></label>`).join('')}</div>`}).join(''):'<p class="mut">Noch keine Schalter vorhanden.</p>'}${dpKarte()}</div>`}
+// Unterkarte „Druck & Belegdarstellung“: Druckprofil der gewählten Belegart (UI.dpTyp); gespeichert werden nur Abweichungen von DRUCK_STD
+function dpKarte(){
+  const typ=T[UI.dpTyp]?UI.dpTyp:'AN',P=S().druckprofil?.[typ]||{},w=dProfil(typ),re=RE_V.includes(typ),L=DRUCKOPT.filter(x=>dGilt(x,typ)),G=[...new Set(L.map(x=>x.p))],hw=L.map(x=>x.warn?.(w)).filter(Boolean);
+  const feld=x=>{const a=`data-o="s" data-f="druckprofil.${typ}.${x.k}"${re&&x.k in DRUCK_RE?' disabled':''}`,v=w[x.k],kopf=`<b>${esc(x.l)}</b> <span class="mut">(Standard: ${esc(dStdTxt(x))})</span>${x.k in P?' '+tag('geändert','warn'):''}`,inf=x.info?`<span class="mut" style="display:block;font-size:12px">${esc(x.info)}</span>`:'';
+    return x.typ==='chk'?`<label class="chk" style="margin-top:6px;flex:1 1 100%"><input type="checkbox" ${a} ${v?'checked':''}> <span>${kopf}${inf}</span></label>`
+      :`<label style="flex:1 1 320px">${kopf}${x.max?` <span class="mut">höchstens ${x.max} Zeichen</span>`:''}${x.opts?`<select ${a}>${x.opts.map(([k,l])=>opt(k,l,v)).join('')}</select>`:x.typ==='ta'?`<textarea ${a} placeholder="${esc(x.ph||'')}" style="height:54px">${esc(v)}</textarea>`:`<input ${a} value="${esc(v)}" placeholder="${esc(x.ph||'')}"${x.max?` maxlength="${x.max}"`:''}>`}${inf}</label>`};
+  return`<div id="dprof" style="border-top:1px solid var(--line);margin-top:14px;padding-top:8px"><div class="bar" style="margin:0"><b>Druck &amp; Belegdarstellung</b><select data-o="ui" data-f="dpTyp" title="Belegart">${Object.keys(T).map(t=>opt(t,T[t].bez,typ)).join('')}</select>${Object.keys(P).length?tag(Object.keys(P).length+' vom Standard abweichend','warn'):tag('Standard','ok')}<span class="sp"></span>
+    <button class="s" data-act="dpre" title="Dieses Profil für Anzahlungs-, Teil-, Schlussrechnung, Rechnung und Gutschrift übernehmen">auf alle Rechnungsarten übertragen</button><button class="s" data-act="dpstd" ${Object.keys(P).length?'':'disabled'}>Standard wiederherstellen</button></div>
+    <p class="mut" style="margin:6px 0 0;font-size:13px">Darstellung in Vorschau, Druck, PDF und E-Mail je Belegart. Im Beleg legt „Druckoptionen …“ Abweichungen für diesen einen Beleg fest. Beim Festschreiben wird die Darstellung im Beleg eingefroren (Nachdruck wie das Original).${re?' Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG).':''}</p>
+    ${erw('druckprofil')?'':'<div class="hint" style="margin:8px 0 0">Das Druckprofil ist ausgeschaltet (Schalter „Druckprofil je Belegart“ oben): Entwürfe werden im Standard-Aussehen gedruckt, festgeschriebene Belege mit ihrem Stand beim Festschreiben. Die Einstellungen hier bleiben gespeichert.</div>'}
+    ${hw.length?`<div class="hint" style="margin:8px 0 0">${hw.map(esc).join('<br>')}</div>`:''}
+    ${L.length?G.map(g=>`<div style="margin-top:10px"><div class="mut" style="font-weight:600">${esc(g)}</div><div class="row" style="align-items:flex-start">${L.filter(x=>x.p===g).map(feld).join('')}</div></div>`).join(''):'<p class="mut">Noch keine Darstellungsoptionen vorhanden.</p>'}</div>`}
+// Feld des Druckprofils setzen (Einstellungen): Abweichung speichern bzw. bei Standardwert löschen; Unterkarte neu zeichnen, Fokus bleibt im nächsten Feld
+function dpSetzen(pfad,v){const[,t,k]=pfad.split('.'),A=S().druckprofil??={},w=typeof v==='string'?v.trim():v;if(!T[t]||(RE_V.includes(t)&&k in DRUCK_RE))return;
+  const p=A[t]??={};if(w===DRUCK_STD[k])delete p[k];else p[k]=w;if(!Object.keys(p).length)delete A[t];persist();
+  setTimeout(()=>{const f=document.activeElement?.dataset?.f,e=$('#dprof');if(!e)return;e.outerHTML=dpKarte();if(f)document.querySelector(`[data-f="${f}"]`)?.focus()},0)}
 
 /* ---------- Belege kostenlos auslesen: PDF-Textebene und E-Rechnung (ohne Fremdbibliothek) ---------- */
 async function inflate(u8){ // FlateDecode; toleriert Restbytes nach dem Datenende
@@ -3483,6 +3506,7 @@ const ftZeilen=el=>{const e=el?.querySelector('.ft');if(!e)return null;try{retur
 function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute Ausgabe, P0 n)
   const f=S().firma,k=b.fest&&b.adresse?b.adresse:adressSnapshot(kontakt(b.kontaktId)),s=summen(b),t=T[b.typ],ohneP=OHNE_PREIS.includes(b.typ);
   const fx=fixAktiv(b),fv=x=>fx?fx[x]||'':x==='bearbeiter'?S().bearbeiter:f[x]; // eingefrorene Werte ohne Rückfall auf die aktuellen Einstellungen
+  const dp=dOpt(b); // Druckprofil der Belegart mit den Abweichungen des Belegs (festgeschrieben: Schnappschuss b.druckFix)
   edit=edit&&!b.fest;
   // bearbeitbares Feld in der Vorschau (key: h:<feld> | p:<index>:<feld>)
   const ed=(key,val,ph='',ml=false)=>edit?`<span class="ed${ml?' ml':''}" contenteditable="true" spellcheck="true" data-ed="${key}" data-ph="${esc(ph)}">${ml?rt(val):esc(val)}</span>`:(ml?rt(val):esc(val));
@@ -3536,6 +3560,37 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   ${fusszeile(fx?fx.fz||[]:fussZeilen(f))}
   </div>`;
 }
+/* Druckprofil (P1, erw.druckprofil): Darstellungsoptionen je Belegart in S().druckprofil.<typ>.<k> (nur Abweichungen), Vorgaben DRUCK_STD = bisheriges Aussehen.
+   Je Beleg nur Abweichungen vom Profil in b.druck; beim Festschreiben der vollständige Stand in b.druckFix (gelesen nur bei b.fest, ACT.reopen löscht ihn).
+   Schalter aus: Entwürfe mit DRUCK_STD, festgeschriebene Belege weiter mit ihrem Schnappschuss; Profile und b.druck bleiben gespeichert.
+   DRUCKOPT: {k, std, p:Paket (Überschrift), l:Bezeichnung, typ:'chk'|'txt'|'ta' bzw. opts:[[wert,text]], info, ph:Platzhalter, max:Zeichen,
+   nur:[Belegarten], preis:true = nur Belegarten mit Preisen, warn:o=>Hinweistext bei widersprüchlicher Einstellung} */
+const DRUCKOPT=[
+  // Zusammenfassung der Titel und Gruppensummen (P2)
+  // Infoblock, Grußformel, Fußzeile, Kostenvoranschlag (P5)
+];
+const DRUCK_RE={preise:true,summen:true}; // Rechnungsarten (RE_V): Gesamtpreise und Summenblock immer (Entgelt, Steuersatz, Steuerbetrag – § 11 Abs. 1 Z 3 lit. e/f UStG)
+const DRUCK_STD={...DRUCK_RE,...Object.fromEntries(DRUCKOPT.map(x=>[x.k,x.std]))};
+const dGilt=(x,typ)=>(!x.nur||x.nur.includes(typ))&&!(x.preis&&OHNE_PREIS.includes(typ)); // Option bei dieser Belegart einstellbar
+const dProfil=typ=>({...DRUCK_STD,...(S().druckprofil?.[typ]||{})});
+const dOpt=b=>{const o=b.fest?{...DRUCK_STD,...(b.druckFix||{})}:{...DRUCK_STD,...(erw('druckprofil')?{...(S().druckprofil?.[b.typ]||{}),...(b.druck||{})}:{})};if(RE_V.includes(b.typ))Object.assign(o,DRUCK_RE);return o};
+const dStdTxt=x=>x.typ==='chk'?(x.std?'ein':'aus'):x.opts?x.opts.find(o=>o[0]===x.std)?.[1]||x.std:x.std?`„${x.std}“`:'leer';
+// Knopf im Beleg (Formular: „Druckoptionen …“, über der Vorschau: „Druckformat …“)
+const dKnopf=(b,l)=>erw('druckprofil')&&DRUCKOPT.some(x=>dGilt(x,b.typ))?`<button class="s" data-act="dopt"${b.fest?' disabled title="Festgeschrieben – die Darstellung wurde beim Festschreiben eingefroren"':' title="Darstellung dieses Belegs in Vorschau, Druck und PDF (Abweichungen vom Druckprofil der Belegart)"'}>${l}${!b.fest&&b.druck&&Object.keys(b.druck).length?' (geändert)':''}</button>`:'';
+// Druckoptionen je Beleg: nur Abweichungen vom Profil der Belegart in b.druck („Wie Belegart“ löscht sie); bei Rechnungsarten gesperrte Felder (DRUCK_RE); ein Rückgängig-Schritt
+async function druckDialog(b){
+  if(!b||b.fest)return;const L=DRUCKOPT.filter(x=>dGilt(x,b.typ));if(!L.length)return;
+  const P=dProfil(b.typ),w=dOpt(b),re=RE_V.includes(b.typ),ab=Object.keys(b.druck||{}).filter(k=>L.some(x=>x.k===k));
+  const felder=[{typ:'hinweis',l:`Abweichungen vom Druckprofil „${esc(T[b.typ].bez)}“ (Einstellungen → Erweiterungen → Druck &amp; Belegdarstellung). ${ab.length?`Dieser Beleg weicht ab bei: ${ab.map(k=>esc(L.find(x=>x.k===k).l)).join(', ')}.`:'Derzeit wie die Belegart.'}`}];
+  let p='';for(const x of L){if(x.p!==p){p=x.p;felder.push({typ:'hinweis',l:`<b>${esc(p)}</b>`,neu:1})}
+    felder.push({k:x.k,l:esc(x.l),wert:w[x.k],typ:x.typ==='chk'?'checkbox':x.typ==='ta'?'textarea':'text',opts:x.opts,dis:re&&x.k in DRUCK_RE,ph:x.ph,max:x.max,info:x.info,h:60,neu:1,cls:'w2'})}
+  const r=await formDialog({titel:`Druckoptionen – ${esc(T[b.typ].bez)} ${esc(bNr(b))}`,ok:'Übernehmen',breit:true,scroll:true,extra:'Wie Belegart',felder});
+  if(!r)return;
+  if(r==='extra'){if(!b.druck)return;delete b.druck}
+  else{const hw=L.map(x=>x.warn?.({...w,...r})).filter(Boolean);if(hw.length&&!confirm(hw.join('\n')+'\n\nTrotzdem übernehmen?'))return;
+    const neu={...(b.druck||{})};for(const x of L){if(re&&x.k in DRUCK_RE)continue;const v=r[x.k];if(v===P[x.k])delete neu[x.k];else neu[x.k]=v}
+    if(JSON.stringify(neu)===JSON.stringify(b.druck||{}))return;if(Object.keys(neu).length)b.druck=neu;else delete b.druck}
+  persist();render()}
 /* Papierformat (Einstellungen): das Layout bleibt im A4-Maß und wird für Druck und PDF auf das Format skaliert */
 const PAPIER={A4:{l:'A4 (210 × 297 mm)',w:210,h:297},A5:{l:'A5 (148 × 210 mm)',w:148,h:210},Letter:{l:'US-Letter (216 × 279 mm)',w:215.9,h:279.4}};
 const papier=()=>{const p=PAPIER[S().papier]||PAPIER.A4,k=p.w/210;return{...p,k,hc:p.h/k-27.3}}; // hc = nutzbare Höhe je Seite (A4-mm, Ränder oben 10 / unten 17,3 mm)
@@ -3773,7 +3828,7 @@ const ACT={
   senden:()=>versenden(curBeleg()),pdfdl:()=>belegPDF(curBeleg()),
   storno:()=>stornieren(curBeleg()),
   dup:()=>duplizieren(curBeleg()),
-  reopen:()=>{const b=curBeleg();if(!confirm('Beleg wieder bearbeiten? Die Nummer bleibt erhalten.'))return;b.fest=false;log('wieder geöffnet',`${T[b.typ].bez} ${b.nr}`);commit();render()},
+  reopen:()=>{const b=curBeleg();if(!confirm('Beleg wieder bearbeiten? Die Nummer bleibt erhalten.'))return;b.fest=false;delete b.druckFix;log('wieder geöffnet',`${T[b.typ].bez} ${b.nr}`);commit();render()},
   anst:el=>{const b=curBeleg();b.status=el.dataset.v;log('Angebotsstatus',`${b.nr}: ${b.status||'offen'}`);commit();render()},
   padd:el=>{const b=curBeleg(),a=el.dataset.art,i=b.pos.length,kr=T[b.typ].b==='V'&&['W','L','F'].includes(a)?+kontakt(b.kontaktId)?.rabatt||0:0;b.pos.push(neuPos({art:a,einheit:a==='L'?'h':'Stk',menge:a==='T'||a==='G'?0:1,rabatt:kr,...(a==='G'?{pauschal:0,ohneEP:false}:{})}));persist();
     if(a==='T')render(),setTimeout(()=>document.querySelector(`.rte[data-ed="p:${i}:text"]`)?.focus(),0);else renderFocus(`[data-p="${i}"][data-f="${a==='G'?'bez':'artikel'}"]`)},
@@ -3843,6 +3898,10 @@ const ACT={
   logodel:()=>{S().firma.logo='';persist();render()},
   erwstd:()=>{S().erw={};log('Erweiterungen','alle Schalter auf Standard');persist();render()},
   erwpk:el=>{const e=S().erw||{};for(const x of ERW)if(x.p===el.dataset.p)delete e[x.k];log('Erweiterungen',`${el.dataset.p}: Standard wiederhergestellt`);persist();render()},
+  dopt:()=>druckDialog(curBeleg()),
+  dpstd:()=>{const t=T[UI.dpTyp]?UI.dpTyp:'AN';if(!S().druckprofil?.[t]||!confirm(`Druckprofil „${T[t].bez}“ auf Standard zurücksetzen?\nAuch eigene Texte dieser Belegart (z. B. Grußformel, Fußzeilen-Zusatz) werden gelöscht.`))return;delete S().druckprofil[t];log('Druckprofil',`${T[t].bez}: Standard wiederhergestellt`);persist();render()},
+  dpre:()=>{const t=T[UI.dpTyp]?UI.dpTyp:'AN',A=S().druckprofil??={},Z=RE_V.filter(x=>x!==t);if(!confirm(`Druckprofil „${T[t].bez}“ auf alle Rechnungsarten übertragen (${Z.map(x=>T[x].bez).join(', ')})?\nDeren bisherige Einstellungen werden ersetzt.`))return;
+    for(const x of Z){if(A[t])A[x]=JSON.parse(JSON.stringify(A[t]));else delete A[x]}log('Druckprofil',`${T[t].bez} auf Rechnungsarten übertragen`);persist();render()},
   abmelden:()=>AUTH.abmelden(),
   ansicht:el=>{lsSet('erp-ansicht',el.dataset.m);render()},
   anrev:()=>angebotRevision(curBeleg()),
@@ -3904,7 +3963,7 @@ document.addEventListener('change',e=>{
       if(d.f==='lagerplatz'&&v==='__lp'){render();baumDialog(LP);return}
       if(d.f==='gruppe'&&(v==='__neu'||v==='__sub')){gruppeNeu(v==='__sub'?a.gruppe:'').then(g=>{if(g){a.gruppe=g;persist()}render()});return}if(d.f==='einheitenStr'){a.einheiten=String(v).split(/[;,]/).map(x=>x.split('=')).filter(x=>x.length===2&&x[0].trim()&&num(x[1])>0).map(([e,f])=>({e:e.trim(),f:num(f)}));for(const x of a.einheiten)if(!S().einheiten.includes(x.e))S().einheiten.push(x.e)}else a[d.f]=nv;if(['nr','bez','aktiv'].includes(d.f))artDatalist();if(['lager','einheitenStr'].includes(d.f)){persist();render();return}break}
     case'al':artikel(d.id).lieferanten[+d.i][d.f]=v;break;
-    case's':if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()]??={};o[pth[0]]=d.t==='b'?v===true||v==='true':nv;if(d.f.startsWith('erw.')){persist();render();return}}break;
+    case's':if(d.f.startsWith('druckprofil.')){dpSetzen(d.f,v);return}if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()]??={};o[pth[0]]=d.t==='b'?v===true||v==='true':nv;if(d.f.startsWith('erw.')){persist();render();return}}break;
     case'st':{const x=S().steuer[+d.i];if(stGesperrt().has(x.code)){alert(`Steuersatz „${x.bez||x.code}“ wird in festgeschriebenen Belegen verwendet und kann nicht geändert werden (§ 11 UStG, § 131 BAO).\nFür einen neuen Satz bitte einen neuen Code anlegen.`);render();return}if(d.f==='code'){const alt=x.code;if(S().steuer.some((y,j)=>j!==+d.i&&y.code===v)){alert('Code existiert bereits.');render();return}if(DB.belege.some(b=>b.pos.some(p=>p.steuer===alt))){alert('Code wird verwendet und kann nicht geändert werden.');render();return}}x[d.f]=nv;break}
     case'tf':S().tarife[+d.i][d.f]=nv;break;
     case'fbk':FB().konten[+d.i][d.f]=v;break;

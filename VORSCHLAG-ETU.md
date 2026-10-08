@@ -130,7 +130,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
     - Druck über das Browsermenü: `beforeprint` füllt `#print` aus dem aktuellen Beleg, wenn `drucken()`/`druckHTML()` ihn nicht gerade befüllt haben (Merker `DRUCK`). Außerhalb der Route `beleg` wird `#print` geleert.
     - `#print` wird **nicht** in `afterprint` geleert, denn Android und iOS lösen `afterprint` je nach Browser sofort oder gar nicht aus, das gäbe leere Ausdrucke. Geleert wird beim nächsten Routenwechsel im `hashchange`-Handler.
     - Test am Desktop (Chrome, Edge, Firefox), unter Android und unter iOS.
-  - c) **Nachdruck-Treue:**
+  - c) ✅ umgesetzt (Commit f6526f9; `belegFix()`, `fixAktiv()`, `stDef()`, `ftZeilen()`; Bestellungen: zusätzlich `b.fix.lnr` = Stamm-Art.-Nr. beim Festschreiben, im Entwurf Rückfall auf `p.einkauf.artNr` nur beim selben Lieferanten). **Nachdruck-Treue:**
     - `festschreiben()` speichert vor `b.fest=true` den Block `b.fix={fz,bearbeiter,name,mail,tel,zeichner,zeichnerFkt,steuer:[{code,satz,bez,hinweis}]}`. Das Logo wird wegen der Größe nicht gespeichert.
     - `docHTML` liest bei `b.fest&&b.fix` diese Werte, ohne Rückfall auf die aktuellen Einstellungen: `fx?fx.bearbeiter:S().bearbeiter`. Ein beim Festschreiben leerer Bearbeiter bleibt leer.
     - **Fußzeile aus einer Quelle:** `docHTML` schreibt die Zeilen (eingefroren bzw. mit Zusatz aus P5) als `data-fz` (JSON) an das `.ft`-Element.
@@ -141,7 +141,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
     - Bei festgeschriebenen Bestellungen wird nur `p.lnr` bzw. `p.einkauf?.artNr` gedruckt, nicht der aktuelle Artikelstamm.
     - `summen()` und die Steuerhinweise in `docHTML` verwenden bei `b.fest` die Werte aus `b.fix.steuer`.
     - Alte Belege ohne `b.fix` bleiben wie bisher.
-  - d) **Steuersätze schützen:** `case'st'` sperrt `satz`, `bez` und `hinweis` von Codes, die in festgeschriebenen Belegen verwendet werden, wie heute schon den Code. Dazu der Hinweis „Für einen neuen Satz einen neuen Code anlegen“. Das schützt auch FiBu und UVA alter Rechnungen, die nicht über `b.fix` laufen.
+  - d) ✅ umgesetzt (Commit a86ff40; gesperrt sind auch Code und Löschen, `stGesperrt()`; nutzt `steuerCodes()` aus c), Rücknahme daher vor c). **Steuersätze schützen:** `case'st'` sperrt `satz`, `bez` und `hinweis` von Codes, die in festgeschriebenen Belegen verwendet werden, wie heute schon den Code. Dazu der Hinweis „Für einen neuen Satz einen neuen Code anlegen“. Das schützt auch FiBu und UVA alter Rechnungen, die nicht über `b.fix` laufen.
   - e) `duplizieren()` übernimmt `optLS`, `optRabatt` und `ltDruck`.
   - f) `ACT.kbel` ruft `konditionenUebernehmen(b,k)` auf.
   - g) `onPos('einheit')` rechnet `epL` und `epS` mit demselben Faktor um. P13 ergänzt `ekL` und `zeit`.
@@ -150,10 +150,10 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - j) `artikelInPos()` schreibt die Lieferanten-Art.-Nr. künftig in `p.lnr` und nicht mehr in `p.text`. Alte Positionen bleiben unverändert; P4 kann die Zeile im Druck ausblenden.
   - k) ✅ umgesetzt (Commit fbdaef7). `pdfAusBeleg()`: `const kopfH=box.querySelector('table.p thead')` wird einmal bestimmt. An beiden Stellen gilt dann `el.closest('thead')===kopfH` bzw. `pe.closest('thead')===kopfH`. Bekannte Einschränkung: Eine mehrseitige Optionen-Tabelle bekommt auf der Folgeseite keinen wiederholten Kopf.
   - l) ✅ umgesetzt (Commit 66bc2b7). **Nur `table.p` wird zeilenweise geteilt:** in `vorschauSeiten()` `c.matches('table.p')` statt `table`, in `brk` `table.p tbody>tr:not(.grpz)`. `.tot` und die neue Zusammenfassung (P2) bleiben in Vorschau und PDF ein Block, wie im Druck. Bei bestehenden Belegen ändert sich dadurch nur die Stelle eines Seitenumbruchs, wenn der Summenblock genau auf der Seitengrenze liegt; der Inhalt bleibt gleich.
-  - m) **Pflichtangaben prüfen:** Hinweis in Einstellungen → Firma und vor dem Festschreiben von Rechnungen, wenn `f.gericht`, `f.fn` oder `f.uid` leer ist.
+  - m) ✅ umgesetzt (Commit abdf44c; nichts eingetragen, `FIRMA_TBH` unverändert). **Pflichtangaben prüfen:** Hinweis in Einstellungen → Firma und vor dem Festschreiben von Rechnungen, wenn `f.gericht`, `f.fn` oder `f.uid` leer ist.
     - Das Firmenbuchgericht tragen Sie in den Einstellungen ein. Vermutlich ist es das LG Wiener Neustadt; bitte bestätigen.
     - Ein Eintrag in `FIRMA_TBH` ist nur optional. `migrate()` füllt leere Firmenfelder aus `FIRMA_TBH` und ändert damit auch Nachdrucke alter Belege ohne `b.fix`.
-  - n) **Vermerk „DUPLIKAT“** (Schalter):
+  - n) ✅ umgesetzt (Commit 24362bd; Standard aus; Druck über das Browsermenü kennzeichnet ohne Rückfrage, da dort kein Dialog möglich ist; ändert dieselben Druckfunktionen wie c), Rücknahme daher vor c)). **Vermerk „DUPLIKAT“** (Schalter):
     - Der Zähler `b.ausgaben` zählt Druck, PDF und Versand festgeschriebener Belege der Arten `RE_V`. Bei alten Belegen zählt `b.versand.length` mit.
     - Er wird nach der Ausgabe per `commit()` erhöht.
     - Ab der zweiten Ausgabe fragt ein Dialog „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja). `docHTML` setzt den Vermerk dann über den Titel.
@@ -984,7 +984,8 @@ Jedes Paket wird erst nach Ihrem Test im Browser nach `main` übernommen. Bis da
 - **Gesamtkalkulation (P10, später):** proportional als Standard; einheitlicher Aufschlag im Dialog wählbar.
 - **Lohnkostennachweis (P9, später):** nur auf Wunsch je Beleg (Standard aus).
 - **Briefanrede (P6, später):** österreichische Form „Sehr geehrter Herr Ing. Mustermann,“, je Kontakt überschreibbar.
-- Noch offen: Firmenbuchgericht (Frage 8), Duplikat-Vermerk Standard (bis zur Antwort aus), Fragen 5, 6, 7, 9, 10, 11.
+- **Pflichtangaben/Duplikat (P0 m/n):** Firmenbuchgericht nicht vorbelegen, nur Hinweis bei leerem Feld; Duplikat-Vermerk Standard aus.
+- Noch offen: Fragen 5, 6, 7, 9, 10, 11.
 
 ## 6. Offene Fragen
 

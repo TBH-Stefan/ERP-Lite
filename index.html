@@ -126,6 +126,12 @@ label>input,label>select,label>textarea{margin-top:2px;color:var(--ink);font-siz
 .mut{color:var(--mut)}.err{color:var(--err)}.okc{color:var(--ok)}.warnc{color:var(--warn)}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .bar select{width:auto}
+/* Kompakt (P30) Menüs und Filter: Suche + „Filter (n) ▾“ in einer Zeile, Typ-Chips einzeilig, Schnellknöpfe, Auswahlleiste Artikel (.aws) am Handy unten */
+body.kompakt .bar.fs>input{width:auto!important;flex:1 1 140px;min-width:0}body.kompakt .chips.ein{flex-wrap:nowrap;overflow-x:auto}body.kompakt .chips.ein button{flex:none}
+body.kompakt td .nw{white-space:nowrap}
+@media(max-width:760px){body.kompakt .quick>*{flex:1 1 0;min-width:0;padding:10px 4px}
+  body.kompakt .aws{position:fixed;left:0;right:0;bottom:0;z-index:50;margin:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.1)}
+  body.kompakt:has(#dirtybar) .aws{bottom:96px}}
 .sp{flex:1}
 .cols{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
 @media(max-width:1100px){.cols{grid-template-columns:1fr}}
@@ -1287,13 +1293,13 @@ V.dash=()=>{
     return L.filter(x=>x[0].length).map(([arr,h,f])=>`<div class="card kkl" style="padding:0"><h2>${h}</h2>${arr.map(f).join('')}</div>`).join('')+(leer.length?`<div class="card mut">${leer.join(' · ').replace(/^./,c=>c.toUpperCase())}</div>`:'')};
   return`<h1>Überblick ${j}</h1>
   ${!S().firma.name?'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>':''}
-  <div class="quick">
+  ${kmp()?quickK():`<div class="quick">
     <a class="btn" href="#/zeiten">⏱ Zeit erfassen</a>
     <label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>
     <button data-act="qneu" data-t="AN">+ Angebot</button>
     <button data-act="qneu" data-t="LS">+ Lieferschein</button>
     <button data-act="qneu" data-t="RE">+ Rechnung</button>
-  </div>
+  </div>`}
   <div class="grid">
     <div class="kpi click" onclick="nav('auswertung')" title="Auswertungen">Umsatz netto ${j}<b>${fmt(ums)} €</b></div>
     <div class="kpi click" onclick="nav('auftraege')" title="Aufträge &amp; DB II">DB II Aufträge ${j}<b>${fmt(db)} € ${u2?dbTag(db/u2):''}</b></div>
@@ -1311,6 +1317,81 @@ V.dash=()=>{
     <div class="card"><h2>Entwürfe <a href="javascript:void 0" onclick="zuListe('V','','entwurf')" style="font-weight:400;font-size:13px">Verkauf →</a> <a href="javascript:void 0" onclick="zuListe('E','','entwurf')" style="font-weight:400;font-size:13px">Einkauf →</a></h2>${liste(entw,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${T[b.typ].bez}</td><td>${esc(kName(b.kontaktId))}</td><td>${esc(b.betreff)}</td><td>${dAT(b.datum)}</td></tr>`)}</div>
   </div>`}`;
 };
+
+/* ---------- Kompakt (P30): Neu-/Einlesen-Menüs, Filter-Pop-up und Chips, „± Bestand buchen“ als Pop-up ----------
+   FILTER.<name>(el) öffnet formDialog mit den bisherigen Filtern (schreibt dieselben UI-Schlüssel), Auslöser data-act="filter" data-fl="<name>"; aktive Filter als Chips (ACT.fweg, data-f = UI-Schlüssel) */
+const EINLESEN=[['lsscan','📷','Lieferschein einlesen'],['erfoto','📄','Eingangsrechnung einlesen'],['bescan','📄','Lieferantenangebot einlesen']];
+MENUE.einlesen=()=>EINLESEN.map(([id,ic,l])=>({l,ic,datei:{id,accept:'image/*,application/pdf,.xml,text/xml'}})); // input-IDs wie bisher (change-Handler), in kompakt nur im Menü
+const neuEintrag=t=>({l:T[t].bez,ic:BICON[t],act:'qneu',d:{t}});
+MENUE.neu=()=>[...['AN','LS','RE'].map(neuEintrag),{l:'Weitere Belegarten',ic:'＋',sub:Object.keys(T).filter(t=>!['AN','LS','RE','GS'].includes(t)).map(neuEintrag)}];
+MENUE.neuV=()=>[...Object.keys(T).filter(t=>T[t].b==='V'&&t!=='GS').map(neuEintrag),{trenn:1},{l:'Rechnung aus Lieferscheinen …',ic:'🧾',act:'sammelre0'}];
+MENUE.neuE=()=>Object.keys(T).filter(t=>T[t].b==='E').map(neuEintrag);
+MENUE.kneu=()=>[{l:'Kunde',ic:'👤',act:'knew',d:{t:'K'}},{l:'Lieferant',ic:'🏭',act:'knew',d:{t:'L'}}];
+MENUE.artikel=()=>[{l:UI.aWahl?'Auswahl beenden':'Auswählen (mehrere Artikel)',ic:'☑',act:'awahl'},{l:'Gruppen verwalten …',ic:'🗂',act:'agrp'}];
+MENUE.lager=()=>[{l:'Lagerplätze verwalten …',ic:'📍',act:'lpverw'},{l:'Lagerplätze per Matrix …',ic:'▦',act:'lpmx'}];
+queueMicrotask(()=>{const z=MENUE.lagerz;if(z)MENUE.lagerz=el=>[{l:'Bestand buchen …',ic:'±',act:'lgpop',d:{aid:el.dataset.aid}},...z(el)]}); // nach allen Definitionen: ⋯ der Lagerkarte (Listen als Karten) ergänzen
+const quickK=()=>kmpH()?'<div class="quick"><button class="p" data-act="menue" data-m="neu">+ Neu ▾</button><button data-act="menue" data-m="einlesen">📷 Einlesen ▾</button><a class="btn" href="#/zeiten">⏱ Zeit</a></div>'
+  :'<div class="quick"><a class="btn" href="#/zeiten">⏱ Zeit erfassen</a><button data-act="menue" data-m="einlesen">📷 Belege einlesen ▾</button><button data-act="qneu" data-t="AN">+ Angebot</button><button data-act="qneu" data-t="LS">+ Lieferschein</button><button data-act="qneu" data-t="RE">+ Rechnung</button></div>';
+const FILTER={};
+const fKnopf=(fl,n,a='')=>`<button class="${n?'on':''}" data-act="filter" data-fl="${fl}"${a}>Filter${n?` (${n})`:''} ▾</button>`;
+const fChips=L=>L.length?`<div class="bar chips">${L.map(([f,l])=>`<button class="on" data-act="fweg" data-f="${f}" title="Filter entfernen">${esc(l)} ✕</button>`).join('')}</div>`:'';
+const BST={entwurf:'Entwürfe',offen:'offen',offenRe:'offene Rechnungen',ueber:'überfällig',storno:'storniert'};
+const belegFilterL=k=>[[k+'Typ',T[UI[k+'Typ']]?.bez],[k+'St',BST[UI[k+'St']]],[k+'Jahr',UI[k+'Jahr']],[k+'Qrt',UI[k+'Qrt']&&'Q'+UI[k+'Qrt']],[k+'Mon',UI[k+'Mon']&&MONATE[UI[k+'Mon']-1]]].filter(x=>x[1]);
+FILTER.belege=async el=>{const k=el.dataset.k,b=k==='v'?'V':'E',typen=Object.keys(T).filter(t=>T[t].b===b),jahre=[...new Set([String(new Date().getFullYear()),...DB.belege.filter(x=>T[x.typ].b===b).map(x=>x.datum.slice(0,4))])].sort().reverse();
+  const o=await formDialog({titel:'Filter – '+(b==='V'?'Verkauf':'Einkauf'),ok:'Anzeigen',extra:'Zurücksetzen',felder:[
+    {k:'Typ',l:'Belegart',wert:UI[k+'Typ']||'',opts:[['','alle Belegarten'],...typen.map(t=>[t,T[t].bez])]},{k:'St',l:'Status',wert:UI[k+'St']||'',opts:[['','alle Status'],...Object.entries(BST)]},
+    {k:'Jahr',l:'Jahr',wert:UI[k+'Jahr']||'',opts:[['','alle Jahre'],...jahre.map(x=>[x,x])],neu:1},{k:'Qrt',l:'Quartal',wert:UI[k+'Qrt']||'',opts:[['','alle Quartale'],...[1,2,3,4].map(x=>[String(x),'Q'+x])]},
+    {k:'Mon',l:'Monat',wert:UI[k+'Mon']||'',opts:[['','alle Monate'],...MONATE.map((x,i)=>[String(i+1),x])]}]});
+  if(!o)return;for(const f of ['Typ','St','Jahr','Qrt','Mon'])UI[k+f]=o==='extra'?'':o[f];render()};
+const artFilterL=()=>[['aGr',UI.aGr==='__ohne'?'ohne Gruppe':UI.aGr&&grBez(UI.aGr)],['aInaktiv',lsGet('erp-aInaktiv')==='1'&&'mit deaktivierten']].filter(x=>x[1]);
+FILTER.artikel=async()=>{const n=DB.artikel.filter(a=>a.aktiv===false).length;
+  const o=await formDialog({titel:'Filter – Artikel',ok:'Anzeigen',extra:'Zurücksetzen',felder:[
+    {k:'gr',l:'Artikelgruppe (inkl. Untergruppen)',wert:UI.aGr||'',opts:[['','alle Gruppen'],['__ohne','– ohne Gruppe –'],...grBaum().map(({g,t})=>[g.id,' '.repeat(t)+(t?'└ ':'')+g.bez+` (${grAnz(g.id)})`])],cls:'w2'},
+    {k:'inakt',l:`deaktivierte anzeigen${n?` (${n})`:''}`,typ:'checkbox',wert:lsGet('erp-aInaktiv')==='1',neu:1}]});
+  if(!o)return;UI.aGr=o==='extra'?'':o.gr;lsSet('erp-aInaktiv',o!=='extra'&&o.inakt?'1':null);render()};
+const lagerFilterL=()=>[['lgP',UI.lgP==='__ohne'?'ohne Lagerplatz':UI.lgP&&LP.pfad(UI.lgP)]].filter(x=>x[1]);
+FILTER.lager=async()=>{const o=await formDialog({titel:'Filter – Lager',ok:'Anzeigen',extra:'Zurücksetzen',felder:[{k:'lp',l:'Lagerplatz (inkl. Unterebenen)',wert:UI.lgP||'',opts:[['','alle Lagerplätze'],['__ohne','– ohne Lagerplatz –'],...LP.liste().map(({g})=>[g.id,LP.pfad(g.id)+` (${LP.anz(g.id)})`])],cls:'w2'}]});
+  if(!o)return;UI.lgP=o==='extra'?'':o.lp;render()};
+// Kopf der Belegliste in kompakt: Titel mit „+ Neu ▾“ (und „📷 Einlesen ▾“); Handy: Suche + Filter-Pop-up + Chips; Bildschirm: Typ-Chips einzeilig, Filter wie bisher
+function belegKopfK(bereich,k,typen,jahre){const fl=belegFilterL(k),typ=UI[k+'Typ'],st=UI[k+'St'],fJ=UI[k+'Jahr']||'',fQ=UI[k+'Qrt']||'',fM=UI[k+'Mon']||'',such=`<input data-o="ui" data-f="${k}Q" placeholder="Suche Nr, Name, Betreff" value="${esc(UI[k+'Q'])}"`;
+  return`<div class="bar"><h1 style="margin:0">${bereich==='V'?'Verkauf':'Einkauf'}</h1><span class="sp"></span>${bereich==='E'?'<button data-act="menue" data-m="einlesen">📷 Einlesen ▾</button>':''}<button class="p" data-act="menue" data-m="neu${bereich}">+ Neu ▾</button></div>
+  ${kmpH()?`<div class="bar fs">${such}>${fKnopf('belege',fl.length,` data-k="${k}"`)}</div>${fChips(fl)}`
+  :`<div class="bar chips ein"><button class="${typ?'':'on'}" data-act="btyp" data-k="${k}" data-t="">Alle</button>${typen.map(t=>`<button class="${typ===t?'on':''}" data-act="btyp" data-k="${k}" data-t="${t}" title="${T[t].bez}">${BICON[t]} ${T[t].bez}</button>`).join('')}</div>
+  <div class="bar"><select data-o="ui" data-f="${k}Jahr" title="Jahr">${opt('','alle Jahre',fJ)}${jahre.map(x=>opt(x,x,fJ)).join('')}</select><select data-o="ui" data-f="${k}Qrt" title="Quartal">${opt('','alle Quartale',fQ)}${[1,2,3,4].map(x=>opt(String(x),'Q'+x,fQ)).join('')}</select>
+    <select data-o="ui" data-f="${k}Mon" title="Monat">${opt('','alle Monate',fM)}${MONATE.map((x,i)=>opt(String(i+1),x,fM)).join('')}</select><select data-o="ui" data-f="${k}St" title="Status">${opt('','alle Status',st)}${Object.entries(BST).map(([v,l])=>opt(v,l,st)).join('')}</select>${such} style="width:240px"></div>`}`}
+function kontaktKopfK(kf,kt,anz){const ch=kf?`<div class="bar chips" style="margin:0">${[['','Alle'],['K','Kunden'],['L','Lieferanten']].map(([t,l])=>`<button class="${kt===t?'on':''}" data-act="ktyp" data-t="${t}">${l} (${anz(t)})</button>`).join('')}</div>`:'',such=`<input data-o="ui" data-f="kQ" placeholder="Suche" value="${esc(UI.kQ)}"`;
+  return kmpH()?`<div class="bar"><h1 style="margin:0">Kunden &amp; Lieferanten</h1><span class="sp"></span><button class="p" data-act="menue" data-m="kneu">+ Neu ▾</button></div>${ch?`<div class="bar">${ch}</div>`:''}<div class="bar">${such}></div>`
+    :`<h1>Kunden &amp; Lieferanten</h1><div class="bar">${ch}${such} style="width:260px"><span class="sp"></span><button class="p" data-act="knew" data-t="K">+ Kunde</button><button data-act="knew" data-t="L">+ Lieferant</button></div>`}
+// Artikel am Handy: Suche + Filter-Pop-up, Gruppen und Mehrfachauswahl im ⋯; Häkchen nur im Modus „Auswählen“ (Antippen der Karte wählt aus), Aktionen in der Leiste unten
+function artikelKopfH(sel){const fl=artFilterL();
+  return`<div class="bar"><h1 style="margin:0">Artikel &amp; Leistungen</h1><span class="sp"></span><button class="p" data-act="anew">+ Artikel</button><button class="mehr" data-act="menue" data-m="artikel" title="Gruppen, Auswählen …">⋯</button></div>
+  <div class="bar fs"><input data-o="ui" data-f="aQ" placeholder="Suche (auch Lief.-Art.-Nr.)" value="${esc(UI.aQ)}">${fKnopf('artikel',fl.length)}</div>${fChips(fl)}
+  ${UI.aWahl?`<div class="bar aws"><b>${sel.size} ausgewählt</b><select data-act="amgr" ${sel.size?'':'disabled'} title="Ausgewählten Artikeln eine Gruppe zuordnen">${opt('','Gruppe …','')}${opt('__keine','– keine Gruppe –','')}${grListe().map(([id,l])=>opt(id,l,'')).join('')}${opt('__neu','+ neue Hauptgruppe …','')}</select><button data-act="amakt" data-v="0" ${sel.size?'':'disabled'}>Deaktivieren</button><button data-act="amakt" data-v="1" ${sel.size?'':'disabled'}>Aktivieren</button><button class="d" data-act="amdel" ${sel.size?'':'disabled'}>Löschen …</button><span class="sp"></span><button class="p" data-act="awahl">Fertig</button></div>`:''}`}
+const artTabK=(id,c,r,o)=>tabelle(id,c,r,UI.aWahl?{...o,zeile:a=>`class="click" onclick="this.querySelector('[data-asel]')?.click()" style="${a.aktiv===false?'opacity:.5':''}"`}:{...o,vor:null});
+function lagerKopfK(L,tot){const fl=lagerFilterL(),u=L.filter(a=>+a.minBestand>0&&bestand(a.id).menge<+a.minBestand).length;
+  return`<div class="bar"><h1 style="margin:0">Lager</h1><span class="sp"></span><button class="p" data-act="lgpop">± Bestand buchen …</button><button class="mehr" data-act="menue" data-m="lager" title="Lagerplätze verwalten, Matrix …">⋯</button></div>
+  ${kmpH()?`<div class="grid"><div class="kpi">Lagerwert gesamt<b>${fmt(tot)} €</b><span class="mut">${L.length} Artikel</span></div><div class="kpi">Unter Mindestbestand<b class="${u?'err':''}">${u}</b><span class="mut">Artikel</span></div></div>
+  <div class="bar fs"><input data-o="ui" data-f="lgQ" placeholder="Suche Artikel, Lagerplatz" value="${esc(UI.lgQ)}">${fKnopf('lager',fl.length)}</div>${fChips(fl)}`
+  :`<div class="bar"><input data-o="ui" data-f="lgQ" placeholder="Suche Artikel, Lagerplatz" value="${esc(UI.lgQ)}" style="width:240px"><select data-o="ui" data-f="lgP" title="Nach Lagerplatz filtern (inkl. Unterebenen)">${opt('','alle Lagerplätze',UI.lgP)}${opt('__ohne','– ohne Lagerplatz –',UI.lgP)}${LP.liste().map(({g})=>opt(g.id,LP.pfad(g.id)+` (${LP.anz(g.id)})`,UI.lgP)).join('')}</select></div>`}`}
+// Lagerbewegungen als Akkordeon (20 Einträge + „weitere“), am Handy als Karten
+function lagerBewK(){const N=UI.lgMehr||20,J=[...DB.lager].reverse(),Z=J.slice(0,N);
+  const inh=kmpH()?`<div class="kkl">${Z.map(e=>{const a=artikel(e.artikelId);return karte({t:`${esc(a?.nr||'')} ${esc(a?.bez||'')}`,u:esc(e.text),z:dAT(e.datum),b:`${fmtQ(e.menge)} · ${fmt(e.wert)} €`,a:e.belegId?`onclick="nav('beleg/${e.belegId}')"`:''})}).join('')||'<p class="mut" style="margin:0">Keine Bewegungen.</p>'}</div>`
+    :`<table><thead><tr><th>Datum</th><th>Artikel</th><th class="n">Menge</th><th class="n">Wert</th><th>Vorgang</th></tr></thead><tbody>${Z.map(e=>{const a=artikel(e.artikelId);return`<tr${e.belegId?` class="click" onclick="nav('beleg/${e.belegId}')"`:''}><td>${dAT(e.datum)}</td><td>${esc(a?.nr)} ${esc(a?.bez)}</td><td class="n">${fmtQ(e.menge)}</td><td class="n">${fmt(e.wert)}</td><td>${esc(e.text)}</td></tr>`}).join('')||'<tr><td colspan="5" class="mut">Keine Bewegungen.</td></tr>'}</tbody></table>`;
+  return akk('lgbew','Lagerbewegungen',inh+(J.length>N?`<button class="s" style="margin-top:8px" onclick="UI.lgMehr=${N+20};render()">weitere ${Math.min(20,J.length-N)} anzeigen</button>`:''),{zusatz:`${J.length} Einträge`})}
+// „± Bestand buchen“ als Pop-up: dieselben Felder und IDs (lg-…) wie die bisherige Karte, gebucht wird unverändert über ACT.lgbook
+function lagerPop(aid=''){const L0=DB.artikel.filter(a=>a.lager).sort((a,c)=>String(a.nr).localeCompare(String(c.nr)));if(!L0.length){alert('Keine Lagerartikel (Häkchen „Lagerartikel“ im Artikel setzen).');return}
+  const d=document.createElement('div');d.className='modal';
+  d.innerHTML=`<div class="mbox" style="max-width:640px"><h2>± Bestand buchen (Korrektur / Inventur)</h2>
+    <div class="row"><label class="w2">Artikel<select id="lg-a">${L0.map(a=>opt(a.id,a.nr+' – '+a.bez,aid)).join('')}</select></label><label class="w05">Datum<input type="date" id="lg-d" value="${isoD()}"></label></div>
+    <div class="row"><label class="w05">Modus<select id="lg-m">${opt('diff','Zu-/Abgang ±')}${opt('ist','Inventur: Ist-Menge')}</select></label><label class="w05">Menge<input type="number" step="any" inputmode="decimal" id="lg-q"></label>
+      <label class="w05">EK je Einh. (Zugang)<input type="number" step="any" inputmode="decimal" id="lg-p" placeholder="Ø-EK"></label></div>
+    <div class="row"><label>Text<input id="lg-t" placeholder="z. B. Inventur 31.12., Bruch"></label></div><p class="mut" id="lg-ist" style="margin:0"></p>
+    <div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Buchen</button></div></div>`;
+  document.body.appendChild(d);const sel=d.querySelector('#lg-a');
+  const ist=()=>{const a=artikel(sel.value);d.querySelector('#lg-ist').textContent=a?`Bestand ${fmtQ(bestand(a.id).menge)} ${a.einheit||''} · Ø-EK ${fmt(avgEK(a.id))} €`:''};ist();sel.onchange=ist;
+  const fin=()=>{d.remove();document.removeEventListener('keydown',kd)},kd=e=>{if(e.key==='Escape')fin()};document.addEventListener('keydown',kd);
+  d.querySelector('#m-no').onclick=fin;d.querySelector('#m-ok').onclick=()=>{const n=DB.lager.length;ACT.lgbook();if(DB.lager.length>n)fin()};
+  setTimeout(()=>d.querySelector('#lg-q').focus(),0)}
 
 /* ---------- Belegliste ---------- */
 /* Zusammenhängende Belege (Revisionen, Folgebelege, Storno) als Gruppe: Kopfzeile = aktuelle Revision bzw. Ausgangsbeleg, Rest mit +/- auf- und zuklappen */
@@ -1347,7 +1428,7 @@ V.belege=(bereich='V')=>{
   const PRJ=new Map();for(const g of GR_)if(g.kinder.length||beleg(g.rid)?.projekt)PRJ.set(g.kopf.id,g.rid);
   L=GR_.flatMap(g=>{ANZ.set(g.kopf.id,g.kinder.length);const k=UI.auf[g.kopf.id]?g.kinder:[];k.forEach(x=>KIND.add(x.id));return[g.kopf,...k]});
   GRK=GR_.filter(g=>g.kinder.length).map(g=>g.kopf.id);const mitGr=GRK.length>0;
-  return`<h1>${bereich==='V'?'Verkauf':'Einkauf'}</h1>
+  return`${kmp()?belegKopfK(bereich,k,typen,jahre):`<h1>${bereich==='V'?'Verkauf':'Einkauf'}</h1>
   <div class="bar pikto"><span class="mut" style="align-self:center">Neu:</span>${typen.filter(t=>t!=='GS').map(t=>`<button data-act="qneu" data-t="${t}" title="Neue(s) ${T[t].bez}"><span class="ic">${BICON[t]}</span>${T[t].bez.replace('Auftragsbestätigung','Auftragsbest.').replace('Anzahlungsrechnung','Anzahlungs-RE').replace('Proformarechnung','Proforma')}</button>`).join('')}
     ${bereich==='V'?'<button data-act="sammelre0" title="Rechnung aus Lieferscheinen"><span class="ic">🧾🚚</span>RE aus LS …</button>':''}</div>
   <div class="bar chips"><button class="${typ?'':'on'}" data-act="btyp" data-k="${k}" data-t="">Alle</button>${typen.map(t=>`<button class="${typ===t?'on':''}" data-act="btyp" data-k="${k}" data-t="${t}" title="${T[t].bez}">${BICON[t]} ${T[t].bez}</button>`).join('')}</div>
@@ -1358,9 +1439,9 @@ V.belege=(bereich='V')=>{
     <select data-o="ui" data-f="${k}St" title="Status">${opt('','alle Status',st)}${opt('entwurf','Entwürfe',st)}${opt('offen','offen',st)}${opt('offenRe','offene Rechnungen',st)}${opt('ueber','überfällig',st)}${opt('storno','storniert',st)}</select>
     <input data-o="ui" data-f="${k}Q" placeholder="Suche Nr, Name, Betreff" value="${esc(UI[k+'Q'])}" style="width:240px">
     <span class="sp"></span>${bereich==='E'?'<label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>':''}
-  </div>
+  </div>`}
   ${tabelle('belege'+bereich,[
-    {k:'datum',l:'Datum',hm:1,f:b=>dAT(b.datum)},{k:'nr',l:'Nummer',f:b=>`${esc(bNr(b))}<br><span class="mut">${b.typ} · ${dAT(b.datum)}</span>`},
+    {k:'datum',l:'Datum',hm:1,f:b=>dAT(b.datum)},{k:'nr',l:'Nummer',f:b=>`${kmp()?`<span class="nw">${esc(bNr(b))}</span>`:esc(bNr(b))}<br><span class="mut">${b.typ} · ${dAT(b.datum)}</span>`},
     {k:'fremd',l:bereich==='V'?'Fremd-Nr.':'Beleg-Nr. Lieferant',f:b=>esc(b.fremdNr||''),std:bereich==='E'},{k:'art',l:'Art',hm:1,f:b=>T[b.typ].bez},
     {k:'knr',l:bereich==='V'?'Kunden-Nr.':'Lief.-Nr.',f:b=>esc(kontakt(b.kontaktId)?.nr||''),std:false},{k:'kontakt',l:bereich==='V'?'Kunde':'Lieferant',f:b=>esc(kName(b.kontaktId))},
     {k:'betreff',l:'Betreff',hm:1,f:b=>esc(b.betreff)},{k:'auftrag',l:'Auftrag',f:b=>b.auftragId&&b.auftragId!==b.id?esc(bNr(beleg(b.auftragId))):'',std:false},
@@ -1976,7 +2057,7 @@ V.kontakte=typ=>{
   const kt=kf?UI.kTyp:'',passt=k=>!kt||k.typ===kt||k.typ==='KL';
   const L=DB.kontakte.filter(k=>passt(k)&&(!q||(kf?[k.nr,k.name,k.zusatz,k.ort,k.uid,k.email,k.tel,k.kdNrLief]:[k.nr,k.name,k.ort,k.uid]).join(' ').toLowerCase().includes(q))).sort((a,c)=>a.name.localeCompare(c.name));
   const anz=t=>DB.kontakte.filter(k=>!t||k.typ===t||k.typ==='KL').length;
-  return`<h1>Kunden &amp; Lieferanten</h1>${kf?`<div class="bar chips">${[['','Alle'],['K','Kunden'],['L','Lieferanten']].map(([t,l])=>`<button class="${kt===t?'on':''}" data-act="ktyp" data-t="${t}">${l} (${anz(t)})</button>`).join('')}</div>`:''}<div class="bar"><input data-o="ui" data-f="kQ" placeholder="Suche" value="${esc(UI.kQ)}" style="width:260px"><span class="sp"></span><button class="p" data-act="knew" data-t="K">+ Kunde</button><button data-act="knew" data-t="L">+ Lieferant</button></div>
+  return`${kmp()?kontaktKopfK(kf,kt,anz):`<h1>Kunden &amp; Lieferanten</h1>${kf?`<div class="bar chips">${[['','Alle'],['K','Kunden'],['L','Lieferanten']].map(([t,l])=>`<button class="${kt===t?'on':''}" data-act="ktyp" data-t="${t}">${l} (${anz(t)})</button>`).join('')}</div>`:''}<div class="bar"><input data-o="ui" data-f="kQ" placeholder="Suche" value="${esc(UI.kQ)}" style="width:260px"><span class="sp"></span><button class="p" data-act="knew" data-t="K">+ Kunde</button><button data-act="knew" data-t="L">+ Lieferant</button></div>`}
   ${tabelle('kontakte',[
     {k:'nr',l:'Nr',f:k=>esc(k.nr)},{k:'name',l:'Name',f:k=>esc(k.name)},{k:'zusatz',l:'Zusatz',f:k=>esc(k.zusatz||''),std:false},{k:'typ',l:'Typ',f:k=>({K:'Kunde',L:'Lieferant',KL:'Kunde + Lieferant'}[k.typ])},{k:'kart',l:'Art',f:k=>k.kundenart==='privat'?'Privat':'B2B'},
     {k:'strasse',l:'Straße',f:k=>esc(k.strasse||''),std:false},{k:'ort',l:'Ort',f:k=>`${esc(k.plz)} ${esc(k.ort)}`},{k:'land',l:'Land',f:k=>esc(k.land||''),std:false},{k:'uid',l:'UID',f:k=>esc(k.uid)},
@@ -2027,11 +2108,11 @@ function artikelLoeschen(ids){
 V.artikel=id=>{
   if(id)return artikelEdit(id);
   const L=artikelListe(),sichtbar=new Set(L.map(a=>a.id)),sel=new Set((UI.aSel=UI.aSel.filter(id=>sichtbar.has(id)))),nInaktiv=DB.artikel.filter(a=>a.aktiv===false).length;
-  return`<h1>Artikel &amp; Leistungen</h1><div class="bar"><input data-o="ui" data-f="aQ" placeholder="Suche (auch Lief.-Art.-Nr.)" value="${esc(UI.aQ)}" style="width:260px">
+  return`${kmpH()?artikelKopfH(sel):`<h1>Artikel &amp; Leistungen</h1><div class="bar"><input data-o="ui" data-f="aQ" placeholder="Suche (auch Lief.-Art.-Nr.)" value="${esc(UI.aQ)}" style="width:260px">
     <select data-o="ui" data-f="aGr" title="Nach Artikelgruppe filtern (inkl. Untergruppen)">${opt('','alle Gruppen',UI.aGr)}${opt('__ohne','– ohne Gruppe –',UI.aGr)}${grBaum().map(({g,t})=>opt(g.id,'\u2003'.repeat(t)+(t?'└ ':'')+g.bez+` (${grAnz(g.id)})`,UI.aGr)).join('')}</select><button data-act="agrp" title="Gruppen anlegen, umbenennen, löschen">Gruppen …</button>
     <label class="chk" style="margin:0"><input type="checkbox" data-act="ainakt" ${lsGet('erp-aInaktiv')==='1'?'checked':''}> deaktivierte anzeigen${nInaktiv?` (${nInaktiv})`:''}</label><span class="sp"></span>
-    ${sel.size?`<span><b>${sel.size}</b> ausgewählt</span><select data-act="amgr" title="Ausgewählten Artikeln eine Gruppe zuordnen">${opt('','Gruppe zuordnen …','')}${opt('__keine','– keine Gruppe –','')}${grListe().map(([id,l])=>opt(id,l,'')).join('')}${opt('__neu','+ neue Hauptgruppe …','')}</select><button data-act="amakt" data-v="0">Deaktivieren</button><button data-act="amakt" data-v="1">Aktivieren</button><button class="d" data-act="amdel">Löschen …</button>`:''}<button class="p" data-act="anew">+ Artikel</button></div>
-  ${tabelle('artikel',[
+    ${sel.size?`<span><b>${sel.size}</b> ausgewählt</span><select data-act="amgr" title="Ausgewählten Artikeln eine Gruppe zuordnen">${opt('','Gruppe zuordnen …','')}${opt('__keine','– keine Gruppe –','')}${grListe().map(([id,l])=>opt(id,l,'')).join('')}${opt('__neu','+ neue Hauptgruppe …','')}</select><button data-act="amakt" data-v="0">Deaktivieren</button><button data-act="amakt" data-v="1">Aktivieren</button><button class="d" data-act="amdel">Löschen …</button>`:''}<button class="p" data-act="anew">+ Artikel</button></div>`}
+  ${(kmpH()?artTabK:tabelle)('artikel',[
     {k:'nr',l:'Nr',f:a=>esc(a.nr)},{k:'bez',l:'Bezeichnung',f:a=>esc(a.bez)},{k:'lnr',l:'Lief.-Art.-Nr.',f:a=>esc(lfNr(a))},{k:'lief',l:'Lieferant',f:a=>esc(lfNamen(a)),std:false},
     {k:'gruppe',l:'Gruppe',f:a=>kmp()&&grG(a.gruppe)?`<span title="${esc(grBez(a.gruppe))}">${esc(grG(a.gruppe).bez)}</span>`:esc(grBez(a.gruppe))},{k:'art',l:'Art',f:a=>ART[a.art]},{k:'einheit',l:'Einh.',f:a=>esc(a.einheit)},{k:'lp',l:'Listenpreis',n:1,f:a=>+lf1(a).lp?fmt(lf1(a).lp):'',std:false},{k:'rabatt',l:'Rabatt %',n:1,f:a=>+lf1(a).rabatt?fmtQ(lf1(a).rabatt):'',std:false},
     {k:'ek',l:'EK',n:1,f:a=>fmt(a.ek)},{k:'vk',l:'VK',n:1,f:a=>fmt(a.vk)},{k:'aufschlag',l:'Aufschlag %',n:1,f:a=>+a.ek&&+a.vk?fmtQ(r2((a.vk/a.ek-1)*100)):'',std:false},
@@ -2074,7 +2155,7 @@ V.lager=()=>{
   const L=L0.filter(a=>(!pl||(pl==='__ohne'?!a.lagerplatz||!LP.G(a.lagerplatz):ps.has(a.lagerplatz)))&&(!q||[a.nr,a.bez,LP.pfad(a.lagerplatz),lfNr(a)].join(' ').toLowerCase().includes(q)));
   const J=[...DB.lager].reverse().slice(0,200);
   const tot=sum(L,a=>bestand(a.id).wert);
-  return`<h1>Lager</h1>
+  return`${kmp()?lagerKopfK(L,tot):`<h1>Lager</h1>
   <div class="card"><h2>Korrektur / Inventur</h2><div class="row">
     <label class="w05">Datum<input type="date" id="lg-d" value="${isoD()}"></label>
     <label class="w2">Artikel<select id="lg-a">${L0.map(a=>opt(a.id,a.nr+' – '+a.bez,'')).join('')}</select></label>
@@ -2085,9 +2166,9 @@ V.lager=()=>{
     <button class="p" data-act="lgbook">Buchen</button></div></div>
   <div class="bar"><input data-o="ui" data-f="lgQ" placeholder="Suche Artikel, Lagerplatz" value="${esc(UI.lgQ)}" style="width:240px">
     <select data-o="ui" data-f="lgP" title="Nach Lagerplatz filtern (inkl. Unterebenen)">${opt('','alle Lagerplätze',UI.lgP)}${opt('__ohne','– ohne Lagerplatz –',UI.lgP)}${LP.liste().map(({g})=>opt(g.id,LP.pfad(g.id)+` (${LP.anz(g.id)})`,UI.lgP)).join('')}</select>
-    <button data-act="lpverw">Lagerplätze …</button><button data-act="lpmx">▦ Matrix …</button><span class="sp"></span></div>
+    <button data-act="lpverw">Lagerplätze …</button><button data-act="lpmx">▦ Matrix …</button><span class="sp"></span></div>`}
   ${tabelle('lager',[
-    {k:'nr',l:'Nr',f:a=>esc(a.nr)},{k:'bez',l:'Artikel',f:a=>esc(a.bez)},{k:'lplatz',l:'Lagerplatz',f:a=>`<span onclick="event.stopPropagation()"><select data-lpa="${a.id}" style="max-width:190px">${lpOpts(a.lagerplatz,'–')}</select></span>`},{k:'lnr',l:'Lief.-Art.-Nr.',f:a=>esc(lfNr(a)),std:false},{k:'lief',l:'Lieferant',f:a=>esc(lfNamen(a)),std:false},
+    {k:'nr',l:'Nr',f:a=>esc(a.nr)},{k:'bez',l:'Artikel',f:a=>esc(a.bez)},{k:'lplatz',l:'Lagerplatz',f:a=>kmp()?`<span class="nw">${esc(LP.pfad(a.lagerplatz)||'–')}</span> <button class="s" data-bw="lp" data-aid="${a.id}" onclick="event.stopPropagation();ACT.bwahl(this)" title="Lagerplatz ändern">✎</button>`:`<span onclick="event.stopPropagation()"><select data-lpa="${a.id}" style="max-width:190px">${lpOpts(a.lagerplatz,'–')}</select></span>`},{k:'lnr',l:'Lief.-Art.-Nr.',f:a=>esc(lfNr(a)),std:false},{k:'lief',l:'Lieferant',f:a=>esc(lfNamen(a)),std:false},
     {k:'bestand',l:'Bestand',n:1,f:a=>fmtQ(bestand(a.id).menge),cls:a=>+a.minBestand>0&&bestand(a.id).menge<+a.minBestand?'err':''},{k:'einheit',l:'Einh.',f:a=>esc(a.einheit)},
     {k:'avg',l:'Ø-EK',n:1,f:a=>fmt(avgEK(a.id))},{k:'wert',l:'Wert',n:1,f:a=>fmt(bestand(a.id).wert)},{k:'min',l:'Mindestbestand',n:1,f:a=>a.minBestand?fmtQ(a.minBestand):''},
     {k:'fehl',l:'Fehlmenge',n:1,f:a=>+a.minBestand>bestand(a.id).menge?fmtQ(r3(a.minBestand-bestand(a.id).menge)):'',std:false}],L,
@@ -2096,9 +2177,9 @@ V.lager=()=>{
        return karte({t:`${esc(a.nr)} ${esc(a.bez)}`,u:esc(LP.pfad(a.lagerplatz)||'– kein Lagerplatz –'),z:`Ø-EK ${fmt(avgEK(a.id))} · Wert ${fmt(b.wert)}`,b:`<span class="${u?'err':''}">${fmtQ(b.menge)} ${esc(a.einheit)}</span>${u?`<span class="mut" style="font-weight:400"> / min. ${fmtQ(a.minBestand)}</span>`:''}`})},
      nach:kmpH()?a=>`<td><button class="mehr" onclick="event.stopPropagation();ACT.menue(this)" data-m="lagerz" data-aid="${a.id}" title="Lagerplatz ändern …">⋯</button></td>`:null,kfuss:()=>karte({t:'Lagerwert gesamt',b:fmt(tot)+' €'}),
      fuss:vis=>`<tfoot><tr>${vis.map((c,j)=>`<td class="${c.n?'n':''}">${c.k==='wert'?fmt(tot):j===0?'Lagerwert gesamt':''}</td>`).join('')}<td></td></tr></tfoot>`})}
-  <div class="card" style="padding:0"><table><thead><tr><th>Datum</th><th>Artikel</th><th class="n">Menge</th><th class="n">Wert</th><th>Vorgang</th></tr></thead><tbody>
+  ${kmp()?lagerBewK():`<div class="card" style="padding:0"><table><thead><tr><th>Datum</th><th>Artikel</th><th class="n">Menge</th><th class="n">Wert</th><th>Vorgang</th></tr></thead><tbody>
   ${J.map(e=>{const a=artikel(e.artikelId);return`<tr${e.belegId?` class="click" onclick="nav('beleg/${e.belegId}')"`:''}><td>${dAT(e.datum)}</td><td>${esc(a?.nr)} ${esc(a?.bez)}</td><td class="n">${fmtQ(e.menge)}</td><td class="n">${fmt(e.wert)}</td><td>${esc(e.text)}</td></tr>`}).join('')||'<tr><td colspan="5" class="mut">Keine Bewegungen.</td></tr>'}
-  </tbody></table></div>`;
+  </tbody></table></div>`}`;
 };
 
 MENUE.lagerz=el=>{const a=artikel(el.dataset.aid);return a?[{l:'Lagerplatz ändern …',ic:'📍',act:'bwahl',d:{bw:'lp',aid:a.id}},{l:'Artikel öffnen',ic:'📦',href:'#/artikel/'+a.id}]:[]}; // ⋯ einer Lagerzeile am Handy (P30)
@@ -4180,6 +4261,8 @@ const ACT={
     let menge=m==='ist'?r3(q-bestand(a).menge):q;if(!menge){alert('Keine Mengenänderung.');return}
     lagerBuchung({artikelId:a,menge,preis:p!==''?num(p):null,datum:$('#lg-d').value||isoD(),text:(m==='ist'?'Inventur':'Korrektur')+(t?': '+t:'')});
     log('Lagerbuchung',`${artikel(a).nr}: ${fmtQ(menge)}`);commit();render()},
+  filter:el=>FILTER[el.dataset.fl]?.(el),fweg:el=>{const f=el.dataset.f;if(f==='aInaktiv')lsSet('erp-aInaktiv',null);else UI[f]='';render()}, // Filter-Pop-up und Chips (P30)
+  lgpop:el=>lagerPop(el.dataset.aid||''),awahl:()=>{UI.aWahl=!UI.aWahl;if(!UI.aWahl)UI.aSel=[];render()}, // „± Bestand buchen“, Mehrfachauswahl Artikel am Handy (P30)
   exp:el=>EXPORTS[el.dataset.k](),
   savenow:()=>commit(),speichern:()=>commit(),zurueck:()=>{if(!zurueck())alert('Keine Änderung zum Zurücknehmen.')},verwerfen:()=>{if(confirm("Alle ungespeicherten Änderungen verwerfen?"))verwerfen()},
   stadd:()=>{S().steuer.push({code:'NEU',satz:0,bez:'',hinweis:''});persist();render()},

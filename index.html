@@ -122,7 +122,10 @@ label>input,label>select,label>textarea{margin-top:2px;color:var(--ink);font-siz
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
 .kpi b{display:block;font-size:20px;margin-top:2px}
 .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;background:#eef0f3;color:#374151;white-space:nowrap}
-.tag.ok{background:#e3f4ea;color:var(--ok)}.tag.warn{background:#fdf1dc;color:var(--warn)}.tag.err{background:#fde8e6;color:var(--err)}.tag.acc{background:var(--acc2);color:var(--acc)}
+.tag.ok{background:#e3f4ea;color:var(--ok)}
+/* Kompakt (P30) Stammdaten: Visitenkarte des Kontakts (.vk), Kennzeilen; Knopfzeile unter dem Titel */
+.vk>div{margin-top:3px}.vk .vkl{display:flex;flex-wrap:wrap;gap:4px 16px}.vk .vkl a{color:var(--acc);text-decoration:none;padding:6px 0;display:inline-block}.vk .vkn{white-space:pre-wrap;color:var(--ink);background:#fafbfc;border-radius:6px;padding:6px 8px;margin-top:6px}
+.kkl>.kkf{border-top:1px solid var(--line)}.kkl>.kkf>button{margin:0 10px 0 0}.tag.warn{background:#fdf1dc;color:var(--warn)}.tag.err{background:#fde8e6;color:var(--err)}.tag.acc{background:var(--acc2);color:var(--acc)}
 .mut{color:var(--mut)}.err{color:var(--err)}.okc{color:var(--ok)}.warnc{color:var(--warn)}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .bar select{width:auto}
@@ -2068,26 +2071,48 @@ V.kontakte=typ=>{
      mf:k=>{const op=sum(DB.belege.filter(b=>b.kontaktId===k.id),b=>T[b.typ].b==='V'?offen(b):-offen(b)); // Karte am Handy (P30)
        return karte({t:esc(k.name),s:[k.typ!=='L'?tag('Kunde','acc'):'',k.typ!=='K'?tag('Lieferant'):'',k.kundenart==='privat'?tag('Privat','warn'):''].join(' '),u:[k.nr,`${k.plz||''} ${k.ort||''}`.trim()].filter(Boolean).map(esc).join(' · '),z:op?(op>0?'Forderung':'Verbindlichkeit'):'',b:op?fmt(Math.abs(op))+' €':''})}})}`;
 };
-V.kontakt=id=>{
-  const k=kontakt(id);if(!k)return'<p>Nicht gefunden.</p>';
+// Felder eines Kontakts (Setter 'k'): Formular im Kontakt, in kompakt im Pop-up „Kontakt bearbeiten“ (P30)
+function kontaktFelder(k){
   const f=(fl,l,cls='',type='text')=>`<label class="${cls}">${l}<input type="${type}" data-o="k" data-id="${k.id}" data-f="${fl}" value="${esc(k[fl])}"></label>`;
-  const docs=DB.belege.filter(b=>b.kontaktId===k.id).sort((a,c)=>c.datum.localeCompare(a.datum));
-  return`<div class="bar"><h1 style="margin:0">${esc(k.nr)} ${esc(k.name||'Neuer Kontakt')}</h1><span class="sp"></span>
-  ${k.typ!=='L'?`<button data-act="kbel" data-t="AN" data-id="${k.id}">+ Angebot</button><button data-act="kbel" data-t="RE" data-id="${k.id}">+ Rechnung</button>`:''}
-  ${k.typ!=='K'?`<button data-act="kbel" data-t="BE" data-id="${k.id}">+ Bestellung</button><button data-act="kbel" data-t="ER" data-id="${k.id}">+ Eingangsrechnung</button>`:''}
-  <button class="d" data-act="kdel" data-id="${k.id}">Löschen</button></div>
-  <div class="card">
-  <div class="row">${f('nr',k.typ==='L'?'Lieferanten-Nr.':k.typ==='KL'?'Kunden-/Lief.-Nr.':'Kunden-Nr.','w05')}<label class="w05">Typ<select data-o="k" data-id="${k.id}" data-f="typ">${opt('K','Kunde',k.typ)}${opt('L','Lieferant',k.typ)}${opt('KL','Kunde + Lieferant',k.typ)}</select></label>${f('name','Name / Firma *','w2')}${f('zusatz','Zusatz / z. H.')}</div>
+  return`<div class="row">${f('nr',k.typ==='L'?'Lieferanten-Nr.':k.typ==='KL'?'Kunden-/Lief.-Nr.':'Kunden-Nr.','w05')}<label class="w05">Typ<select data-o="k" data-id="${k.id}" data-f="typ">${opt('K','Kunde',k.typ)}${opt('L','Lieferant',k.typ)}${opt('KL','Kunde + Lieferant',k.typ)}</select></label>${f('name','Name / Firma *','w2')}${f('zusatz','Zusatz / z. H.')}</div>
   <div class="row">${f('strasse','Straße *','w2')}${f('plz','PLZ *','w05')}${f('ort','Ort *')}${f('land','Land *','w05')}</div>
   <div class="row"><label class="w05">Art<select data-o="k" data-id="${k.id}" data-f="kundenart">${opt('B2B','Unternehmen (B2B)',k.kundenart||'B2B')}${opt('privat','Privat (B2C)',k.kundenart||'B2B')}</select></label>${f('uid',k.kundenart==='privat'?'UID-Nr.':'UID-Nr. (B2B)')}${f('email','E-Mail')}${f('tel','Telefon')}</div>
   <div class="row">${f('zahlungsziel','Zahlungsziel Tage','w05','number')}${f('skonto','Skonto %','w05','number')}${f('skontoTage','Skonto Tage','w05','number')}${k.typ!=='L'?f('rabatt','Kundenrabatt %','w05','number'):''}${k.typ!=='K'?`<label class="w05" title="Unsere Kunden-Nr. beim Lieferanten – steht auf Bestellungen und anderen Einkaufsbelegen statt der internen Lieferanten-Nr.">Unsere Kunden-Nr.<input data-o="k" data-id="${k.id}" data-f="kdNrLief" value="${esc(k.kdNrLief||'')}"></label>`:''}<span style="flex:2" class="mut">Optional: werden in neue Belege übernommen.</span></div>
   ${kontaktFehlt(k).length?`<div class="hint">Pflichtangaben fehlen: ${kontaktFehlt(k).join(', ')} (für Rechnungen nötig).</div>`:''}
-  <div class="row"><label>Notiz<textarea data-o="k" data-id="${k.id}" data-f="notiz">${esc(k.notiz)}</textarea></label></div>
-  </div>
-  <div class="card" style="padding:0"><table><thead><tr><th>Datum</th><th>Beleg</th><th>Betreff</th><th class="n">Brutto</th><th class="n">Offen</th><th>Status</th></tr></thead><tbody>
+  <div class="row"><label>Notiz<textarea data-o="k" data-id="${k.id}" data-f="notiz">${esc(k.notiz)}</textarea></label></div>`}
+V.kontakt=id=>{
+  const k=kontakt(id);if(!k)return'<p>Nicht gefunden.</p>';
+  const docs=DB.belege.filter(b=>b.kontaktId===k.id).sort((a,c)=>c.datum.localeCompare(a.datum));
+  return`${kmp()?kontaktKopfV(k,docs):`<div class="bar"><h1 style="margin:0">${esc(k.nr)} ${esc(k.name||'Neuer Kontakt')}</h1><span class="sp"></span>
+  ${k.typ!=='L'?`<button data-act="kbel" data-t="AN" data-id="${k.id}">+ Angebot</button><button data-act="kbel" data-t="RE" data-id="${k.id}">+ Rechnung</button>`:''}
+  ${k.typ!=='K'?`<button data-act="kbel" data-t="BE" data-id="${k.id}">+ Bestellung</button><button data-act="kbel" data-t="ER" data-id="${k.id}">+ Eingangsrechnung</button>`:''}
+  <button class="d" data-act="kdel" data-id="${k.id}">Löschen</button></div>
+  <div class="card">
+  ${kontaktFelder(k)}
+  </div>`}
+  ${kmpH()?kontaktBelegeK(docs):`<div class="card" style="padding:0"><table><thead><tr><th>Datum</th><th>Beleg</th><th>Betreff</th><th class="n">Brutto</th><th class="n">Offen</th><th>Status</th></tr></thead><tbody>
   ${docs.map(b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${dAT(b.datum)}</td><td>${T[b.typ].bez} ${esc(bNr(b))}</td><td>${esc(b.betreff)}</td><td class="n">${fmt(sgn(b)*summen(b).zahlbar)}</td><td class="n">${T[b.typ].re?fmt(offen(b)):''}</td><td>${statusTag(b)}</td></tr>`).join('')||'<tr><td colspan="6" class="mut">Keine Belege.</td></tr>'}
-  </tbody></table></div>`;
+  </tbody></table></div>`}`;
 };
+/* Kontakt in kompakt (P30): Visitenkarte (Anschrift, 📞 tel:, ✉ mailto:, UID, Konditionen, offene Posten) statt Formular; „✎ Bearbeiten“ öffnet die bisherigen Felder
+   als Live-Pop-up (Setter 'k' samt Prüfung der Nummer); Löschen im ⋯; Belege am Handy als Karten */
+function kontaktKopfV(k,docs){const op=sum(docs,b=>T[b.typ].b==='V'?offen(b):-offen(b)),adr=[k.strasse,[k.plz,k.ort].filter(Boolean).join(' '),k.land].filter(Boolean).map(esc).join(', ');
+  const kond=[k.zahlungsziel!==''&&k.zahlungsziel!=null?`Zahlungsziel ${esc(k.zahlungsziel)} Tage`:'',+k.skonto?`${fmtQ(k.skonto)} % Skonto ${esc(k.skontoTage||0)} Tage`:'',k.typ!=='L'&&+k.rabatt?`Kundenrabatt ${fmtQ(k.rabatt)} %`:'',k.typ!=='K'&&k.kdNrLief?`Unsere Kunden-Nr. ${esc(k.kdNrLief)}`:''].filter(Boolean);
+  const tel=String(k.tel||'').replace(/[^\d+]/g,'');
+  return`<div class="bar"><h1 style="margin:0">${esc(k.nr)} ${esc(k.name||'Neuer Kontakt')}</h1></div>
+  <div class="bar">${k.typ!=='L'?`<button data-act="kbel" data-t="AN" data-id="${k.id}">+ Angebot</button><button data-act="kbel" data-t="RE" data-id="${k.id}">+ Rechnung</button>`:''}${k.typ!=='K'?`<button data-act="kbel" data-t="BE" data-id="${k.id}">+ Bestellung</button><button data-act="kbel" data-t="ER" data-id="${k.id}">+ Eingangsrechnung</button>`:''}<span class="sp"></span><button class="mehr" data-act="menue" data-m="kontakt" data-id="${k.id}" title="Bearbeiten, Löschen">⋯</button></div>
+  <div class="card vk"><div class="bar" style="margin:0"><b style="font-size:16px">${esc(k.name||'Neuer Kontakt')}</b><span class="mut">${esc(k.zusatz||'')}</span><span class="sp"></span><button data-act="lpop" data-lp="kontakt" data-id="${k.id}">✎ Bearbeiten</button></div>
+    <div>${adr||'<span class="mut">keine Anschrift</span>'}</div>
+    ${k.tel||k.email?`<div class="vkl">${k.tel?`<a href="tel:${esc(tel)}">📞 ${esc(k.tel)}</a>`:''}${k.email?`<a href="mailto:${esc(k.email)}">✉ ${esc(k.email)}</a>`:''}</div>`:''}
+    <div class="mut">${[{K:'Kunde',L:'Lieferant',KL:'Kunde + Lieferant'}[k.typ],k.kundenart==='privat'?'Privat (B2C)':'Unternehmen (B2B)',k.uid?'UID '+esc(k.uid):''].filter(Boolean).join(' · ')}</div>
+    ${kond.length?`<div class="mut">${kond.join(' · ')}</div>`:''}
+    ${op?`<div>Offene Posten: <b>${fmt(Math.abs(op))} €</b> <span class="mut">${op>0?'Forderung':'Verbindlichkeit'}</span></div>`:''}
+    ${k.notiz?`<div class="vkn">${esc(k.notiz)}</div>`:''}
+    ${kontaktFehlt(k).length?`<div class="hint" style="margin:8px 0 0">Pflichtangaben fehlen: ${kontaktFehlt(k).join(', ')} (für Rechnungen nötig).</div>`:''}</div>`}
+const kontaktBelegeK=docs=>`<div class="card kkl" style="padding:0"><h2>Belege <span class="mut" style="font-weight:400">(${docs.length})</span></h2>${docs.map(b=>karte({t:`${BICON[b.typ]||''} ${T[b.typ].bez} ${esc(bNr(b))}`,s:statusTag(b),u:esc(b.betreff||''),z:dAT(b.datum),
+  b:(T[b.typ].re&&Math.abs(offen(b))>0.005?`<span class="mut" style="font-weight:400">offen ${fmt(offen(b))} ·</span> `:'')+fmt(sgn(b)*summen(b).zahlbar)+' €',a:`onclick="nav('beleg/${b.id}')"`})).join('')||'<p class="mut" style="margin:0;padding:0 12px 10px">Keine Belege.</p>'}</div>`;
+MENUE.kontakt=el=>[{l:'Bearbeiten …',ic:'✎',act:'lpop',d:{lp:'kontakt',id:el.dataset.id}},{l:'Löschen',ic:'🗑',act:'kdel',d:{id:el.dataset.id},gefahr:1}];
+LIVE.kontakt=el=>{const k=kontakt(el.dataset.id);if(k)livePop(`${esc(k.nr)} ${esc(k.name||'Kontakt')} bearbeiten`,()=>kontaktFelder(k),{verwerfen:k,breit:true})};
 
 /* ---------- Artikel ---------- */
 function artikelListe(){const q=UI.aQ.toLowerCase(),alle=lsGet('erp-aInaktiv')==='1',gr=UI.aGr,grSet=gr&&gr!=='__ohne'?grUnter(gr):null;return DB.artikel.filter(a=>(alle||a.aktiv!==false)&&(!gr||(gr==='__ohne'?!a.gruppe||!grG(a.gruppe):grSet.has(a.gruppe)))&&(!q||[a.nr,a.bez,a.ean,grBez(a.gruppe),...(a.lieferanten||[]).map(l=>l.artNr)].join(' ').toLowerCase().includes(q))).sort((a,c)=>String(a.nr).localeCompare(String(c.nr)))}
@@ -2131,7 +2156,7 @@ function artikelEdit(id){
   const f=(fl,l,cls='',type='text')=>`<label class="${cls}">${l}<input type="${type}" ${type==='number'?'step="any"':''} data-o="a" data-id="${a.id}" data-f="${fl}" value="${esc(a[fl])}"></label>`;
   const lief=DB.kontakte.filter(k=>k.typ!=='K');
   const bs=bestand(a.id);
-  return`<div class="bar"><h1 style="margin:0">${esc(a.nr)} ${esc(a.bez)}</h1><span class="sp"></span><button class="d" data-act="adel" data-id="${a.id}">Löschen</button></div>
+  return`${kmp()?artikelEditK(a,f,bs):`<div class="bar"><h1 style="margin:0">${esc(a.nr)} ${esc(a.bez)}</h1><span class="sp"></span><button class="d" data-act="adel" data-id="${a.id}">Löschen</button></div>
   <div class="card">
   <div class="row">${f('nr','Artikel-Nr.','w05')}${f('bez','Bezeichnung','w2')}<label class="w2">Artikelgruppe${ketteHTML('gr',a.gruppe,`data-act="bwahl" data-aid="${a.id}"`)}</label><label class="w05">Art<select data-o="a" data-id="${a.id}" data-f="art">${['W','L','F'].map(k=>opt(k,ART[k],a.art)).join('')}</select></label><label class="w05">aktiv<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="aktiv" ${a.aktiv!==false?'checked':''}></label></div>
   <div class="row"><label>Langtext<textarea data-o="a" data-id="${a.id}" data-f="text">${esc(a.text)}</textarea></label></div>
@@ -2140,13 +2165,37 @@ function artikelEdit(id){
     ${f('ek','EK je Basiseinheit','w05','number')}${f('hk','Herstellkosten (0 = EK)','w05','number')}${f('vk','VK je Basiseinheit','w05','number')}${erw('vkVorschlag')?f('vkAufschlag','VK-Aufschlag % auf HK','w05','number')+`<span id="avkv" style="align-self:flex-end;padding-bottom:6px">${vkVorschlagHTML(a)}</span>`:''}
     <label class="w05">USt<select data-o="a" data-id="${a.id}" data-f="steuer">${S().steuer.map(s=>opt(s.code,s.bez,a.steuer)).join('')}</select></label></div>
   <div class="row"><label class="w05">Lagerartikel<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="lager" ${a.lager?'checked':''}></label><label class="w2">Lagerplatz${ketteHTML('lp',a.lagerplatz,`data-act="bwahl" data-aid="${a.id}"`)}</label>${a.lager?f('minBestand','Mindestbestand','w05','number')+`<label class="w05">Bestand<input disabled value="${fmtQ(bs.menge)} ${esc(a.einheit)}"></label><label class="w05">Ø-EK<input disabled value="${fmt(avgEK(a.id))}"></label><label class="w05">Lagerwert<input disabled value="${fmt(bs.wert)}"></label>`:'<span style="flex:4"></span>'}</div>
-  </div>
-  <div class="card"><h2>Lieferanten</h2><table><thead><tr><th>Lieferant</th><th>Art.-Nr. beim Lieferanten</th><th class="n">Listenpreis</th><th class="n">Rabatt %</th><th class="n">Netto-EK</th><th>Stand</th><th></th></tr></thead><tbody>
+  </div>`}
+  ${kmpH()?lieferantenK(a):`<div class="card"><h2>Lieferanten</h2><table><thead><tr><th>Lieferant</th><th>Art.-Nr. beim Lieferanten</th><th class="n">Listenpreis</th><th class="n">Rabatt %</th><th class="n">Netto-EK</th><th>Stand</th><th></th></tr></thead><tbody>
   ${(a.lieferanten||[]).map((l,i)=>{const fi=(fl,w)=>`<td style="width:${w}px"><input type="number" step="any" data-o="al" data-id="${a.id}" data-i="${i}" data-f="${fl}" value="${l[fl]??''}"></td>`;
     return`<tr><td><select data-o="al" data-id="${a.id}" data-i="${i}" data-f="kontaktId">${opt('','–',l.kontaktId)}${lief.map(k=>opt(k.id,k.name,l.kontaktId)).join('')}</select></td><td><input data-o="al" data-id="${a.id}" data-i="${i}" data-f="artNr" value="${esc(l.artNr)}"></td>${fi('lp',100)}${fi('rabatt',80)}${fi('ek',100)}<td class="mut">${l.stand?dAT(l.stand):''}</td><td><button class="s d" data-act="aldel" data-id="${a.id}" data-i="${i}">✕</button></td></tr>`}).join('')}
-  </tbody></table><button style="margin-top:8px" data-act="aladd" data-id="${a.id}">+ Lieferant</button></div>
+  </tbody></table><button style="margin-top:8px" data-act="aladd" data-id="${a.id}">+ Lieferant</button></div>`}
   ${(a.unterlagen||[]).length?`<div class="card"><h2>Unterlagen (Angebote)</h2>${a.unterlagen.map((u,i)=>`<div class="att"><a href="javascript:void 0" data-act="aopen" data-id="${a.id}" data-i="${i}">📄 ${esc(u.name)}</a><span class="mut">${esc(u.herkunft||'')}</span></div>`).join('')}</div>`:''}`;
 }
+
+/* Artikel in kompakt (P30): Abschnitte als Akkordeon (Stammdaten offen, Preise, Lager mit Bestand/Ø-EK/Lagerwert als Text), Löschen im ⋯;
+   Lieferanten am Handy als Karten, Antippen öffnet das Pop-up „Lieferant“ (Setter 'al') */
+function artikelEditK(a,f,bs){const id=a.id,sel=(fl,o)=>`<select data-o="a" data-id="${id}" data-f="${fl}">${o}</select>`,vkv=erw('vkVorschlag');
+  const st=`<div class="row">${f('nr','Artikel-Nr.','w05')}${f('bez','Bezeichnung','w2')}<label class="w05">Art${sel('art',['W','L','F'].map(k=>opt(k,ART[k],a.art)).join(''))}</label><label class="chk w05"><input type="checkbox" data-o="a" data-id="${id}" data-f="aktiv" ${a.aktiv!==false?'checked':''}> aktiv</label></div>
+    <div class="row"><label class="w2">Artikelgruppe${ketteHTML('gr',a.gruppe,`data-act="bwahl" data-aid="${id}"`)}</label></div>
+    <div class="row"><label>Langtext<textarea data-o="a" data-id="${id}" data-f="text">${esc(a.text)}</textarea></label></div>
+    <div class="row"><label class="w05">Basiseinheit${sel('einheit',S().einheiten.map(e=>opt(e,e,a.einheit)).join(''))}</label><label class="w2">Weitere Einheiten (z. B. Krt=10; Rolle=100)<input data-o="a" data-id="${id}" data-f="einheitenStr" value="${esc((a.einheiten||[]).map(x=>x.e+'='+x.f).join('; '))}"></label></div>`;
+  const pr=`<div class="row">${f('ek','EK je Basiseinheit','w05','number')}${f('hk','Herstellkosten (0 = EK)','w05','number')}${f('vk','VK je Basiseinheit','w05','number')}${vkv?f('vkAufschlag','VK-Aufschlag % auf HK','w05','number'):''}<label class="w05">USt${sel('steuer',S().steuer.map(s=>opt(s.code,s.bez,a.steuer)).join(''))}</label></div>${vkv?`<span id="avkv">${vkVorschlagHTML(a)}</span>`:''}`;
+  const lg=`<div class="row"><label class="chk w05"><input type="checkbox" data-o="a" data-id="${id}" data-f="lager" ${a.lager?'checked':''}> Lagerartikel</label><label class="w2">Lagerplatz${ketteHTML('lp',a.lagerplatz,`data-act="bwahl" data-aid="${id}"`)}</label>${a.lager?f('minBestand','Mindestbestand','w05','number'):''}</div>
+    ${a.lager?`<p style="margin:4px 0 0">Bestand <b>${fmtQ(bs.menge)} ${esc(a.einheit)}</b> · Ø-EK ${fmt(avgEK(id))} € · Lagerwert ${fmt(bs.wert)} €</p>`:''}`;
+  return`<div class="bar"><h1 style="margin:0">${esc(a.nr)} ${esc(a.bez)}</h1>${a.aktiv===false?tag('deaktiviert'):''}<span class="sp"></span><button class="mehr" data-act="menue" data-m="artikeld" data-id="${id}" title="Löschen …">⋯</button></div>
+  ${akk('art-st','Stammdaten',st,{offen:true,zusatz:esc([ART[a.art],grG(a.gruppe)?.bez].filter(Boolean).join(' · '))})}
+  ${akk('art-pr','Preise',pr,{zusatz:`EK ${fmt(a.ek)} · VK ${fmt(a.vk)}${+a.hk?' · HK '+fmt(a.hk):''}`})}
+  ${akk('art-lg','Lager',lg,{zusatz:a.lager?`Bestand ${fmtQ(bs.menge)} ${esc(a.einheit)}${LP.pfad(a.lagerplatz)?' · '+esc(LP.pfad(a.lagerplatz)):''}`:'kein Lagerartikel'})}`}
+const lieferantenK=a=>`<div class="card kkl" style="padding:0"><h2>Lieferanten</h2>${(a.lieferanten||[]).map((l,i)=>karte({t:esc(kName(l.kontaktId)),u:l.artNr?'Art.-Nr. '+esc(l.artNr):'',z:[+l.lp?'Liste '+fmt(l.lp):'',+l.rabatt?'− '+fmtQ(l.rabatt)+' %':'',l.stand?'Stand '+dAT(l.stand):''].filter(Boolean).join(' · '),b:+l.ek?fmt(l.ek)+' €':'',
+  a:`onclick="ACT.lpop(this)" data-lp="al" data-id="${a.id}" data-i="${i}"`})).join('')}<div style="padding:8px 12px"><button data-act="lpop" data-lp="alneu" data-id="${a.id}">+ Lieferant</button></div></div>`;
+MENUE.artikeld=el=>[{l:'Löschen …',ic:'🗑',act:'adel',d:{id:el.dataset.id},gefahr:1}];
+LIVE.al=el=>{const a=artikel(el.dataset.id),i=+el.dataset.i;if(!a?.lieferanten?.[i])return;const lief=DB.kontakte.filter(k=>k.typ!=='K');
+  livePop('Lieferant',()=>{const l=a.lieferanten[i];if(!l)return'';const at=fl=>`data-o="al" data-id="${a.id}" data-i="${i}" data-f="${fl}"`,fi=(fl,lb)=>`<label class="w05">${lb}<input type="number" step="any" inputmode="decimal" ${at(fl)} value="${l[fl]??''}"></label>`;
+    return`<div class="row"><label class="w2">Lieferant<select ${at('kontaktId')}>${opt('','–',l.kontaktId)}${lief.map(k=>opt(k.id,k.name,l.kontaktId)).join('')}</select></label><label>Art.-Nr. beim Lieferanten<input ${at('artNr')} value="${esc(l.artNr)}"></label></div>
+    <div class="row">${fi('lp','Listenpreis')}${fi('rabatt','Rabatt %')}${fi('ek','Netto-EK')}</div>${l.stand?`<p class="mut" style="margin:0">Stand ${dAT(l.stand)}</p>`:''}
+    <div class="bar" style="margin:10px 0 0"><button class="d" data-id="${a.id}" data-i="${i}" onclick="ACT.aldel(this);this.closest('.modal').querySelector('#m-ok').click()">Lieferant entfernen</button></div>`},{verwerfen:a.lieferanten[i]})};
+LIVE.alneu=el=>{const a=artikel(el.dataset.id);if(!a)return;(a.lieferanten=a.lieferanten||[]).push({kontaktId:'',artNr:''});persist();render();LIVE.al({dataset:{id:a.id,i:a.lieferanten.length-1}})};
 
 /* ---------- Lager ---------- */
 V.lager=()=>{

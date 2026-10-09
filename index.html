@@ -162,6 +162,7 @@ label>input,label>select,label>textarea{margin-top:2px;color:var(--ink);font-siz
 /* Kompakt (P30) Stammdaten: Visitenkarte des Kontakts (.vk), Kennzeilen; Knopfzeile unter dem Titel */
 .vk>div{margin-top:3px}.vk .vkl{display:flex;flex-wrap:wrap;gap:4px 16px}.vk .vkl a{color:var(--acc);text-decoration:none;padding:6px 0;display:inline-block}.vk .vkn{white-space:pre-wrap;color:var(--ink);background:#fafbfc;border-radius:6px;padding:6px 8px;margin-top:6px}
 .kkl>.kkf{border-top:1px solid var(--line)}.kkl>.kkf>button{margin:0 10px 0 0}.tag.warn{background:#fdf1dc;color:var(--warn)}.tag.err{background:#fde8e6;color:var(--err)}.tag.acc{background:var(--acc2);color:var(--acc)}
+.pfehlt,.pfehlt .bwfeld{border-color:var(--err)!important;box-shadow:0 0 0 2px rgba(180,35,24,.22)!important}
 .mut{color:var(--mut)}.err{color:var(--err)}.okc{color:var(--ok)}.warnc{color:var(--warn)}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .bar select{width:auto}
@@ -1780,6 +1781,10 @@ function dialog({titel,html,ok='OK',check='',gefahr=false}){
 /* Formular im Popup: felder=[{k,l,wert,typ,opts,cls,pflicht,dis,ph,max,info,h}] → Objekt mit Werten oder null (dis:true = gesperrt, Wert bleibt;
    ph = Platzhalter, max = höchste Zeichenzahl mit Zähler, info = Beschreibung unter dem Feld, h = Höhe Textfeld, typ 'hinweis' = nur Text l);
    extra = Beschriftung eines dritten Knopfs (Ergebnis 'extra'), scroll = hohes Formular mit Bildlauf */
+// Pflichtfelder: deutliche Warnung (auch am Handy sichtbar), fehlende Felder rot markieren, zugeklappte Abschnitte öffnen, erstes Feld anspringen
+function pflichtWarnung(d,namen,els=[]){const e=d.querySelector('#m-err'),t=namen.length>1?'Bitte Pflichtfelder ausfüllen:\n• '+namen.join('\n• '):`Bitte „${namen[0]}“ ausfüllen.`;if(e)e.textContent=namen.length>1?'Bitte ausfüllen: '+namen.join(', '):t;
+  for(const x of els){if(!x)continue;x.classList.add('pfehlt');x.closest('details')?.setAttribute('open','');x.addEventListener('input',()=>x.classList.remove('pfehlt'),{once:true})}
+  alert(t);const f=els.find(Boolean);if(f){f.scrollIntoView({block:'center'});try{f.focus({preventScroll:true})}catch(_){}}else e?.scrollIntoView({block:'nearest'})}
 function formDialog({titel,felder,ok='Anlegen',breit=false,extra='',scroll=false}){
   return new Promise(res=>{
     const d=document.createElement('div');d.className='modal';
@@ -1798,7 +1803,7 @@ function formDialog({titel,felder,ok='Anlegen',breit=false,extra='',scroll=false
       if(v!==null){box.dataset.wert=v;box.innerHTML=ketteHTML(f.baum,v,'data-fk="1"')}});
     d.addEventListener('input',e=>{const f=felder.find(x=>x.max&&x.k===e.target.dataset.k),c=f&&d.querySelector(`[data-cnt="${f.k}"]`);if(c)c.textContent=`(${e.target.value.length}/${f.max})`});
     const lesen=()=>{const o={};for(const f of felder){if(f.typ==='hinweis'||f.typ==='abschnitt')continue;const e=d.querySelector(`[data-k="${f.k}"]`);o[f.k]=f.typ==='kette'?e.dataset.wert:f.typ==='checkbox'?e.checked:f.typ==='number'?num(e.value):e.value.trim()}return o};
-    const okf=()=>{const o=lesen(),fehlt=felder.find(f=>f.pflicht&&!o[f.k]);if(fehlt){d.querySelector('#m-err').textContent=`Bitte „${fehlt.l}“ ausfüllen.`;return}fin(o)};
+    const okf=()=>{const o=lesen(),F=felder.filter(f=>f.pflicht&&!o[f.k]);if(F.length){pflichtWarnung(d,F.map(f=>f.l),F.map(f=>d.querySelector(`[data-k="${f.k}"]`)));return}fin(o)};
     const kd=e=>{if(e.key==='Escape')fin(null);if(e.key==='Enter'&&e.target.tagName==='INPUT')okf()};document.addEventListener('keydown',kd);
     d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#m-ok').onclick=okf;if(extra)d.querySelector('#m-x').onclick=()=>fin('extra');
   });
@@ -1882,10 +1887,10 @@ function posArtikelPopup(b,i){
     const fin=v=>{d.remove();document.removeEventListener('keydown',kd,true);res(v)};
     const kd=e=>{if(e.key==='Escape'&&!document.querySelector('#bw-l')){e.stopPropagation();fin(false)}};document.addEventListener('keydown',kd,true);
     d.querySelector('#m-no').onclick=()=>fin(false);
-    d.querySelector('#m-ok').onclick=()=>{const bez=q('bez').value.trim();if(!bez){d.querySelector('#m-err').textContent='Bitte Bezeichnung ausfüllen.';return}
+    d.querySelector('#m-ok').onclick=()=>{const bez=q('bez').value.trim();if(!bez){pflichtWarnung(d,['Bezeichnung'],[q('bez')]);return}
       const stamm=d.querySelector('#pa-st').checked,vkSt=d.querySelector('#pa-vk').checked,ein={lid:q('lid').value,artNr:q('artNr').value.trim(),lp:n('lp'),rabatt:n('rab'),ek:r2(n('ek'))};
       let A=a;
-      if(stamm&&!A){const nr=q('nr').value.trim();if(!nr){d.querySelector('#m-err').textContent='Bitte Artikel-Nr. angeben.';return}
+      if(stamm&&!A){const nr=q('nr').value.trim();if(!nr){pflichtWarnung(d,['Artikel-Nr.'],[q('nr')]);return}
         if(DB.artikel.some(x=>x.nr===nr)){d.querySelector('#m-err').textContent='Artikel-Nr. '+nr+' existiert bereits.';return}
         if(nr===nrV)s.anr++;A={id:uid(),nr,bez,gruppe:q('gruppe').dataset.wert||'',lagerplatz:'',text:'',art:q('art').value,einheit:q('einheit').value,einheiten:[],ek:0,vk:0,steuer:p.steuer||s.stdSteuer,lager:false,minBestand:0,lieferanten:[],aktiv:true};
         DB.artikel.push(A);log('Artikel angelegt',`${nr} ${bez} (aus ${bNr(b)})`)}

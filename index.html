@@ -1223,7 +1223,7 @@ function render(){
   $('#main').innerHTML=f(arg);
   document.body.classList.toggle('zlaus',!erw('zuletzt'));if(arg&&ZL_V.includes(view))zuletztMerk(view+'/'+arg); // Zuletzt geöffnet (P19 a)
   requestAnimationFrame(vorschauSeiten);
-  document.querySelectorAll('.modal.live').forEach(m=>{try{m._zeich?.()}catch(e){}}); // offene Bearbeiten-Pop-ups (P30) zeigen den neuen Stand
+  document.querySelectorAll('.modal').forEach(m=>{try{if(m._gilt&&!m._gilt()){(m._weg||(()=>m.remove()))();return}m._zeich?.()}catch(e){}}); // offene Bearbeiten-Pop-ups (P30) zeigen den neuen Stand; Pop-ups eines verlassenen oder ersetzten Belegs (Navigation, Abgleich, Verwerfen) schließen
 }
 window.addEventListener('hashchange',async()=>{
   if(!DB)return;
@@ -1307,7 +1307,7 @@ function livePop(titel,inhalt,{verwerfen=null,breit=false}={}){
   const zeich=()=>{if(!d.isConnected)return;const a=document.activeElement,k=a&&d.contains(a)?['data-o','data-f','data-i','data-id','data-t','data-h','data-p','data-ed'].map(x=>a.hasAttribute(x)?`[${x}="${CSS.escape(a.getAttribute(x))}"]`:'').join(''):'';
     d.querySelector('.lpi').innerHTML=inhalt();if(k)d.querySelector(k)?.focus()};
   d.addEventListener('change',()=>setTimeout(zeich,0)); // nach dem globalen change-Handler (der schreibt den Wert)
-  d._zeich=zeich; // render() zeichnet offene Pop-ups mit (z. B. nach neuem Kunden, Preisverlauf, Artikel-Pop-up)
+  d._zeich=zeich;d._weg=()=>{d.remove();document.removeEventListener('keydown',kd,true)}; // render() zeichnet offene Pop-ups mit (z. B. nach neuem Kunden, Preisverlauf, Artikel-Pop-up) bzw. schließt sie (_gilt)
   const fin=()=>{d.remove();document.removeEventListener('keydown',kd,true);render()},zu=()=>{document.activeElement?.blur?.();setTimeout(fin,0)};
   const kd=e=>{const M=document.querySelectorAll('.modal');if(e.key==='Escape'&&M[M.length-1]===d&&!document.querySelector('.pop')){e.stopPropagation();zu()}};document.addEventListener('keydown',kd,true); // offenes Menü bzw. Preisverlauf schließt Esc zuerst
   d.querySelector('#m-ok').onclick=zu;
@@ -1549,7 +1549,8 @@ function kopfK(b){const V_=T[b.typ].b==='V',ohneP=OHNE_PREIS.includes(b.typ),z=[
   const tx=[b.kopf,b.fuss].map(rtText).filter(Boolean).join(' · ');
   return`${kmpBH()&&(b.kontaktId||b.fest)?kopfZus(b):`<div class="card">${kopfFelder(b,'kopf')}</div>`}
   <div class="kakk">${ohneP?'':akk('b-zahl','Zahlungsbedingungen',kopfFelder(b,'zahl'),{zusatz:esc(z)})}${V_||b.typ==='BE'?akk('b-texte','Kopf- und Fußtext',kopfFelder(b,'texte'),{zusatz:esc(tx.length>50?tx.slice(0,48)+' …':tx)||'leer'}):''}</div>`}
-function kopfPop(b){if(!b||b.fest)return;livePop(`Kopfdaten – ${esc(T[b.typ].bez)} ${esc(bNr(b))}`,()=>kopfFelder(b,'kopf'),{verwerfen:b,breit:true})}
+const anBeleg=(d,b)=>{if(d)d._gilt=()=>curBeleg()===b;return d}; // Pop-up gehört zu diesem Beleg: schließt, wenn ein anderer Beleg angezeigt bzw. der Datenstand ersetzt wird (Felder schreiben über curBeleg())
+function kopfPop(b){if(!b||b.fest)return;anBeleg(livePop(`Kopfdaten – ${esc(T[b.typ].bez)} ${esc(bNr(b))}`,()=>kopfFelder(b,'kopf'),{verwerfen:b,breit:true}),b)}
 /* ---------- Beleg-Editor ---------- */
 V.beleg=id=>{
   const b=beleg(id);if(!b)return'<p>Beleg nicht gefunden.</p>';
@@ -1687,9 +1688,9 @@ MENUE.beleg=()=>{const b=curBeleg();if(!b)return[];const t=T[b.typ],H=HANDY.matc
     b.fest&&!b.storno&&REOPEN.includes(b.typ)&&b.status!=='ersetzt'&&{l:'Wieder öffnen (Inhalt bearbeiten)',ic:'🔓',act:'reopen',titel:'Die Nummer bleibt erhalten'},
     !b.storno&&{l:b.fest?'Stornieren …':'Löschen …',ic:'🗑',act:'storno',gefahr:1}].filter(Boolean);
   return L.filter((x,i)=>!x.trenn||(i>0&&!L[i-1].trenn&&L.slice(i+1).some(y=>!y.trenn&&!y.gefahr)))};
-LIVE.spalten=()=>{const b=curBeleg();if(!b||b.fest)return;livePop('Spalten &amp; Druck',()=>{const ohneP=OHNE_PREIS.includes(b.typ),dk=dKnopf(b,'Druckoptionen …');
+LIVE.spalten=()=>{const b=curBeleg();if(!b||b.fest)return;anBeleg(livePop('Spalten &amp; Druck',()=>{const ohneP=OHNE_PREIS.includes(b.typ),dk=dKnopf(b,'Druckoptionen …');
   return`${ohneP?'':`<label class="chk"><input type="checkbox" data-h="optRabatt" ${showRab(b)?'checked':''}> Spalte Rabatt</label><label class="chk"><input type="checkbox" data-h="optLS" ${b.optLS?'checked':''}> Lohn / Sonstiges (EP = Lohn + Sonstiges)</label>`}
-  <label class="chk" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''}> Langtext drucken</label>${dk?`<div class="bar" style="margin:14px 0 0">${dk}</div>`:''}`})};
+  <label class="chk" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''}> Langtext drucken</label>${dk?`<div class="bar" style="margin:14px 0 0">${dk}</div>`:''}`}),b)};
 /* ---------- Bearbeiten direkt in der Vorschau ---------- */
 function deNum(s){s=String(s).replace(/[\s€%  ]/g,'');if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');const n=parseFloat(s);return isNaN(n)?0:n}
 function edUebernehmen(el,next){
@@ -1950,8 +1951,8 @@ function zahlPop(b){if(!b||!zahlOffen(b))return;const o=offen(b),si=skontoInfo(b
     <div class="row"><label>Notiz<input id="z-not" placeholder="z. B. Teilzahlung"></label></div>
     ${si.sk&&o>0.005?`<label class="chk"><input type="checkbox" id="z-skan" onchange="zSkonto()" ${si.ok?'checked':'disabled'}> Skonto abziehen</label><p id="z-skinfo" class="mut" style="margin:4px 0 0">${si.ok?`${fmtQ(si.sk)} % Skonto bis ${dAT(si.bis)}: <b>${fmt(si.betrag)} €</b>`:`<span class="err">Skontofrist (${fmtQ(si.sk)} % bis ${dAT(si.bis)}) abgelaufen</span>`}</p>`:''}
     <div class="bar" style="justify-content:flex-end;margin:14px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Zahlung buchen</button></div></div>`;
-  document.body.appendChild(d);const fin=()=>{d.remove();document.removeEventListener('keydown',kd)},kd=e=>{if(e.key==='Escape')fin()};document.addEventListener('keydown',kd);
-  d.querySelector('#m-no').onclick=fin;d.querySelector('#m-ok').onclick=()=>{const n=(b.zahlungen||[]).length;ACT.zadd();if((b.zahlungen||[]).length>n)fin()}; // schließt, sobald gebucht (Periodensperre, Skontofrist wie bisher in ACT.zadd)
+  document.body.appendChild(d);const fin=()=>{d.remove();document.removeEventListener('keydown',kd)},kd=e=>{if(e.key==='Escape')fin()};document.addEventListener('keydown',kd);d._gilt=()=>curBeleg()===b;d._weg=fin;
+  d.querySelector('#m-no').onclick=fin;d.querySelector('#m-ok').onclick=()=>{if(curBeleg()!==b){fin();return}const n=(b.zahlungen||[]).length;ACT.zadd();if((b.zahlungen||[]).length>n)fin()}; // schließt, sobald gebucht (Periodensperre, Skontofrist wie bisher in ACT.zadd)
   setTimeout(()=>d.querySelector('#z-bet')?.focus(),0)}
 function kopfLese(b){const t=T[b.typ],V_=t.b==='V',ohneP=OHNE_PREIS.includes(b.typ),k=kontakt(b.kontaktId),a=b.adresse?.name?b.adresse:k||{},z=(l,v)=>v?`<dt>${l}</dt><dd>${v}</dd>`:'';
   const adr=[a.strasse,[a.plz,a.ort].filter(Boolean).join(' ')].filter(Boolean).map(esc).join(', '),tx=[b.kopf,b.fuss].map(rtText).filter(Boolean).join(' · ');
@@ -1971,7 +1972,8 @@ function posLeseK(b){const ohneP=OHNE_PREIS.includes(b.typ),gi=gruppenInfo(b),pn
   return`<div class="card" style="padding:8px"><table class="pos pl"><thead><tr><th>Pos</th><th>Bezeichnung</th><th class="n">Menge</th><th>Einh.</th>${ohneP?'':`${ls?'<th class="n">Lohn</th><th class="n">Sonst.</th>':''}<th class="n">EP</th>${rab?'<th class="n">Rab.</th>':''}<th class="n">GP netto</th><th>USt</th>`}</tr></thead>
     <tbody>${rows||`<tr><td colspan="${n+1}" class="mut">Keine Positionen.</td></tr>`}</tbody></table></div>`}
 function updateCalc(b){
-  b.pos.forEach((p,i)=>{const e=$('#gp'+i);if(e)e.textContent=fmt(posGP(p))});
+  const gi=gruppenInfo(b);b.pos.forEach((p,i)=>{const e=$('#gp'+i),g=gi.grp[p.id];if(e){const s=e.querySelector('span'),t=fmt(posGP(p));(s||e).textContent=g&&+g.pauschal>0?`(${t})`:t} // Pauschalgruppe: GP in Klammern wie beim Zeichnen
+    const x=p.art==='G'&&$('#gs'+i);if(x)(x.querySelector('b')||x).textContent=fmt(gruppePreis(p,gi))}); // Gruppensumme läuft mit
   const s=$('#sumbox');if(s)s.innerHTML=sumBox(b);const k=$('#kalkbox');if(k)k.innerHTML=kalkBox(b);
   const st=$('.bstat');if(st)st.outerHTML=belegStatus(b); // Statuszeile (P19 c): Datum, Netto
   const a=$('#aktsum');if(a)a.textContent=fmt(summen(b).netto)+' €'; // Aktionsleiste (kompakt, P30)
@@ -1993,7 +1995,7 @@ function aktLeiste(b){if(!kmpBH())return'';const n=b.pos.filter(p=>!isInfo(p)).l
   return`<div class="aktl">${OHNE_PREIS.includes(b.typ)?`<span class="aks mut">${n} Position${n===1?'':'en'}</span>`:`<button class="aks" data-act="sumpop" title="Summen und Kalkulation"><span class="mut">netto</span> <b id="aktsum">${fmt(summen(b).netto)} €</b> <span class="mut">Σ</span></button>`}<span class="sp"></span>
     ${!b.fest?'<button class="p" data-act="menue" data-m="pneu">+ Position ▾</button>':zahlOffen(b)?'<button class="p" data-act="zpop">💶 Zahlung</button>':'<button class="p" data-act="druck">PDF</button>'}</div>`}
 function sumPop(b){if(!b||OHNE_PREIS.includes(b.typ))return;const V_=T[b.typ].b==='V';
-  livePop('Summen',()=>`${sumBox(b)}${V_&&b.typ!=='GS'?`<h3 style="font-size:14px;margin:14px 0 6px">Kalkulation DB II</h3>${kalkBox(b)}`:''}`)}
+  anBeleg(livePop('Summen',()=>`${sumBox(b)}${V_&&b.typ!=='GS'?`<h3 style="font-size:14px;margin:14px 0 6px">Kalkulation DB II</h3>${kalkBox(b)}`:''}`),b)}
 
 /* ---------- Preisverlauf-Popup ---------- */
 function closePop(){document.querySelectorAll('.pop').forEach(e=>e.remove());HIST=null}
@@ -2053,7 +2055,7 @@ function posFelder(b,i){const p=b.pos[i],V_=T[b.typ].b==='V',ohneP=OHNE_PREIS.in
   <div class="row"><label class="w05">USt<select ${a('steuer')}>${stO(p.steuer)}</select></label>${zf('ek','EK je Einheit',p.ek,' title="Einstandspreis je Einheit"')}</div>`}
   <div class="row">${kz}${ohneP?'':`<label class="w05">GP netto<b class="pgsum">${pa?`(${fmt(posGP(p))}) im Gruppenpreis`:fmt(posGP(p))}</b></label>`}</div>${kn}`}
 function posPopup(b,i){const p=b.pos[i];if(!p||b.fest)return null;let d=null;
-  d=livePop(p.art==='G'?'Gruppe bearbeiten':p.art==='T'?'Textposition bearbeiten':'Position bearbeiten',()=>{const j=b.pos.indexOf(p);if(j<0){setTimeout(()=>d?.querySelector('#m-ok')?.click(),0);return'<p class="mut">Position gelöscht.</p>'}return posFelder(b,j)},{verwerfen:p,breit:true});
+  d=livePop(p.art==='G'?'Gruppe bearbeiten':p.art==='T'?'Textposition bearbeiten':'Position bearbeiten',()=>{const j=b.pos.indexOf(p);if(j<0){setTimeout(()=>d?.querySelector('#m-ok')?.click(),0);return'<p class="mut">Position gelöscht.</p>'}return posFelder(b,j)},{verwerfen:p,breit:true});anBeleg(d,b);
   const fi=e=>{if(!d.isConnected){document.removeEventListener('focusin',fi);return}const t=e.target;if(t.closest?.('#main')&&t.dataset?.p!=null){const x=d.querySelector(`[data-p="${t.dataset.p}"][data-f="${t.dataset.f}"]`);if(x){x.focus();x.select?.()}}};
   document.addEventListener('focusin',fi); // renderFocus() nach der Artikelwahl: Fokus ins Pop-up statt in die Zeile dahinter
   return d}

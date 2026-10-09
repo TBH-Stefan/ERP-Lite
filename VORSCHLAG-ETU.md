@@ -161,7 +161,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
     - Das erste Original bleibt unverändert.
 - **Schalter:**
   - `erw.strgP` = true und `erw.snapshot` = true. Beide beheben einen Fehler bzw. stellen die Nachdruck-Treue her.
-  - `erw.duplikat` = false, Empfehlung: ein.
+  - `erw.duplikat` = true (vom Anwender am 09.10.2026 so entschieden).
   - Alle anderen Punkte sind reine Fehlerbehebungen ohne Schalter und lassen sich per `git revert` zurücknehmen; f)–j) einzeln, d) und e) erst nach P1 (benachbarte Zeilen), c) erst nach j) (`lnrStamm()`), siehe Rücknahme-Reihenfolge in Abschnitt 4.
 - **Datenmodell:** Beleg `fix` (wird beim Festschreiben gesetzt) und `ausgaben` (Zähler); Position `lnr` (gibt es schon). Alle Felder sind optional.
 - **Nutzen** hoch · **Aufwand** M (die Einzelkorrekturen jeweils S oder kleiner) · **Abhängig von:** – · **Recht:**

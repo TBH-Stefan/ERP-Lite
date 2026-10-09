@@ -134,6 +134,12 @@ input,select,textarea{font:inherit;padding:5px 7px;border:1px solid #cdd2da;bord
 input[type=checkbox]{width:auto}
 textarea{min-height:52px;resize:vertical}
 input:disabled,select:disabled,textarea:disabled{background:#f3f4f6;color:#374151;border-color:#e5e7eb}
+/* Kompakt (P30) Beleg: Aktionsleiste am Handy (.aktl: Netto → Summen-Pop-up, Hauptaktion; über der Leiste „Ungespeichert“), rechte Spalte ab 1100 px stehend (.bcol) */
+.aktl{display:none}
+@media(max-width:760px){body.kompakt .aktl{display:flex;align-items:center;gap:8px;position:fixed;left:0;right:0;bottom:0;z-index:50;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.1)}
+  body.kompakt .aktl .aks{border:0;background:none;padding:6px 4px;font-size:15px;text-align:left;min-height:44px;white-space:nowrap}body.kompakt main:has(.aktl){padding-bottom:84px}
+  body.kompakt:has(#dirtybar) .aktl{bottom:96px}body.kompakt:has(#dirtybar) main:has(.aktl){padding-bottom:190px}body.kompakt:has(.aktl) .undo{bottom:84px!important}body.kompakt:has(.aktl):has(#dirtybar) .undo{bottom:180px!important}}
+@media(min-width:1100px){body.kompakt .cols.bcol>:last-child{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}main:has(.bstat.fix) .cols.bcol>:last-child{top:48px;max-height:calc(100vh - 58px)}}
 button,.btn{font:inherit;padding:6px 12px;border:1px solid #cdd2da;background:#fff;border-radius:5px;cursor:pointer;color:inherit;text-decoration:none;display:inline-block;white-space:nowrap}
 button:hover{border-color:#9aa3b2}
 button.p{background:var(--acc);border-color:var(--acc);color:#fff}
@@ -1584,7 +1590,7 @@ V.beleg=id=>{
   const kette=DB.belege.filter(x=>b.auftragId?x.auftragId===b.auftragId:(x.id===b.id||x.vorgaengerId===b.id||x.id===b.vorgaengerId)).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
   const k=kontakt(b.kontaktId),scan=['WE','ER','BE'].includes(b.typ)?scanBox(b):'';
   const ans=ansicht();
-  const kopfbar=kmpB()?belegKopfbarK(b,ans)+zahlKopfK(b):`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
+  const kopfbar=kmpB()?belegKopfbarK(b,ans)+zahlKopfK(b)+aktLeiste(b):`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
     ${b.fest?'':`<button class="p" data-act="fest">Festschreiben …</button>`}
     <button data-act="druck">PDF / Drucken</button>
@@ -1596,8 +1602,8 @@ V.beleg=id=>{
     <button data-act="dup">Duplizieren</button>
     ${b.storno?'':`<button class="d" data-act="storno">${b.fest?'Stornieren':'Löschen'}</button>`}
   </div>${belegStatus(b)}${b.status==='ersetzt'?`<div class="hint">Dieses Angebot wurde durch eine Revision ersetzt.</div>`:''}`;
-  const dk=b.fest?'':dKnopf(b,'Druckformat …');
-  const blatt=`${dk?`<div class="bar" style="margin:0 0 6px;justify-content:flex-end">${dk}</div>`:''}<div class="blatt" id="vorschau">${docHTML(b,true)}</div>${b.fest?'':'<p class="mut" style="font-size:12px;margin:-6px 0 14px">Gestrichelte Felder direkt im Blatt bearbeiten – Änderungen werden in die Eingabefelder übernommen.</p>'}`;
+  const dk=b.fest||kmpBH()?'':dKnopf(b,'Druckformat …');
+  const blatt=`${dk?`<div class="bar" style="margin:0 0 6px;justify-content:flex-end">${dk}</div>`:''}<div class="blatt" id="vorschau">${docHTML(b,vEdit())}</div>${b.fest||!vEdit()?'':'<p class="mut" style="font-size:12px;margin:-6px 0 14px">Gestrichelte Felder direkt im Blatt bearbeiten – Änderungen werden in die Eingabefelder übernommen.</p>'}`;
   const formHTML=`
   ${kmpB()?(b.fest?kopfLese(b):kopfK(b)):kopfFelder(b)}
   ${kmpB()&&b.fest&&!HANDY.matches?posLeseK(b):posK(b)?posKartenK(b):`<div class="card" style="padding:8px;overflow-x:auto">
@@ -1610,19 +1616,17 @@ V.beleg=id=>{
     ${b.fest?'':`<div class="bar" style="margin:8px 0 0"><button data-act="padd" data-art="G">+ Gruppe</button><button data-act="padd" data-art="W">+ Ware</button><button data-act="padd" data-art="L">+ Leistung</button><button data-act="padd" data-art="F">+ Fremdleistung</button><button data-act="padd" data-art="T">+ Text</button>${V_?`<button data-act="pzeit">+ Stunden aus Zeiterfassung</button>`:''}</div>`}
   </div>`}`;
   const extra=`${t.re&&b.fest&&!b.storno&&!(b.typ==='GS'&&beleg(b.vorgaengerId))&&!kmpB()?zahlBox(b):''}
-  <div class="card"><h2>Anhänge${b.typ==='ER'?' (Rechnung als Foto/PDF)':''}</h2>
-    ${(b.anhaenge||[]).map((a,i)=>`<div class="att"><a href="javascript:void 0" data-act="attopen" data-i="${i}">📄 ${esc(a.name)}</a><span class="mut">${a.groesse?Math.round(a.groesse/1024)+' kB':''}</span><span class="sp"></span><button class="s d" data-act="attdel" data-i="${i}">✕</button></div>`).join('')||'<p class="mut" style="margin:0 0 6px">keine</p>'}
-    ${STORE.art==='cache'?'<p class="mut">Test-Modus: Anhänge liegen nur in diesem Browser.</p>':''}<label class="btn" style="margin-top:8px">📷 Foto / Datei hinzufügen<input type="file" id="att" accept="image/*,application/pdf,.xml" multiple hidden></label>
-  </div>`;
-  const side=`${ohneP?'':`<div class="card"><h2>Summen</h2><div id="sumbox">${sumBox(b)}</div></div>`}
-    ${V_&&!ohneP&&b.typ!=='GS'?`<div class="card"><h2>Kalkulation DB II</h2><div id="kalkbox">${kalkBox(b)}</div></div>`:''}
+  ${kmpB()&&ans!=='beides'?'':anhKarte(b)}`;
+  const side=`${ohneP||kmpBH()?'':`<div class="card"><h2>Summen</h2><div id="sumbox">${sumBox(b)}</div></div>`}
+    ${V_&&!ohneP&&b.typ!=='GS'&&!kmpBH()?`<div class="card"><h2>Kalkulation DB II</h2><div id="kalkbox">${kalkBox(b)}</div></div>`:''}
     ${b.typ==='AN'?revHistorie(b):''}
     <div class="card"><h2>Belegkette${b.auftragId&&V_?` · <a href="#/auftrag/${b.auftragId}">Auftrag</a>`:''}</h2><div class="chain">${kette.map(x=>`<a href="#/beleg/${x.id}" class="${x.id===b.id?'cur':''}">${T[x.typ].bez} ${esc(bNr(x))} · ${dAT(x.datum)} ${x.storno?'(storniert)':x.status==='ersetzt'?'(ersetzt)':''}</a>`).join('')}</div></div>
     ${(b.versand||[]).length?`<div class="card"><h2>Versand</h2>${b.versand.map(v=>`<div style="margin-bottom:4px">✉ ${new Date(v.datum).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'})} an ${esc(v.an)}</div>`).join('')}</div>`:''}
     ${k?`<div class="card"><h2>${V_?'Kunde':'Lieferant'}</h2><div>${esc(k.nr)} · <a href="#/kontakt/${k.id}">${esc(k.name)}</a><br>${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.uid?'<br>UID '+esc(k.uid):''}${!V_&&k.kdNrLief?'<br>Unsere Kunden-Nr. '+esc(k.kdNrLief):''}</div></div>`:''}`;
   if(ans==='beides')return`${kopfbar}${scan}<div class="split"><div>${formHTML}${side}${extra}</div><div class="sticky">${blatt}</div></div>`;
-  if(ans==='vorschau')return`${kopfbar}${scan}<div class="cols"><div>${blatt}${extra}</div><div>${side}</div></div>`;
-  return`${kopfbar}${scan}<div class="cols"><div>${formHTML}${extra}</div><div>${side}</div></div>`;
+  const sideK=kmpB()?belegSeiteK(b,side,kette):side,bc=kmpB()?' bcol':''; // kompakt (P30): Beleg-Info am Handy als Akkordeon, Anhänge am Bildschirm rechts (in „Beides“ links wie bisher)
+  if(ans==='vorschau')return`${kopfbar}${scan}<div class="cols${bc}"><div>${blatt}${extra}</div><div>${sideK}</div></div>`;
+  return`${kopfbar}${scan}<div class="cols${bc}"><div>${formHTML}${extra}</div><div>${sideK}</div></div>`;
 };
 /* Statuszeile im Beleg (P19 c, erw.statuszeile): Bereich › Belegart (Klick → Liste), Belegdatum, Kontakt, Netto (#kopfsum), angelegt bzw. festgeschrieben mit Uhrzeit;
    erw.kopfFix: bleibt beim Scrollen oben stehen (dann mit Nummer und Status); aktualisiert über updateCalc() */
@@ -1630,6 +1634,7 @@ const BMZ={AN:'Angebote',AB:'Auftragsbestätigungen',PR:'Proformarechnungen',LS:
 const dtAT=iso=>{const d=iso?new Date(iso):null;return d&&!isNaN(d)?d.toLocaleString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):''};
 function belegStatus(b){
   if(!erw('statuszeile'))return'';const t=T[b.typ],k=kontakt(b.kontaktId),fix=erw('kopfFix');
+  if(kmpBH())return`<div class="bstat${fix?' fix':''}"${fix?` style="top:${$('.topbar')?.offsetHeight||0}px"`:''}>${[fix?`<b>${esc(bNr(b))}</b>${statusTag(b)}`:'',b.datum?`vom ${dAT(b.datum)}`:'',b.fest?`festgeschrieben${b.festAm?' '+dtAT(b.festAm):''}`:b.erstellt?`angelegt ${dtAT(b.erstellt)}`:''].filter(Boolean).join('<span class="mut"> · </span>')}</div>`; // kompakt am Handy (P30): ohne Pfad, Kontakt und Netto (stehen in Zusammenfassung und Aktionsleiste)
   const teile=[`<a href="#/belege/${t.b}">${t.b==='V'?'Verkauf':'Einkauf'}</a> › <a href="javascript:void 0" onclick="zuListe('${t.b}','${b.typ}')" title="Liste der ${esc(BMZ[b.typ]||t.bez)}">${esc(BMZ[b.typ]||t.bez)}</a>${fix?` › <b>${esc(bNr(b))}</b>${statusTag(b)}`:''}`,
     b.datum?`vom ${dAT(b.datum)}`:'',k?`<a href="#/kontakt/${k.id}">${esc(k.name)}</a>`:'',OHNE_PREIS.includes(b.typ)?'':`netto <b id="kopfsum">${fmt(summen(b).netto)} €</b>`,
     b.fest?`festgeschrieben${b.festAm?' '+dtAT(b.festAm):''}`:b.erstellt?`angelegt ${dtAT(b.erstellt)}`:''].filter(Boolean);
@@ -1969,9 +1974,26 @@ function updateCalc(b){
   b.pos.forEach((p,i)=>{const e=$('#gp'+i);if(e)e.textContent=fmt(posGP(p))});
   const s=$('#sumbox');if(s)s.innerHTML=sumBox(b);const k=$('#kalkbox');if(k)k.innerHTML=kalkBox(b);
   const st=$('.bstat');if(st)st.outerHTML=belegStatus(b); // Statuszeile (P19 c): Datum, Netto
-  const v=$('#vorschau');if(v){v.innerHTML=docHTML(b,true);vorschauSeiten()}
+  const a=$('#aktsum');if(a)a.textContent=fmt(summen(b).netto)+' €'; // Aktionsleiste (kompakt, P30)
+  const v=$('#vorschau');if(v){v.innerHTML=docHTML(b,vEdit());vorschauSeiten()}
 }
 function curBeleg(){const h=location.hash.replace(/^#\/?/,'').split('/');return h[0]==='beleg'?beleg(h[1]):null}
+/* Kompakt (P30 U8): Aktionsleiste am Handy (aktLeiste: links Netto #aktsum → ACT.sumpop = sumBox und kalkBox im Pop-up; rechts „+ Position ▾“, „💶 Zahlung“ bzw. „PDF“), Beleg-Info
+   (belegSeiteK: am Handy Akkordeon mit Anhängen, Revisionen, Belegkette, Versand, Kontakt – bei ER offen; am Bildschirm Anhänge in der rechten Spalte, die ab 1100 px stehen bleibt);
+   Vorschau am Handy nur zum Lesen: vEdit() = false (keine gestrichelten Felder, bearbeitet wird in Eingabe bzw. Pop-ups) */
+const vEdit=()=>!kmpBH();
+function anhKarte(b){return`<div class="card"><h2>Anhänge${b.typ==='ER'?' (Rechnung als Foto/PDF)':''}</h2>
+    ${(b.anhaenge||[]).map((a,i)=>`<div class="att"><a href="javascript:void 0" data-act="attopen" data-i="${i}">📄 ${esc(a.name)}</a><span class="mut">${a.groesse?Math.round(a.groesse/1024)+' kB':''}</span><span class="sp"></span><button class="s d" data-act="attdel" data-i="${i}">✕</button></div>`).join('')||'<p class="mut" style="margin:0 0 6px">keine</p>'}
+    ${STORE.art==='cache'?'<p class="mut">Test-Modus: Anhänge liegen nur in diesem Browser.</p>':''}<label class="btn" style="margin-top:8px">📷 Foto / Datei hinzufügen<input type="file" id="att" accept="image/*,application/pdf,.xml" multiple hidden></label>
+  </div>`}
+function belegSeiteK(b,side,kette){const n=(b.anhaenge||[]).length,v=(b.versand||[]).length;
+  if(!HANDY.matches)return b.typ==='ER'?anhKarte(b)+side:side+anhKarte(b);
+  return akk('b-info','Beleg-Info',anhKarte(b)+side,{offen:b.typ==='ER',zusatz:[n?`${n} Anhang${n>1?'e':''}`:'keine Anhänge',kette.length>1?`Belegkette ${kette.length}`:'',v?`${v}× versendet`:''].filter(Boolean).join(' · ')})}
+function aktLeiste(b){if(!kmpBH())return'';const n=b.pos.filter(p=>!isInfo(p)).length;
+  return`<div class="aktl">${OHNE_PREIS.includes(b.typ)?`<span class="aks mut">${n} Position${n===1?'':'en'}</span>`:`<button class="aks" data-act="sumpop" title="Summen und Kalkulation"><span class="mut">netto</span> <b id="aktsum">${fmt(summen(b).netto)} €</b> <span class="mut">Σ</span></button>`}<span class="sp"></span>
+    ${!b.fest?'<button class="p" data-act="menue" data-m="pneu">+ Position ▾</button>':zahlOffen(b)?'<button class="p" data-act="zpop">💶 Zahlung</button>':'<button class="p" data-act="druck">PDF</button>'}</div>`}
+function sumPop(b){if(!b||OHNE_PREIS.includes(b.typ))return;const V_=T[b.typ].b==='V';
+  livePop('Summen',()=>`${sumBox(b)}${V_&&b.typ!=='GS'?`<h3 style="font-size:14px;margin:14px 0 6px">Kalkulation DB II</h3>${kalkBox(b)}`:''}`)}
 
 /* ---------- Preisverlauf-Popup ---------- */
 function closePop(){document.querySelectorAll('.pop').forEach(e=>e.remove());HIST=null}
@@ -4617,6 +4639,7 @@ const ACT={
   ansicht:el=>{lsSet('erp-ansicht',el.dataset.m);render()},
   anrev:()=>angebotRevision(curBeleg()),
   anfolge:()=>folgeAngebot(curBeleg()),
+  sumpop:()=>sumPop(curBeleg()), // Summen und Kalkulation im Pop-up (Aktionsleiste, P30)
   wechseln:()=>{if(pending&&!confirm('Nicht gespeicherte Änderungen gehen verloren. Fortfahren?'))return;lsSet('erp-modus',null);location.hash='';location.reload()},
   attopen:async el=>{const a=curBeleg().anhaenge[+el.dataset.i];try{await STORE.openFile(a)}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
   attdel:el=>{const b=curBeleg(),a=b.anhaenge[+el.dataset.i];if(!confirm(`Verknüpfung zu „${a.name}“ entfernen?\n(Die Datei selbst bleibt im Speicherort erhalten.)`))return;b.anhaenge.splice(+el.dataset.i,1);log('Anhang entfernt',`${bNr(b)}: ${a.name}`);persist();render()},

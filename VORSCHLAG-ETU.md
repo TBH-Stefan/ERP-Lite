@@ -898,7 +898,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Nutzen** gering bis mittel (nur bei großen Angeboten) · **Aufwand** L (berührt `gruppenInfo`, `summen`, `effKz`, `folge`, `revDiff`, Druck und PDF) · **Abhängig von:** P2, P18 · **Recht:** –
 
 ### P30 – Kompakte App- und Web-Ansicht
-- **Stand:** Konzept vom 09.10.2026, noch nicht umgesetzt. Grundlage sind zwei Analysen der Oberfläche mit Testdaten: Handy 390 × 844 und 360 × 740 px, Bildschirm 1400 × 900 und 1024 × 768 px. Gemessen wurden Seitenüberlauf, innere Bildläufe, Tippziele und die Lage wichtiger Elemente. Zeilenangaben (Z.) in diesem Paket beziehen sich auf Commit c9703e5.
+- **Stand:** Konzept vom 09.10.2026. ✅ U7 umgesetzt am 09.10.2026 (Commits 7acb6e1, 4e15709, 439ca23, 7160459, 050e6d5, 56f4235, 89025f2; Ergebnisse und Abweichungen unter „Stand U7“ bei der Umsetzung), U8 offen. Grundlage sind zwei Analysen der Oberfläche mit Testdaten: Handy 390 × 844 und 360 × 740 px, Bildschirm 1400 × 900 und 1024 × 768 px. Gemessen wurden Seitenüberlauf, innere Bildläufe, Tippziele und die Lage wichtiger Elemente. Zeilenangaben (Z.) in diesem Paket beziehen sich auf Commit c9703e5.
 - **Entscheidung des Anwenders (09.10.2026):** Die App-Ansicht am Handy ist überladen und soll kompakter werden, damit man besser bearbeiten kann. Die Web-Ansicht wird ebenfalls geprüft, wo nötig mit Pop-up-Fenstern. Die kompakte Ansicht ist ausdrücklich gewünscht: Schalter `erw.kompakt`, **Standard ein**, abschaltbar (aus = bisherige Darstellung). Das ist eine begründete Ausnahme von Abschnitt 2 Nr. 2: Es ändert sich nur die Bildschirmdarstellung, kein Beleg, kein Ausdruck und kein Rechenweg.
 - **Ziel:**
   - Am Handy stehen die wichtigste Information und die Hauptaktion ohne Wischen und ohne langes Scrollen bereit.
@@ -1128,7 +1128,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
     - P21 erweitert `vEdit()` später um den Schalter „Änderungsmodus“ (`erp-vEdit`).
 - **Umsetzung in zwei Einheiten:** je Commit ein Teil, Präfix „Kompakt: …“.
   - **U7 „Grundmuster & Überlauf“** (Aufwand L, ca. 3–4 Tage), in dieser Reihenfolge:
-    1. „Kompakt: Fehlerbehebung Seitenüberlauf, Reiter, Leiste ‚Ungespeichert‘, schmale Felder“. Nur CSS, ohne Schalter, weil es Fehler behebt:
+    1. „Kompakt: Fehlerbehebung Seitenüberlauf, Reiter, Leiste ‚Ungespeichert‘, schmale Felder“. Nur CSS, ohne Schalter, weil es Fehler behebt: ✅ umgesetzt (Commit 7acb6e1)
        - `.cols{grid-template-columns:minmax(0,1fr) 340px}` und `.cols>*{min-width:0}`; das gilt auch für das Inline-Raster im Überblick;
        - Tabellen in Karten mit waagrechtem Bildlauf: `.card{overflow-x:auto}` bis 1100 px als Sicherheitsnetz (`.pop` und `.modal` hängen am `body` und sind nicht betroffen);
        - am Handy `.seg{flex-wrap:wrap}` und `#dirtybar{flex-wrap:wrap}`;
@@ -1136,12 +1136,17 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
        - `.pop.zlpop` mit begrenzter Höhe und Bildlauf.
 
        Prüfung: `scrollWidth = innerWidth` in allen Ansichten bei 360, 390, 1024 und 1400 px.
-    2. „Kompakt: Schalter erw.kompakt und Grundbausteine“: ERW-Eintrag, `body.kompakt`, `kmp()`/`kmpH()`/`HANDY`, B1 (`menuePop`, `MENUE`, `ACT.menue`), B2 samt den Ergänzungen in `formDialog()`, B3 `karte()` mit CSS, B5 `akk()`, B6 `hilfe()`, B7 (Kennzahlen), B9 `livePop()`, Tippziele und Abstände. Sichtbar ändern sich dadurch nur Dialoge, Kennzahlen und Tippziele.
-    3. „Kompakt: Listen als Karten“: Kartenmodus in `tabelle()` mit `m`-Angaben in allen 8 Aufrufen (Verkauf/Einkauf, Aufträge, Zeiten, Kontakte, Artikel, Lager, K-Blätter, LVs); `karte()` im Überblick, bei den Belegen im Kontakt, im Auftrag, in der Verrechnung, im Journal und im Protokoll.
-    4. „Kompakt: Neu-/Einlesen-Menüs und Filter-Pop-up“ für Überblick, Verkauf/Einkauf, Kontakte, Artikel und Lager (B4, `ACT.fweg`, „± Bestand buchen“ über `ACT.lgpop`).
-    5. „Kompakt: Kontakt, Artikel, Kosten, Verrechnung, Aufträge, Auswertung, FiBu, Export“: Visitenkarte, Akkordeons, ⓘ, Live-Pop-ups für Kontakt, Lieferanten und Konten. Bei Bedarf in zwei Commits teilen: Stammdaten und Kaufmännisch.
-    6. „Kompakt: Einstellungen als Akkordeon“: `V.einstellungen`, `erwKarte()`, `dpKarte()`, Karten mit Live-Pop-up für Steuersätze, Tarife und Nummernkreise. Der Dialog Druckoptionen bekommt Abschnitte: `druckDialog()` verwendet `typ:'abschnitt'` statt der fetten Hinweiszeile, was ohne kompakt gleich aussieht.
-    7. Doku: PFLICHTENHEFT (Abschnitt Erweiterungen), CLAUDE.md (Bausteine und Namen), dieser Vorschlag (Stand, Rücknahme-Reihenfolge).
+    2. „Kompakt: Schalter erw.kompakt und Grundbausteine“: ERW-Eintrag, `body.kompakt`, `kmp()`/`kmpH()`/`HANDY`, B1 (`menuePop`, `MENUE`, `ACT.menue`), B2 samt den Ergänzungen in `formDialog()`, B3 `karte()` mit CSS, B5 `akk()`, B6 `hilfe()`, B7 (Kennzahlen), B9 `livePop()`, Tippziele und Abstände. Sichtbar ändern sich dadurch nur Dialoge, Kennzahlen und Tippziele. ✅ umgesetzt (Commit 4e15709)
+    3. „Kompakt: Listen als Karten“: Kartenmodus in `tabelle()` mit `m`-Angaben in allen 8 Aufrufen (Verkauf/Einkauf, Aufträge, Zeiten, Kontakte, Artikel, Lager, K-Blätter, LVs); `karte()` im Überblick, bei den Belegen im Kontakt, im Auftrag, in der Verrechnung, im Journal und im Protokoll. ✅ umgesetzt (Commit 439ca23)
+    4. „Kompakt: Neu-/Einlesen-Menüs und Filter-Pop-up“ für Überblick, Verkauf/Einkauf, Kontakte, Artikel und Lager (B4, `ACT.fweg`, „± Bestand buchen“ über `ACT.lgpop`). ✅ umgesetzt (Commit 7160459)
+    5. „Kompakt: Kontakt, Artikel, Kosten, Verrechnung, Aufträge, Auswertung, FiBu, Export“: Visitenkarte, Akkordeons, ⓘ, Live-Pop-ups für Kontakt, Lieferanten und Konten. Bei Bedarf in zwei Commits teilen: Stammdaten und Kaufmännisch. ✅ umgesetzt in zwei Commits: 050e6d5 (Kontakt, Artikel) und 56f4235 (Kosten, Verrechnung, Aufträge, Auswertung, Kontenplan, Export, K-Blätter)
+    6. „Kompakt: Einstellungen als Akkordeon“: `V.einstellungen`, `erwKarte()`, `dpKarte()`, Karten mit Live-Pop-up für Steuersätze, Tarife und Nummernkreise. Der Dialog Druckoptionen bekommt Abschnitte: `druckDialog()` verwendet `typ:'abschnitt'` statt der fetten Hinweiszeile, was ohne kompakt gleich aussieht. ✅ umgesetzt (Commit 89025f2)
+    7. Doku: PFLICHTENHEFT (Abschnitt Erweiterungen), CLAUDE.md (Bausteine und Namen), dieser Vorschlag (Stand, Rücknahme-Reihenfolge). ✅ umgesetzt
+    - **Stand U7 (09.10.2026):**
+      - **Messung** (Testdaten der Analyse, 45 Ansichten samt FiBu-, LV- und K-Blatt-Reitern): kein Seitenüberlauf bei 360, 390, 1024 und 1400 px, mit `erw.kompakt` ein und aus. Am Handy (390 px, ohne Beleg-Editor) sind Knöpfe und Felder unter 40 px von 864 auf 0 gesunken; erster Beleg der Belegliste bei y = 214; Einstellungen zugeklappt 1,0 Bildschirme (vorher 8,9), Überblick 1,5 (1,9), Kosten 1,7 (3,0), Lager 1,7 (2,9), Auswertung 1,0 (3,9), Kontenplan 1,4 (3,7). Länger wurden die LV-Bearbeitung (5,1 statt 4,1, größere Tippziele; Karten optional in U8) sowie Artikel und Zeiten (Karten, Schnellwahl).
+      - **Regression:** Mit `erw.kompakt=false` ist `#main` in allen 45 Ansichten gleich wie vor U7 (Vergleich mit festen IDs und fester Uhrzeit), nur die Einstellungen zeigen den neuen Schalter; ebenso der Dialog „Druckoptionen“. `docHTML`, Vorschau und PDF 30/30 gleich (1500 px und 390 px). Gesamttest Stufe 1 (alle Schalter einzeln aus/an, „Alle Schalter auf Standard“, „Standard wiederherstellen“) ohne Fehler; das Testskript klickt die Schalter jetzt bei aufgeklapptem Abschnitt.
+      - **Abweichungen vom Konzept:** `erp-akk` speichert je Abschnitt nur Abweichungen vom Standard (`{id:1|0}`), weil manche Abschnitte standardmäßig offen sind; das `toggle`-Ereignis beim Zeichnen ändert den Zustand nicht (`data-auf`). Live-Pop-ups über einen gemeinsamen Auslöser `ACT.lpop` mit `LIVE.<name>` (Kontakt, Lieferant, Konto, Steuersatz, Tarif, Nummernkreis; „+ …“ legt an und öffnet das Pop-up), Filter über `ACT.filter` mit `FILTER.<name>`, Mehrfachauswahl Artikel über `ACT.awahl`; zusätzlich `ACT.fweg`, `ACT.lgpop`, `ACT.menue`. Die Karten der Verrechnung und der Belege im Kontakt/Auftrag kamen mit Commit 5 (dort wurden die Ansichten ohnehin umgebaut), Zeiterfassung (Karten nach Tag, Schnellwahl, Auftrag kurz) mit Commit 3. Lagerwert als Kennzahl nur am Handy (am Bildschirm Summenzeile wie bisher), Belege im Kontakt und Auftrag am Bildschirm weiter als Tabelle. Der „Standard wiederherstellen“-Knopf eines Pakets steht nur bei Abweichung im Kopf (ein gesperrter Knopf im Kopf schluckte das Antippen).
+      - **Offen:** Test an echten Geräten (Android, iOS: Blatt von unten, Bildschirmtastatur, Dateiauswahl aus dem Menü), U8 (Beleg-Editor).
   - **U8 „Beleg-Editor“** (Aufwand L, ca. 3–4 Tage), setzt U7 Commit 2 voraus:
     1. „Kompakt: Beleg – Schalter erw.kompaktBeleg, Kopfleiste mit Hauptaktion und ⋯-Menü“ (`MENUE.beleg`, Live-Pop-up „Spalten & Druck …“).
     2. „Kompakt: Beleg – Kopfdaten als Zusammenfassung mit Pop-up“ (`kopfFelder(b)`, `ACT.kopfd`, Akkordeons für Zahlungsbedingungen und Texte).
@@ -1213,7 +1218,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Rücknahme** (`git revert`):
   - U7 Commit 1 lässt sich einzeln zurücknehmen.
   - Die U8-Commits werden in umgekehrter Reihenfolge zurückgenommen, von 7 bis 1.
-  - U7 Commits 3–6 sind einzeln rücknehmbar, aber vor U7 Commit 2.
+  - U7 Commits 3–6 sind einzeln rücknehmbar, aber vor U7 Commit 2. Geprüft (09.10.2026): U7 Commit 1, 3, 4, 5 (beide Teile) und 6 jeweils einzeln per `git revert` konfliktfrei, Programm danach ohne Konsolenfehler; U7 Commit 2 erst nach 3–6 (diese nutzen `kmp()`, `karte()`, `akk()` …; Commit 6 ändert außerdem `akk()`); alle U7-Commits in umgekehrter Reihenfolge ergeben wieder genau den Stand vor U7.
   - U7 Commit 2 kommt erst nach allen U8-Commits dran.
   - P19 c lässt sich erst zurücknehmen, wenn U8 Commit 6 zurückgenommen ist, weil dieser `belegStatus()` ändert.
 - **Einordnung:**
@@ -1285,6 +1290,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - P0 n (24362bd): vorher 10f3241, P14 und P1 samt Vorgängern
   - P0 c (f6526f9): vorher P0 j (nutzt `lnrStamm()`), P0 d, P0 n, P11 samt 724e6b0 und deren Vorgänger
   - P0 b (af99b8d): vorher zusätzlich P0 c; Grundgerüst (4094cd5): ganz zuletzt, nach allen Paketen mit Schaltern und 05429d5
+  - seit der Kompakten Ansicht (P30 U7, 09.10.2026): U7 einzeln wie bei P30 beschrieben (Commit 2 nach 3–6). P6 (Teil, 072ff14), Korrektur b626535 und P5 (7bca588): vorher U7 Commit 3 (439ca23), 4 (7160459) und 5 Stammdaten (050e6d5). P19 c (2aa2bf6) und P1 (d5237b2) samt allen Commits, die P1 voraussetzen (P0 b, c, d, e, n, Grundgerüst): vorher U7 Commit 2 (4e15709) und damit U7 Commit 3–6. U7 Commit 1 (7acb6e1) bleibt unabhängig.
 - Noch offen: Test an echten Geräten (Edge, Firefox, Android, iOS; Druck, Strg+P, Browsermenü), echter Mailversand und Abgleich über OneDrive mit zwei Geräten, Tag `vor-etu` (nicht gesetzt).
 
 **Stufe 2: Kernfunktionen nach ETU (ca. 12–13 Tage)**

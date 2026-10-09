@@ -117,6 +117,12 @@ nav a.navkl{display:none;padding-left:32px;font-size:13px}body.navkl nav a.navkl
 main{flex:1;padding:20px 26px 60px;min-width:0}
 h1{font-size:21px;margin:0 0 14px}h2{font-size:15px;margin:0 0 10px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:14px}
+/* Kompakt (P30) Beleg: Lese-Ansicht festgeschriebener Belege (dl.kvl, table.pos.pl ohne Eingabefelder), Zahlungsstatus oben (.zst) mit Zahlungen als Karten */
+dl.kv.kvl{grid-template-columns:max-content minmax(0,1fr);gap:5px 14px}dl.kv.kvl dd{text-align:left;white-space:normal;overflow-wrap:anywhere}dl.kv.kvl dd a{color:var(--acc);text-decoration:none}
+@media(min-width:1100px){dl.kv.kvl{grid-template-columns:max-content minmax(0,1fr) max-content minmax(0,1fr)}}
+.ltx{white-space:pre-wrap;font-size:13px;line-height:1.45;background:#fafbfc;border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+table.pos.pl td{padding:5px 6px}table.pos.pl .plt{font-size:12px;color:var(--mut);margin-top:2px;white-space:pre-wrap}table.pos.pl td.n{white-space:nowrap}
+.zst{border-left:4px solid var(--ok)}.zst.zof{border-left-color:var(--acc)}.zst .zkl{margin-top:8px;border-top:1px solid var(--line)}.zatt{margin-top:6px;display:flex;flex-wrap:wrap;gap:2px 14px}.zatt a{color:var(--acc);text-decoration:none;padding:6px 0}
 table{border-collapse:collapse;width:100%}
 th,td{padding:5px 7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 th{font-size:12px;color:var(--mut);font-weight:600;background:#fafbfc;white-space:nowrap}
@@ -1578,7 +1584,7 @@ V.beleg=id=>{
   const kette=DB.belege.filter(x=>b.auftragId?x.auftragId===b.auftragId:(x.id===b.id||x.vorgaengerId===b.id||x.id===b.vorgaengerId)).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
   const k=kontakt(b.kontaktId),scan=['WE','ER','BE'].includes(b.typ)?scanBox(b):'';
   const ans=ansicht();
-  const kopfbar=kmpB()?belegKopfbarK(b,ans):`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
+  const kopfbar=kmpB()?belegKopfbarK(b,ans)+zahlKopfK(b):`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
     ${b.fest?'':`<button class="p" data-act="fest">Festschreiben …</button>`}
     <button data-act="druck">PDF / Drucken</button>
@@ -1593,8 +1599,8 @@ V.beleg=id=>{
   const dk=b.fest?'':dKnopf(b,'Druckformat …');
   const blatt=`${dk?`<div class="bar" style="margin:0 0 6px;justify-content:flex-end">${dk}</div>`:''}<div class="blatt" id="vorschau">${docHTML(b,true)}</div>${b.fest?'':'<p class="mut" style="font-size:12px;margin:-6px 0 14px">Gestrichelte Felder direkt im Blatt bearbeiten – Änderungen werden in die Eingabefelder übernommen.</p>'}`;
   const formHTML=`
-  ${kmpB()?kopfK(b):kopfFelder(b)}
-  ${posK(b)?posKartenK(b):`<div class="card" style="padding:8px;overflow-x:auto">
+  ${kmpB()?(b.fest?kopfLese(b):kopfK(b)):kopfFelder(b)}
+  ${kmpB()&&b.fest&&!HANDY.matches?posLeseK(b):posK(b)?posKartenK(b):`<div class="card" style="padding:8px;overflow-x:auto">
     ${kmpB()?'':`<div class="bar" style="margin:0 0 6px"><span class="mut">${ohneP?'Druck:':'Spalten einblenden:'}</span>
       ${ohneP?'':`<label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optRabatt" ${zRab?'checked':''} ${dis}> Rabatt</label>
       <label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optLS" ${zLS?'checked':''} ${dis}> Lohn / Sonstiges</label>`}
@@ -1603,7 +1609,7 @@ V.beleg=id=>{
     <tbody>${rows||`<tr><td colspan="14" class="mut">Noch keine Positionen.</td></tr>`}</tbody></table>
     ${b.fest?'':`<div class="bar" style="margin:8px 0 0"><button data-act="padd" data-art="G">+ Gruppe</button><button data-act="padd" data-art="W">+ Ware</button><button data-act="padd" data-art="L">+ Leistung</button><button data-act="padd" data-art="F">+ Fremdleistung</button><button data-act="padd" data-art="T">+ Text</button>${V_?`<button data-act="pzeit">+ Stunden aus Zeiterfassung</button>`:''}</div>`}
   </div>`}`;
-  const extra=`${t.re&&b.fest&&!b.storno&&!(b.typ==='GS'&&beleg(b.vorgaengerId))?zahlBox(b):''}
+  const extra=`${t.re&&b.fest&&!b.storno&&!(b.typ==='GS'&&beleg(b.vorgaengerId))&&!kmpB()?zahlBox(b):''}
   <div class="card"><h2>Anhänge${b.typ==='ER'?' (Rechnung als Foto/PDF)':''}</h2>
     ${(b.anhaenge||[]).map((a,i)=>`<div class="att"><a href="javascript:void 0" data-act="attopen" data-i="${i}">📄 ${esc(a.name)}</a><span class="mut">${a.groesse?Math.round(a.groesse/1024)+' kB':''}</span><span class="sp"></span><button class="s d" data-act="attdel" data-i="${i}">✕</button></div>`).join('')||'<p class="mut" style="margin:0 0 6px">keine</p>'}
     ${STORE.art==='cache'?'<p class="mut">Test-Modus: Anhänge liegen nur in diesem Browser.</p>':''}<label class="btn" style="margin-top:8px">📷 Foto / Datei hinzufügen<input type="file" id="att" accept="image/*,application/pdf,.xml" multiple hidden></label>
@@ -1657,6 +1663,7 @@ function vorschlagNr(b){
 const kmpB=()=>kmp()&&!!erw('kompaktBeleg'),kmpBH=()=>kmpB()&&HANDY.matches;
 function belegHaupt(b){const t=T[b.typ];
   if(!b.fest)return{l:'Festschreiben …',act:'fest'};
+  if(zahlOffen(b))return{l:'💶 Zahlung erfassen …',lh:'💶 Zahlung …',act:'zpop'};
   if(!b.storno&&b.status!=='ersetzt'&&t.folge.length){if(b.typ==='AN'&&!b.status)return{l:'→ Auftragsbestätigung',lh:'→ Auftragsbest.',act:'folge',value:'AB'};if(['AB','LS','PR'].includes(b.typ))return{l:'→ Rechnung',act:'folgere'}}
   return{l:'PDF / Drucken',act:'druck'}}
 const zuRE=b=>!b.storno&&T[b.typ].folge.length&&b.status!=='ersetzt'&&['AN','AB','LS','PR'].includes(b.typ); // „→ Rechnung“ wie bisher (Entwurf wird vorher festgeschrieben)
@@ -1921,6 +1928,43 @@ function zahlBox(b){
   ${Math.abs(o)>0.005?`<div class="row" style="margin-top:8px"><label class="w05">Datum<input type="date" id="z-dat" value="${isoD()}" onchange="zSkonto(1)"></label><label class="w05">Betrag<input type="number" step="any" id="z-bet" value="${r2(o-sk0)}"></label><label class="w05">Skonto<input type="number" step="any" id="z-sk" value="${sk0}"></label><label class="w05">Art<select id="z-art">${opt('Bank','Bank')}${opt('Bar','Bar')}${opt('Verrechnung','Verrechnung')}</select></label><label>Notiz<input id="z-not"></label><button class="p" data-act="zadd">Zahlung buchen</button></div>
   ${si.sk&&o>0.005?`<div class="bar" style="margin:6px 0 0"><label class="chk" style="margin:0"><input type="checkbox" id="z-skan" onchange="zSkonto()" ${si.ok?'checked':'disabled'}> Skonto abziehen</label><span id="z-skinfo" class="mut">${si.ok?`${fmtQ(si.sk)} % Skonto bis ${dAT(si.bis)}: <b>${fmt(si.betrag)} €</b>`:`<span class="err">Skontofrist (${fmtQ(si.sk)} % bis ${dAT(si.bis)}) abgelaufen</span>`}</span></div>`:''}`:''}</div>`;
 }
+/* Kompakt (P30 U8): Lese-Ansicht festgeschriebener Belege – Kopfdaten als Zusammenfassung (kopfLese, dl.kvl), Positionen am Bildschirm als schlanke Tabelle ohne Eingabefelder (posLeseK),
+   am Handy als Karten; nur Anzeige, die Sperre bleibt. Zahlung: Statuskarte oben (zahlKopfK: offen, fällig, Skonto; Zahlungen als Karten, Löschen im ⋯ = ACT.zdel; bei ER die Original-Anhänge),
+   „💶 Zahlung erfassen …“ (ACT.zpop → zahlPop) mit den bisherigen Feldern und IDs (z-dat, z-bet, z-sk, z-art, z-not, z-skan, z-skinfo), gebucht über ACT.zadd; die Inline-Maske entfällt in kompakt */
+const zahlOffen=b=>!!T[b.typ].re&&b.fest&&!b.storno&&!(b.typ==='GS'&&beleg(b.vorgaengerId))&&Math.abs(offen(b))>0.005;
+function zahlKopfK(b){if(!(T[b.typ].re&&b.fest&&!b.storno&&!(b.typ==='GS'&&beleg(b.vorgaengerId))))return'';const o=offen(b),si=skontoInfo(b,isoD()),Z=b.zahlungen||[],of=Math.abs(o)>0.005,fa=faellig(b);
+  const st=of?`<b>offen ${fmt(o)} €</b> <span class="mut">· fällig ${dAT(fa)}</span>${fa<isoD()?' '+tag('überfällig','err'):''}${si.ok?` <span class="mut">· Skonto ${fmtQ(si.sk)} % bis ${dAT(si.bis)}</span>`:''}`:`${tag('bezahlt','ok')} <span class="mut">${Z.length} Zahlung${Z.length===1?'':'en'}</span>`;
+  return`<div class="card zst${of?' zof':''}"><div class="bar" style="margin:0"><span>${st}</span><span class="sp"></span>${of?'<button class="p" data-act="zpop">💶 Zahlung erfassen …</button>':''}</div>
+    ${b.typ==='ER'&&(b.anhaenge||[]).length?`<div class="zatt">${b.anhaenge.map((a,i)=>`<a href="javascript:void 0" data-act="attopen" data-i="${i}">📄 ${esc(a.name)}</a>`).join('')}</div>`:''}
+    ${Z.length?`<div class="kkl zkl">${Z.map((z,i)=>`<div class="kkf">${karte({t:`${dAT(z.datum)} · ${esc(z.art)}`,b:fmt(z.betrag)+' €',u:[z.skonto?'Skonto '+fmt(z.skonto)+' €':'',esc(z.notiz||'')].filter(Boolean).join(' · ')})}<button class="mehr" data-act="menue" data-m="zahl" data-i="${i}" title="Zahlung löschen">⋯</button></div>`).join('')}</div>`:''}</div>`}
+MENUE.zahl=el=>[{l:'Zahlung löschen …',ic:'🗑',act:'zdel',d:{i:el.dataset.i},gefahr:1}];
+function zahlPop(b){if(!b||!zahlOffen(b))return;const o=offen(b),si=skontoInfo(b,isoD()),sk0=si.ok?si.betrag:0,d=document.createElement('div');d.className='modal';
+  d.innerHTML=`<div class="mbox"><h2>Zahlung erfassen – ${esc(T[b.typ].bez)} ${esc(b.nr)}</h2><p class="mut" style="margin:0 0 6px">offen <b>${fmt(o)} €</b> · fällig ${dAT(faellig(b))}</p>
+    <div class="row"><label class="w05">Datum<input type="date" id="z-dat" value="${isoD()}" onchange="zSkonto(1)"></label><label class="w05">Betrag<input type="number" step="any" inputmode="decimal" id="z-bet" value="${r2(o-sk0)}"></label></div>
+    <div class="row"><label class="w05">Skonto<input type="number" step="any" inputmode="decimal" id="z-sk" value="${sk0}"></label><label class="w05">Art<select id="z-art">${opt('Bank','Bank')}${opt('Bar','Bar')}${opt('Verrechnung','Verrechnung')}</select></label></div>
+    <div class="row"><label>Notiz<input id="z-not" placeholder="z. B. Teilzahlung"></label></div>
+    ${si.sk&&o>0.005?`<label class="chk"><input type="checkbox" id="z-skan" onchange="zSkonto()" ${si.ok?'checked':'disabled'}> Skonto abziehen</label><p id="z-skinfo" class="mut" style="margin:4px 0 0">${si.ok?`${fmtQ(si.sk)} % Skonto bis ${dAT(si.bis)}: <b>${fmt(si.betrag)} €</b>`:`<span class="err">Skontofrist (${fmtQ(si.sk)} % bis ${dAT(si.bis)}) abgelaufen</span>`}</p>`:''}
+    <div class="bar" style="justify-content:flex-end;margin:14px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Zahlung buchen</button></div></div>`;
+  document.body.appendChild(d);const fin=()=>{d.remove();document.removeEventListener('keydown',kd)},kd=e=>{if(e.key==='Escape')fin()};document.addEventListener('keydown',kd);
+  d.querySelector('#m-no').onclick=fin;d.querySelector('#m-ok').onclick=()=>{const n=(b.zahlungen||[]).length;ACT.zadd();if((b.zahlungen||[]).length>n)fin()}; // schließt, sobald gebucht (Periodensperre, Skontofrist wie bisher in ACT.zadd)
+  setTimeout(()=>d.querySelector('#z-bet')?.focus(),0)}
+function kopfLese(b){const t=T[b.typ],V_=t.b==='V',ohneP=OHNE_PREIS.includes(b.typ),k=kontakt(b.kontaktId),a=b.adresse?.name?b.adresse:k||{},z=(l,v)=>v?`<dt>${l}</dt><dd>${v}</dd>`:'';
+  const adr=[a.strasse,[a.plz,a.ort].filter(Boolean).join(' ')].filter(Boolean).map(esc).join(', '),tx=[b.kopf,b.fuss].map(rtText).filter(Boolean).join(' · ');
+  return`<div class="card"><dl class="kv kvl">${z(V_?'Kunde':'Lieferant',`${k?`<a href="#/kontakt/${k.id}">${esc(a.name||k.name)}</a>`:esc(a.name||'–')}${adr?`<br><span class="mut">${adr}</span>`:''}`)}${z(b.typ==='ER'?'Rechnungsdatum':'Datum',dAT(b.datum))}
+    ${b.typ==='AN'?z(esc(dOpt(b).lblGueltig||'Gültig bis'),dAT(b.gueltigBis)):''}${['AB','BE'].includes(b.typ)?z('Liefertermin',dAT(b.liefertermin)):''}${(t.re&&V_)||b.typ==='LS'?z('Liefer-/Leistungsdatum',esc(b.leistung)):''}
+    ${b.typ==='ER'?z('Rechnungs-Nr. Lieferant',esc(b.fremdNr)):''}${['BE','WE'].includes(b.typ)?z(b.typ==='BE'?'Angebot Lieferant':'Lieferschein-Nr. Lief.',esc(b.fremdNr)):''}${z('Betreff / Projekt',esc(b.betreff))}${z('Bezug',esc(b.bezug))}
+    ${V_?'':z('Auftrag',b.auftragId?esc(auftragKurz(b.auftragId)):'– kein Auftrag –')}${b.typ==='ER'&&b.konto?z('Aufwandskonto',esc(b.konto+' '+kontoBez(b.konto))):''}${b.typ==='WE'?z('Lager',`${b.lagerBuchen!==false?'eingebucht':'nicht eingebucht'} · ${b.verrechnen!==false?'weiterverrechnen':'nicht weiterverrechnen'}`):''}
+    ${ohneP?'':z('Zahlungsbedingungen',`${fmtQ(+b.zahlungsziel||0)} Tage${+b.skonto?` · ${fmtQ(b.skonto)} % Skonto ${fmtQ(+b.skontoTage||0)} Tage`:''}`)}</dl></div>
+  ${(V_||b.typ==='BE')&&tx?akk('b-texte','Kopf- und Fußtext',`${b.kopf?`<div class="mut" style="font-size:12px">Kopftext</div><div class="ltx">${rt(b.kopf)}</div>`:''}${b.fuss?`<div class="mut" style="font-size:12px;margin-top:8px">Fußtext</div><div class="ltx">${rt(b.fuss)}</div>`:''}`,{zusatz:esc(tx.length>50?tx.slice(0,48)+' …':tx)}):''}`}
+function posLeseK(b){const ohneP=OHNE_PREIS.includes(b.typ),gi=gruppenInfo(b),pnr=posNummern(b),rab=showRab(b),ls=!!b.optLS&&!ohneP,V_=T[b.typ].b==='V',n=3+(ohneP?0:(ls?2:0)+(rab?1:0)+3);
+  const lt=p=>p.text?`<div class="plt">${rt(p.text)}</div>`:'',kzT=k=>k?' '+tag(k==='OPT'?'Option':'Alternative','warn'):'';
+  const rows=b.pos.map(p=>{if(p.art==='T')return`<tr class="t"><td></td><td colspan="${n}">${rt(p.text)}</td></tr>`;
+    if(p.art==='G')return`<tr class="grp"><td class="mut">${pnr[p.id]||''}</td><td colspan="${n-(ohneP?0:2)}"><b>${esc(p.bez)}</b>${+p.pauschal>0?' '+tag('Pauschal'):''}${p.ohneEP?' '+tag('Einzelpreise ausgeblendet'):''}${kzT(p.kz)}${lt(p)}</td>${ohneP?'':`<td class="n"><b>${fmt(gruppePreis(p,gi))}</b></td><td>${+p.pauschal>0?esc(stDef(b,p.steuer||S().stdSteuer).bez):''}</td>`}</tr>`;
+    const g=gi.grp[p.id],pa=g&&+g.pauschal>0,gp=fmt(posGP(p));
+    return`<tr class="${g?'ing':''}"><td class="mut">${pnr[p.id]||''}</td><td>${p.nr?`<span class="mut">${esc(p.nr)}</span> `:''}${esc(p.bez)}${kzT(effKz(p,gi))}${!V_&&p.lnr?' '+tag('Lief.: '+esc(p.lnr)):''}${lt(p)}</td><td class="n">${fmtQ(p.menge)}</td><td>${esc(p.einheit||'')}</td>
+      ${ohneP?'':`${ls?`<td class="n">${fmtP(+p.epL||0)}</td><td class="n">${fmtP(+p.epS||0)}</td>`:''}<td class="n">${fmtP(p.ep)}</td>${rab?`<td class="n">${+p.rabatt?fmtQ(p.rabatt)+' %':''}</td>`:''}<td class="n">${pa?`<span class="mut" title="im Gruppenpreis enthalten">(${gp})</span>`:gp}</td><td>${esc(stDef(b,p.steuer).bez)}</td>`}</tr>`}).join('');
+  return`<div class="card" style="padding:8px"><table class="pos pl"><thead><tr><th>Pos</th><th>Bezeichnung</th><th class="n">Menge</th><th>Einh.</th>${ohneP?'':`${ls?'<th class="n">Lohn</th><th class="n">Sonst.</th>':''}<th class="n">EP</th>${rab?'<th class="n">Rab.</th>':''}<th class="n">GP netto</th><th>USt</th>`}</tr></thead>
+    <tbody>${rows||`<tr><td colspan="${n+1}" class="mut">Keine Positionen.</td></tr>`}</tbody></table></div>`}
 function updateCalc(b){
   b.pos.forEach((p,i)=>{const e=$('#gp'+i);if(e)e.textContent=fmt(posGP(p))});
   const s=$('#sumbox');if(s)s.innerHTML=sumBox(b);const k=$('#kalkbox');if(k)k.innerHTML=kalkBox(b);
@@ -4507,6 +4551,7 @@ const ACT={
     if(sk>0&&($('#z-dat').value||isoD())>skontoBis(b)&&!confirm(`Skontofrist ${+b.skonto?'('+fmtQ(b.skonto)+' % bis '+dAT(skontoBis(b))+') ':''}ist zum Zahlungsdatum abgelaufen bzw. kein Skonto vereinbart.\nSkonto ${fmt(sk)} € trotzdem buchen?`))return;
     b.zahlungen.push({id:uid(),datum:$('#z-dat').value||isoD(),betrag:r2(bet),skonto:r2(sk),art:$('#z-art').value,notiz:$('#z-not').value});
     log('Zahlung',`${b.nr}: ${fmt(bet)}${sk?' + Skonto '+fmt(sk):''}`);commit();render()},
+  zpop:()=>zahlPop(curBeleg()), // Zahlung im Pop-up (kompakter Beleg, P30)
   zdel:el=>{const b=curBeleg(),z=b.zahlungen[+el.dataset.i];if(!confirm(`Zahlung ${fmt(z.betrag)} vom ${dAT(z.datum)} löschen?`))return;b.zahlungen.splice(+el.dataset.i,1);log('Zahlung gelöscht',`${b.nr}: ${fmt(z.betrag)}`);commit();render()},
   abe:el=>{const b=neuBeleg('BE',{auftragId:el.dataset.id,betreff:'Projekt: '+(beleg(el.dataset.id)?.betreff||'')});persist();go('beleg/'+b.id)},
   plt:el=>{const b=curBeleg(),i=+el.dataset.i,p=b?.pos[i];if(!p||b.fest)return;(UI.ltAuf=UI.ltAuf||[]).push(p.id);render();setTimeout(()=>document.querySelector(`#main .rte[data-ed="p:${i}:text"]`)?.focus(),0)}, // leeren Langtext einblenden (einzeilige Positionszeile, P30)

@@ -690,7 +690,7 @@ function merge3(base,local,remote){
   for(const r of out.belege){const n=AZ.get(r.id);if(n>(r.ausgaben??0))r.ausgaben=n} // Ausgabezähler (DUPLIKAT) nie verkleinern
   const seen=new Set((out.log||[]).map(x=>x.ts+x.aktion));
   out.log=[...(out.log||[]),...(local.log||[]).filter(x=>!seen.has(x.ts+x.aktion))].sort((a,b)=>a.ts.localeCompare(b.ts));
-  if(!eq(local.settings,base?.settings)){if(eq(out.settings,base?.settings))out.settings=local.settings;else konfl.push('Einstellungen')}
+  if(!eq(local.settings,base?.settings)){if(eq(out.settings,base?.settings))out.settings=local.settings;else if(!eq(out.settings,local.settings))konfl.push('Einstellungen')} // lokal = entfernt (beide gleich geändert, z. B. durch migrate() ergänzt): kein Konflikt
   for(const t in local.settings.nk){const z=out.settings.nk[t]?.zaehler;if(!z)continue;for(const j in local.settings.nk[t].zaehler)z[j]=Math.max(z[j]||0,local.settings.nk[t].zaehler[j])}
   {const lf=local.fibu,bf=base?.fibu,rf=out.fibu;if(lf){if(!rf)out.fibu=lf;else{const ids=new Map(rf.buchungen.map(x=>[x.id,x]));for(const x of lf.buchungen){const r=ids.get(x.id);if(!r)rf.buchungen.push(x);else if(x.storno&&!r.storno){r.storno=true;r.stornoDatum=x.stornoDatum}}if(!eq(lf.map,bf?.map)&&eq(rf.map,bf?.map))rf.map=lf.map;if(!eq(lf.konten,bf?.konten)&&eq(rf.konten,bf?.konten))rf.konten=lf.konten;if((lf.sperre||'')>(rf.sperre||''))rf.sperre=lf.sperre}}}
   for(const k of ['K','L'])out.settings.knr[k]=Math.max(out.settings.knr[k]||0,local.settings.knr?.[k]||0);

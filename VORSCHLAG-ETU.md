@@ -892,6 +892,329 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Datenmodell:** Gruppe `ebene` (optional).
 - **Nutzen** gering bis mittel (nur bei großen Angeboten) · **Aufwand** L (berührt `gruppenInfo`, `summen`, `effKz`, `folge`, `revDiff`, Druck und PDF) · **Abhängig von:** P2, P18 · **Recht:** –
 
+### P30 – Kompakte App- und Web-Ansicht
+- **Stand:** Konzept vom 09.10.2026, noch nicht umgesetzt. Grundlage sind zwei Analysen der Oberfläche mit Testdaten: Handy 390 × 844 und 360 × 740 px, Bildschirm 1400 × 900 und 1024 × 768 px. Gemessen wurden Seitenüberlauf, innere Bildläufe, Tippziele und die Lage wichtiger Elemente. Zeilenangaben (Z.) in diesem Paket beziehen sich auf Commit c9703e5.
+- **Entscheidung des Anwenders (09.10.2026):** Die App-Ansicht am Handy ist überladen und soll kompakter werden, damit man besser bearbeiten kann. Die Web-Ansicht wird ebenfalls geprüft, wo nötig mit Pop-up-Fenstern. Die kompakte Ansicht ist ausdrücklich gewünscht: Schalter `erw.kompakt`, **Standard ein**, abschaltbar (aus = bisherige Darstellung). Das ist eine begründete Ausnahme von Abschnitt 2 Nr. 2: Es ändert sich nur die Bildschirmdarstellung, kein Beleg, kein Ausdruck und kein Rechenweg.
+- **Ziel:**
+  - Am Handy stehen die wichtigste Information und die Hauptaktion ohne Wischen und ohne langes Scrollen bereit.
+  - Gleichzeitig sind weniger Bedienelemente sichtbar; Seltenes liegt in Menüs und Pop-ups.
+  - Tippziele sind mindestens 40 px groß, und keine Seite ist breiter als der Bildschirm.
+  - Am Bildschirm gelten dieselben Muster dort, wo sie Platz und Klicks sparen: Beleg-Editor, festgeschriebene Belege, Kosten, Lager, Kontenplan, Einstellungen.
+- **Heute:**
+  - **Fehler (unabhängig vom Schalter):**
+    1. **Seitenüberlauf:**
+       - Ursache: Die Spalten von `.cols` (Z. 130 `1fr 340px`, mobil `1fr!important` Z. 159) haben kein `min-width:0` und nehmen deshalb die Mindestbreite breiter Tabellen an. Tabellen in Karten haben meist keinen eigenen Bildlauf.
+       - Handy: 8 Ansichten sind breiter als 390 px, nämlich Überblick 469, Rechnung mit Zahlungen 415, Zu verrechnen 668, Auftrag 541, Laufende Kosten 434, Artikel 540, Export 415 und Einstellungen 469 px.
+       - Folge: Der Browser verkleinert die ganze Seite auf 58–94 %. Pop-ups werden abgeschnitten, z. B. „Anlegen“ in „Neuer Kunde“ im Überblick oder „Lagerplatz wählen“ im Artikel.
+       - Bildschirm: Das Angebot ist bei 1400 px 1457 px breit, die Summenspalte ist um 57 px abgeschnitten. Bei 1024 px ist es 1103 px breit.
+    2. **Abgeschnittene Reiter:** `.seg{overflow:hidden}` (Z. 21). Am Handy sind folgende Reiter nicht erreichbar:
+       - FiBu (Z. 2729): UVA (teilweise), GuV, Bilanz, Kontenplan und Einstellungen;
+       - K-Blatt (Z. 2198): K4, K5, K6 und „Vergleich / Prüfung“.
+    3. **Leiste „Ungespeicherte Änderungen“** (`#dirtybar`, Z. 53/56): Bei 390 px ragt „Speichern“ rechts aus der Leiste.
+    4. **Schmale Felder:** `.row>label.w05` (Z. 118) ist spezifischer als die Mobil-Regel `.row>label` (Z. 157). Am Handy stehen deshalb drei schmale Felder je Zeile, und Datumswerte werden abgeschnitten („10/10/202…“).
+    5. **Liste „Zuletzt“** (`zuletztPop()`, Z. 1132): Sie hat keine Höhenbegrenzung. Bei 900 px Fensterhöhe sind das Listenende und „Liste leeren“ nicht erreichbar.
+  - **Überladung am Handy:**
+    - **Angebot-Entwurf** (3 Gruppen, 12 Positionen):
+      - Höhe 5867 px, das sind 7 Bildschirme (bei 360 × 740 px 8,1).
+      - 235 Bedienelemente, davon 223 kleiner als 40 px.
+      - Die erste Position steht bei y = 906, die Summen erst bei y = 5207.
+      - Die Kopfleiste hat 9–14 Aktionen in 4–6 Zeilen, „Löschen“ steht gleichrangig neben „Duplizieren“.
+      - Jede Position braucht 250–290 px mit 12 Feldern und 5 Knöpfen; leere „Langtext …“-Felder sind immer sichtbar.
+    - **Festgeschriebene Belege** erscheinen als Formular mit 66–112 gesperrten Feldern. Die Zahlungserfassung einer offenen Rechnung liegt bei y = 2605, unter allen Positionen.
+    - **Belegliste:** Vor dem ersten Beleg stehen ca. 600 px Bedienelemente (9 Neu-Knöpfe, 11 Typ-Chips, 4 Auswahllisten, Suche). Den Status sieht man nur durch Wischen.
+    - **Weitere Listen:** In Kontakten sind die Offenen Posten verdeckt, in Artikeln Preise und Bestand, in Zeiten die Stunden, in Laufenden Kosten der Knopf „Buchen“. Im Lager steht je Zeile eine unlesbare Lagerplatz-Auswahl.
+    - **Einstellungen:** 10,7 Handy-Bildschirme, jeder Schalter mit langem Hilfetext.
+    - **Tippziele:** `button.s` 23 px (✕, ↑↓, ⚙, „Buchen“, „+ Zeile“), Positionsfelder 25–27 px, Chips 29 px, Links in Statuszeile und Kartenköpfen 15–17 px, Artikel-Häkchen 13 px.
+  - **Bildschirm:**
+    - Listen und Auswertungen sind gut bedienbar.
+    - Überladen sind:
+      - der Beleg-Editor in Eingabe und Beides: Einheit zeigt „S“, USt „20 ⁰“, das EK-Feld ist 25 px breit, die Summen scrollen weg;
+      - festgeschriebene Belege;
+      - Laufende Kosten mit 37 Fälligkeiten untereinander;
+      - Lager, LV-Positionen und Kontenplan;
+      - Einstellungen mit 5,7 Bildschirmen.
+    - Die Ansicht „Beides“ ist bei 1024 px nicht bedienbar (linke Spalte 377 px), weil `ansicht()` (Z. 1364) erst unter 1000 px umschaltet.
+- **Grundsätze:**
+  - **Schalter:**
+    - `erw.kompakt` (Standard ein) gilt für alle Ansichten (U7).
+    - `erw.kompaktBeleg` (Standard ein) gilt für den Beleg-Editor (U8) und wirkt nur zusammen mit `erw.kompakt`.
+    - Paket `'Ansicht (P30)'`: Die Karte „Erweiterungen“ ordnet es nach P19 ein. Die Einträge stehen an eigenen Stellen in `ERW`.
+  - **CSS:**
+    - `render()` setzt `document.body.classList.toggle('kompakt',erw('kompakt'))`, wie bei `navkl` und `zlaus`.
+    - Regeln, die bestehende Elemente anders darstellen, stehen nur unter `body.kompakt …`:
+      - für das Handy in `@media(max-width:760px)`;
+      - für Touch-Geräte (Tablet) in `@media(pointer:coarse)`;
+      - für alle Breiten ohne Media Query.
+    - Neue Bausteine bekommen eigene Klassen (`.kk`, `.akk`, `.ih`, `.aktl`, `.mehr`). Deren Regeln wirken nur dort, wo das neue Markup erzeugt wird.
+    - Jeder Commit hat einen eigenen CSS-Block mit dem Kommentar `/* Kompakt (P30) … */`.
+  - **JS:**
+    - Verzweigt wird nur über `kmp()` = `erw('kompakt')` und `kmpH()` = `kmp()&&HANDY.matches`, mit `const HANDY=matchMedia('(max-width:760px)')` (dieselbe Grenze wie im CSS). Im Beleg kommt `erw('kompaktBeleg')` dazu.
+    - Wechselt die Breite über die Grenze (Handy gedreht, Fenstergröße geändert), zeichnet ein `change`-Listener auf `HANDY` neu (`render()`, nicht bei offenem `.modal`).
+  - **Ohne Schalter bleibt das HTML gleich:** Mit `erw.kompakt=false` liefern alle Ansichten dasselbe `#main.innerHTML` wie vorher. Es wirken nur die Fehlerbehebungen, und die sind reines CSS.
+  - **Nur Darstellung:**
+    - Es gibt keine neuen Datenfelder.
+    - Unverändert bleiben `docHTML()`, `summen()`, `vorschauSeiten()`, `drucken()`, `pdfAusBeleg()`, `persist()`/`commit()`, `merge3()` und der Verlauf.
+    - Alle Aktionen laufen über vorhandene `ACT`-Einträge, über `onPos()`/`onHead()` und über die Setter im `change`-Handler. Damit bleiben Rechenwege und Rückgängig-Schritte gleich.
+    - Zustände je Gerät liegen nur im localStorage, gelesen und geschrieben über `lsGet`/`lsSet`: `erp-akk` (geöffnete Abschnitte).
+  - **Neue `ACT`-Schlüssel** (geprüft, noch nicht vergeben, auch nicht in `ACT_LV`, `ACT_LB`, `ACT_FB`): `menue`, `fweg`, `pneu`, `pbear`, `kopfd`, `zpop`, `sumpop`, `lgpop`, `plt`. Vor jedem Commit wird auf doppelte Schlüssel geprüft.
+- **Bausteine (wiederverwendbar):**
+  - **B1 ⋯-Menü** `menuePop(btn,eintraege)`:
+    - Vorbild ist `zuletztPop()`: `.pop`, geschlossen wird über `closePop()`, Esc und Klick daneben.
+    - Einträge `{l,ic,act,d:{…},value,dis,titel,gefahr,trenn,sub,datei:{id,accept}}`:
+      - Normale Einträge werden Knöpfe mit `data-act` und rufen vorhandene Aktionen auf.
+      - `sub` ergibt ein Untermenü, z. B. „Folgebeleg ▸“ mit `<button data-act="folge" value="AB">` statt einer Auswahlliste.
+      - `datei` ergibt `<label class="btn"><input type="file" id="lsscan" …>`. Der `change`-Handler (Z. 4075) erkennt die IDs `lsscan`/`erfoto`/`bescan` schon. Die IDs bleiben eindeutig, weil die Knöpfe in kompakt nur im Menü stehen. Das Menü schließt erst nach der Dateiauswahl (wegen iOS).
+      - Gefährliche Einträge (Löschen, Stornieren) stehen abgesetzt am Ende, in Rot.
+    - Die Menüs werden je Ansicht als `MENUE.<name>=…` direkt neben der Ansicht definiert. Auslöser: `<button class="mehr" data-act="menue" data-m="beleg">⋯</button>`, 40 × 40 px.
+    - Breite `min(320px, clientWidth − 16)` über `document.documentElement.clientWidth`. Am Handy erscheint das Menü als Blatt am unteren Rand.
+    - In kompakt liegt `.pop` über `.modal` (z-index). So sind Menüs und Preisverlauf auch aus einem Pop-up heraus sichtbar.
+  - **B2 Dialoge als Blatt von unten** (nur CSS, kein HTML wird geändert):
+    - Am Handy gilt `.modal{align-items:flex-end;padding:0}` und `.mbox{max-width:none;max-height:92dvh;overflow:auto;border-radius:12px 12px 0 0}`. Die Inline-Höhe aus `formDialog({scroll})` wird dabei übersteuert.
+    - In allen Breiten sind Titel (`.mbox>h2:first-child`) und Knopfleiste (`.mbox>.bar:last-child`) `position:sticky`. „OK“ bzw. „Übernehmen“ ist damit immer sichtbar.
+    - Das wirkt auf `dialog()`, `formDialog()` (und damit `kontaktPopup()`, `artikelPopup()`, `kostenDialog()`, `druckDialog()`), `frageSpeichern()`, `posArtikelPopup()`, `spaltenDialog()`, `dupFrage()`, `baumWahl()` und `lagerMatrix()`. Je Dialog ist zu prüfen, ob die Knopfleiste das letzte `.bar` der `.mbox` ist.
+    - `formDialog()` bekommt in kompakt:
+      - den Feldtyp `'abschnitt'` (`{typ:'abschnitt',l,zu}`): ohne kompakt wie heute eine fette Hinweiszeile, mit kompakt der Beginn eines zuklappbaren Abschnitts;
+      - `info` hinter ⓘ (siehe B6);
+      - Häkchen als Zeile „☐ Titel“;
+      - die Feldoption `im` für `inputmode`: `numeric` für PLZ und Zahlungsziel, `decimal` für Beträge; als `type` `tel` bzw. `email`.
+  - **B3 Karten statt Tabellen:**
+    - `karte({t,s,u,z,b})` liefert ein `<div class="kk">`:
+      - Zeile 1: Titel `t` fett links, Status bzw. Tag `s` rechts;
+      - Zeile 2: Unterzeile `u` grau, einzeilig gekürzt;
+      - Zeile 3: Zusatz `z` klein links, Betrag `b` fett rechts.
+    - `tabelle()` (Z. 2788) bekommt am Handy einen Kartenmodus:
+      - Spalten erhalten optional `m:'t'|'s'|'u'|'z'|'b'`. Mehrere Spalten mit demselben Platz werden mit „ · “ verbunden.
+      - Optional `mf(r)` für eine eigene Kartendarstellung, z. B. die Nummer ohne die Unterzeile „AN · Datum“.
+      - Je Zeile wird eine Zelle `td.kk` mit der Karte erzeugt, unabhängig von der Spaltenauswahl.
+      - `zeile` (Tippziel), `vor`, `nach`, `zwischen` und `fuss` (Summenzeile) bleiben erhalten.
+      - Kopfzeile und ⚙ entfallen am Handy; die Spaltenauswahl bleibt am Bildschirm.
+      - Ohne `m`-Angaben bleibt es eine Tabelle mit Bildlauf.
+    - `karte()` dient auch für Listen ohne `tabelle()`: Überblick, Belege im Kontakt und im Auftrag, Zahlungen, Fälligkeiten, Verrechnung, Journal, Protokoll.
+    - Die ganze Karte ist das Tippziel (mindestens 48 px hoch). Das Löschen-✕ steht nie in der Karte, sondern im ⋯ bzw. im Bearbeiten-Pop-up.
+  - **B4 Filter-Pop-up:**
+    - Am Handy ersetzt der Knopf „Filter (n) ▾“ neben dem Suchfeld die Auswahllisten und Chips.
+    - Er öffnet `formDialog()` (siehe B2) mit den bisherigen Filtern als Feldern: z. B. Belegart, Jahr, Quartal, Monat, Status; Gruppe über `baumWahl`; deaktivierte Artikel.
+    - „Anzeigen“ schreibt die `UI`-Schlüssel und zeichnet neu, „Zurücksetzen“ leert sie.
+    - Über der Liste stehen die aktiven Filter als Chips mit ✕ (`ACT.fweg`, `data-f` = `UI`-Schlüssel).
+    - Suchfeld und Live-Suche bleiben unverändert, ebenso die `UI`-Schlüssel.
+  - **B5 Akkordeon** `akk(id,titel,inhalt,{offen,zusatz})` erzeugt `<details class="akk" data-akk="id"><summary>…</summary>…</details>`:
+    - Der Zustand gilt je Gerät (`erp-akk`, Liste der geöffneten IDs). Er wird beim Zeichnen gelesen und über einen `toggle`-Listener in der Capture-Phase geschrieben, denn `toggle` steigt nicht auf.
+    - So übersteht er auch das Neuzeichnen einzelner Teile, z. B. `dpSetzen()` → `dpKarte()`.
+    - Die Kopfzeile zeigt eine Zusammenfassung, z. B. „Zahlungsbedingungen · 14 Tage · 2 % Skonto 10 Tage“.
+    - Ohne kompakt wird nur der Inhalt ausgegeben, wie bisher.
+  - **B6 ⓘ-Hilfe** `hilfe(text)`: Lange Erklärtexte stehen in kompakt als `<details class="ih"><summary>ⓘ</summary>…</details>` hinter dem Titel; ohne kompakt bleibt der Text wie bisher. Betroffen sind `p.mut` in Kosten, Aufträgen, Verrechnung, K-Blättern, Einstellungen und Erweiterungen sowie die Texte unter den Feldern der Druckoptionen.
+  - **B7 Kennzahlen** (nur CSS):
+    - Am Handy wird `.grid` mit `.kpi` zweispaltig (`repeat(2,minmax(0,1fr))`, Wert 17 px, Zusatzzeile einzeilig gekürzt). Das spart im Überblick ca. 400 px.
+    - Am Bildschirm `minmax(170px,1fr)` mit weniger Innenabstand: 7 Kacheln passen bei 1400 px in eine Zeile.
+  - **B8 Aktionsleiste unten** `.aktl` (U8):
+    - Links steht die Summe; Tippen öffnet ein Pop-up mit `sumBox()` und `kalkBox()`. Rechts steht die Hauptaktion.
+    - Am Handy sitzt sie fest am unteren Rand. Ist `#dirtybar` sichtbar, rückt sie darüber (`body:has(#dirtybar) .aktl`), und `main` bekommt unten den nötigen Abstand.
+    - Später lässt sie sich auch in der Zeiterfassung nutzen („Erfassen“).
+  - **B9 Bearbeiten-Pop-up mit Live-Feldern** `livePop(titel,inhalt,{verwerfen})`:
+    - Ein `.modal`, dessen Felder dieselben Attribute tragen wie die bisherigen Formulare: `data-p`/`data-f`, `data-h`, `data-o`/`data-i`, `data-ed`.
+    - Der vorhandene `change`-Handler bzw. `edUebernehmen()` schreibt die Werte: `onPos()`, `onHead()` und die Setter `case'st'`, `'tf'`, `'nk'`, `'tx'`, `'k'`, `'al'`, `'fbk'`, `'path'`. Es gibt also keine doppelte Logik, und jede Änderung ist ein `persist()`-Schritt (Strg+Z).
+    - Nach jeder Änderung zeichnet das Pop-up seinen Inhalt neu, und zwar nach dem globalen Handler (`setTimeout 0`); der Fokus bleibt im Pop-up. `render()` schließt kein `.modal`.
+    - Knöpfe:
+      - „Fertig“;
+      - optional „Änderungen verwerfen“: stellt den beim Öffnen gemerkten Stand in einem `persist()`-Schritt wieder her.
+    - Danach folgt `render()`.
+  - **Tippziele, Abstände, Schrift** (CSS in kompakt):
+    - Am Handy sind `button`, `.btn`, `select` und `input` (außer Häkchen) mindestens 40 px hoch, `button.s` mindestens 40 × 36 px. Häkchen 20 px, Chips 36 px, Abstand zwischen Symbolknöpfen mindestens 8 px.
+    - Kartenköpfe mit „→“ sind als ganze Zeile tippbar.
+    - `main` und `.card` haben 10 px Innenabstand, Karten 10 px Abstand zueinander.
+    - Die Eingabeschrift bleibt bei 16 px, sonst zoomt iOS.
+    - Auf Tablets (`pointer:coarse`) gelten ebenfalls 40 px; am Bildschirm mit Maus bleibt alles wie bisher.
+    - Die Seitenleiste bekommt bei niedriger Fensterhöhe geringere Abstände; bei 768 px ist heute der Speicherstatus abgeschnitten.
+  - **Kopfzeile einer Ansicht:** Titel links, rechts eine Hauptaktion und „⋯“ bzw. „+ Neu ▾“. Alles Seltene liegt im Menü: Löschen, Kopie, Verwaltung, Drucken bei Listen.
+- **Ansichten:** „Handy“ heißt bis 760 px. Die Spalte „Bildschirm“ nennt, was sich mit `erw.kompakt` auch am Desktop ändert; alles andere bleibt dort wie bisher. Den Beleg beschreibt der folgende Abschnitt.
+
+| Ansicht | Handy | Bildschirm | Funktionen |
+|---|---|---|---|
+| Überblick | Schnellknöpfe in einer Zeile: „+ Neu ▾“ (Angebot, Lieferschein, Rechnung, weitere Belegarten), „📷 Einlesen ▾“ (Lieferschein, Eingangsrechnung, Lieferantenangebot), „⏱ Zeit“. Kennzahlen zweispaltig. Leere Listen zu einer Zeile zusammengefasst („Nichts überfällig · keine fälligen Eingangsrechnungen“). Listen als Karten | Einlesen als ein Menü, dadurch 5 Schnellknöpfe in einer Zeile; Kennzahlen in einer Zeile | `V.dash`, `liste()`, `MENUE.neu`, `MENUE.einlesen` |
+| Verkauf, Einkauf | „+ Neu ▾“ (Belegarten mit Piktogramm, „RE aus LS …“) und im Einkauf „📷 Einlesen ▾“ neben der Überschrift. Suche und Filter-Pop-up (Belegart, Jahr, Quartal, Monat, Status), aktive Filter als Chips. Karten: Nummer bzw. „Entwurf“ mit Status; Kunde · Betreff; Datum · Art links, Brutto/Offen rechts. Gruppen-Knopf „+2“ und Projektname als 40-px-Ziele | „Neu:“-Reihe als „+ Neu ▾“, Typ-Chips einzeilig, Nummer ohne Zeilenumbruch | `V.belege`, `tabelle()`, `grpAuf()`, `projektName()` |
+| Kunden & Lieferanten | Chips bleiben (36 px hoch), „+ Neu ▾“ (Kunde, Lieferant). Karten: Name; Nr. · PLZ Ort; Tags Kunde/Lieferant/Privat; Offene Posten rechts als „Forderung“ bzw. „Verbindlichkeit“ | Chips, Suche und Knöpfe in einer Zeile | `V.kontakte` |
+| Kontakt | Visitenkarte statt Formular: Adresse, 📞 `tel:`-Link, ✉ `mailto:`-Link, UID, Konditionen in einer Zeile. „✎ Bearbeiten“ öffnet das bisherige Formular als Live-Pop-up (B9, Setter `'k'`, samt Prüfung der Nummer). Sichtbar bleiben „+ Angebot/+ Rechnung“ bzw. „+ Bestellung/+ Eingangsrechnung“, „Löschen“ liegt im ⋯. Belege als Karten, darüber die Summe offener Posten | gleich wie am Handy | `V.kontakt` |
+| Artikel | Karten: Nr. und Bezeichnung; Gruppe · Lagerplatz · Bestand; VK rechts (EK klein). Filter-Pop-up (Gruppe, deaktivierte). Im ⋯: „Gruppen verwalten“ und „Auswählen“; Mehrfachauswahl nur in diesem Modus, mit den Aktionen Gruppe zuordnen, Deaktivieren und Löschen in einer Leiste unten | Gruppe nur mit der letzten Ebene (ganzer Pfad als `title`), Häkchen-Zelle als 32-px-Ziel | `V.artikel` |
+| Artikel-Detail | Abschnitte als Akkordeon: Stammdaten (offen); Preise (EK, HK, VK, Aufschlag, VK-Vorschlag); Lager (Bestand, Ø-EK und Lagerwert als Text statt gesperrter Felder). Lieferanten als Karten mit ✎-Pop-up (B9, Setter `'al'`) und „+ Lieferant“. „Löschen“ im ⋯ | Akkordeon; Lieferanten-Tabelle bleibt | `artikelEdit()` |
+| Lager | „± Bestand buchen …“ öffnet ein Pop-up mit den bisherigen Feldern und IDs (`lg-…`), gebucht wird unverändert über `ACT.lgbook`; aus einer Karte heraus mit vorbelegtem Artikel. Karten: Artikel, Lagerplatz als Text, Bestand und Einheit rechts (rot unter Mindestbestand). Lagerplatz ändern über ⋯ → `baumWahl('lp',…)` statt einer Auswahlliste je Zeile. Lagerwert gesamt als Kennzahl. Bewegungen als Akkordeon (zu, 20 Einträge + „mehr“). Filter-Pop-up; „Lagerplätze …“ und „▦ Matrix …“ im ⋯ | Korrektur als Pop-up-Knopf, Lagerplatz als Text mit ✎, Bewegungen als Akkordeon | `V.lager` |
+| Zeiterfassung | Das Formular bleibt, denn es ist die typische Handy-Aufgabe. Stunden in voller Breite mit Schnellwahl 0,5/1/2/4/8 h, Auftrag kurz (Nr. · Kunde). Liste nach Tag gruppiert als Karten („Tarif · 6 h · Tätigkeit“, Auftrag kurz, Status). Löschen im ⋯ | Auftrag kurz, voller Text als `title` | `V.zeiten` |
+| Laufende Kosten | Kennzahlen zweispaltig, Erklärtext hinter ⓘ. „Fällig & demnächst“ als Karten mit sichtbarem Knopf „Buchen“ (40 px), überfällige rot. „Abgaben & Löhne“ als Menü „Buchungshilfen ▾“ (Lohnbuchung, USt-Zahllast, Zahlung Abgaben), die Salden als Akkordeon. Register als Akkordeon je Kategorie (Kopf: Kategorie · € je Monat), Positionen als Karten; Tippen öffnet `kostenDialog()`, Löschen im ⋯. Jahresübersicht als Akkordeon | Abschnitte als Akkordeon („Fällig“ offen), Fälligkeiten je Kostenposition zusammengefasst (Einzeltermine aufklappbar) | `V.kosten` |
+| Zu verrechnen | Je Auftrag eine Karte; Kopf: Auftrag · Kunde mit „→ Rechnung erstellen“. Darunter je Wareneingang eine Zwischenzeile (Lieferant · LS-Nr.) und die Positionen als Zeilen („Art.-Nr. Bezeichnung · 25 m offen · 172,50 €“). „nicht verrechnen“ im ⋯, Erklärtext hinter ⓘ | Zwischenzeile je Wareneingang statt eigener Spalte | `V.verrechnung` |
+| Aufträge, Auftrag | Karten: Nr. mit Phase; Kunde · Betreff; DB II Vorkalkulation/Ist als Tags. Im Auftrag: Kennzahlen 2 × 2 (Umsatz, Herstellkosten, DB II Vorkalkulation, DB II Ist), Belege und Stunden als Karten (ohne Spalte Partner). Hauptknopf „Zeiten abrechnen“, „+ Bestellung“ und „+ Eingangsrechnung“ im Menü „+ ▾“ | Erklärtext hinter ⓘ | `V.auftraege`, `V.auftrag` |
+| Auswertung | Abschnitte als Akkordeon: Umsatz & USt, Aufträge, Kunden & Artikel, Skonto, Offene Posten. Kennzahlen zweispaltig. Monate ohne Werte ausgeblendet (Umschalter „alle Monate“), Hinweise hinter ⓘ | gleich wie am Handy | `V.auswertung` |
+| LV, K-Blätter, Textbausteine | Listen als Karten. LV-Kopf als Zusammenfassung (Titel, Auftraggeber, Datum) im Akkordeon, Reiter direkt unter dem Titel. Reiter der K-Blätter umbrechend (Fehler 2). LV-Positionen als Karten mit Pop-up nach dem Muster aus U8 (optional, U8 Commit 7) | LV-Kopf nach dem Anlegen zugeklappt | `V.lvs`, `lvEdit()`, `V.kbs`, `V.lvbib` |
+| FiBu | Reiter umbrechend (Fehler 2). Journal als Karten: Datum und Beleg, Text, „Soll an Haben“, Betrag rechts. Kontenplan als Leseliste mit Suche; Tippen öffnet ein ✎-Pop-up (B9, Setter `'fbk'`), gelöscht wird nur dort (`fbkdel`) | Kontenplan als Leseliste je Kontenklasse (Akkordeon) mit ✎-Pop-up | `V.fibu`, `ACT_FB` |
+| Export | Protokoll als Akkordeon (zu, 20 Einträge + „mehr“) mit Karten. Ein leerer Papierkorb braucht nur eine Zeile | gleich wie am Handy | `V.export` |
+| Einstellungen | Akkordeon je Abschnitt (Firma, Belege einlesen, Kaufmännisch, Steuersätze, Stundentarife, Nummernkreise & Texte, Erweiterungen, Druck & Belegdarstellung), Zustand je Gerät. Steuersätze, Tarife und Nummernkreise als Karten mit ✎-Pop-up (B9; Setter `'st'` samt `stGesperrt()`, `'tf'`, `'nk'`, `'tx'`; Kopf- und Fußtext als volle Textfelder). Erweiterungen: je Schalter eine Zeile „☐ Titel (Standard: ein)“, Hilfetext hinter ⓘ, Paket als Akkordeon (offen, wenn es vom Standard abweicht), „Standard wiederherstellen“ im Paketkopf. Druckprofil je Gruppe als Akkordeon. Lange Texte (KI-Schlüssel) hinter ⓘ | Akkordeon und ⓘ ebenso; Tabellen bleiben, Kopf- und Fußtext der Nummernkreise über „Texte …“ (Pop-up) | `V.einstellungen`, `erwKarte()`, `dpKarte()` |
+| Pop-ups | Blatt von unten mit stets sichtbaren Knöpfen (B2). Druckoptionen mit den Gruppen (P2, P5 …) als Akkordeon und Hilfetexten hinter ⓘ. Kontakt- und Kostendialog mit zuklappbaren Abschnitten „Konditionen“ bzw. „Buchhaltung“. ▲▼ in der Spaltenauswahl als 40-px-Ziele | Knöpfe immer sichtbar, Abschnitte zuklappbar | `formDialog()`, `druckDialog()`, `kontaktPopup()`, `kostenDialog()`, `spaltenDialog()` |
+
+- **Beleg-Editor (U8, `erw.kompaktBeleg`):**
+  - **Kopfleiste** (`kopfbar`, Z. 1290):
+    - Titel und Status stehen in einer Zeile. Darunter folgen Eingabe | Vorschau, eine Hauptaktion und „⋯“.
+    - Die Hauptaktion hängt vom Zustand ab:
+      - Entwurf: „Festschreiben …“;
+      - offene Rechnung: „💶 Zahlung erfassen …“;
+      - festgeschriebenes AN, AB, LS oder PR: der nächste Folgebeleg („→ Auftragsbestätigung“ bzw. „→ Rechnung“);
+      - sonst „PDF / Drucken“.
+    - `MENUE.beleg` enthält:
+      - PDF / Drucken, PDF speichern, Senden … (nicht bei WE und ER);
+      - → Rechnung, Folgebeleg ▸, Sammelrechnung … (bei LS);
+      - „Spalten & Druck …“: ein Live-Pop-up mit den bisherigen `data-h`-Häkchen Rabatt, Lohn / Sonstiges und Langtext drucken, dazu „Druckoptionen …“;
+      - Duplizieren;
+      - beim festgeschriebenen Angebot „Neue Revision bearbeiten“ (`anrev`), „Folgeangebot“, „abgelehnt“ bzw. „wieder offen“;
+      - „Wieder öffnen“ (`reopen`, anders beschriftet als die Revision);
+      - abgesetzt am Ende „Löschen“ bzw. „Stornieren“.
+    - Am Bildschirm sind zusätzlich „PDF / Drucken“ und „→ Rechnung“ sichtbar, der Rest liegt im ⋯. Die Leiste passt so auch bei 1024 px in eine Zeile.
+  - **Kopfdaten** (`formHTML`, Z. 1304):
+    - **Handy:**
+      - Eine Zusammenfassung in drei Zeilen: Kunde · Ort (mit Hinweis „fehlt: …“); Datum · Gültig bis bzw. Liefertermin; Betreff · Bezug.
+      - „✎“ öffnet das Live-Pop-up „Kopfdaten“ (`ACT.kopfd`) mit denselben Feldern (`data-h`). Dazu werden die Felder in die Hilfsfunktion `kopfFelder(b)` ausgelagert; ohne Schalter bleibt das HTML byte-gleich.
+      - Ein neuer Beleg ohne Kunde zeigt das Formular offen, wie bisher.
+      - „Zahlungsbedingungen“ und „Kopf-/Fußtext“ stehen als Akkordeon (zu) mit Zusammenfassung. Kopf- und Fußtext stehen untereinander in voller Breite.
+    - **Bildschirm:** Kunde, Datum, Gültig bis, Betreff und Bezug bleiben als Formular; Zahlungsbedingungen und Kopf-/Fußtext werden zum Akkordeon.
+    - Die Leiste „Spalten einblenden …“ (Z. 1330) entfällt in kompakt (stattdessen ⋯ → „Spalten & Druck …“), bei festgeschriebenen Belegen ganz.
+  - **Positionen am Handy** (Z. 1260–1285):
+    - **Karten** (ca. 56–64 px hoch):
+      - Pos-Nr. und Bezeichnung fett, GP rechts (bei Pauschalgruppen in Klammern).
+      - Darunter „40 Stk × 189,00“, bei Rabatt „− 10 %“, bei Lohn/Sonstiges „L 12,00 + S 30,00“.
+      - Tags: Option/Alternative (über `effKz`), Art Leistung/Fremdleistung, USt nur bei Abweichung vom Standard, im Einkauf „Lief.: …“.
+      - Der Langtext steht einzeilig gekürzt darunter.
+    - **Pop-up „Position bearbeiten“** (Live-Pop-up `posPopup(b,i)`, `ACT.pbear`), geöffnet durch Tippen auf die Karte:
+      - alle Felder der Zeile: Art, Artikel (mit Vorschlägen aus `dl-art`), Bezeichnung, Langtext (`.rte` mit `data-ed`), Menge, Einheit, EP bzw. Lohn/Sonstiges, Rabatt, USt, EK, Kz;
+      - GP live (`id="gp<i>"`, `updateCalc()` aktualisiert es);
+      - Knöpfe Preisverlauf, „Artikel ✎“ (`posArtikelPopup()`) bzw. „+A“, Löschen.
+    - Im ⋯ der Karte: Nach oben/unten, Preisverlauf, Artikel ✎, Löschen.
+    - **Gruppen** stehen als Akkordeon-Kopf: Nr., Bezeichnung und Gruppensumme, dazu Tags Pauschal, Einzelpreise ausgeblendet, Option. Tippen auf den Titel öffnet das Gruppen-Pop-up mit Bezeichnung, Gruppentext, „Einzelpreise ausblenden“, Pauschalpreis, USt und Kz.
+    - **Textpositionen** erscheinen als Karte mit gekürztem Text.
+    - **„+ Position ▾“** (Ware, Leistung, Fremdleistung, Gruppe, Text, Stunden aus Zeiterfassung) läuft über `ACT.pneu`: Es ruft `ACT.padd` auf und öffnet das Pop-up der neuen Position.
+    - Erwartete Wirkung: Der Positionsteil schrumpft von ca. 3900 auf ca. 900 px.
+  - **Positionen am Bildschirm:**
+    - Eine Zeile je Position: Pos | Art.-Nr. | Bezeichnung | Menge | Einh. | EP (bzw. Lohn/Sonstiges) | (Rabatt) | GP | ✎ ⋯, mit denselben Eingabefeldern (`data-p`/`data-f`).
+    - Die Art steht als Kürzel im Pos-Feld, die USt nur bei Abweichung als Tag. EK und Kz stehen im Pop-up (✎ öffnet `posPopup`), ↑↓ € ✕ im ⋯.
+    - Leere Langtexte sind ausgeblendet; „+ Langtext“ über ✎ bzw. 📝 (`ACT.plt`).
+    - Das Gruppen-Häkchen „Einzelpreise ausblenden“ und der Gruppenpreis liegen im Gruppen-Pop-up, ein Pauschalpreis erscheint als Tag.
+    - Die Tabelle passt damit bei 1400 px ohne Bildlauf.
+    - In kompakt gilt „Beides“ erst ab 1280 px (`ansicht()`), darunter „Eingabe“.
+  - **Festgeschriebene Belege als Lese-Ansicht:**
+    - Kopfdaten als `dl.kv`-Zusammenfassung.
+    - Positionen am Handy als Karten, am Bildschirm als schlanke Tabelle ohne Eingabefelder (Pos, Bezeichnung + Langtext, Menge, Einh., EP, Rabatt, GP, USt).
+    - Keine gesperrten Felder, keine leeren Langtext-Kästen. Das ist nur Anzeige, die Sperre bleibt unverändert.
+  - **Zahlung:**
+    - Bei offener Rechnung steht oben eine Statuskarte „offen 1 007,33 € · fällig 23.10.2026 · Skonto 2 % bis 19.10.“ mit dem Knopf „💶 Zahlung erfassen …“. Derselbe Knopf ist Hauptaktion und steht in der Aktionsleiste.
+    - Das Pop-up (`ACT.zpop`) enthält die bisherigen Felder mit denselben IDs (`z-dat`, `z-bet`, `z-sk`, `z-art`, `z-not`, `z-skan`, `z-skinfo`). `zSkonto()` und `ACT.zadd` arbeiten deshalb unverändert, samt Periodensperre und Prüfung der Skontofrist. Das Pop-up schließt, sobald eine Zahlung gebucht ist.
+    - Die Zahlungen erscheinen als Karten („09.10.2026 · Bank · 1 510,99 € · Teilzahlung“), Löschen im ⋯ (`ACT.zdel`).
+    - Die Inline-Maske entfällt in kompakt, damit die IDs eindeutig bleiben.
+    - Die Eingangsrechnung bekommt dasselbe; dort steht zusätzlich der Original-Anhang oben.
+  - **Summe und Aktionsleiste** (B8):
+    - **Handy:**
+      - Links „netto 15 987,25 € Σ“. Tippen zeigt `sumBox()` und `kalkBox()` als Pop-up (`ACT.sumpop`); `updateCalc()` hält den Wert aktuell.
+      - Rechts „+ Position ▾“ (Entwurf), „💶 Zahlung“ (offene Rechnung) bzw. „PDF“.
+      - Die Statuszeile wird am Handy kürzer, ohne Brotkrumen und ohne Netto.
+    - **Bildschirm:** Die rechte Spalte (Summen, Kalkulation) ist ab 1100 px `position:sticky`, mit eigener Höhe und Bildlauf wie `.split .sticky`.
+  - **Beleg-Info:**
+    - Am Handy stehen Anhänge, Belegkette, Versand und Revisionen im Akkordeon „Beleg-Info“ (zu; bei ER sind die Anhänge offen).
+    - Die Karte „Kunde“ entfällt am Handy, weil der Kunde in der Zusammenfassung steht.
+    - Am Bildschirm wandern die Anhänge in die rechte Spalte.
+  - **Vorschau:**
+    - Am Handy ist sie nur zum Lesen da: `docHTML(b,vEdit())`, wobei `vEdit()` bei `kmpH()&&erw('kompaktBeleg')` false liefert. Das gilt auch in `updateCalc()`. Im Blatt mit 45 % Größe stehen dann keine gestrichelten Felder mehr, und der Hinweistext entfällt.
+    - Bearbeitet wird in der Eingabe bzw. im Positions-Pop-up.
+    - „Druckformat …“ wandert ins ⋯.
+    - Pinch-Zoom ist erlaubt (`viewport` ohne `user-scalable=no`).
+    - P21 erweitert `vEdit()` später um den Schalter „Änderungsmodus“ (`erp-vEdit`).
+- **Umsetzung in zwei Einheiten:** je Commit ein Teil, Präfix „Kompakt: …“.
+  - **U7 „Grundmuster & Überlauf“** (Aufwand L, ca. 3–4 Tage), in dieser Reihenfolge:
+    1. „Kompakt: Fehlerbehebung Seitenüberlauf, Reiter, Leiste ‚Ungespeichert‘, schmale Felder“. Nur CSS, ohne Schalter, weil es Fehler behebt:
+       - `.cols{grid-template-columns:minmax(0,1fr) 340px}` und `.cols>*{min-width:0}`; das gilt auch für das Inline-Raster im Überblick;
+       - Tabellen in Karten mit waagrechtem Bildlauf: `.card{overflow-x:auto}` bis 1100 px als Sicherheitsnetz (`.pop` und `.modal` hängen am `body` und sind nicht betroffen);
+       - am Handy `.seg{flex-wrap:wrap}` und `#dirtybar{flex-wrap:wrap}`;
+       - am Handy `.row>label.w05` wie `.row>label`, also zwei Felder je Zeile;
+       - `.pop.zlpop` mit begrenzter Höhe und Bildlauf.
+
+       Prüfung: `scrollWidth = innerWidth` in allen Ansichten bei 360, 390, 1024 und 1400 px.
+    2. „Kompakt: Schalter erw.kompakt und Grundbausteine“: ERW-Eintrag, `body.kompakt`, `kmp()`/`kmpH()`/`HANDY`, B1 (`menuePop`, `MENUE`, `ACT.menue`), B2 samt den Ergänzungen in `formDialog()`, B3 `karte()` mit CSS, B5 `akk()`, B6 `hilfe()`, B7 (Kennzahlen), B9 `livePop()`, Tippziele und Abstände. Sichtbar ändern sich dadurch nur Dialoge, Kennzahlen und Tippziele.
+    3. „Kompakt: Listen als Karten“: Kartenmodus in `tabelle()` mit `m`-Angaben in allen 8 Aufrufen (Verkauf/Einkauf, Aufträge, Zeiten, Kontakte, Artikel, Lager, K-Blätter, LVs); `karte()` im Überblick, bei den Belegen im Kontakt, im Auftrag, in der Verrechnung, im Journal und im Protokoll.
+    4. „Kompakt: Neu-/Einlesen-Menüs und Filter-Pop-up“ für Überblick, Verkauf/Einkauf, Kontakte, Artikel und Lager (B4, `ACT.fweg`, „± Bestand buchen“ über `ACT.lgpop`).
+    5. „Kompakt: Kontakt, Artikel, Kosten, Verrechnung, Aufträge, Auswertung, FiBu, Export“: Visitenkarte, Akkordeons, ⓘ, Live-Pop-ups für Kontakt, Lieferanten und Konten. Bei Bedarf in zwei Commits teilen: Stammdaten und Kaufmännisch.
+    6. „Kompakt: Einstellungen als Akkordeon“: `V.einstellungen`, `erwKarte()`, `dpKarte()`, Karten mit Live-Pop-up für Steuersätze, Tarife und Nummernkreise. Der Dialog Druckoptionen bekommt Abschnitte: `druckDialog()` verwendet `typ:'abschnitt'` statt der fetten Hinweiszeile, was ohne kompakt gleich aussieht.
+    7. Doku: PFLICHTENHEFT (Abschnitt Erweiterungen), CLAUDE.md (Bausteine und Namen), dieser Vorschlag (Stand, Rücknahme-Reihenfolge).
+  - **U8 „Beleg-Editor“** (Aufwand L, ca. 3–4 Tage), setzt U7 Commit 2 voraus:
+    1. „Kompakt: Beleg – Schalter erw.kompaktBeleg, Kopfleiste mit Hauptaktion und ⋯-Menü“ (`MENUE.beleg`, Live-Pop-up „Spalten & Druck …“).
+    2. „Kompakt: Beleg – Kopfdaten als Zusammenfassung mit Pop-up“ (`kopfFelder(b)`, `ACT.kopfd`, Akkordeons für Zahlungsbedingungen und Texte).
+    3. „Kompakt: Beleg – Positionen am Handy als Karten mit Positions-Pop-up“ (`posKarte()`, `posPopup()`, Gruppen-Pop-up, `ACT.pbear`/`ACT.pneu`, `MENUE.pos`).
+    4. „Kompakt: Beleg – einzeilige Positionszeile am Bildschirm“ (✎ und ⋯, leere Langtexte, `ACT.plt`, Schwelle für „Beides“ in `ansicht()`).
+    5. „Kompakt: Beleg – Lese-Ansicht festgeschriebener Belege, Zahlung als Pop-up“ (`ACT.zpop`, Statuskarte, Zahlungen als Karten).
+    6. „Kompakt: Beleg – Aktionsleiste mit Summe, Beleg-Info, Vorschau zum Lesen“ (B8, `ACT.sumpop`, `vEdit()`; `updateCalc()` aktualisiert `#aktsum`; kürzere Statuszeile am Handy über `belegStatus()`).
+    7. Optional: „Kompakt: LV-Positionen als Karten mit Pop-up“ (`lvEdit()`, Setter `'path'`).
+    8. Doku.
+- **Passung der Stufe-2-Pakete:**
+  - **P3/P4 (Preise, Summen, Spalten, Positionsdarstellung):**
+    - Die Druckoptionen wirken nur in `docHTML()`; P30 berührt sie nicht.
+    - Neue Optionen erscheinen ohne eigene Gestaltung im Dialog „Druckoptionen“ und in `dpKarte()`. Beide sind in kompakt nach Gruppen (`DRUCKOPT.p`) als Akkordeon mit ⓘ-Hilfen aufgebaut, der Dialog über `typ:'abschnitt'`.
+    - Anteile im Editor: die Spalte „Rabatt/Zuschlag %“ (P4, `erw.zuschlag`), Nummern „1.1“ im Editor und die Spalten „Aufschl. %“/„DB %“ aus dem Rest von P11 (`b.optKalk`).
+      - Am Handy kommen sie in die Positionskarte (Zeile 2 bzw. Tag „DB 32 %“) und als Felder ins Positions-Pop-up.
+      - Am Bildschirm werden sie zusätzliche Spalten der einzeiligen Positionszeile.
+      - Das Häkchen dafür gehört in „Spalten & Druck …“.
+  - **P10 (Gesamtkalkulation):**
+    - Der Dialog `gesamtKalk(b)` wird als `.modal`/`.mbox` gebaut und bekommt dadurch das Blatt von unten und die stets sichtbaren Knöpfe (B2).
+    - Die Tabelle (Gesamt/Material/Fremdleistung/Lohn × 7 Spalten) wird am Handy als eine Karte je Kostenart dargestellt: EK, VK aktuell, Aufschlag neu in % ↔ €, VK neu. DB gesamt und DB II neu bleiben als Kopfzeile sichtbar.
+    - Auslöser:
+      - der Eintrag „Gesamtkalkulation …“ im ⋯ des Belegs;
+      - das Summen-Pop-up, dort auch „→ auf Ziel anheben …“ aus `kalkBox`.
+    - Bei festgeschriebenen Belegen ist der Eintrag ausgegraut, mit Hinweis auf die Revision.
+    - Der Rücknahme-Dialog (`b.kalkAlt`) nutzt `karte()` mit Häkchen.
+  - **P18 (Gliederung):**
+    - Am Handy übernimmt die Gruppenansicht der Positionskarten die Gliederung (Akkordeon mit Gruppensumme).
+    - Zusätzlich gibt es „☰ Gliederung“ im ⋯ bzw. in der Aktionsleiste, als Blatt mit Sprung zur Karte (`ACT.spring`).
+    - Die geplanten Attribute `data-pi`/`data-g` gelten auch für Karten und einzeilige Zeilen.
+    - Am Bildschirm bleibt es wie geplant (Spalte bzw. erste Karte).
+    - Den Auf-/Zuklapp-Zustand merkt sich `akk()` statt eines eigenen `erp-glZu`.
+  - **P20 (globale Suche):**
+    - Eine Lupe 🔍 steht in der `.topbar` neben 🕘 und in der Seitenleiste.
+    - Die Treffer erscheinen gruppiert als Karten (`karte()`), jede Gruppe aufklappbar (`akk()`).
+    - Das Eingabefeld steht oben fest; Strg+K und F3 bleiben.
+  - **Weitere Pakete:**
+    - P6 (Anrede, Titel, Namen): Abschnitt „Person & Anrede“ in `kontaktPopup()` und in der Visitenkarte.
+    - Positionsfelder aus P9, P13, P15 und P17 (`ohneLohnNw`, `zeit`, `ekL`, `tarif`, `formel`, `ergAus`): Abschnitt „Weitere“ im Positions-Pop-up.
+    - P12: die neuen Zeilen im Summen-Pop-up.
+    - P21 baut auf `vEdit()` auf.
+    - P22: Die geplanten Teile (Kopf, Positionen, Texte, Beleg-Info, Kalkulation) entsprechen den kompakten Abschnitten.
+    - P23 (Sortieren, Summenzeile): am Handy „Sortieren nach“ im Filter-Pop-up und `fuss` im Kartenmodus.
+    - P19 b (Pfeile) braucht Platz in der `.topbar`.
+- **Test und Abnahme** (zusätzlich zu Abschnitt 2 Nr. 7):
+  - **Messung** wie in der Analyse bei 360 × 740, 390 × 844 (Touch), 1024 × 768 und 1400 × 900 px: kein Seitenüberlauf; Lage der ersten Position, der Summe und der Hauptaktion; Tippziele.
+  - **Zielwerte** mit den Testdaten der Analyse:
+    - Angebot-Entwurf (12 Positionen) am Handy höchstens ca. 2,5 Bildschirme hoch, erste Position im ersten Bildschirm, Summe immer sichtbar;
+    - erster Beleg der Belegliste bei y ≤ 250;
+    - „Zahlung erfassen“ einer offenen Rechnung im ersten Bildschirm;
+    - Einstellungen zugeklappt höchstens 2 Bildschirme;
+    - am Handy alle sichtbaren Bedienelemente außer Textlinks mindestens 40 px.
+  - **Regression:**
+    - Mit `erw.kompakt=false` ist `#main.innerHTML` in allen Ansichten gleich wie vor U7; es wirkt nur das CSS der Fehlerbehebungen. Screenshots sind gleich, außer an den behobenen Stellen.
+    - `docHTML`, Vorschau-Seiten, PDF und Druck sind mit Standardeinstellungen in beiden Schalterstellungen gleich. Beabsichtigte Ausnahme: die Handy-Vorschau ohne gestrichelte Felder, ihr Inhalt entspricht `docHTML(b,false)`.
+  - **Rechenwege:**
+    - Änderungen über das Positions- und das Kopfdaten-Pop-up ergeben dieselben Summen, Folgebelege und Rückgängig-Schritte wie über die Tabelle.
+    - Eine Zahlung über das Pop-up wirkt wie über die bisherige Maske (Skonto, Periodensperre).
+  - Keine Konsolenfehler, keine doppelten `ACT`-Schlüssel, jeder Commit einzeln per `git revert` rücknehmbar (Reihenfolge unten).
+  - Offen: Test an echten Geräten (Android, iOS): Blatt von unten, Bildschirmtastatur, Dateiauswahl aus dem Menü.
+- **Schalter:**
+  - `erw.kompakt` = true (Entscheidung des Anwenders).
+  - `erw.kompaktBeleg` = true; wirkt nur zusammen mit `kompakt`.
+  - Die Fehlerbehebungen (U7 Commit 1) haben keinen Schalter.
+- **Datenmodell:** keines. Je Gerät wird nur `erp-akk` gespeichert (geöffnete Abschnitte).
+- **Nutzen** hoch (Bedienung am Handy, Übersicht am Bildschirm) · **Aufwand** U7 L und U8 L, je ca. 3–4 Tage (LV-Positionen optional M) · **Abhängig von:** – (nutzt `belegStatus()` aus P19 c; U8 setzt U7 Commit 2 voraus) · **Recht:**
+  - Festgeschriebene Belege bleiben unveränderbar; die Lese-Ansicht zeigt nur an (§ 11 UStG, § 131 BAO).
+  - Ausdruck, PDF und versendete Belege bleiben unverändert.
+  - Die Tippziele liegen über der Vorgabe von WCAG 2.2 AA (24 × 24 px).
+- **Rücknahme** (`git revert`):
+  - U7 Commit 1 lässt sich einzeln zurücknehmen.
+  - Die U8-Commits werden in umgekehrter Reihenfolge zurückgenommen, von 7 bis 1.
+  - U7 Commits 3–6 sind einzeln rücknehmbar, aber vor U7 Commit 2.
+  - U7 Commit 2 kommt erst nach allen U8-Commits dran.
+  - P19 c lässt sich erst zurücknehmen, wenn U8 Commit 6 zurückgenommen ist, weil dieser `belegStatus()` ändert.
+- **Einordnung:**
+  - Der Anwender wünscht das Paket, deshalb kommt es vor bzw. parallel zu Stufe 2: zuerst U7, dann U8.
+  - Pakete, die den Beleg-Editor ändern (P10, P18 und die Editor-Anteile von P4 und P11), möglichst nach U8 umsetzen. Dann nutzen sie gleich die Muster.
+
 ---
 
 ### Bereits vorhanden (kein eigenes Paket)

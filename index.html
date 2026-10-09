@@ -139,6 +139,11 @@ dl.kv dt{color:var(--mut)}dl.kv dd{margin:0;text-align:right;white-space:nowrap}
 dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
 .chain a{display:block;padding:2px 0;color:var(--acc);text-decoration:none}
 .chain a.cur{font-weight:700;color:var(--ink)}
+/* Kompakt (P30) Listen als Karten am Handy: .kkl = Liste mit einer Karte je Zeile (td.kkc), Zellen davor/danach (Gruppenknopf, ⋯) schmal; Überblick/Journal mit Karten direkt in der Karte */
+.kkl table{table-layout:auto}.kkl td{padding:0;border-bottom:1px solid var(--line);vertical-align:middle}.kkl td.kkc{width:100%;max-width:0}.kkf{display:flex;align-items:center}.kkf>.kk{flex:1;min-width:0}.kkvz{flex:none;padding-left:6px;white-space:nowrap}.kkl td:not(.kkc):not([colspan]){width:1%;white-space:nowrap;padding:0 4px}
+.kkl tr:last-child>td{border-bottom:0}.kkl tr.prjz td{padding:6px 12px}.kkl tr.kkv td{padding:4px 8px;background:#fafbfc}.kkl>.kk{border-top:1px solid var(--line)}.kkl>h2{margin:0;padding:10px 12px 4px}.kkl>h2+.kk{border-top:0}
+.kk[onclick]{cursor:pointer}.kk[onclick]:hover,.kkl tr.click:hover .kk{background:var(--acc2)}.qh{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.qh button{flex:1 1 0}
+body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{width:20px;height:20px;margin:6px}
 .hint{background:#fff8e6;border:1px solid #f3dca5;border-radius:6px;padding:8px 10px;margin-bottom:12px;font-size:13px}
 .bstat{font-size:13px;color:var(--mut);margin:-6px 0 12px;line-height:1.6}.bstat a{color:var(--acc);text-decoration:none}.bstat a:hover{text-decoration:underline}.bstat b{color:var(--ink)}.bstat .tag{margin-left:4px} /* Statuszeile im Beleg (P19 c) */
 .bstat.fix{position:sticky;z-index:25;background:var(--bg);margin:-6px -4px 12px;padding:4px;border-bottom:1px solid var(--line)}main:has(.bstat.fix) .split .sticky{top:48px;max-height:calc(100vh - 58px)}
@@ -1272,6 +1277,14 @@ V.dash=()=>{
   const beOffen=DB.belege.filter(b=>b.typ==='BE'&&b.fest&&!b.storno&&erledigung(b)<0.9999);
   const entw=DB.belege.filter(b=>!b.fest&&!b.storno),wv=zuVerrechnen().filter(x=>x.offen>0);
   const liste=(arr,f)=>arr.length?`<table>${arr.map(f).join('')}</table>`:'<p class="mut">keine</p>';
+  const dashK=()=>{const nb=b=>`onclick="nav('beleg/${b.id}')"`,L=[ // am Handy (P30): Listen als Karten, leere Listen zusammen in einer Zeile
+    [ueber,`<a href="javascript:void 0" onclick="zuListe('V','','ueber')">Überfällige Ausgangsrechnungen →</a>`,b=>karte({t:esc(b.nr),u:esc(kName(b.kontaktId)),z:'fällig '+dAT(faellig(b)),b:fmt(offen(b))+' €',a:nb(b)}),'nichts überfällig'],
+    [erUe,`<a href="javascript:void 0" onclick="zuListe('E','ER','offenRe')">Eingangsrechnungen fällig (7 Tage) →</a>`,b=>karte({t:esc(b.fremdNr||bNr(b)),u:esc(kName(b.kontaktId)),z:'fällig '+dAT(faellig(b)),b:fmt(offen(b))+' €',a:nb(b)}),'keine fälligen Eingangsrechnungen'],
+    [min,`<a href="javascript:void 0" onclick="nav('lager')">Unter Mindestbestand →</a>`,a=>karte({t:`${esc(a.nr)} ${esc(a.bez)}`,b:`${fmtQ(bestand(a.id).menge)} / ${fmtQ(a.minBestand)} ${esc(a.einheit)}`,a:`onclick="nav('artikel/${a.id}')"`}),'nichts unter Mindestbestand'],
+    [beOffen,`<a href="javascript:void 0" onclick="zuListe('E','BE','offen')">Offene Bestellungen →</a>`,b=>karte({t:esc(b.nr),s:statusTag(b),u:esc(kName(b.kontaktId)),z:b.liefertermin?'Liefertermin '+dAT(b.liefertermin):'',a:nb(b)}),'keine offenen Bestellungen'],
+    [entw,`Entwürfe <a href="javascript:void 0" onclick="zuListe('V','','entwurf')" style="font-weight:400;font-size:13px">Verkauf →</a> <a href="javascript:void 0" onclick="zuListe('E','','entwurf')" style="font-weight:400;font-size:13px">Einkauf →</a>`,b=>karte({t:`${BICON[b.typ]||''} ${T[b.typ].bez}`,u:[kName(b.kontaktId),b.betreff].filter(x=>x&&x!=='–').map(esc).join(' · '),z:dAT(b.datum),a:nb(b)}),'keine Entwürfe']];
+    const leer=L.filter(x=>!x[0].length).map(x=>x[3]);
+    return L.filter(x=>x[0].length).map(([arr,h,f])=>`<div class="card kkl" style="padding:0"><h2>${h}</h2>${arr.map(f).join('')}</div>`).join('')+(leer.length?`<div class="card mut">${leer.join(' · ').replace(/^./,c=>c.toUpperCase())}</div>`:'')};
   return`<h1>Überblick ${j}</h1>
   ${!S().firma.name?'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>':''}
   <div class="quick">
@@ -1290,13 +1303,13 @@ V.dash=()=>{
     <div class="kpi click" onclick="nav('verrechnung')">Noch zu verrechnen (EK)<b>${fmt(sum(wv,x=>x.offen*(+x.p.ep||+x.p.ek||0)))} €</b><span class="mut">${new Set(wv.map(x=>x.b.id)).size} Wareneingänge</span></div>
     <div class="kpi click" onclick="zuListe('V','AN','offen')" title="Offene Angebote im Verkauf">Offene Angebote<b>${fmt(sum(ang,b=>summen(b).netto))} €</b><span class="mut">${ang.length} Stück</span></div>
   </div>
-  <div class="cols" style="grid-template-columns:1fr 1fr">
+  ${kmpH()?dashK():`<div class="cols" style="grid-template-columns:1fr 1fr">
     <div class="card"><h2><a href="javascript:void 0" onclick="zuListe('V','','ueber')" title="Alle anzeigen">Überfällige Ausgangsrechnungen →</a></h2>${liste(ueber,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${b.nr}</td><td>${esc(kName(b.kontaktId))}</td><td>fällig ${dAT(faellig(b))}</td><td class="n">${fmt(offen(b))}</td></tr>`)}</div>
     <div class="card"><h2><a href="javascript:void 0" onclick="zuListe('E','ER','offenRe')" title="Alle anzeigen">Eingangsrechnungen fällig (7 Tage) →</a></h2>${liste(erUe,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${esc(b.fremdNr)}</td><td>${esc(kName(b.kontaktId))}</td><td>${dAT(faellig(b))}</td><td class="n">${fmt(offen(b))}</td></tr>`)}</div>
     <div class="card"><h2><a href="javascript:void 0" onclick="nav('lager')" title="Alle anzeigen">Unter Mindestbestand →</a></h2>${liste(min,a=>`<tr class="click" onclick="nav('artikel/${a.id}')"><td>${esc(a.nr)}</td><td>${esc(a.bez)}</td><td class="n">${fmtQ(bestand(a.id).menge)} / ${fmtQ(a.minBestand)} ${esc(a.einheit)}</td></tr>`)}</div>
     <div class="card"><h2><a href="javascript:void 0" onclick="zuListe('E','BE','offen')" title="Alle anzeigen">Offene Bestellungen →</a></h2>${liste(beOffen,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${b.nr}</td><td>${esc(kName(b.kontaktId))}</td><td>${b.liefertermin?dAT(b.liefertermin):''}</td><td>${statusTag(b)}</td></tr>`)}</div>
     <div class="card"><h2>Entwürfe <a href="javascript:void 0" onclick="zuListe('V','','entwurf')" style="font-weight:400;font-size:13px">Verkauf →</a> <a href="javascript:void 0" onclick="zuListe('E','','entwurf')" style="font-weight:400;font-size:13px">Einkauf →</a></h2>${liste(entw,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${T[b.typ].bez}</td><td>${esc(kName(b.kontaktId))}</td><td>${esc(b.betreff)}</td><td>${dAT(b.datum)}</td></tr>`)}</div>
-  </div>`;
+  </div>`}`;
 };
 
 /* ---------- Belegliste ---------- */
@@ -1356,6 +1369,8 @@ V.belege=(bereich='V')=>{
     {k:'faellig',l:'Fällig',f:b=>T[b.typ].re&&b.fest?dAT(faellig(b)):'',std:false},{k:'versand',l:'Versendet',f:b=>(b.versand||[]).length?'✉ '+dAT(b.versand[b.versand.length-1].datum.slice(0,10)):'',std:false},
     {k:'anh',l:'Anhänge',n:1,f:b=>(b.anhaenge||[]).length||'',std:false},{k:'rev',l:'Revision',f:b=>{if(b.typ!=='AN'||!(b.basisNr||b.nr))return'';const n=revListe(b).length;return n>1?`R${b.rev||0} von ${n}`:''},std:bereich==='V'},{k:'status',l:'Status',f:b=>statusTag(b)}],L,
     {zeile:b=>`class="click${KIND.has(b.id)?' kind':''}" onclick="nav('beleg/${b.id}')"`,leer:'Keine Belege.',
+     mf:b=>{const z=OHNE_PREIS.includes(b.typ)?'':fmt(sgn(b)*summen(b).zahlbar),o=T[b.typ].re&&b.fest&&!b.storno?offen(b):0; // Karte am Handy (P30)
+       return karte({t:`${BICON[b.typ]||''} ${esc(bNr(b))}${bereich==='E'&&b.fremdNr?` <span class="mut" style="font-weight:400">${esc(b.fremdNr)}</span>`:''}`,s:statusTag(b),u:[kName(b.kontaktId),b.betreff].filter(x=>x&&x!=='–').map(esc).join(' · '),z:`${dAT(b.datum)} · ${T[b.typ].bez}`,b:z?(Math.abs(o)>0.005&&fmt(o)!==z?`<span class="mut" style="font-weight:400">offen ${fmt(o)} ·</span> `:'')+z+' €':''})},
      zwischen:(b,n)=>{const r=PRJ.has(b.id)&&beleg(PRJ.get(b.id));return r&&r.projekt?`<tr class="prjz"><td colspan="${n}"><b>${esc(r.projekt)}</b> <button class="s" onclick="projektName('${r.id}')" title="Projektname ändern">✎</button></td></tr>`:''},
      vor:mitGr?{kopf:`<span style="white-space:nowrap"><button class="s" onclick="grpAuf('*')" title="Alle aufklappen">+</button><button class="s" onclick="grpAuf('-')" title="Alle zuklappen">−</button></span>`,
        zelle:b=>KIND.has(b.id)?'<td class="mut" style="text-align:right;padding-right:2px">└</td>':`<td>${ANZ.get(b.id)?`<button class="s grpk" onclick="event.stopPropagation();grpAuf('${b.id}')" title="${ANZ.get(b.id)} zugehörige(r) Beleg(e) (Revisionen, Folgebelege) ${UI.auf[b.id]?'zuklappen':'aufklappen'}">${UI.auf[b.id]?'−':'+'}${ANZ.get(b.id)}</button>${beleg(PRJ.get(b.id))?.projekt?'':`<button class="s" onclick="event.stopPropagation();projektName('${PRJ.get(b.id)}')" title="Projektname als Überschrift vergeben">🏷</button>`}`:''}</td>`}:null})}`;
@@ -1753,6 +1768,7 @@ function auftragsListe(){
   const g={};for(const b of DB.belege)if(b.auftragId&&T[b.typ].b==='V')(g[b.auftragId]=g[b.auftragId]||[]).push(b);
   return Object.entries(g).map(([id,docs])=>({id,docs,root:beleg(id)||docs[0]})).sort((a,c)=>c.root.datum.localeCompare(a.root.datum));
 }
+const auftragKurz=aid=>{const r=beleg(aid)||DB.belege.find(b=>b.auftragId===aid);return r?`${bNr(r)} · ${kName(r.kontaktId)}`:'–'}; // Nr. · Kunde (P30)
 function auftragLabel(aid){const r=beleg(aid)||DB.belege.find(b=>b.auftragId===aid);return r?`${bNr(r)} · ${kName(r.kontaktId)}${r.betreff?' · '+r.betreff:''}`:'–'}
 function phase(docs){
   const ok=docs.filter(d=>!d.storno);
@@ -1774,7 +1790,8 @@ V.auftraege=()=>{
     {k:'mat',l:'Material',n:1,f:a=>n(a).material?fmt(n(a).material):'',std:false},{k:'fremd',l:'Fremdleistung',n:1,f:a=>n(a).fremd?fmt(n(a).fremd):'',std:false},{k:'std',l:'Stunden',n:1,f:a=>n(a).std?fmtQ(n(a).std):'',std:false},
     {k:'ihk',l:'Ist-HK',n:1,f:a=>n(a).hk?fmt(n(a).hk):''},{k:'idb',l:'Ist-DB II',n:1,f:a=>n(a).uN?fmt(n(a).db2)+' '+dbTag(n(a).db2p):''},
     {k:'offen',l:'Offen (Forderung)',n:1,f:a=>{const o=sum(a.docs.filter(d=>T[d.typ].re&&T[d.typ].b==='V'),offen);return o?fmt(o):''},std:false}],L,
-    {zeile:a=>`class="click" onclick="nav('auftrag/${a.id}')"`,leer:'Noch keine Aufträge.'})})()}`;
+    {zeile:a=>`class="click" onclick="nav('auftrag/${a.id}')"`,leer:'Noch keine Aufträge.',
+     mf:a=>karte({t:esc(bNr(a.root)),s:phase(a.docs),u:[kName(a.root.kontaktId),a.root.betreff].filter(x=>x&&x!=='–').map(esc).join(' · '),z:[v(a)?'Vorkalk. '+dbTag(v(a).db2p):'',n(a).uN?'Ist '+dbTag(n(a).db2p):''].filter(Boolean).join(' '),b:n(a).uN?fmt(n(a).uN)+' €':v(a)?fmt(v(a).uS)+' €':''})})})()}`;
 };
 V.auftrag=aid=>{
   const docs=DB.belege.filter(b=>b.auftragId===aid).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
@@ -1930,22 +1947,26 @@ V.kosten=()=>{
 V.zeiten=()=>{
   const L=[...DB.zeiten].sort((a,c)=>c.datum.localeCompare(a.datum)).slice(0,300);
   const auf=auftragsListe().filter(a=>!a.docs.every(d=>d.storno));
+  const tagH={};for(const z of L)tagH[z.datum]=(tagH[z.datum]||0)+(+z.stunden||0);let lz=''; // Karten am Handy nach Tag (P30)
   return`<h1>Zeiterfassung</h1>
   <div class="card"><div class="row">
     <label class="w05">Datum<input type="date" id="zt-d" value="${isoD()}"></label>
     <label class="w2">Auftrag<select id="zt-a">${auf.map(a=>opt(a.id,auftragLabel(a.id),lsGet('erp-lastA'))).join('')}</select></label>
     <label>Tarif<select id="zt-t">${S().tarife.map(t=>opt(t.kz,t.kz+' – '+t.bez,lsGet('erp-lastT'))).join('')}</select></label>
-    <label class="w05">Stunden<input type="number" step="0.25" inputmode="decimal" id="zt-h"></label>
+    ${kmpH()?`<label class="w2">Stunden<input type="number" step="0.25" inputmode="decimal" id="zt-h"><span class="qh">${[0.5,1,2,4,8].map(h=>`<button type="button" class="s" onclick="$('#zt-h').value='${h}'">${fmtQ(h)} h</button>`).join('')}</span></label>`:'<label class="w05">Stunden<input type="number" step="0.25" inputmode="decimal" id="zt-h"></label>'}
     <label class="w2">Tätigkeit<input id="zt-x"></label>
     <button class="p" data-act="ztadd">Erfassen</button></div>
     ${auf.length?'':'<p class="hint">Zuerst ein Angebot oder einen Auftrag anlegen.</p>'}</div>
   ${tabelle('zeiten',[
-    {k:'datum',l:'Datum',f:z=>dAT(z.datum)},{k:'auftrag',l:'Auftrag',f:z=>`<a href="#/auftrag/${z.auftragId}">${esc(auftragLabel(z.auftragId))}</a>`},{k:'kunde',l:'Kunde',f:z=>esc(kName((beleg(z.auftragId)||{}).kontaktId)),std:false},
+    {k:'datum',l:'Datum',f:z=>dAT(z.datum)},{k:'auftrag',l:'Auftrag',f:z=>kmp()?`<a href="#/auftrag/${z.auftragId}" title="${esc(auftragLabel(z.auftragId))}">${esc(auftragKurz(z.auftragId))}</a>`:`<a href="#/auftrag/${z.auftragId}">${esc(auftragLabel(z.auftragId))}</a>`},{k:'kunde',l:'Kunde',f:z=>esc(kName((beleg(z.auftragId)||{}).kontaktId)),std:false},
     {k:'tarif',l:'Tarif',f:z=>esc(z.tarif)},{k:'text',l:'Tätigkeit',f:z=>esc(z.text)},{k:'std',l:'Std.',n:1,f:z=>fmtQ(z.stunden)},{k:'kosten',l:'Kosten/h',n:1,f:z=>fmt(z.kosten)},{k:'vk',l:'VK/h',n:1,f:z=>fmt(z.vk)},
     {k:'kges',l:'Kosten gesamt',n:1,f:z=>fmt(z.stunden*z.kosten),std:false},{k:'vges',l:'VK gesamt',n:1,f:z=>fmt(z.stunden*z.vk),std:false},
     {k:'status',l:'Status',f:z=>z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn')}],L,
-    {nach:z=>`<td>${z.belegId?'':`<button class="s d" data-act="ztdel" data-id="${z.id}">✕</button>`}</td>`,leer:'Keine Einträge.'})}`;
+    {nach:kmpH()?z=>`<td>${z.belegId?'':`<button class="mehr" data-act="menue" data-m="zeit" data-id="${z.id}" title="Weitere Aktionen">⋯</button>`}</td>`:z=>`<td>${z.belegId?'':`<button class="s d" data-act="ztdel" data-id="${z.id}">✕</button>`}</td>`,leer:'Keine Einträge.',
+     mf:z=>karte({t:`${esc(z.tarif)} · ${fmtQ(z.stunden)} h`,s:z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn'),u:esc(z.text),z:`<a href="#/auftrag/${z.auftragId}">${esc(auftragKurz(z.auftragId))}</a>`,b:fmt(z.stunden*z.vk)+' €'}),
+     zwischen:kmpH()?(z,n)=>{if(z.datum===lz)return'';lz=z.datum;return`<tr class="prjz"><td colspan="${n}"><b>${dAT(z.datum)}</b> <span class="mut">· ${fmtQ(tagH[z.datum])} h</span></td></tr>`}:null})}`;
 };
+MENUE.zeit=el=>{const z=DB.zeiten.find(x=>x.id===el.dataset.id);return z?[{l:'Auftrag öffnen',ic:'📊',href:'#/auftrag/'+z.auftragId},{l:'Löschen',ic:'🗑',act:'ztdel',d:{id:z.id},gefahr:1}]:[]};
 
 /* ---------- Kontakte ---------- */
 V.kontakte=typ=>{
@@ -1962,7 +1983,9 @@ V.kontakte=typ=>{
     {k:'email',l:'E-Mail',f:k=>esc(k.email||''),std:false},{k:'tel',l:'Telefon',f:k=>esc(k.tel||''),std:false},{k:'ziel',l:'Zahlungsziel',n:1,f:k=>k.zahlungsziel!==''&&k.zahlungsziel!=null?k.zahlungsziel+' T.':'',std:false},{k:'skonto',l:'Skonto',n:1,f:k=>+k.skonto?`${fmtQ(k.skonto)} % / ${k.skontoTage||0} T.`:'',std:false},{k:'rabatt',l:'Kundenrabatt',n:1,f:k=>+k.rabatt?fmtQ(k.rabatt)+' %':'',std:false},
     {k:'umsatz',l:'Umsatz lfd. Jahr',n:1,f:k=>{const j=String(new Date().getFullYear()),u=sum(DB.belege.filter(b=>b.kontaktId===k.id&&zaehltUmsatz(b)&&b.datum.startsWith(j)),b=>sgn(b)*summen(b).nettoEff);return u?fmt(u):''},std:false},
     {k:'op',l:'Offene Posten',n:1,f:k=>{const op=sum(DB.belege.filter(b=>b.kontaktId===k.id),b=>T[b.typ].b==='V'?offen(b):-offen(b));return op?fmt(op):''}},
-    {k:'kdnr',l:'Unsere Kd.-Nr.',f:k=>esc(k.kdNrLief||''),std:false},{k:'notiz',l:'Notiz',f:k=>esc(String(k.notiz||'').slice(0,60)),std:false}],L,{zeile:k=>`class="click" onclick="nav('kontakt/${k.id}')"`,leer:kt?`Keine ${kt==='K'?'Kunden':'Lieferanten'}.`:'Keine Kontakte.'})}`;
+    {k:'kdnr',l:'Unsere Kd.-Nr.',f:k=>esc(k.kdNrLief||''),std:false},{k:'notiz',l:'Notiz',f:k=>esc(String(k.notiz||'').slice(0,60)),std:false}],L,{zeile:k=>`class="click" onclick="nav('kontakt/${k.id}')"`,leer:kt?`Keine ${kt==='K'?'Kunden':'Lieferanten'}.`:'Keine Kontakte.',
+     mf:k=>{const op=sum(DB.belege.filter(b=>b.kontaktId===k.id),b=>T[b.typ].b==='V'?offen(b):-offen(b)); // Karte am Handy (P30)
+       return karte({t:esc(k.name),s:[k.typ!=='L'?tag('Kunde','acc'):'',k.typ!=='K'?tag('Lieferant'):'',k.kundenart==='privat'?tag('Privat','warn'):''].join(' '),u:[k.nr,`${k.plz||''} ${k.ort||''}`.trim()].filter(Boolean).map(esc).join(' · '),z:op?(op>0?'Forderung':'Verbindlichkeit'):'',b:op?fmt(Math.abs(op))+' €':''})}})}`;
 };
 V.kontakt=id=>{
   const k=kontakt(id);if(!k)return'<p>Nicht gefunden.</p>';
@@ -2010,12 +2033,13 @@ V.artikel=id=>{
     ${sel.size?`<span><b>${sel.size}</b> ausgewählt</span><select data-act="amgr" title="Ausgewählten Artikeln eine Gruppe zuordnen">${opt('','Gruppe zuordnen …','')}${opt('__keine','– keine Gruppe –','')}${grListe().map(([id,l])=>opt(id,l,'')).join('')}${opt('__neu','+ neue Hauptgruppe …','')}</select><button data-act="amakt" data-v="0">Deaktivieren</button><button data-act="amakt" data-v="1">Aktivieren</button><button class="d" data-act="amdel">Löschen …</button>`:''}<button class="p" data-act="anew">+ Artikel</button></div>
   ${tabelle('artikel',[
     {k:'nr',l:'Nr',f:a=>esc(a.nr)},{k:'bez',l:'Bezeichnung',f:a=>esc(a.bez)},{k:'lnr',l:'Lief.-Art.-Nr.',f:a=>esc(lfNr(a))},{k:'lief',l:'Lieferant',f:a=>esc(lfNamen(a)),std:false},
-    {k:'gruppe',l:'Gruppe',f:a=>esc(grBez(a.gruppe))},{k:'art',l:'Art',f:a=>ART[a.art]},{k:'einheit',l:'Einh.',f:a=>esc(a.einheit)},{k:'lp',l:'Listenpreis',n:1,f:a=>+lf1(a).lp?fmt(lf1(a).lp):'',std:false},{k:'rabatt',l:'Rabatt %',n:1,f:a=>+lf1(a).rabatt?fmtQ(lf1(a).rabatt):'',std:false},
+    {k:'gruppe',l:'Gruppe',f:a=>kmp()&&grG(a.gruppe)?`<span title="${esc(grBez(a.gruppe))}">${esc(grG(a.gruppe).bez)}</span>`:esc(grBez(a.gruppe))},{k:'art',l:'Art',f:a=>ART[a.art]},{k:'einheit',l:'Einh.',f:a=>esc(a.einheit)},{k:'lp',l:'Listenpreis',n:1,f:a=>+lf1(a).lp?fmt(lf1(a).lp):'',std:false},{k:'rabatt',l:'Rabatt %',n:1,f:a=>+lf1(a).rabatt?fmtQ(lf1(a).rabatt):'',std:false},
     {k:'ek',l:'EK',n:1,f:a=>fmt(a.ek)},{k:'vk',l:'VK',n:1,f:a=>fmt(a.vk)},{k:'aufschlag',l:'Aufschlag %',n:1,f:a=>+a.ek&&+a.vk?fmtQ(r2((a.vk/a.ek-1)*100)):'',std:false},
     {k:'steuer',l:'USt',f:a=>esc(steuerDef(a.steuer)?.bez||a.steuer),std:false},{k:'ean',l:'EAN',f:a=>esc(a.ean||''),std:false},
     {k:'lager',l:'Lager',f:a=>a.lager?'✓':''},{k:'lplatz',l:'Lagerplatz',f:a=>esc(LP.pfad(a.lagerplatz)),std:false},{k:'bestand',l:'Bestand',n:1,f:a=>a.lager?fmtQ(bestand(a.id).menge):''},{k:'min',l:'Mindestbestand',n:1,f:a=>+a.minBestand?fmtQ(a.minBestand):'',std:false},
     {k:'text',l:'Langtext',f:a=>esc(String(a.text||'').replace(/<[^>]+>/g,' ').slice(0,80)),std:false},{k:'aktiv',l:'aktiv',f:a=>a.aktiv===false?'nein':'',std:false}],L,
     {zeile:a=>`class="click" onclick="nav('artikel/${a.id}')" style="${a.aktiv===false?'opacity:.5':''}"`,vor:{kopf:`<input type="checkbox" data-act="aselall" title="Alle (gefilterten) auswählen" ${L.length&&L.every(a=>sel.has(a.id))?'checked':''}>`,zelle:a=>`<td onclick="event.stopPropagation()"><input type="checkbox" data-asel="${a.id}" ${sel.has(a.id)?'checked':''}></td>`},
+     mf:a=>karte({t:`${esc(a.nr)} ${esc(a.bez)}`,s:a.aktiv===false?tag('deaktiviert'):'',u:[grG(a.gruppe)?.bez,LP.pfad(a.lagerplatz),a.lager?`Bestand ${fmtQ(bestand(a.id).menge)} ${a.einheit||''}`:''].filter(Boolean).map(esc).join(' · '),z:+a.ek?'EK '+fmt(a.ek):'',b:fmt(a.vk)+' €'+(a.einheit?' / '+esc(a.einheit):'')}), // Karte am Handy (P30)
      leer:'Keine Artikel. Positionen können auch frei erfasst und mit „+A“ als Artikel gespeichert werden.'})}`;
 };
 // VK-Vorschlag aus dem Aufschlag je Artikel (P11, erw.vkVorschlag): VK = (Herstellkosten bzw. EK) × (1 + Aufschlag/100); null = kein Aufschlag eingetragen
@@ -2068,11 +2092,16 @@ V.lager=()=>{
     {k:'avg',l:'Ø-EK',n:1,f:a=>fmt(avgEK(a.id))},{k:'wert',l:'Wert',n:1,f:a=>fmt(bestand(a.id).wert)},{k:'min',l:'Mindestbestand',n:1,f:a=>a.minBestand?fmtQ(a.minBestand):''},
     {k:'fehl',l:'Fehlmenge',n:1,f:a=>+a.minBestand>bestand(a.id).menge?fmtQ(r3(a.minBestand-bestand(a.id).menge)):'',std:false}],L,
     {zeile:a=>`class="click" onclick="nav('artikel/${a.id}')"`,leer:'Keine Lagerartikel (Häkchen „Lagerartikel“ im Artikel setzen).',
+     mf:a=>{const b=bestand(a.id),u=+a.minBestand>0&&b.menge<+a.minBestand; // Karte am Handy (P30): Lagerplatz als Text, ändern über ⋯
+       return karte({t:`${esc(a.nr)} ${esc(a.bez)}`,u:esc(LP.pfad(a.lagerplatz)||'– kein Lagerplatz –'),z:`Ø-EK ${fmt(avgEK(a.id))} · Wert ${fmt(b.wert)}`,b:`<span class="${u?'err':''}">${fmtQ(b.menge)} ${esc(a.einheit)}</span>${u?`<span class="mut" style="font-weight:400"> / min. ${fmtQ(a.minBestand)}</span>`:''}`})},
+     nach:kmpH()?a=>`<td><button class="mehr" onclick="event.stopPropagation();ACT.menue(this)" data-m="lagerz" data-aid="${a.id}" title="Lagerplatz ändern …">⋯</button></td>`:null,kfuss:()=>karte({t:'Lagerwert gesamt',b:fmt(tot)+' €'}),
      fuss:vis=>`<tfoot><tr>${vis.map((c,j)=>`<td class="${c.n?'n':''}">${c.k==='wert'?fmt(tot):j===0?'Lagerwert gesamt':''}</td>`).join('')}<td></td></tr></tfoot>`})}
   <div class="card" style="padding:0"><table><thead><tr><th>Datum</th><th>Artikel</th><th class="n">Menge</th><th class="n">Wert</th><th>Vorgang</th></tr></thead><tbody>
   ${J.map(e=>{const a=artikel(e.artikelId);return`<tr${e.belegId?` class="click" onclick="nav('beleg/${e.belegId}')"`:''}><td>${dAT(e.datum)}</td><td>${esc(a?.nr)} ${esc(a?.bez)}</td><td class="n">${fmtQ(e.menge)}</td><td class="n">${fmt(e.wert)}</td><td>${esc(e.text)}</td></tr>`}).join('')||'<tr><td colspan="5" class="mut">Keine Bewegungen.</td></tr>'}
   </tbody></table></div>`;
 };
+
+MENUE.lagerz=el=>{const a=artikel(el.dataset.aid);return a?[{l:'Lagerplatz ändern …',ic:'📍',act:'bwahl',d:{bw:'lp',aid:a.id}},{l:'Artikel öffnen',ic:'📦',href:'#/artikel/'+a.id}]:[]}; // ⋯ einer Lagerzeile am Handy (P30)
 
 /* ---------- Auswertungen ---------- */
 function ustVerteilung(b){
@@ -2242,7 +2271,8 @@ V.kbs=id=>{
   <p class="mut">Eine Kalkulationsbasis enthält K2 (Gesamtzuschlag), K3 (Personalpreise), K4 (Materialpreise), K5 (zusammengesetzte Preiskomponenten) und K6 (Gerätepreise). K7 entsteht je Position im Leistungsverzeichnis.</p>
   ${tabelle('kbs',[{k:'name',l:'Bezeichnung',f:kb=>esc(kb.name)},{k:'art',l:'Art',f:kb=>kb.art==='bieter'?tag('Prüfung Bieter','warn'):tag('eigen','acc')},{k:'bp',l:'Bieter / Projekt',f:kb=>`${esc(kb.bieter)} ${esc(kb.projekt)}`},
     {k:'gzl',l:'GZ Lohn',n:1,f:kb=>fmt(k2gz(kb).l)+' %'},{k:'gzs',l:'GZ Sonst.',n:1,f:kb=>fmt(k2gz(kb).s)+' %'},{k:'mlp',l:'Mittellohnpreis',n:1,f:kb=>kb.k3[0]?fmt(k3calc(kb,kb.k3[0]).mlp):''},
-    {k:'k4',l:'K4-Zeilen',n:1,f:kb=>kb.k4.length,std:false}],DB.kalk,{zeile:kb=>`class="click" onclick="nav('kbs/${kb.id}')"`,leer:'Noch keine K-Blätter.'})}`;
+    {k:'k4',l:'K4-Zeilen',n:1,f:kb=>kb.k4.length,std:false}],DB.kalk,{zeile:kb=>`class="click" onclick="nav('kbs/${kb.id}')"`,leer:'Noch keine K-Blätter.',
+    mf:kb=>karte({t:esc(kb.name),s:kb.art==='bieter'?tag('Prüfung Bieter','warn'):tag('eigen','acc'),u:esc(`${kb.bieter||''} ${kb.projekt||''}`.trim()),z:`GZ Lohn ${fmt(k2gz(kb).l)} % · Sonst. ${fmt(k2gz(kb).s)} %`,b:kb.k3[0]?fmt(k3calc(kb,kb.k3[0]).mlp)+' €/h':''})})}`;
 };
 function kbEdit(id){
   const kb=ROOT.kb(id);if(!kb)return'<p>Nicht gefunden.</p>';
@@ -2345,7 +2375,8 @@ V.lvs=id=>{
   return`<div class="bar"><h1 style="margin:0">Leistungsverzeichnisse</h1><span class="sp"></span><button class="p" data-act="lvneu" data-a="angebot">+ LV für Angebot</button><button data-act="lvneu" data-a="ausschreibung">+ LV für Ausschreibung</button></div>
   ${tabelle('lvs',[{k:'nr',l:'Nr',f:lv=>esc(lv.nr)},{k:'titel',l:'Titel',f:lv=>esc(lv.titel)},{k:'art',l:'Art',f:lv=>lv.art==='ausschreibung'?tag('Ausschreibung','warn'):tag('Angebot','acc')},
     {k:'ag',l:'Auftraggeber',f:lv=>esc(kName(lv.kontaktId))},{k:'datum',l:'Datum',f:lv=>dAT(lv.datum),std:false},{k:'pos',l:'Positionen',n:1,f:lv=>lv.items.filter(i=>i.typ==='POS').length},
-    {k:'summe',l:'Summe netto',n:1,f:lv=>fmt(lvSummen(lv).gesamt)},{k:'bieter',l:'Bieter',n:1,f:lv=>lv.bieter.length||''}],DB.lv,{zeile:lv=>`class="click" onclick="nav('lvs/${lv.id}')"`,leer:'Noch keine LVs.'})}`;
+    {k:'summe',l:'Summe netto',n:1,f:lv=>fmt(lvSummen(lv).gesamt)},{k:'bieter',l:'Bieter',n:1,f:lv=>lv.bieter.length||''}],DB.lv,{zeile:lv=>`class="click" onclick="nav('lvs/${lv.id}')"`,leer:'Noch keine LVs.',
+    mf:lv=>karte({t:esc(`${lv.nr||''} ${lv.titel||''}`.trim()||'LV'),s:lv.art==='ausschreibung'?tag('Ausschreibung','warn'):tag('Angebot','acc'),u:esc(kName(lv.kontaktId)),z:`${lv.items.filter(i=>i.typ==='POS').length} Positionen${lv.bieter.length?' · '+lv.bieter.length+' Bieter':''}`,b:fmt(lvSummen(lv).gesamt)+' €'})})}`;
 };
 function lvEdit(id){
   const lv=ROOT.lv(id);if(!lv)return'<p>Nicht gefunden.</p>';
@@ -2776,10 +2807,11 @@ V.fibu=()=>{
     let saldo=0;const kb=UI.fbKonto;
     if(kb){const v=salden(J,z.von,z.bis)[kb];saldo=v?r2(v.vortrag):0}
     body=`<div class="bar">${filt}${kb?`<span>Kontoblatt <b>${kb} ${esc(kontoBez(kb))}</b></span><button class="s" data-act="fbkonto" data-k="">alle Konten</button>`:''}<span class="sp"></span><button data-act="fbexp">Journal exportieren (CSV)</button></div>
-    <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Datum</th><th>Beleg</th><th>Text</th><th>Soll</th><th>Haben</th><th class="n">Betrag</th>${kb?'<th class="n">Saldo</th>':''}</tr></thead><tbody>
+    ${kmpH()?(()=>{let sd=saldo; // am Handy (P30): Buchungen als Karten
+      return`<div class="card kkl" style="padding:0">${kb?karte({t:'Vortrag',b:fmt(sd)}):''}${L.map(e=>{if(kb)sd=r2(sd+(e.soll===kb?e.betrag:-e.betrag));return karte({t:`${dAT(e.datum)} · ${e.ref&&e.auto?`<a href="#/beleg/${e.ref}">${esc(e.beleg)}</a>`:esc(e.beleg)}`,s:e.manuell?tag('manuell'):'',u:esc(e.text),z:`${kLink(e.soll)} an ${kLink(e.haben)}${kb?` · Saldo ${fmt(sd)}`:''}`,b:fmt(e.betrag)})}).join('')||'<p class="mut" style="margin:0;padding:10px 12px">Keine Buchungen im Zeitraum.</p>'}${karte({t:'Summe '+z.label,b:fmt(sum(L,e=>e.betrag))})}</div>`})():`<div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Datum</th><th>Beleg</th><th>Text</th><th>Soll</th><th>Haben</th><th class="n">Betrag</th>${kb?'<th class="n">Saldo</th>':''}</tr></thead><tbody>
     ${kb?`<tr><td></td><td></td><td class="mut">Vortrag</td><td></td><td></td><td></td><td class="n">${fmt(saldo)}</td></tr>`:''}
     ${L.map(e=>{if(kb)saldo=r2(saldo+(e.soll===kb?e.betrag:-e.betrag));return`<tr><td>${dAT(e.datum)}</td><td>${e.ref&&e.auto?`<a href="#/beleg/${e.ref}">${esc(e.beleg)}</a>`:esc(e.beleg)}</td><td>${esc(e.text)}${e.manuell?' <span class="tag">manuell</span>':''}</td><td>${kLink(e.soll)}</td><td>${kLink(e.haben)}</td><td class="n">${fmt(e.betrag)}</td>${kb?`<td class="n">${fmt(saldo)}</td>`:''}</tr>`}).join('')||'<tr><td colspan="7" class="mut">Keine Buchungen im Zeitraum.</td></tr>'}
-    </tbody><tfoot><tr><td colspan="5">Summe ${z.label}</td><td class="n">${fmt(sum(L,e=>e.betrag))}</td>${kb?'<td></td>':''}</tr></tfoot></table></div>`;
+    </tbody><tfoot><tr><td colspan="5">Summe ${z.label}</td><td class="n">${fmt(sum(L,e=>e.betrag))}</td>${kb?'<td></td>':''}</tr></tfoot></table></div>`}`;
   }
   if(tab==='buchen'){
     body=`<div class="card"><h2>Manuelle Buchung</h2><p class="mut" style="margin-top:0">Für Bank-, Kassen-, Lohn-, Abschreibungs-, Eröffnungs- und Abschlussbuchungen. Rechnungen und Zahlungen aus dem ERP werden automatisch gebucht.</p>
@@ -2903,12 +2935,21 @@ V.export=()=>{
 
 /* ---------- Einstellbare Tabellenspalten (je Liste, in den Einstellungen gespeichert) ---------- */
 const TABS={};
-function tabelle(id,cols,rows,{zeile,vor,nach,leer='Keine Einträge.',fuss,zwischen}={}){
+function tabelle(id,cols,rows,{zeile,vor,nach,leer='Keine Einträge.',fuss,zwischen,mf,kfuss}={}){
+  if(kmpH()&&(mf||cols.some(c=>c.m))){TABS[id]=cols;return tabKarten(id,cols,rows,{zeile,vor,nach,leer,zwischen,mf,kfuss})} // Kartenmodus am Handy (P30)
   TABS[id]=cols;const w=S().spalten?.[id],vis=(w?w.map(k=>cols.find(c=>c.k===k)).filter(Boolean):cols.filter(c=>c.std!==false));if(!vis.length)vis.push(cols[0]);
   const cl=c=>[c.n?'n':'',c.hm?'hm':''].join(' ').trim();
   return`<div class="card" style="padding:0;overflow-x:auto"><table data-tab="${id}"><thead><tr>${vor?`<th style="width:28px">${vor.kopf||''}</th>`:''}${vis.map(c=>`<th class="${cl(c)}">${c.l}</th>`).join('')}${nach?'<th></th>':''}<th style="width:30px;text-align:right"><button class="s" data-act="spalten" data-id="${id}" title="Spalten auswählen">⚙</button></th></tr></thead><tbody>
   ${rows.map(r=>`${zwischen?zwischen(r,vis.length+(vor?1:0)+(nach?1:0)+1):''}<tr ${zeile?zeile(r):''}>${vor?vor.zelle(r):''}${vis.map(c=>`<td class="${cl(c)} ${c.cls?c.cls(r):''}">${c.f(r)??''}</td>`).join('')}${nach?nach(r):''}<td></td></tr>`).join('')||`<tr><td colspan="${vis.length+3}" class="mut">${leer}</td></tr>`}</tbody>${fuss?fuss(vis,!!vor):''}</table></div>`;
 }
+/* Kartenmodus der Listen am Handy (P30, erw.kompakt): je Zeile eine Karte (unabhängig von der Spaltenauswahl), aus mf(r) bzw. den Spalten mit m:'t'|'s'|'u'|'z'|'b'
+   (mehrere je Platz mit „ · “ verbunden, mk(r) = Wert für die Karte, sonst f(r)); zeile, vor, nach und zwischen bleiben, kfuss() = Fuß (statt fuss), ohne Kopfzeile und ⚙ */
+function tabKarten(id,cols,rows,{zeile,vor,nach,leer,zwischen,mf,kfuss}){
+  const wert=(r,p)=>cols.filter(c=>c.m===p).map(c=>(c.mk||c.f)(r)).filter(x=>x!==''&&x!=null).join(' · '),n=1+(nach?1:0);
+  const vi=r=>vor?vor.zelle(r).replace(/^\s*<td[^>]*>/,'').replace(/<\/td>\s*$/,'').trim():''; // Zelle davor (Gruppenknopf, Häkchen) links in der Karte
+  const k=r=>mf?mf(r):karte({t:wert(r,'t'),s:wert(r,'s'),u:wert(r,'u'),z:wert(r,'z'),b:wert(r,'b')});
+  return`<div class="card kkl" style="padding:0"><table data-tab="${id}"><tbody>${vor?.kopf&&rows.length?`<tr class="kkv"><td colspan="${n}">${vor.kopf}</td></tr>`:''}
+  ${rows.map(r=>`${zwischen?zwischen(r,n):''}<tr ${zeile?zeile(r):''}><td class="kkc">${vi(r)?`<div class="kkf"><span class="kkvz" onclick="event.stopPropagation()">${vi(r)}</span>${k(r)}</div>`:k(r)}</td>${nach?nach(r):''}</tr>`).join('')||`<tr><td class="kkc mut" style="padding:10px 12px">${leer}</td></tr>`}</tbody></table>${kfuss?kfuss():''}</div>`}
 function spaltenDialog(id){
   const cols=TABS[id];if(!cols)return;const w=S().spalten?.[id];let ord=[...(w?w.filter(k=>cols.some(c=>c.k===k)):cols.filter(c=>c.std!==false).map(c=>c.k)),...cols.map(c=>c.k)].filter((k,i,a)=>a.indexOf(k)===i);
   const an=new Set(w?w:cols.filter(c=>c.std!==false).map(c=>c.k));

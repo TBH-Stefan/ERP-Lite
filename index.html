@@ -273,6 +273,10 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .doc table.p td.c{text-align:center}
 /* Spalten (P4): bei abweichender Spaltenfolge (table.p.sp) Ausrichtung über Klassen statt Spaltenposition; Menge rechts / Einheit links (th.n, th.l) */
 .doc table.p.sp th:nth-child(2){text-align:center}.doc table.p.sp th.bz,.doc table.p.sp th.an,.doc table.p th.l,.doc table.p.sp th.l{text-align:left}.doc table.p.sp th.n{text-align:right}
+/* Positionsdarstellung (P4): Kleinzeile (Lohn/Sonstiges, Rabatt, Zuschlag), nur Langtext, Langtext über die volle Breite, Gruppenüberschrift farbig/unterstrichen, Bezeichnung nicht fett */
+.doc .kzl{font-size:8pt;color:#333}.doc .lt.lk{font-size:9pt;color:#000}.doc table.p tr.mlt>td{border-bottom:0;padding-bottom:1px}.doc table.p tr.ltz>td{padding-top:0}
+.doc.gf tr.grpz td:not(.n)>b{color:var(--gf,#80704d)}.doc.gu tr.grpz td:not(.n)>b{text-decoration:underline}.doc.nf table.p tbody tr:not(.grpz):not(.gsum)>td>b{font-weight:400}
+@media print{.doc table.p tr.mlt{break-after:avoid}}
 .doc table.p.sp tbody td:first-child{text-align:left;white-space:normal}.doc table.p.sp tbody td.c,.doc table.p.sp tbody td.pn{text-align:center}.doc table.p.sp tbody td.pn{white-space:nowrap}.doc table.p.sp tbody td.n,.doc table.p.sp tbody tr.gsum td{text-align:right}.doc table.p td.an{font-size:8.5pt}
 .doc .lt{font-size:8.5pt;color:#333;white-space:pre-wrap}
 .doc .tot{margin-left:auto;width:95mm;border-collapse:collapse}
@@ -444,6 +448,7 @@ const T={
 const RE_V=['AR','TR','RE','SR','GS'];
 const ART={W:'Ware',L:'Leistung',F:'Fremdleistung',G:'Gruppe',T:'Text'};
 const showRab=b=>!!b.optRabatt||b.pos.some(p=>+p.rabatt);
+const zuE=()=>!!erw('zuschlag'),rabL=k=>zuE()?(k?'Rab./Zuschl. %':'Rabatt/Zuschlag %'):(k?'Rab. %':'Rabatt %'),rabT=()=>zuE()?' title="Rabatt in %; negativ = Zuschlag (−10 = 10 % Zuschlag)"':''; // Zuschlag je Position als negativer Rabatt (P4, erw.zuschlag)
 // Positionsnummern: ohne Gruppen 1,2,3 – mit Gruppen 1, 1.01, 1.02, 2, 2.01 …
 function posNummern(b,kurz=dOpt(b).nrForm==='kurz'){ // kurz: 1.1 statt 1.01 (P4, druck.nrForm; Druck und Editor)
   const m={},hatG=b.pos.some(p=>p.art==='G');let g=0,k=0,n=0;
@@ -512,6 +517,7 @@ const ERW=[
   {k:'statuszeile',std:true,p:'Navigation (P19)',l:'Statuszeile unter dem Belegtitel',info:'Zeigt unter dem Titel eines Belegs den Pfad „Verkauf › Angebote“ (anklickbar, führt zur gefilterten Liste), das Belegdatum, den Kunden bzw. Lieferanten, den Nettobetrag (läuft bei Änderungen mit) und wann der Beleg angelegt bzw. festgeschrieben wurde (mit Uhrzeit). Reine Anzeige, daher Standard ein.'},
   {k:'kopfFix',std:false,p:'Navigation (P19)',l:'Statuszeile beim Scrollen oben festhalten',info:'Die Statuszeile bleibt mit Nummer und Status beim Scrollen am oberen Rand stehen (am Handy unter der Kopfzeile). Standard aus, weil sie am Handy eine Zeile Platz kostet. Wirkt nur mit eingeschalteter Statuszeile.'},
   {k:'kompakt',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht (Handy und Bildschirm)',info:'Weniger Bedienelemente auf einmal: Seltenes liegt in Menüs (⋯, „+ Neu ▾“) und Pop-ups, Listen erscheinen am Handy als Karten, Filter in einem Pop-up, lange Abschnitte (z. B. Einstellungen) zum Auf- und Zuklappen, Erklärtexte hinter ⓘ. Dialoge öffnen am Handy als Blatt von unten, Titel und Knöpfe bleiben beim Scrollen sichtbar; Knöpfe und Felder sind am Handy und auf Tablets mindestens 40 px hoch. Welche Abschnitte offen sind, merkt sich das Gerät. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Entscheidung des Anwenders (09.10.2026), daher Standard ein. Aus: bisherige Darstellung.'},
+  {k:'zuschlag',std:false,p:'Zuschlag je Position (P4)',l:'Rabattspalte im Editor als „Rabatt/Zuschlag“',info:'Ein für den Kunden sichtbarer Zuschlag je Position (z. B. Erschwernis, Kleinmenge, Nachtarbeit) wird als negativer Rabatt erfasst: −10 = 10 % Zuschlag. Summen, Folgebelege und Auswertungen rechnen damit unverändert. Mit diesem Schalter heißt die Spalte im Beleg-Editor „Rabatt/Zuschlag %“ mit diesem Hinweis, die Positionskarte zeigt „+ 10 % Zuschlag“. Wie Zuschläge gedruckt werden (negativ in der Rabattspalte, als „+10 %“ oder als Textzeile), legt das Druckprofil fest (Positionsdarstellung). Aus: Bezeichnung „Rabatt“ wie bisher.'},
   {k:'kompaktBeleg',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht im Beleg-Editor',info:'Wirkt nur mit eingeschalteter kompakter Ansicht. Im Beleg stehen oben nur Eingabe | Vorschau, die Hauptaktion (z. B. Festschreiben, Zahlung erfassen, → Rechnung) und ⋯ mit allen weiteren Belegaktionen (PDF, Senden, Folgebeleg, Duplizieren, Revision, Löschen bzw. Stornieren …); Kopfdaten, Positionen und Zahlungen werden in Pop-ups bearbeitet, am Handy erscheinen die Positionen als Karten und Summe und Hauptaktion in einer Leiste am unteren Rand. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Aus: Beleg-Editor wie bisher (übrige kompakte Ansicht bleibt).'},
   {k:'ios',std:true,p:'Ansicht (P30)',l:'iOS-Darstellung am Handy',info:'Wirkt nur mit eingeschalteter kompakter Ansicht und nur am Handy. Bedienung nach den Vorgaben von Apple: Systemschrift, Tippziele mindestens 44 pt, Pop-ups und Menüs als Blatt von unten mit Griff, Segmente wie in iOS (z. B. Art der Position: Ware | Leistung | …), Schalter statt Häkchen, Hintergrund bleibt beim offenen Pop-up stehen, durchscheinende Leisten. Sichere Bereiche (Notch, Home-Indikator) gelten immer. Aus: kompakte Ansicht ohne iOS-Gestaltung.'},
 ];
@@ -1629,7 +1635,7 @@ V.beleg=id=>{
       ${ohneP?'':`
       ${zLS?`<td data-l="Lohn" style="width:86px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="epL" value="${p.epL??''}" ${dis}></td><td data-l="Sonstiges" style="width:86px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="epS" value="${p.epS??''}" ${dis}></td>`:''}
       <td data-l="${zLS?'PP':'EP netto'}" style="width:92px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="ep" value="${p.ep}" ${dis||zLS?'disabled':''}></td>
-      ${zRab?`<td data-l="Rabatt %" style="width:58px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="rabatt" value="${p.rabatt||''}" ${dis} placeholder="%"></td>`:''}
+      ${zRab?`<td data-l="${rabL()}" style="width:58px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="rabatt" value="${p.rabatt||''}" ${dis} placeholder="%"${rabT()}></td>`:''}
       <td class="n gp" data-l="${zLS?'GP':'GP netto'}" id="gp${i}" style="width:90px;padding-top:7px">${pausch?`<span class="mut" title="im Gruppenpreis enthalten">(${fmt(posGP(p))})</span>`:fmt(posGP(p))}</td>
       <td data-l="USt" style="width:96px"><select data-p="${i}" data-f="steuer" ${dis}>${steuerOpts(p.steuer)}</select></td>
       <td data-l="EK" style="width:84px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="ek" value="${p.ek}" ${dis} title="Einstandspreis je Einheit"></td>`}
@@ -1656,10 +1662,10 @@ V.beleg=id=>{
   ${kmpB()?(b.fest?kopfLese(b):kopfK(b)):kopfFelder(b)}
   ${kmpB()&&b.fest&&!HANDY.matches?posLeseK(b):posK(b)?posKartenK(b):`<div class="card" style="padding:8px;overflow-x:auto">
     ${kmpB()?'':`<div class="bar" style="margin:0 0 6px"><span class="mut">${ohneP?'Druck:':'Spalten einblenden:'}</span>
-      ${ohneP?'':`<label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optRabatt" ${zRab?'checked':''} ${dis}> Rabatt</label>
+      ${ohneP?'':`<label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optRabatt" ${zRab?'checked':''} ${dis}> ${zuE()?'Rabatt/Zuschlag':'Rabatt'}</label>
       <label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optLS" ${zLS?'checked':''} ${dis}> Lohn / Sonstiges</label>`}
       <label class="chk" style="margin:0;font-size:13px" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''} ${dis}> Langtext drucken</label>${dKnopf(b,'Druckoptionen …')}</div>`}
-    <table class="pos${zl?' pz':''}"><thead>${zl?`<tr><th>Pos</th><th>Art.-Nr.</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonst.</th>':'<th>EP netto</th>'}${zRab?'<th>Rab. %</th>':''}<th class="n">GP netto</th>`}<th></th></tr>`:`<tr><th></th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonstiges</th>':''}<th>${zLS?'PP':'EP netto'}</th>${zRab?'<th>Rab. %</th>':''}<th class="n">${zLS?'GP':'GP netto'}</th><th>USt</th><th title="Einstandspreis je Einheit">EK</th>`}<th>Kz</th><th></th></tr>`}</thead>
+    <table class="pos${zl?' pz':''}"><thead>${zl?`<tr><th>Pos</th><th>Art.-Nr.</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonst.</th>':'<th>EP netto</th>'}${zRab?`<th${rabT()}>${rabL(1)}</th>`:''}<th class="n">GP netto</th>`}<th></th></tr>`:`<tr><th></th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonstiges</th>':''}<th>${zLS?'PP':'EP netto'}</th>${zRab?`<th${rabT()}>${rabL(1)}</th>`:''}<th class="n">${zLS?'GP':'GP netto'}</th><th>USt</th><th title="Einstandspreis je Einheit">EK</th>`}<th>Kz</th><th></th></tr>`}</thead>
     <tbody>${rows||`<tr><td colspan="14" class="mut">Noch keine Positionen.</td></tr>`}</tbody></table>
     ${b.fest?'':`<div class="bar" style="margin:8px 0 0"><button data-act="padd" data-art="G">+ Gruppe</button><button data-act="padd" data-art="W">+ Ware</button><button data-act="padd" data-art="L">+ Leistung</button><button data-act="padd" data-art="F">+ Fremdleistung</button><button data-act="padd" data-art="T">+ Text</button>${V_?`<button data-act="pzeit">+ Stunden aus Zeiterfassung</button>`:''}</div>`}
   </div>`}`;
@@ -1702,7 +1708,7 @@ function posZeileK(b,p,i,c){const ed=!b.fest,dis=b.fest?' disabled':'',a=f=>`dat
     <td class="pzr"><input list="dl-art" ${a('artikel')} value="${esc(p.nr)}"${dis} placeholder="Art.-Nr.">${!c.V_&&p.lnr?`<div class="mut pzl" title="Art.-Nr. des Lieferanten (Druck: „Ihre Art.-Nr.“): ${esc(p.lnr)}">Lief.: ${esc(p.lnr)}</div>`:''}</td>
     <td><div class="pzb"><input ${a('bez')} value="${esc(p.bez)}"${dis} placeholder="Bezeichnung">${plt}</div>${lt?rte('Langtext …'):''}${ndTag(c.wg)}${kz||st?`<div class="pzt">${kz?tag(kz==='OPT'?'Option':'Alternative','warn'):''}${st?tag(esc(st)):''}</div>`:''}</td>
     <td class="pzm">${zf('menge',p.menge)}</td><td class="pze"><select ${a('einheit')}${dis}>${c.einhOpts(p)}</select></td>
-    ${c.ohneP?'':`${c.zLS?`<td class="pzp">${zf('epL',p.epL,' title="Lohn"')}</td><td class="pzp">${zf('epS',p.epS,' title="Sonstiges"')}</td>`:`<td class="pzp">${zf('ep',p.ep)}</td>`}${c.zRab?`<td class="pzq">${zf('rabatt',p.rabatt||'',' placeholder="%"')}</td>`:''}
+    ${c.ohneP?'':`${c.zLS?`<td class="pzp">${zf('epL',p.epL,' title="Lohn"')}</td><td class="pzp">${zf('epS',p.epS,' title="Sonstiges"')}</td>`:`<td class="pzp">${zf('ep',p.ep)}</td>`}${c.zRab?`<td class="pzq">${zf('rabatt',p.rabatt||'',' placeholder="%"'+rabT())}</td>`:''}
     <td class="n pzg" id="gp${i}">${pa?`<span class="mut" title="im Gruppenpreis enthalten">(${fmt(posGP(p))})</span>`:fmt(posGP(p))}</td>`}${akt}</tr>`}
 function vorschlagNr(b){
   if(b.nr)return b.nr;
@@ -1736,7 +1742,7 @@ MENUE.beleg=()=>{const b=curBeleg();if(!b)return[];const t=T[b.typ],H=HANDY.matc
     !b.storno&&{l:b.fest?'Stornieren …':'Löschen …',ic:'🗑',act:'storno',gefahr:1}].filter(Boolean);
   return L.filter((x,i)=>!x.trenn||(i>0&&!L[i-1].trenn&&L.slice(i+1).some(y=>!y.trenn&&!y.gefahr)))};
 LIVE.spalten=()=>{const b=curBeleg();if(!b||b.fest)return;anBeleg(livePop('Spalten &amp; Druck',()=>{const ohneP=OHNE_PREIS.includes(b.typ),dk=dKnopf(b,'Druckoptionen …');
-  return`${ohneP?'':`<label class="chk"><input type="checkbox" data-h="optRabatt" ${showRab(b)?'checked':''}> Spalte Rabatt</label><label class="chk"><input type="checkbox" data-h="optLS" ${b.optLS?'checked':''}> Lohn / Sonstiges (EP = Lohn + Sonstiges)</label>`}
+  return`${ohneP?'':`<label class="chk"><input type="checkbox" data-h="optRabatt" ${showRab(b)?'checked':''}> Spalte ${zuE()?'Rabatt/Zuschlag':'Rabatt'}</label><label class="chk"><input type="checkbox" data-h="optLS" ${b.optLS?'checked':''}> Lohn / Sonstiges (EP = Lohn + Sonstiges)</label>`}
   <label class="chk" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''}> Langtext drucken</label>${dk?`<div class="bar" style="margin:14px 0 0">${dk}</div>`:''}`}),b)};
 /* ---------- Bearbeiten direkt in der Vorschau ---------- */
 function deNum(s){s=String(s).replace(/[\s€%  ]/g,'');if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');const n=parseFloat(s);return isNaN(n)?0:n}
@@ -2020,7 +2026,7 @@ function posLeseK(b){const ohneP=OHNE_PREIS.includes(b.typ),gi=gruppenInfo(b),pn
     const g=gi.grp[p.id],pa=g&&+g.pauschal>0,gp=fmt(posGP(p));
     return`<tr class="${g?'ing':''}"><td class="mut">${pnr[p.id]||''}</td><td>${p.nr?`<span class="mut">${esc(p.nr)}</span> `:''}${esc(p.bez)}${kzT(effKz(p,gi))}${!V_&&p.lnr?' '+tag('Lief.: '+esc(p.lnr)):''}${lt(p)}</td><td class="n">${fmtQ(p.menge)}</td><td>${esc(p.einheit||'')}</td>
       ${ohneP?'':`${ls?`<td class="n">${fmtP(+p.epL||0)}</td><td class="n">${fmtP(+p.epS||0)}</td>`:''}<td class="n">${fmtP(p.ep)}</td>${rab?`<td class="n">${+p.rabatt?fmtQ(p.rabatt)+' %':''}</td>`:''}<td class="n">${pa?`<span class="mut" title="im Gruppenpreis enthalten">(${gp})</span>`:gp}</td><td>${esc(stDef(b,p.steuer).bez)}</td>`}</tr>`}).join('');
-  return`<div class="card" style="padding:8px"><table class="pos pl"><thead><tr><th>Pos</th><th>Bezeichnung</th><th class="n">Menge</th><th>Einh.</th>${ohneP?'':`${ls?'<th class="n">Lohn</th><th class="n">Sonst.</th>':''}<th class="n">EP</th>${rab?'<th class="n">Rab.</th>':''}<th class="n">GP netto</th><th>USt</th>`}</tr></thead>
+  return`<div class="card" style="padding:8px"><table class="pos pl"><thead><tr><th>Pos</th><th>Bezeichnung</th><th class="n">Menge</th><th>Einh.</th>${ohneP?'':`${ls?'<th class="n">Lohn</th><th class="n">Sonst.</th>':''}<th class="n">EP</th>${rab?`<th class="n"${rabT()}>${zuE()?'Rab./Zu.':'Rab.'}</th>`:''}<th class="n">GP netto</th><th>USt</th>`}</tr></thead>
     <tbody>${rows||`<tr><td colspan="${n+1}" class="mut">Keine Positionen.</td></tr>`}</tbody></table></div>`}
 function updateCalc(b){
   const gi=gruppenInfo(b);b.pos.forEach((p,i)=>{const e=$('#gp'+i),g=gi.grp[p.id];if(e){const s=e.querySelector('span'),t=fmt(posGP(p));(s||e).textContent=g&&+g.pauschal>0?`(${t})`:t} // Pauschalgruppe: GP in Klammern wie beim Zeichnen
@@ -2072,7 +2078,7 @@ const posMehr=i=>`<button class="mehr" data-act="menue" data-m="pos" data-i="${i
 function posKarte(b,p,i,c){const at=c.ed?` data-act="pbear" data-i="${i}" role="button" title="Position bearbeiten"`:'',mehr=c.ed?posMehr(i):'';
   if(p.art==='T')return`<div class="kkf pkf${ndCls(c.wg,p)}"${ndAttr(c.wg,i)}><div class="kk pk pkt"${at}><div class="kku">${esc(rtText(p.text))||'<i class="mut">leerer Text</i>'}${ndTag(c.wg)}</div></div>${mehr}</div>`;
   const g=c.gi.grp[p.id],pa=g&&+g.pauschal>0,kz=effKz(p,c.gi),gp=fmt(posGP(p)),lt=rtText(p.text),st=p.steuer&&p.steuer!==c.std?stDef(b,p.steuer).bez:'';
-  const z2=[esc(p.nr||''),`${fmtQ(p.menge)} ${esc(p.einheit||'')}${c.ohneP?'':` × ${fmtP(p.ep)}`}${+p.rabatt?` − ${fmtQ(p.rabatt)} %`:''}`,c.zLS?`L ${fmtP(+p.epL||0)} + S ${fmtP(+p.epS||0)}`:''].filter(Boolean).join(' · ');
+  const z2=[esc(p.nr||''),`${fmtQ(p.menge)} ${esc(p.einheit||'')}${c.ohneP?'':` × ${fmtP(p.ep)}`}${+p.rabatt?(zuE()&&+p.rabatt<0?` + ${fmtQ(-p.rabatt)} % Zuschlag`:` − ${fmtQ(p.rabatt)} %`):''}`,c.zLS?`L ${fmtP(+p.epL||0)} + S ${fmtP(+p.epS||0)}`:''].filter(Boolean).join(' · ');
   const tags=[kz==='OPT'?tag('Option','warn'):kz==='ALT'?tag('Alternative','warn'):'',p.art==='L'?tag('Leistung'):p.art==='F'?tag('Fremdleistung'):'',st?tag(esc(st)):'',!c.V_&&p.lnr?tag('Lief.: '+esc(p.lnr)):''].join('');
   return`<div class="kkf pkf${kz?' pko':''}${ndCls(c.wg,p)}"${ndAttr(c.wg,i)}><div class="kk pk"${at}><div class="kk1"><span class="kkt"><span class="pnr">${c.pnr[p.id]||''}</span> ${esc(p.bez)||'<i class="mut">ohne Bezeichnung</i>'}</span>${c.ohneP?'':`<span class="kkb" id="gp${i}">${pa?`(${gp})`:gp}</span>`}</div>
     <div class="kku">${z2}${tags?' '+tags:''}${ndTag(c.wg)}</div>${lt?`<div class="kkz">${esc(lt)}</div>`:''}</div>${mehr}</div>`}
@@ -2103,7 +2109,7 @@ function posFelder(b,i){const p=b.pos[i],V_=T[b.typ].b==='V',ohneP=OHNE_PREIS.in
   return`<div class="row">${art}<label class="w05">Artikel<input list="dl-art" ${a('artikel')} value="${esc(p.nr)}" placeholder="Art.-Nr."></label>${!V_&&p.lnr?`<span class="mut" style="align-self:center" title="Art.-Nr. des Lieferanten (Druck: „Ihre Art.-Nr.“)">Lief.: ${esc(p.lnr)}</span>`:''}</div>
   <div class="row"><label class="w2">Bezeichnung<input ${a('bez')} value="${esc(p.bez)}" placeholder="Bezeichnung"></label></div><div class="row"><label class="w2">Langtext${rte('Langtext …')}</label></div>
   <div class="row">${zf('menge','Menge',p.menge)}<label class="w05">Einheit<select ${a('einheit')}>${el.map(e=>opt(e,e,p.einheit)).join('')}</select></label></div>
-  ${ohneP?'':`<div class="row">${zLS?zf('epL','Lohn',p.epL)+zf('epS','Sonstiges',p.epS)+`<label class="w05">EP (Lohn + Sonstiges)<input value="${p.ep}" disabled></label>`:zf('ep','EP netto',p.ep)}${showRab(b)?zf('rabatt','Rabatt %',p.rabatt||'',' placeholder="%"'):''}</div>
+  ${ohneP?'':`<div class="row">${zLS?zf('epL','Lohn',p.epL)+zf('epS','Sonstiges',p.epS)+`<label class="w05">EP (Lohn + Sonstiges)<input value="${p.ep}" disabled></label>`:zf('ep','EP netto',p.ep)}${showRab(b)?zf('rabatt',rabL()+(zuE()?' '+hilfe('negativ = Zuschlag, z. B. −10 = 10 % Zuschlag'):''),p.rabatt||'',' placeholder="%"'+rabT()):''}</div>
   <div class="row"><label class="w05">USt<select ${a('steuer')}>${stO(p.steuer)}</select></label>${zf('ek','EK je Einheit',p.ek,' title="Einstandspreis je Einheit"')}</div>`}
   <div class="row">${kz}${ohneP?'':`<label class="w05">GP netto<b class="pgsum">${pa?`(${fmt(posGP(p))}) im Gruppenpreis`:fmt(posGP(p))}</b></label>`}</div>${kn}`}
 function posPopup(b,i){const p=b.pos[i];if(!p||b.fest)return null;let d=null;
@@ -4265,8 +4271,9 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   const nm=dp.nullMenge==='aus'||(dp.nullMenge==='ep'&&!RE_V.includes(b.typ))?dp.nullMenge:'',weg=nullWeg(b,nm),oEP=g=>!!g.ohneEP||!dp.epGrp,str=dp.striche?'–':''; // Menge 0, Einzelpreise in Gruppen, Striche (P3)
   const opt_=p=>p.art==='G'?!!p.kz:p.art==='T'?false:!!effKz(p,gi);
   const haupt=b.pos.filter(p=>!opt_(p)),nebn=b.pos.filter(p=>opt_(p));
-  const mehrSt=s.steuern.length>1,rab=showRab(b),ls=!!b.optLS&&!ohneP;
+  const mehrSt=s.steuern.length>1,lsA=!!b.optLS&&!ohneP,lsf=lsA&&['zeile','aus'].includes(dp.lsForm)?dp.lsForm:'spalten',ls=lsf==='spalten'&&lsA,rf=['text','netto'].includes(dp.rabForm)?dp.rabForm:'spalte',zf=['plus','text'].includes(dp.zusForm)?dp.zusForm:'spalte',zus=b.pos.some(p=>+p.rabatt<0),rab=showRab(b)&&(rf==='spalte'||(zf!=='text'&&zus)); // Lohn/Sonstiges, Rabatt, Zuschlag (P4): ls/rab = Spalten
   const spP=dp.spPos!==false,an=dp.artNr==='spalte',spM=dp.spMenge!==false,spE=spM&&dp.spEinheit!==false,mv=dp.spFolge==='mengeVorn',mr=dp.mengeAusr==='rechts',sp=!spP||an||mv,nfix=(spP?1:0)+(an?1:0)+1+(spM?1:0)+(spE?1:0); // Spalten (P4); sp = abweichende Folge (Klassen statt Spaltenposition)
+  const kurz=dp.kurz!==false,ltB=!!dp.ltBreit,gfv=/^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(dp.grpFarbe)?dp.grpFarbe:DRUCK_STD.grpFarbe,dc=(['farbe','farbe-u'].includes(dp.grpStil)?' gf':'')+(dp.grpStil==='farbe-u'?' gu':'')+(dp.posFett===false?' nf':''); // Positionsdarstellung (P4)
   const ncol=nfix+(ohneP?0:(ls?2:0)+1+(rab?1:0)+(mehrSt?1:0)+1);
   const zeile=p=>{
     const i=pi(p);if(weg.has(p.id))return''; // Menge 0 nicht drucken (P3)
@@ -4274,12 +4281,15 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
     if(p.art==='G'){const zeigP=!ohneP&&(+p.pauschal>0||oEP(p)||gsA);
       return`<tr class="grpz">${spP?`<td${sp?' class="pn"':''}><b>${pnr[p.id]}</b></td>`:''}<td colspan="${ncol-(zeigP?1:0)-(spP?1:0)}"><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Gruppe')}</b>${p.text||edit?`<div class="lt">${ed(`p:${i}:text`,p.text,'Gruppentext …',true)}</div>`:''}</td>${zeigP?`<td class="n"><b>${fmt(gruppePreis(p,gi))}</b></td>`:''}</tr>`}
     const g=gi.grp[p.id],ohne=ohneP||(g&&(+g.pauschal>0||oEP(g))),na=nm==='ep'&&!ohneP&&!(+p.menge); // Einheitspreis: Menge „n. A.“, ohne Gesamtpreis (P3)
-    const pr=ohneP?'':ohne?(str?`${ls?'<td class="n">–</td><td class="n">–</td>':''}<td class="n">–</td>${rab?'<td></td>':''}${mehrSt?'<td></td>':''}<td class="n">–</td>`:`<td colspan="${ncol-nfix}"></td>`):`${ls?`<td class="n">${edit?ed(`p:${i}:epL`,fmt(p.epL)):fmt(p.epL)}</td><td class="n">${edit?ed(`p:${i}:epS`,fmt(p.epS)):fmt(p.epS)}</td>`:''}<td class="n">${edit&&!ls?ed(`p:${i}:ep`,fmt(p.ep)):fmt(p.ep)}</td>${rab?`<td class="n">${edit?ed(`p:${i}:rabatt`,+p.rabatt?fmtQ(p.rabatt):'','%'):(+p.rabatt?fmtQ(p.rabatt)+' %':'')}</td>`:''}${mehrSt?`<td class="n">${esc(stDef(b,p.steuer).satz)} %</td>`:''}<td class="n">${na?str:fmt(posGP(p))}</td>`;
+    const r=+p.rabatt||0,rn=rf==='netto'&&r>0,rz=r>0&&rf!=='spalte'||r<0&&zf==='text'?'':r<0&&zf==='plus'?'+'+fmtQ(-r)+' %':edit&&rf==='spalte'&&zf==='spalte'?ed(`p:${i}:rabatt`,r?fmtQ(r):'','%'):(r?fmtQ(r)+' %':''),bt=r2((+p.menge||0)*(+p.ep||0)); // Rabatt bzw. Zuschlag (negativer Rabatt) je Position (P4)
+    const kz=ohne?'':[lsf==='zeile'?`Lohn ${fmt(p.epL)} € · Sonstiges ${fmt(p.epS)} € je ${esc(p.einheit||'ME')}`:'',r>0&&rf==='text'?esc(dp.rabTxt||DRUCK_STD.rabTxt).replace(/\{Rabatt\}/g,()=>fmtQ(r)).replace(/\{Betrag\}/g,()=>fmt(bt-posGP(p))):'',r<0&&zf==='text'?esc(dp.zusTxt||DRUCK_STD.zusTxt).replace(/\{Zuschlag\}/g,()=>fmtQ(-r)).replace(/\{Betrag\}/g,()=>fmt(posGP(p)-bt)):''].filter(Boolean).map(z=>`<div class="kzl">${z}</div>`).join(''); // Kleinzeilen (P4)
+    const pr=ohneP?'':ohne?(str?`${ls?'<td class="n">–</td><td class="n">–</td>':''}<td class="n">–</td>${rab?'<td></td>':''}${mehrSt?'<td></td>':''}<td class="n">–</td>`:`<td colspan="${ncol-nfix}"></td>`):`${ls?`<td class="n">${edit?ed(`p:${i}:epL`,fmt(p.epL)):fmt(p.epL)}</td><td class="n">${edit?ed(`p:${i}:epS`,fmt(p.epS)):fmt(p.epS)}</td>`:''}<td class="n">${rn?fmt(r2(p.ep*(1-r/100))):edit&&!lsA?ed(`p:${i}:ep`,fmt(p.ep)):fmt(p.ep)}</td>${rab?`<td class="n">${rz}</td>`:''}${mehrSt?`<td class="n">${esc(stDef(b,p.steuer).satz)} %</td>`:''}<td class="n">${na?str:fmt(posGP(p))}</td>`;
     const ln=t.b==='E'?(fx?p.lnr||fx.lnr?.[p.id]||lnrEk(b,p):p.lnr||lnrStamm(b,p)||(!b.fest&&erw('snapshot')?lnrEk(b,p):'')):'',ak=dp.artNr==='spalte'||dp.artNr==='aus'; // Art.-Nr. (Einkauf: des Lieferanten); eigene Spalte bzw. nicht drucken (P4)
     const kl=ak?(dp.artNr==='aus'&&ln?` <span style="color:#555">(Ihre Art.-Nr. ${esc(ln)})</span>`:''):ln?` <span style="color:#555">(Ihre Art.-Nr. ${esc(ln)})</span>`:p.nr?` <span style="color:#555">(${esc(p.nr)})</span>`:'',lx=ak&&t.b==='E'&&!edit?ohneIAN(p.text):p.text;
     const mz=spM?`<td class="${mr?'n':'c'}">${edit?ed(`p:${i}:menge`,na?'':fmtQ(p.menge),na?'n. A.':''):na?'n. A.':fmtQ(p.menge)}${spE||!p.einheit?'':' '+esc(p.einheit)}</td>${spE?`<td${mr?'':' class="c"'}>${esc(p.einheit)}</td>`:''}`:'',az=an?`<td class="an">${esc(ln||p.nr||'')}</td>`:''; // Menge/Einheit, Art.-Nr. (P4)
-    return`<tr>${spP?`<td${sp?' class="pn"':''}>${pnr[p.id]}</td>`:''}${mv?mz+az:az}<td><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Bezeichnung')}</b>${kl}${b.ltDruck!==false&&(lx||edit)?`<div class="lt">${ed(`p:${i}:text`,lx,'Langtext …',true)}</div>`:''}</td>
-    ${mv?'':mz}${pr}</tr>`;
+    const pf=p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':'',lO=b.ltDruck!==false&&(lx||edit),oK=!kurz&&lO&&!!lx,lH=lO?`<div class="lt${oK?' lk':''}">${ed(`p:${i}:text`,lx,'Langtext …',true)}</div>`:'',lz=ltB&&lH; // nur Langtext; Langtext über die volle Breite (P4)
+    return`<tr${lz?' class="mlt"':''}>${spP?`<td${sp?' class="pn"':''}>${pnr[p.id]}</td>`:''}${mv?mz+az:az}<td>${oK&&!pf?'':`<b>${pf}${oK?'':ed(`p:${i}:bez`,p.bez,'Bezeichnung')}</b>`}${kl}${kz}${lz?'':lH}</td>
+    ${mv?'':mz}${pr}</tr>${lz?`<tr class="ltz">${spP?'<td></td>':''}<td colspan="${ncol-(spP?1:0)}">${lH}</td></tr>`:''}`;
   };
   // Gruppensumme (P2, dp.grpSumme): am Ende (Standard), am Anfang im Gruppenkopf, beides oder keine (Options-/Alternativgruppen dann weiter am Ende); Beschriftung dp.grpSumLbl
   const gs=['anfang','beide','aus'].includes(dp.grpSumme)?dp.grpSumme:'ende',gsA=gs==='anfang'||gs==='beide',gsE=g=>gs==='ende'||gs==='beide'||(gs==='aus'&&!!g.kz);
@@ -4293,7 +4303,7 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
     if(Math.abs(sum(Z,z=>z[2])-s.netto)>0.005)return'';
     return`<table class="zs"><tr><th colspan="2">Zusammenfassung</th><th class="n">Gesamt €</th></tr>${Z.map(([n,t,v])=>`<tr><td>${n}</td><td>${t}</td><td class="n">${fmt(v)}</td></tr>`).join('')}</table>`})();
   const mth=spM?`<th${mr?' class="n"':''}>Menge</th>${spE?`<th${mr?' class="l"':''}>Einheit</th>`:''}`:'',ath=an?'<th class="an">Art.-Nr.</th>':''; // Kopf Menge/Einheit, Art.-Nr. (P4)
-  const th=`<tr>${spP?`<th${sp?' class="pn"':''}>Pos</th>`:''}${mv?mth+ath:ath}<th${sp?' class="bz"':''}>Bezeichnung</th>${mv?'':mth}${ohneP?'':`${ls?'<th class="n">Lohn</th><th class="n">Sonstiges</th>':''}<th class="n">${esc(dp.lblEP)||(ls?'PP':'Einzelpreis')}</th>${rab?'<th class="n">Rabatt %</th>':''}${mehrSt?'<th class="n">USt</th>':''}<th class="n">${esc(dp.lblGP)||(ls?'GP':'Gesamtpreis')}</th>`}</tr>`;
+  const th=`<tr>${spP?`<th${sp?' class="pn"':''}>Pos</th>`:''}${mv?mth+ath:ath}<th${sp?' class="bz"':''}>Bezeichnung</th>${mv?'':mth}${ohneP?'':`${ls?'<th class="n">Lohn</th><th class="n">Sonstiges</th>':''}<th class="n">${esc(dp.lblEP)||(ls?'PP':'Einzelpreis')}</th>${rab?`<th class="n">${zf==='plus'&&zus?(rf==='spalte'?'Rab./Zuschl. %':'Zuschlag %'):'Rabatt %'}</th>`:''}${mehrSt?'<th class="n">USt</th>':''}<th class="n">${esc(dp.lblGP)||(ls?'GP':'Gesamtpreis')}</th>`}</tr>`;
   const hinweise=[...new Set(s.steuern.map(x=>stDef(b,x.code).hinweis).filter(Boolean))];
   const nrTxt=b.nr||(edit?vorschlagNr(b)+' (Vorschlag)':'ENTWURF');
   const mitLeistung=(t.re&&t.b==='V')||b.typ==='LS';
@@ -4303,7 +4313,7 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   let zb='';
   if(t.re&&t.b==='V'&&b.typ!=='GS'){zb=`Zahlbar bis ${dAT(faellig(b))} ohne Abzug`+(+b.skonto?`, bei Zahlung bis ${dAT(addDays(b.datum,b.skontoTage))} abzüglich ${fmtQ(b.skonto)} % Skonto`:'')+'.'}
   else if(!ohneP&&['AN','AB','PR'].includes(b.typ)){zb=`Zahlungsbedingungen: ${b.zahlungsziel} Tage netto`+(+b.skonto?`, ${b.skontoTage} Tage ${fmtQ(b.skonto)} % Skonto`:'')+'. Alle Preise in EUR zuzüglich gesetzlicher Umsatzsteuer.'}
-  return`<div class="doc">
+  return`<div class="doc${dc}"${dc.includes('gf')?` style="--gf:${gfv}"`:''}>
   ${b.fest?'':'<div class="wm">ENTWURF – nicht gültig</div>'}
   ${briefkopf(f)}
   <div class="adr"><div class="to">${esc(k.name)}<br>${k.zusatz?esc(k.zusatz)+'<br>':''}${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.land&&k.land!=='Österreich'?'<br>'+esc(k.land):''}</div>
@@ -4312,7 +4322,7 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   ${b.betreff||edit?`<div>Projekt: ${ed('h:betreff',b.betreff,'Betreff / Projekt')}</div>`:''}${b.bezug||edit?`<div>Bezug: ${ed('h:bezug',b.bezug,'z. B. Ihre Anfrage vom …')}</div>`:''}
   ${b.kopf||edit?`<div class="txt">${ed('h:kopf',b.kopf,'Kopftext …',true)}</div>`:''}
   <table class="p${sp?' sp':''}"><thead>${th}</thead><tbody>${tr(haupt)}</tbody></table>
-  ${zs}${ohneP||!dp.summen?'':(eu=>`<table class="tot"><tr><td>${esc(dp.lblNetto||'Nettobetrag')}</td>${eu(fmt(s.netto))}</tr>${ls?`<tr><td style="font-size:8.5pt">davon Lohn ${fmt(s.lohn)} € · Sonstiges ${fmt(s.sonst)} €${Math.abs(s.netto-s.lohn-s.sonst)>0.005?` · ohne Aufteilung (Gruppenpreise) ${fmt(s.netto-s.lohn-s.sonst)} €`:''}</td><td></td>${dp.euroSp?'<td></td>':''}</tr>`:''}
+  ${zs}${ohneP||!dp.summen?'':(eu=>`<table class="tot"><tr><td>${esc(dp.lblNetto||'Nettobetrag')}</td>${eu(fmt(s.netto))}</tr>${lsA&&lsf!=='aus'?`<tr><td style="font-size:8.5pt">davon Lohn ${fmt(s.lohn)} € · Sonstiges ${fmt(s.sonst)} €${Math.abs(s.netto-s.lohn-s.sonst)>0.005?` · ohne Aufteilung (Gruppenpreise) ${fmt(s.netto-s.lohn-s.sonst)} €`:''}</td><td></td>${dp.euroSp?'<td></td>':''}</tr>`:''}
   ${s.steuern.map(x=>`<tr><td>${x.satz?`${esc(dp.lblUSt||'zzgl. Umsatzsteuer')} ${fmtQ(x.satz)} %${mehrSt?' auf '+fmt(x.basis):''}`:esc(x.bez)+' '+fmt(x.basis)}</td>${eu(fmt(x.betrag))}</tr>`).join('')}
   <tr class="b g"><td>${esc(dp.lblBrutto||'Gesamtbetrag')}</td>${eu(fmt(s.brutto))}</tr>
   ${s.abz.map(a=>`<tr><td>abzgl. ${T[a.typ].bez} ${esc(a.nr)} vom ${dAT(a.datum)}<br><span style="font-size:8pt">netto ${fmt(a.netto)}, USt ${fmt(sum(a.steuern,x=>x.betrag))}</span></td>${eu('−'+fmt(a.brutto))}</tr>`).join('')}
@@ -4359,6 +4369,18 @@ const DRUCKOPT=[
   {k:'nrForm',std:'std',p:'Spalten (P4)',l:'Positionsnummern in Gruppen',opts:[['std','1.01, 1.02 …'],['kurz','1.1, 1.2 …']],info:'nur Darstellung (auch im Editor), gespeichert wird keine Nummer. Alle Belegarten gleich einstellen, damit Angebot, Auftragsbestätigung und Rechnung dieselben Nummern zeigen; die OZ aus dem LV stehen in der Art.-Nr.'},
   {k:'lblEP',std:'',p:'Spalten (P4)',l:'Spaltenkopf Einzelpreis',typ:'txt',max:20,preis:true,ph:'Einzelpreis',info:'leer = Standard („Einzelpreis“, bei Lohn / Sonstiges „PP“)'},
   {k:'lblGP',std:'',p:'Spalten (P4)',l:'Spaltenkopf Gesamtpreis',typ:'txt',max:20,preis:true,ph:'Gesamtpreis',info:'leer = Standard („Gesamtpreis“, bei Lohn / Sonstiges „GP“)'},
+  // Positionsdarstellung (P4)
+  {k:'kurz',std:true,p:'Positionsdarstellung (P4)',l:'Kurztext auch bei vorhandenem Langtext',typ:'chk',info:'aus: Positionen mit Langtext zeigen nur den Langtext (in normaler Schrift), z. B. bei Texten aus einem Leistungsbuch, die den Kurztext wiederholen; ohne Langtext bzw. bei „Langtext drucken“ aus bleibt der Kurztext'},
+  {k:'ltBreit',std:false,p:'Positionsdarstellung (P4)',l:'Langtext über die volle Breite',typ:'chk',info:'Der Langtext steht in einer eigenen Zeile unter der Position und reicht bis unter die Preisspalten; beim Seitenumbruch bleibt er bei seiner Position'},
+  {k:'lsForm',std:'spalten',p:'Positionsdarstellung (P4)',l:'Lohn / Sonstiges',opts:[['spalten','als Spalten (Lohn | Sonstiges | PP | GP)'],['zeile','als Zeile unter der Bezeichnung'],['aus','nicht ausweisen']],preis:true,info:'nur bei Belegen mit „Lohn / Sonstiges“. „als Zeile“: „Lohn 12,00 € · Sonstiges 30,00 € je Stk“, als Spalten nur Einzel- und Gesamtpreis; „nicht ausweisen“: Druck wie ohne Aufteilung (auch ohne „davon Lohn …“ im Summenblock), intern bleibt sie für Kalkulation und Nachweis'},
+  {k:'rabForm',std:'spalte',p:'Positionsdarstellung (P4)',l:'Rabatt je Position',opts:[['spalte','Spalte „Rabatt %“'],['text','als Zeile unter der Bezeichnung'],['netto','Einzelpreis bereits rabattiert']],preis:true,info:'„als Zeile“: Text der Rabattzeile (unten); „rabattiert“: Einzelpreis nach Rabatt ohne Rabattangabe – Menge × Einzelpreis kann dann wegen der Rundung um Cent vom Gesamtpreis abweichen'},
+  {k:'rabTxt',std:'abzüglich {Rabatt} % Rabatt = −{Betrag} €',p:'Positionsdarstellung (P4)',l:'Text der Rabattzeile',typ:'txt',max:80,preis:true,info:'{Rabatt} = Prozent, {Betrag} = Rabattbetrag der Position; nur bei „als Zeile“; leer = Standard'},
+  {k:'zusForm',std:'spalte',p:'Positionsdarstellung (P4)',l:'Zuschlag je Position (negativer Rabatt)',opts:[['spalte','in der Rabattspalte negativ (−10 %)'],['plus','in der Spalte als „+10 %“'],['text','als Zeile unter der Bezeichnung']],preis:true,info:'Ein Zuschlag (z. B. Erschwernis, Kleinmenge, Nachtarbeit) wird als negativer Rabatt erfasst (−10 = 10 % Zuschlag); Summen und Folgebelege rechnen damit unverändert. Bei „+10 %“ heißt der Spaltenkopf „Rab./Zuschl. %“ bzw. „Zuschlag %“.'},
+  {k:'zusTxt',std:'zzgl. {Zuschlag} % Zuschlag = +{Betrag} €',p:'Positionsdarstellung (P4)',l:'Text der Zuschlagszeile',typ:'txt',max:80,preis:true,info:'{Zuschlag} = Prozent, {Betrag} = Zuschlagsbetrag der Position; nur bei „als Zeile“; leer = Standard'},
+  {k:'grpStil',std:'',p:'Positionsdarstellung (P4)',l:'Gruppenüberschrift',opts:[['','schwarz, fett'],['farbe','farbig, fett'],['farbe-u','farbig, fett, unterstrichen']]},
+  {k:'grpFarbe',std:'#80704d',p:'Positionsdarstellung (P4)',l:'Farbe der Gruppenüberschrift',typ:'txt',max:7,ph:'#80704d',info:'als #RRGGBB, z. B. #80704d (Farbe der Fußzeilenlinie) oder #b42318 (rot); nur mit „farbig“',
+    warn:o=>o.grpFarbe&&!/^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(o.grpFarbe)?'Farbe der Gruppenüberschrift bitte als #RRGGBB angeben (z. B. #b42318) – sonst gilt #80704d.':''},
+  {k:'posFett',std:true,p:'Positionsdarstellung (P4)',l:'Positionsbezeichnung fett',typ:'chk'},
   // Infoblock, Grußformel, Fußzeile, Kostenvoranschlag (P5)
   {k:'nrInfo',std:false,p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Beleg-Nr. im Infoblock',typ:'chk',info:'Die Nummer steht im Infoblock nach der Kunden-Nr. (z. B. „Angebots-Nr.“) mit einem Hinweis darunter; die Überschrift zeigt dann nur die Belegart.'},
   {k:'nrHinweis',std:'Bei Rückfragen bitte angeben',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Hinweis unter der Beleg-Nr.',typ:'txt',nur:Object.keys(T).filter(t=>!RE_V.includes(t)),info:'nur mit „Beleg-Nr. im Infoblock“; leer = kein Hinweis'},
@@ -4427,7 +4449,8 @@ function vorschauSeiten(){
     let start=0,n=1;
     for(let i=0;i<bloecke.length;i++){const B=bloecke[i],unten=B.el.getBoundingClientRect().bottom-t0();
       if(unten-start<=H+0.5)continue;
-      let j=i;while(j>0&&bloecke[j-1].tab&&bloecke[j-1].tab===B.tab&&bloecke[j-1].el.classList.contains('grpz'))j--; // Gruppenkopf mitnehmen
+      let j=i;if(j>0&&B.tab&&bloecke[j-1].tab===B.tab&&B.el.classList.contains('ltz'))j--; // Langtext über die volle Breite (P4) mit seiner Position
+      while(j>0&&bloecke[j-1].tab&&bloecke[j-1].tab===B.tab&&bloecke[j-1].el.classList.contains('grpz'))j--; // Gruppenkopf mitnehmen
       const Z=bloecke[j],el=Z.erst?Z.tab:Z.el,zt=el.getBoundingClientRect().top-t0();
       if(zt<=start+1){start+=H;n++;i--;continue} // Block größer als eine Seite: wird geteilt
       const fill=start+H-zt;let sp;
@@ -4510,7 +4533,7 @@ async function pdfAusBeleg(b,o={}){
     fertig()}
   // Seitenumbrüche an Zeilen-/Blockgrenzen; Tabellenkopf auf Folgeseiten wiederholen
   // Umbruch nur nach ganzen Zeilen (Position = Bezeichnung + Langtext), nicht nach Tabellen- oder Gruppenkopf; Summenblock (.tot) bleibt ein Block wie im Druck
-  const brk=[...box.querySelectorAll('table.p tbody>tr:not(.grpz),.doc>div:not(.hd),.doc>table,.txt,.sig')].map(e=>Y(e.getBoundingClientRect().bottom)).sort((a,c)=>a-c);
+  const brk=[...box.querySelectorAll('table.p tbody>tr:not(.grpz):not(.mlt),.doc>div:not(.hd),.doc>table,.txt,.sig')].map(e=>Y(e.getBoundingClientRect().bottom)).sort((a,c)=>a-c);
   const tab=box.querySelector('table.p'),tR=tab?.getBoundingClientRect(),thR=tab?.querySelector('thead')?.getBoundingClientRect(),thH=thR?thR.height:0,thTop=thR?Y(thR.top):0;
   const hoehe=Math.max(...[...it].map(x=>x.t==='text'?x.y+4:x.t==='line'?Math.max(x.y1,x.y2):x.y+x.h),0);
   const seiten=[];let st=0;

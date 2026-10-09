@@ -172,6 +172,16 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
   table.pos textarea{height:44px}
   table.pos button.s{padding:6px 12px;font-size:14px}
 }
+/* Kompakt (P30) Fehlerbehebung (ohne Schalter): Spalten nehmen nicht die Breite breiter Tabellen an (kein Seitenüberlauf), Tabellen in Karten mit eigenem Bildlauf,
+   Reiter und Leiste „Ungespeicherte Änderungen“ am Handy umbrechend, schmale Felder am Handy zu zweit je Zeile, Liste „Zuletzt“ mit Bildlauf */
+.cols>*{min-width:0}.cols>*>.card{overflow-x:auto}
+@media(max-width:1100px){.card{overflow-x:auto}}
+.pop.zlpop{max-height:calc(100vh - 150px);overflow-y:auto}
+@media(max-width:760px){
+  .seg{flex-wrap:wrap;max-width:100%}.seg button{flex:1 0 auto;border-bottom:1px solid #e2e5ea;margin-bottom:-1px}
+  #dirtybar{flex-wrap:wrap;row-gap:6px}#dirtybar>span:first-child{flex-basis:100%}
+  .row>label.w05{flex:1 1 calc(50% - 5px);min-width:calc(50% - 5px)}
+}
 #print{display:none}
 .pgw,.pgw>*>tr>td{border:0;padding:0;width:100%;border-collapse:collapse}.pgw .pgf{height:16mm}
 @media print{#app,#start,.pop{display:none!important}#print{display:block}body{background:#fff}@page{size:A4;margin:10mm 14mm 17.3mm 20mm;@bottom-right{content:'Seite ' counter(page) ' von ' counter(pages);white-space:nowrap;font:7.5pt Arial,sans-serif;vertical-align:top;text-align:right;padding-top:10.5mm;width:30mm;margin-right:1mm}}#print.mb .ft{display:none}#print.mb .pgf{height:0}

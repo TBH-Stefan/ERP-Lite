@@ -46,6 +46,10 @@ tr.kind td{background:#f7f8fa;font-size:13px}tr.kind td:nth-child(2){padding-lef
 .mbox{background:#fff;border-radius:10px;max-width:520px;width:100%;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
 .mtab td{border:0;padding:3px 10px 3px 0}
 .mwarn{background:#fde8e6;border:1px solid #f4b8b1;color:#7a1a12;border-radius:6px;padding:9px 11px;margin-top:10px;font-size:13px}
+/* Kompakt (P30) Beleg: Kopfdaten als Zusammenfassung (.kzus, antippen öffnet „Kopfdaten“), Zahlungsbedingungen und Texte als Akkordeon */
+.kzus{line-height:1.55}.kzus[data-act]{cursor:pointer}.kzus[data-act]:hover{border-color:var(--acc)}.kz1{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;font-size:15px}.kzed{margin-left:auto;color:var(--acc);font-size:18px;line-height:1}
+@media(min-width:761px){.kakk{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0 10px;align-items:start}}
+@media(max-width:760px){body.kompakt :is(.kakk,.modal.live) .rte{min-height:40px}}
 label.chk{display:flex;gap:8px;align-items:center;color:var(--ink);font-size:14px;margin-top:12px;cursor:pointer}
 label.chk input{width:18px;height:18px}
 button.gef{background:var(--err);border-color:var(--err)}
@@ -1195,6 +1199,7 @@ function render(){
   $('#main').innerHTML=f(arg);
   document.body.classList.toggle('zlaus',!erw('zuletzt'));if(arg&&ZL_V.includes(view))zuletztMerk(view+'/'+arg); // Zuletzt geöffnet (P19 a)
   requestAnimationFrame(vorschauSeiten);
+  document.querySelectorAll('.modal.live').forEach(m=>{try{m._zeich?.()}catch(e){}}); // offene Bearbeiten-Pop-ups (P30) zeigen den neuen Stand
 }
 window.addEventListener('hashchange',async()=>{
   if(!DB)return;
@@ -1275,9 +1280,10 @@ function livePop(titel,inhalt,{verwerfen=null,breit=false}={}){
   const d=document.createElement('div');d.className='modal live';const alt=verwerfen?JSON.stringify(verwerfen):null;
   d.innerHTML=`<div class="mbox"${breit?' style="max-width:760px"':''}><h2>${titel}</h2><div class="lpi">${inhalt()}</div><div class="bar" style="margin:14px 0 0">${alt?'<button id="lp-vw">Änderungen verwerfen</button>':''}<span class="sp"></span><button class="p" id="m-ok">Fertig</button></div></div>`;
   document.body.appendChild(d);
-  const zeich=()=>{if(!d.isConnected)return;const a=document.activeElement,k=a&&d.contains(a)?['data-o','data-f','data-i','data-id','data-t'].map(x=>a.hasAttribute(x)?`[${x}="${CSS.escape(a.getAttribute(x))}"]`:'').join(''):'';
+  const zeich=()=>{if(!d.isConnected)return;const a=document.activeElement,k=a&&d.contains(a)?['data-o','data-f','data-i','data-id','data-t','data-h','data-p','data-ed'].map(x=>a.hasAttribute(x)?`[${x}="${CSS.escape(a.getAttribute(x))}"]`:'').join(''):'';
     d.querySelector('.lpi').innerHTML=inhalt();if(k)d.querySelector(k)?.focus()};
   d.addEventListener('change',()=>setTimeout(zeich,0)); // nach dem globalen change-Handler (der schreibt den Wert)
+  d._zeich=zeich; // render() zeichnet offene Pop-ups mit (z. B. nach neuem Kunden, Preisverlauf, Artikel-Pop-up)
   const fin=()=>{d.remove();document.removeEventListener('keydown',kd,true);render()},zu=()=>{document.activeElement?.blur?.();setTimeout(fin,0)};
   const kd=e=>{const M=document.querySelectorAll('.modal');if(e.key==='Escape'&&M[M.length-1]===d){e.stopPropagation();zu()}};document.addEventListener('keydown',kd,true);
   d.querySelector('#m-ok').onclick=zu;
@@ -1474,11 +1480,56 @@ V.belege=(bereich='V')=>{
        zelle:b=>KIND.has(b.id)?'<td class="mut" style="text-align:right;padding-right:2px">└</td>':`<td>${ANZ.get(b.id)?`<button class="s grpk" onclick="event.stopPropagation();grpAuf('${b.id}')" title="${ANZ.get(b.id)} zugehörige(r) Beleg(e) (Revisionen, Folgebelege) ${UI.auf[b.id]?'zuklappen':'aufklappen'}">${UI.auf[b.id]?'−':'+'}${ANZ.get(b.id)}</button>${beleg(PRJ.get(b.id))?.projekt?'':`<button class="s" onclick="event.stopPropagation();projektName('${PRJ.get(b.id)}')" title="Projektname als Überschrift vergeben">🏷</button>`}`:''}</td>`}:null})}`;
 };
 
+/* Kompakt (P30 U8): Kopfdaten des Belegs. kopfFelder(b,teil) = bisheriges Formular (ohne teil die ganze Karte, HTML wie bisher), teil 'kopf' (Kunde bis Wareneingang),
+   'zahl' (Zahlungsbedingungen), 'texte' (Kopf- und Fußtext untereinander). kopfK(b) in kompakt: am Handy Zusammenfassung kopfZus(b) (Kunde · Ort, Datum, Betreff · Bezug), antippen
+   öffnet das Live-Pop-up „Kopfdaten“ (ACT.kopfd → kopfPop, dieselben data-h-Felder); neuer Beleg ohne Kunde mit offenem Formular; am Bildschirm Formular. Zahlungsbedingungen und Texte als Akkordeon */
+function kopfFelder(b,teil=''){
+  const t=T[b.typ],dis=b.fest?'disabled':'',V_=t.b==='V',ohneP=OHNE_PREIS.includes(b.typ);
+  const kont=DB.kontakte.filter(k=>V_?k.typ!=='L':k.typ!=='K').sort((a,c)=>a.name.localeCompare(c.name));
+  const rte=(key,val,ph)=>`<div class="rte" ${b.fest?'':'contenteditable="true"'} data-ed="${key}" data-ph="${esc(ph)}">${rt(val)}</div>`;
+  const auftragOpts=()=>opt('','– kein Auftrag (Lager/Gemeinkosten) –',b.auftragId)+auftragsListe().map(a=>opt(a.id,auftragLabel(a.id),b.auftragId)).join('');
+  if(teil==='texte')return V_||b.typ==='BE'?`<div class="row"><label class="w2">Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label></div><div class="row"><label class="w2">Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>`:'';
+  const K=`<div class="row">
+      <label class="w2">${V_?'Kunde':'Lieferant'}<select data-h="kontaktId" ${dis}>${opt('','– wählen –',b.kontaktId)}${kont.map(k=>opt(k.id,k.name+(k.ort?' · '+k.ort:''),b.kontaktId)).join('')}${opt('__neu',V_?'+ Neuer Kunde …':'+ Neuer Lieferant …','')}</select>${b.kontaktId&&!b.fest?`<span style="display:flex;gap:6px;align-items:center;margin-top:4px"><button class="s" data-act="kedit">✎ ${V_?'Kundendaten':'Lieferantendaten'} bearbeiten</button>${kontaktFehlt(kontakt(b.kontaktId)).length?`<span class="err" style="font-size:12px">fehlt: ${kontaktFehlt(kontakt(b.kontaktId)).join(', ')}</span>`:''}${kontakt(b.kontaktId)?.kundenart==='privat'?tag('Privat'):''}</span>`:''}</label>
+      <label class="w05">Datum<input type="date" data-h="datum" value="${b.datum}" ${dis}></label>
+      ${b.typ==='AN'?`<label class="w05">${esc(dOpt(b).lblGueltig||'Gültig bis')}<input type="date" data-h="gueltigBis" value="${b.gueltigBis}" ${dis}></label>`:''}
+      ${['AB','BE'].includes(b.typ)?`<label class="w05">Liefertermin<input type="date" data-h="liefertermin" value="${b.liefertermin}" ${dis}></label>`:''}
+      ${b.typ==='ER'?`<label class="w05">Rechnungs-Nr. Lieferant<input data-h="fremdNr" value="${esc(b.fremdNr)}" ${dis}></label><label>Aufwandskonto (FiBu)<select data-h="konto" ${dis}>${opt('','– automatisch nach Positionsart –',b.konto||'')}${FB().konten.filter(k=>'05678'.includes(k.nr[0])).map(k=>opt(k.nr,k.nr+' '+k.bez,b.konto||'')).join('')}</select></label>`:''}
+      ${['BE','WE'].includes(b.typ)?`<label class="w05">${b.typ==='BE'?'Angebot Lieferant':'Lieferschein-Nr. Lief.'}<input data-h="fremdNr" value="${esc(b.fremdNr)}" ${dis}></label>`:''}
+    </div>
+    ${!b.fest&&!kont.length?`<div class="hint">Noch keine ${V_?'Kunden':'Lieferanten'} – <a href="#/kontakte">jetzt anlegen</a>.</div>`:''}
+    <div class="row">
+      <label class="w2">Betreff / Projekt<input data-h="betreff" value="${esc(b.betreff)}" ${dis}></label>
+      <label>Bezug<input data-h="bezug" value="${esc(b.bezug)}" ${dis} placeholder="z. B. Ihre Anfrage vom …"></label>
+      ${(t.re&&V_)||b.typ==='LS'?`<label>Liefer-/Leistungsdatum<input data-h="leistung" value="${esc(b.leistung)}" ${dis} placeholder="TT.MM.JJJJ oder Zeitraum"></label>`:''}
+    </div>
+    ${!V_?`<div class="row"><label>Auftrag (für Nachkalkulation)<select data-h="auftragId" ${dis}>${auftragOpts()}</select></label></div>`:''}
+    ${b.typ==='WE'?`<div class="row"><label class="chk"><input type="checkbox" data-h="lagerBuchen" ${b.lagerBuchen!==false?'checked':''} ${dis}> Ins Lager einbuchen (abwählen bei Direktlieferung auf die Baustelle)</label><label class="chk"><input type="checkbox" data-h="verrechnen" ${b.verrechnen!==false?'checked':''}> An Kunden weiterverrechnen (Auftrag oder Direktlieferung)</label></div>`:''}`,Z=!ohneP?`<div class="row">
+      <label class="w05">Zahlungsziel Tage<input type="number" data-h="zahlungsziel" value="${b.zahlungsziel}" ${dis}></label>
+      <label class="w05">Skonto %<input type="number" step="any" data-h="skonto" value="${b.skonto}" ${dis}></label>
+      <label class="w05">Skonto Tage<input type="number" data-h="skontoTage" value="${b.skontoTage}" ${dis}></label>
+      <span style="flex:2"></span></div>`:'';
+  if(teil)return teil==='kopf'?K:Z;
+  return`<div class="card">
+    ${K}
+    ${Z}
+    ${V_||b.typ==='BE'?`<div class="row"><label>Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label><label>Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>`:''}
+  </div>`}
+function kopfZus(b){const t=T[b.typ],V_=t.b==='V',k=kontakt(b.kontaktId),a=b.fest&&b.adresse?.name?b.adresse:k,f=b.fest?[]:kontaktFehlt(k);
+  const z2=[(b.typ==='ER'?'Rechnung vom ':'vom ')+dAT(b.datum),b.typ==='AN'&&b.gueltigBis?esc(dOpt(b).lblGueltig||'Gültig bis')+' '+dAT(b.gueltigBis):'',['AB','BE'].includes(b.typ)&&b.liefertermin?'Liefertermin '+dAT(b.liefertermin):'',
+    ((t.re&&V_)||b.typ==='LS')&&b.leistung?'Leistung '+esc(b.leistung):'',['ER','BE','WE'].includes(b.typ)&&b.fremdNr?{ER:'Re-Nr. Lief. ',BE:'Angebot Lief. ',WE:'LS-Nr. Lief. '}[b.typ]+esc(b.fremdNr):''].filter(Boolean);
+  const z3=[b.betreff,b.bezug].filter(Boolean).map(esc),z4=V_?[]:[b.auftragId?'Auftrag '+esc(auftragKurz(b.auftragId)):'kein Auftrag',b.typ==='ER'&&b.konto?'Konto '+esc(b.konto):'',b.typ==='WE'?(b.lagerBuchen!==false?'ins Lager':'nicht ins Lager')+' · '+(b.verrechnen!==false?'weiterverrechnen':'nicht weiterverrechnen'):''].filter(Boolean);
+  return`<div class="card kzus"${b.fest?'':' data-act="kopfd" role="button" title="Kopfdaten bearbeiten"'}><div class="kz1"><b>${a?esc(a.name):`<span class="err">kein ${V_?'Kunde':'Lieferant'}</span>`}</b>${a?.ort?`<span class="mut">· ${esc(a.ort)}</span>`:''}${(a?.kundenart)==='privat'?tag('Privat'):''}${b.fest?'':'<span class="kzed" aria-hidden="true">✎</span>'}</div>
+    ${f.length&&k?`<div class="err" style="font-size:13px">fehlt: ${f.join(', ')}</div>`:''}<div>${z2.join(' · ')}</div>${z3.length?`<div class="mut">${z3.join(' · ')}</div>`:''}${z4.length?`<div class="mut">${z4.join(' · ')}</div>`:''}</div>`}
+function kopfK(b){const V_=T[b.typ].b==='V',ohneP=OHNE_PREIS.includes(b.typ),z=[`${fmtQ(+b.zahlungsziel||0)} Tage`,+b.skonto?`${fmtQ(b.skonto)} % Skonto ${fmtQ(+b.skontoTage||0)} Tage`:''].filter(Boolean).join(' · ');
+  const tx=[b.kopf,b.fuss].map(rtText).filter(Boolean).join(' · ');
+  return`${kmpBH()&&(b.kontaktId||b.fest)?kopfZus(b):`<div class="card">${kopfFelder(b,'kopf')}</div>`}
+  <div class="kakk">${ohneP?'':akk('b-zahl','Zahlungsbedingungen',kopfFelder(b,'zahl'),{zusatz:esc(z)})}${V_||b.typ==='BE'?akk('b-texte','Kopf- und Fußtext',kopfFelder(b,'texte'),{zusatz:esc(tx.length>50?tx.slice(0,48)+' …':tx)||'leer'}):''}</div>`}
+function kopfPop(b){if(!b||b.fest)return;livePop(`Kopfdaten – ${esc(T[b.typ].bez)} ${esc(bNr(b))}`,()=>kopfFelder(b,'kopf'),{verwerfen:b,breit:true})}
 /* ---------- Beleg-Editor ---------- */
 V.beleg=id=>{
   const b=beleg(id);if(!b)return'<p>Beleg nicht gefunden.</p>';
   const t=T[b.typ],dis=b.fest?'disabled':'',V_=t.b==='V',ohneP=OHNE_PREIS.includes(b.typ);
-  const kont=DB.kontakte.filter(k=>V_?k.typ!=='L':k.typ!=='K').sort((a,c)=>a.name.localeCompare(c.name));
   const steuerOpts=c=>S().steuer.map(s=>opt(s.code,s.bez,c)).join('');
   const einhOpts=p=>{const a=artikel(p.artikelId);const l=a?[a.einheit,...(a.einheiten||[]).map(x=>x.e)]:S().einheiten;if(!l.includes(p.einheit))l.unshift(p.einheit);return l.map(e=>opt(e,e,p.einheit)).join('')};
   const zRab=showRab(b),zLS=!!b.optLS&&!ohneP,gi=gruppenInfo(b),pnr=posNummern(b);
@@ -1512,7 +1563,6 @@ V.beleg=id=>{
       <td data-l="Kz" style="width:74px">${kzSel(i,p)}</td>${akt}
     </tr>`}).join('');
   const kette=DB.belege.filter(x=>b.auftragId?x.auftragId===b.auftragId:(x.id===b.id||x.vorgaengerId===b.id||x.id===b.vorgaengerId)).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
-  const auftragOpts=()=>opt('','– kein Auftrag (Lager/Gemeinkosten) –',b.auftragId)+auftragsListe().map(a=>opt(a.id,auftragLabel(a.id),b.auftragId)).join('');
   const k=kontakt(b.kontaktId),scan=['WE','ER','BE'].includes(b.typ)?scanBox(b):'';
   const ans=ansicht();
   const kopfbar=kmpB()?belegKopfbarK(b,ans):`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
@@ -1530,30 +1580,7 @@ V.beleg=id=>{
   const dk=b.fest?'':dKnopf(b,'Druckformat …');
   const blatt=`${dk?`<div class="bar" style="margin:0 0 6px;justify-content:flex-end">${dk}</div>`:''}<div class="blatt" id="vorschau">${docHTML(b,true)}</div>${b.fest?'':'<p class="mut" style="font-size:12px;margin:-6px 0 14px">Gestrichelte Felder direkt im Blatt bearbeiten – Änderungen werden in die Eingabefelder übernommen.</p>'}`;
   const formHTML=`
-  <div class="card">
-    <div class="row">
-      <label class="w2">${V_?'Kunde':'Lieferant'}<select data-h="kontaktId" ${dis}>${opt('','– wählen –',b.kontaktId)}${kont.map(k=>opt(k.id,k.name+(k.ort?' · '+k.ort:''),b.kontaktId)).join('')}${opt('__neu',V_?'+ Neuer Kunde …':'+ Neuer Lieferant …','')}</select>${b.kontaktId&&!b.fest?`<span style="display:flex;gap:6px;align-items:center;margin-top:4px"><button class="s" data-act="kedit">✎ ${V_?'Kundendaten':'Lieferantendaten'} bearbeiten</button>${kontaktFehlt(kontakt(b.kontaktId)).length?`<span class="err" style="font-size:12px">fehlt: ${kontaktFehlt(kontakt(b.kontaktId)).join(', ')}</span>`:''}${kontakt(b.kontaktId)?.kundenart==='privat'?tag('Privat'):''}</span>`:''}</label>
-      <label class="w05">Datum<input type="date" data-h="datum" value="${b.datum}" ${dis}></label>
-      ${b.typ==='AN'?`<label class="w05">${esc(dOpt(b).lblGueltig||'Gültig bis')}<input type="date" data-h="gueltigBis" value="${b.gueltigBis}" ${dis}></label>`:''}
-      ${['AB','BE'].includes(b.typ)?`<label class="w05">Liefertermin<input type="date" data-h="liefertermin" value="${b.liefertermin}" ${dis}></label>`:''}
-      ${b.typ==='ER'?`<label class="w05">Rechnungs-Nr. Lieferant<input data-h="fremdNr" value="${esc(b.fremdNr)}" ${dis}></label><label>Aufwandskonto (FiBu)<select data-h="konto" ${dis}>${opt('','– automatisch nach Positionsart –',b.konto||'')}${FB().konten.filter(k=>'05678'.includes(k.nr[0])).map(k=>opt(k.nr,k.nr+' '+k.bez,b.konto||'')).join('')}</select></label>`:''}
-      ${['BE','WE'].includes(b.typ)?`<label class="w05">${b.typ==='BE'?'Angebot Lieferant':'Lieferschein-Nr. Lief.'}<input data-h="fremdNr" value="${esc(b.fremdNr)}" ${dis}></label>`:''}
-    </div>
-    ${!b.fest&&!kont.length?`<div class="hint">Noch keine ${V_?'Kunden':'Lieferanten'} – <a href="#/kontakte">jetzt anlegen</a>.</div>`:''}
-    <div class="row">
-      <label class="w2">Betreff / Projekt<input data-h="betreff" value="${esc(b.betreff)}" ${dis}></label>
-      <label>Bezug<input data-h="bezug" value="${esc(b.bezug)}" ${dis} placeholder="z. B. Ihre Anfrage vom …"></label>
-      ${(t.re&&V_)||b.typ==='LS'?`<label>Liefer-/Leistungsdatum<input data-h="leistung" value="${esc(b.leistung)}" ${dis} placeholder="TT.MM.JJJJ oder Zeitraum"></label>`:''}
-    </div>
-    ${!V_?`<div class="row"><label>Auftrag (für Nachkalkulation)<select data-h="auftragId" ${dis}>${auftragOpts()}</select></label></div>`:''}
-    ${b.typ==='WE'?`<div class="row"><label class="chk"><input type="checkbox" data-h="lagerBuchen" ${b.lagerBuchen!==false?'checked':''} ${dis}> Ins Lager einbuchen (abwählen bei Direktlieferung auf die Baustelle)</label><label class="chk"><input type="checkbox" data-h="verrechnen" ${b.verrechnen!==false?'checked':''}> An Kunden weiterverrechnen (Auftrag oder Direktlieferung)</label></div>`:''}
-    ${!ohneP?`<div class="row">
-      <label class="w05">Zahlungsziel Tage<input type="number" data-h="zahlungsziel" value="${b.zahlungsziel}" ${dis}></label>
-      <label class="w05">Skonto %<input type="number" step="any" data-h="skonto" value="${b.skonto}" ${dis}></label>
-      <label class="w05">Skonto Tage<input type="number" data-h="skontoTage" value="${b.skontoTage}" ${dis}></label>
-      <span style="flex:2"></span></div>`:''}
-    ${V_||b.typ==='BE'?`<div class="row"><label>Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label><label>Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>`:''}
-  </div>
+  ${kmpB()?kopfK(b):kopfFelder(b)}
   <div class="card" style="padding:8px;overflow-x:auto">
     ${kmpB()?'':`<div class="bar" style="margin:0 0 6px"><span class="mut">${ohneP?'Druck:':'Spalten einblenden:'}</span>
       ${ohneP?'':`<label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optRabatt" ${zRab?'checked':''} ${dis}> Rabatt</label>
@@ -4462,6 +4489,7 @@ const ACT={
   dpre:()=>{const t=T[UI.dpTyp]?UI.dpTyp:'AN',A=S().druckprofil??={},Z=RE_V.filter(x=>x!==t);if(!confirm(`Druckprofil „${T[t].bez}“ auf alle Rechnungsarten übertragen (${Z.map(x=>T[x].bez).join(', ')})?\nDeren bisherige Einstellungen werden ersetzt.`))return;
     for(const x of Z){if(A[t])A[x]=JSON.parse(JSON.stringify(A[t]));else delete A[x]}log('Druckprofil',`${T[t].bez} auf Rechnungsarten übertragen`);persist();render()},
   abmelden:()=>AUTH.abmelden(),
+  kopfd:()=>kopfPop(curBeleg()), // Kopfdaten im Pop-up (kompakter Beleg, P30)
   ansicht:el=>{lsSet('erp-ansicht',el.dataset.m);render()},
   anrev:()=>angebotRevision(curBeleg()),
   anfolge:()=>folgeAngebot(curBeleg()),

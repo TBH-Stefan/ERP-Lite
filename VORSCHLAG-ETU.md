@@ -159,10 +159,15 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
     - Er wird nach der Ausgabe per `commit()` erhöht.
     - Ab der zweiten Ausgabe fragt ein Dialog „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja). `docHTML` setzt den Vermerk dann über den Titel.
     - Das erste Original bleibt unverändert.
+  - o) ✅ umgesetzt (Commits 2498cb0, 04c1ad1, d477ebc; je Punkt ein Commit, Fehlerbehebungen ohne Schalter). **Restfehler aus Stufe 1:**
+    - a) Lohn/Sonstiges (Commit 2498cb0): Bei `b.optLS` setzen `artikelInPos()`, `ACT.hset` (Preisverlauf), `ACT.padd` und zusätzlich `zeitenInPos()` („+ Stunden aus Zeiterfassung“) auch `epL`/`epS` über `lsAufteilen(b,p,q)`, Aufteilung wie `onHead('optLS')`: Art L ganz auf Lohn, sonst ganz auf Sonstiges. `preisHistorie()` gibt `epL`/`epS` des Quellbelegs nur mit, wenn dort `optLS` aktiv war (sonst können die Felder veraltet sein); übernommen wird der Lohn (höchstens EP), der Rest geht auf Sonstiges. Ohne `optLS` unverändert (keine Felder).
+    - b) Optionen/Alternativen über `effKz(p,gruppenInfo(b))` (Commit 04c1ad1): `offeneLS()`, `sammelRechnung()`, „Umsatz nach Artikel/Leistung“ in `V.auswertung`, Hinweis „Preis 0“ in `festschreiben()` und zusätzlich der Hinweis „Positionen ohne EK“ in `kalkBox()` (wie `vorkalk()`). Die Prüfung Reverse Charge / ig. Lieferung läuft über die verrechneten Steuercodes `s.steuern` aus `summen()` (dieselbe Quelle wie der Steuerhinweis im Ausdruck); damit wird auch eine Pauschalgruppe mit RC/IGL geprüft und eine Position einer Optionsgruppe nicht. Der Hinweis „Rechnung enthält Options-/Alternativpositionen“ bleibt (greift über den Gruppenkopf).
+    - c) `merge3()` (Commit d477ebc): keine Konfliktmeldung „Einstellungen“, wenn lokal und entfernt gleich sind, auch wenn beide von der Basis abweichen (z. B. beide gleich geändert oder nach einem Programm-Update durch `migrate()` gleich ergänzt; die Basis wird unverändert aus `STORE.lastText` gelesen). Verschiedene Änderungen melden weiter „Einstellungen“, Zähler wie bisher per Maximum.
+    - Offen: Positionen in Pauschalgruppen zählen in „Umsatz nach Artikel“ weiter mit ihrem Positionspreis (statt des Gruppenpreises) und lösen „Preis 0“ aus, wenn sie ohne Preis erfasst sind; reine Zähler-Unterschiede (Nummernkreise, Kontakt-/Artikelnummern) melden beim Abgleich weiter „Einstellungen“; Positionen aus „Belege einlesen“ bekommen bei `optLS` noch keine Aufteilung.
 - **Schalter:**
   - `erw.strgP` = true und `erw.snapshot` = true. Beide beheben einen Fehler bzw. stellen die Nachdruck-Treue her.
   - `erw.duplikat` = true (vom Anwender am 09.10.2026 so entschieden).
-  - Alle anderen Punkte sind reine Fehlerbehebungen ohne Schalter und lassen sich per `git revert` zurücknehmen; f)–j) einzeln, d) und e) erst nach P1 (benachbarte Zeilen), c) erst nach j) (`lnrStamm()`), siehe Rücknahme-Reihenfolge in Abschnitt 4.
+  - Alle anderen Punkte sind reine Fehlerbehebungen ohne Schalter und lassen sich per `git revert` zurücknehmen; f)–i) und o) einzeln, j) erst nach o) a, d) und e) erst nach P1 (benachbarte Zeilen), c) erst nach j) (`lnrStamm()`), siehe Rücknahme-Reihenfolge in Abschnitt 4.
 - **Datenmodell:** Beleg `fix` (wird beim Festschreiben gesetzt) und `ausgaben` (Zähler); Position `lnr` (gibt es schon). Alle Felder sind optional.
 - **Nutzen** hoch · **Aufwand** M (die Einzelkorrekturen jeweils S oder kleiner) · **Abhängig von:** – · **Recht:**
   - DSGVO: kein fremder Beleg im Ausdruck.
@@ -1264,16 +1269,18 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 6. P11, nur das Popup-Feld „Aufschlag %“ und der VK-Vorschlag bei EK-Änderung (S) – ✅ umgesetzt (Commit 3e041e7)
 7. P19 a/c/d: Zuletzt, Statuszeile, Markierung in der Seitenleiste (S) – ✅ umgesetzt (Commits 506e52e, 2aa2bf6, 2b77577)
 8. P6, nur Kunden/Lieferanten-Filter und „Unsere Kunden-Nr.“ (S) – ✅ umgesetzt (Commit 072ff14)
+9. Restfehler aus Stufe 1 (P0 o: Lohn/Sonstiges bei Artikelwahl, Preisverlauf, neuer Position und Stunden; Optionen über die Gruppe in Sammelrechnung, Auswertung und Festschreib-Prüfungen; Abgleich der Einstellungen) – ✅ umgesetzt (Commits 2498cb0, 04c1ad1, d477ebc), Tests in beiden Ansichten (1400 px, 390 px), `docHTML`/Vorschau/PDF unverändert (28/28)
 
 **Gesamttest nach Stufe 1 (08.10.2026):** ✅
 - Alle Browsertests (Chromium, 1400 px und 390 px) ohne Konsolenfehler: alle Hauptansichten (Übersicht, Verkauf, Einkauf, Belege in Eingabe und Vorschau, Kosten, Zeiten, Kontakte mit Filter, Artikel, Lager, Auswertung, LVs, K-Blätter, FiBu mit allen 8 Reitern, Einstellungen), jeder Schalter einzeln aus/an (Summen unverändert, Druck/PDF ohne Fehler), „Alle Schalter auf Standard“ (Druckprofile bleiben, Strg+Z stellt wieder her) und „Standard wiederherstellen“ je Paket. Keine doppelten Schlüssel in `ACT`, `ACT_LV`, `ACT_LB`, `ACT_FB`.
 - Bestehende Testskripte t2–t36: alle Ergebnisse gleich wie vor ETU (Commit 8eefb2d); zwei Skripte waren schon vor ETU veraltet (Struktur-Popup statt Auswahllisten, Belegansicht startet in „Eingabe“).
 - Regressionsvergleich mit dem Stand vor ETU (30 Belege mit Standardeinstellungen): `docHTML` 30/30 gleich. Abweichungen nur beabsichtigt: Summenblock nicht mehr geteilt (P0 l, 6 Belege in Vorschau und PDF), Kopf der Optionen-Tabelle im PDF (P0 k, 2 Belege, gleiche Texte).
 - **Rücknahme-Reihenfolge** (`git revert`, nur Code; geprüft: Rücknahme konfliktfrei, Programm danach ohne Konsolenfehler; die Doku-Commits werden nicht zurückgenommen):
-  - einzeln: P0 f, g, h, i, j, k, l, m, P2, P14, P19 a, c, d, P6 (Teil), Korrekturen f358a37, 10f3241, 05429d5, 8452dbd, 724e6b0, bec643e
+  - einzeln: P0 f, g, h, i, k, l, P2, P19 c, d, P6 (Teil), Korrekturen f358a37, 10f3241, 05429d5, 8452dbd, 724e6b0, bec643e, Firmenvorgabe/Duplikat-Standard c9703e5, Restfehler P0 o a (2498cb0), b (04c1ad1), c (d477ebc)
+  - P0 j (7de8798): vorher P0 o a (2498cb0); P0 m (abdf44c): vorher P0 o b (04c1ad1) und c9703e5; P14 (d926b4e): vorher c9703e5; P19 a (506e52e): vorher P0 o a und c9703e5
   - P11 (3e041e7): vorher 724e6b0
   - Korrektur b626535: vorher P6 (072ff14); P5 (7bca588): vorher b626535 und P6
-  - P1 (d5237b2): vorher P2, P5, b626535, P19 a, P19 c, P6
+  - P1 (d5237b2): vorher P2, P5, b626535, P19 a (samt P0 o a und c9703e5), P19 c, P6
   - P0 d (a86ff40), P0 e (1c61540): vorher P1 samt Vorgängern
   - P0 n (24362bd): vorher 10f3241, P14 und P1 samt Vorgängern
   - P0 c (f6526f9): vorher P0 j (nutzt `lnrStamm()`), P0 d, P0 n, P11 samt 724e6b0 und deren Vorgänger

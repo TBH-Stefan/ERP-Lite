@@ -1073,20 +1073,26 @@ function preisHistorie(b,p){
     for(const q of x.pos){
       if(isInfo(q))continue;
       if(p.artikelId?q.artikelId!==p.artikelId:(q.bez||'').trim().toLowerCase()!==key)continue;
-      out.push({datum:x.datum,nr:bNr(x),typ:x.typ,kontaktId:x.kontaktId,menge:q.menge,einheit:q.einheit,ep:+q.ep,rabatt:+q.rabatt||0,ek:+q.ek||0,gleich:x.kontaktId===b.kontaktId});
+      out.push({datum:x.datum,nr:bNr(x),typ:x.typ,kontaktId:x.kontaktId,menge:q.menge,einheit:q.einheit,ep:+q.ep,rabatt:+q.rabatt||0,ek:+q.ek||0,gleich:x.kontaktId===b.kontaktId,...(x.optLS&&(q.epL!=null||q.epS!=null)?{epL:+q.epL||0,epS:+q.epS||0}:{})});
     }
   }
   out.sort((a,c)=>(c.gleich-a.gleich)||c.datum.localeCompare(a.datum));
   return out.slice(0,15);
+}
+// Lohn/Sonstiges (b.optLS): ep = epL + epS – Aufteilung aus dem Preisverlauf (q mit epL/epS), sonst wie beim Einschalten der Spalten (Art L → Lohn, sonst Sonstiges)
+function lsAufteilen(b,p,q){
+  if(!b.optLS||isInfo(p))return;const ep=+p.ep||0;
+  if(q&&q.epL!=null){p.epL=r2(+q.epL||0);if(ep>=0&&p.epL>ep)p.epL=ep}else p.epL=p.art==='L'?ep:0; // Lohn höchstens EP, Rest auf Sonstiges
+  p.epS=r2(ep-p.epL);
 }
 function artikelInPos(b,p,a){
   const lAlt=lnrStamm(b,p); // Lieferanten-Art.-Nr. des bisherigen Artikels (wird beim Artikelwechsel entfernt)
   Object.assign(p,{artikelId:a.id,nr:a.nr,bez:a.bez,text:a.text||'',einheit:a.einheit,faktor:1,steuer:a.steuer||S().stdSteuer,art:a.art||'W'});
   const h=preisHistorie(b,p).filter(x=>x.einheit===p.einheit);
   // Verkauf: Preis/Rabatt nur aus früheren Belegen DIESES Kunden, sonst VK des Artikels und Kundenrabatt (Preise anderer Kunden nur über die Preishistorie wählbar)
-  if(T[b.typ].b==='V'){const g=h.find(x=>x.gleich);p.ek=+(a.hk||a.ek)||0;p.ep=g?g.ep:(+a.vk||0);p.rabatt=g?g.rabatt:(+kontakt(b.kontaktId)?.rabatt||0)}
+  if(T[b.typ].b==='V'){const g=h.find(x=>x.gleich);p.ek=+(a.hk||a.ek)||0;p.ep=g?g.ep:(+a.vk||0);p.rabatt=g?g.rabatt:(+kontakt(b.kontaktId)?.rabatt||0);lsAufteilen(b,p,g)}
   // Einkauf: Lieferanten-Art.-Nr. in p.lnr (Druck einmal als „Ihre Art.-Nr.“ hinter der Bezeichnung), nicht mehr zusätzlich im Langtext
-  else{p.ep=h.length?h[0].ep:(+a.ek||0);p.ek=p.ep;const l=(a.lieferanten||[]).find(x=>x.kontaktId===b.kontaktId);if(l?.artNr)p.lnr=l.artNr;else if(p.lnr&&p.lnr===lAlt)p.lnr=''}
+  else{p.ep=h.length?h[0].ep:(+a.ek||0);p.ek=p.ep;lsAufteilen(b,p,h[0]);const l=(a.lieferanten||[]).find(x=>x.kontaktId===b.kontaktId);if(l?.artNr)p.lnr=l.artNr;else if(p.lnr&&p.lnr===lAlt)p.lnr=''}
 }
 
 /* ---------- Router & Render ---------- */
@@ -1702,7 +1708,7 @@ function zeitenAbrechnen(aid){
 function zeitenInPos(b,zt){
   for(const z of zt.sort((a,c)=>a.datum.localeCompare(c.datum))){
     const tf=S().tarife.find(t=>t.kz===z.tarif);
-    b.pos.push(neuPos({art:'L',nr:z.tarif,bez:tf?.bez||z.tarif,text:`${dAT(z.datum)}${z.text?' – '+z.text:''}`,menge:z.stunden,einheit:'h',ep:z.vk,ek:z.kosten}));
+    b.pos.push(neuPos({art:'L',nr:z.tarif,bez:tf?.bez||z.tarif,text:`${dAT(z.datum)}${z.text?' – '+z.text:''}`,menge:z.stunden,einheit:'h',ep:z.vk,ek:z.kosten}));lsAufteilen(b,b.pos[b.pos.length-1]); // Lohn/Sonstiges: Stunden ganz auf Lohn
     z.belegId=b.id;
   }
 }
@@ -3959,7 +3965,7 @@ const ACT={
   dup:()=>duplizieren(curBeleg()),
   reopen:()=>{const b=curBeleg();if(!confirm('Beleg wieder bearbeiten? Die Nummer bleibt erhalten.'))return;b.fest=false;delete b.druckFix;log('wieder geöffnet',`${T[b.typ].bez} ${b.nr}`);commit();render()},
   anst:el=>{const b=curBeleg();b.status=el.dataset.v;log('Angebotsstatus',`${b.nr}: ${b.status||'offen'}`);commit();render()},
-  padd:el=>{const b=curBeleg(),a=el.dataset.art,i=b.pos.length,kr=T[b.typ].b==='V'&&['W','L','F'].includes(a)?+kontakt(b.kontaktId)?.rabatt||0:0;b.pos.push(neuPos({art:a,einheit:a==='L'?'h':'Stk',menge:a==='T'||a==='G'?0:1,rabatt:kr,...(a==='G'?{pauschal:0,ohneEP:false}:{})}));persist();
+  padd:el=>{const b=curBeleg(),a=el.dataset.art,i=b.pos.length,kr=T[b.typ].b==='V'&&['W','L','F'].includes(a)?+kontakt(b.kontaktId)?.rabatt||0:0;b.pos.push(neuPos({art:a,einheit:a==='L'?'h':'Stk',menge:a==='T'||a==='G'?0:1,rabatt:kr,...(a==='G'?{pauschal:0,ohneEP:false}:{})}));lsAufteilen(b,b.pos[i]);persist();
     if(a==='T')render(),setTimeout(()=>document.querySelector(`.rte[data-ed="p:${i}:text"]`)?.focus(),0);else renderFocus(`[data-p="${i}"][data-f="${a==='G'?'bez':'artikel'}"]`)},
   pdel:el=>{const b=curBeleg();b.pos.splice(+el.dataset.i,1);persist();render()},
   pup:el=>{const b=curBeleg(),i=+el.dataset.i;if(i>0){[b.pos[i-1],b.pos[i]]=[b.pos[i],b.pos[i-1]];persist();render()}},
@@ -3967,7 +3973,7 @@ const ACT={
   hist:el=>showHist(curBeleg(),+el.dataset.i,el),
   hclose:()=>closePop(),
   zuletzt:el=>{if(document.querySelector('.zlpop')){closePop();return}zuletztPop(el)},zlleer:()=>{lsSet('erp-zuletzt',null);closePop()}, // Zuletzt geöffnet (P19 a)
-  hset:el=>{const{b,i,h}=HIST,x=h[+el.dataset.j],p=b.pos[i];p.ep=x.ep;if(T[b.typ].b==='V'){p.rabatt=x.rabatt;if(x.ek)p.ek=x.ek}else p.ek=x.ep;if(x.einheit&&x.einheit!==p.einheit&&!p.artikelId)p.einheit=x.einheit;persist();render()},
+  hset:el=>{const{b,i,h}=HIST,x=h[+el.dataset.j],p=b.pos[i];p.ep=x.ep;if(T[b.typ].b==='V'){p.rabatt=x.rabatt;if(x.ek)p.ek=x.ek}else p.ek=x.ep;if(x.einheit&&x.einheit!==p.einheit&&!p.artikelId)p.einheit=x.einheit;lsAufteilen(b,p,x);persist();render()},
   partik:async el=>{const b=curBeleg();if(!b||b.fest)return;if(await posArtikelPopup(b,+el.dataset.i)){persist();render()}},
   mkart:async el=>{const b=curBeleg(),p=b.pos[+el.dataset.i];const f=+p.faktor||1,V_=T[b.typ].b==='V';
     const a=await artikelPopup({bez:p.bez,text:p.text,art:isInfo(p)?'W':p.art,einheit:p.einheit,ek:r2((V_?+p.ek:+p.ep)/f),vk:V_?r2(+p.ep/f):0,steuer:p.steuer,artNr:p.lnr||''},V_?'':b.kontaktId);if(!a)return;

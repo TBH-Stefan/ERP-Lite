@@ -15,6 +15,10 @@ body{margin:0;font:14px/1.45 Arial,Helvetica,sans-serif;color:var(--ink);backgro
 #app{display:none;min-height:100vh}
 body.loaded #app{display:flex}
 .topbar{display:none}
+/* Kompakt (P30) Beleg: Kopfleiste (.bkopf) – Titel und Status, daneben bzw. darunter Eingabe | Vorschau, Hauptaktion und ⋯ (.bka, passt bei 1024 px in eine Zeile) */
+.bkopf{row-gap:8px}.bkt{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0}.bkt h1{margin:0}.bkt h1 .mut{font-weight:400;font-size:15px}
+.bka{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto}
+@media(max-width:760px){.bka{width:100%;margin-left:0;gap:6px}.bka>.seg{flex:none;margin-right:auto}.bka .seg button{padding:6px 8px}}
 .quick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .quick>*{flex:1 1 140px;text-align:center;padding:12px 10px;font-weight:600}
 .att{display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid #eef0f3}
@@ -435,6 +439,7 @@ const ERW=[
   {k:'statuszeile',std:true,p:'Navigation (P19)',l:'Statuszeile unter dem Belegtitel',info:'Zeigt unter dem Titel eines Belegs den Pfad „Verkauf › Angebote“ (anklickbar, führt zur gefilterten Liste), das Belegdatum, den Kunden bzw. Lieferanten, den Nettobetrag (läuft bei Änderungen mit) und wann der Beleg angelegt bzw. festgeschrieben wurde (mit Uhrzeit). Reine Anzeige, daher Standard ein.'},
   {k:'kopfFix',std:false,p:'Navigation (P19)',l:'Statuszeile beim Scrollen oben festhalten',info:'Die Statuszeile bleibt mit Nummer und Status beim Scrollen am oberen Rand stehen (am Handy unter der Kopfzeile). Standard aus, weil sie am Handy eine Zeile Platz kostet. Wirkt nur mit eingeschalteter Statuszeile.'},
   {k:'kompakt',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht (Handy und Bildschirm)',info:'Weniger Bedienelemente auf einmal: Seltenes liegt in Menüs (⋯, „+ Neu ▾“) und Pop-ups, Listen erscheinen am Handy als Karten, Filter in einem Pop-up, lange Abschnitte (z. B. Einstellungen) zum Auf- und Zuklappen, Erklärtexte hinter ⓘ. Dialoge öffnen am Handy als Blatt von unten, Titel und Knöpfe bleiben beim Scrollen sichtbar; Knöpfe und Felder sind am Handy und auf Tablets mindestens 40 px hoch. Welche Abschnitte offen sind, merkt sich das Gerät. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Entscheidung des Anwenders (09.10.2026), daher Standard ein. Aus: bisherige Darstellung.'},
+  {k:'kompaktBeleg',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht im Beleg-Editor',info:'Wirkt nur mit eingeschalteter kompakter Ansicht. Im Beleg stehen oben nur Eingabe | Vorschau, die Hauptaktion (z. B. Festschreiben, Zahlung erfassen, → Rechnung) und ⋯ mit allen weiteren Belegaktionen (PDF, Senden, Folgebeleg, Duplizieren, Revision, Löschen bzw. Stornieren …); Kopfdaten, Positionen und Zahlungen werden in Pop-ups bearbeitet, am Handy erscheinen die Positionen als Karten und Summe und Hauptaktion in einer Leiste am unteren Rand. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Aus: Beleg-Editor wie bisher (übrige kompakte Ansicht bleibt).'},
 ];
 const ERW_STD=Object.fromEntries(ERW.map(x=>[x.k,x.std]));
 const erw=k=>DB?.settings?.erw?.[k]??ERW_STD[k];
@@ -1510,7 +1515,7 @@ V.beleg=id=>{
   const auftragOpts=()=>opt('','– kein Auftrag (Lager/Gemeinkosten) –',b.auftragId)+auftragsListe().map(a=>opt(a.id,auftragLabel(a.id),b.auftragId)).join('');
   const k=kontakt(b.kontaktId),scan=['WE','ER','BE'].includes(b.typ)?scanBox(b):'';
   const ans=ansicht();
-  const kopfbar=`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
+  const kopfbar=kmpB()?belegKopfbarK(b,ans):`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
     ${b.fest?'':`<button class="p" data-act="fest">Festschreiben …</button>`}
     <button data-act="druck">PDF / Drucken</button>
@@ -1550,10 +1555,10 @@ V.beleg=id=>{
     ${V_||b.typ==='BE'?`<div class="row"><label>Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label><label>Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>`:''}
   </div>
   <div class="card" style="padding:8px;overflow-x:auto">
-    <div class="bar" style="margin:0 0 6px"><span class="mut">${ohneP?'Druck:':'Spalten einblenden:'}</span>
+    ${kmpB()?'':`<div class="bar" style="margin:0 0 6px"><span class="mut">${ohneP?'Druck:':'Spalten einblenden:'}</span>
       ${ohneP?'':`<label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optRabatt" ${zRab?'checked':''} ${dis}> Rabatt</label>
       <label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optLS" ${zLS?'checked':''} ${dis}> Lohn / Sonstiges</label>`}
-      <label class="chk" style="margin:0;font-size:13px" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''} ${dis}> Langtext drucken</label>${dKnopf(b,'Druckoptionen …')}</div>
+      <label class="chk" style="margin:0;font-size:13px" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''} ${dis}> Langtext drucken</label>${dKnopf(b,'Druckoptionen …')}</div>`}
     <table class="pos"><thead><tr><th></th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonstiges</th>':''}<th>${zLS?'PP':'EP netto'}</th>${zRab?'<th>Rab. %</th>':''}<th class="n">${zLS?'GP':'GP netto'}</th><th>USt</th><th title="Einstandspreis je Einheit">EK</th>`}<th>Kz</th><th></th></tr></thead>
     <tbody>${rows||`<tr><td colspan="14" class="mut">Noch keine Positionen.</td></tr>`}</tbody></table>
     ${b.fest?'':`<div class="bar" style="margin:8px 0 0"><button data-act="padd" data-art="G">+ Gruppe</button><button data-act="padd" data-art="W">+ Ware</button><button data-act="padd" data-art="L">+ Leistung</button><button data-act="padd" data-art="F">+ Fremdleistung</button><button data-act="padd" data-art="T">+ Text</button>${V_?`<button data-act="pzeit">+ Stunden aus Zeiterfassung</button>`:''}</div>`}
@@ -1591,6 +1596,33 @@ function vorschlagNr(b){
   const nk=S().nk[b.typ],j=b.datum.slice(0,4);
   return`${nk.prefix}-${j}-${String((nk.zaehler[j]||0)+1).padStart(4,'0')}`;
 }
+/* Kompakter Beleg-Editor (P30 U8, erw.kompaktBeleg, wirkt nur mit erw.kompakt): kmpB() = Schalter ein, kmpBH() = zusätzlich Handy (bis 760 px). Nur Darstellung: alle Aktionen über die vorhandenen ACT-Einträge.
+   Kopfleiste belegKopfbarK(): Titel und Status, Eingabe | Vorschau, Hauptaktion belegHaupt(b) (Entwurf: Festschreiben; festgeschriebenes AN: → Auftragsbestätigung; AB, LS, PR: → Rechnung;
+   sonst PDF / Drucken) und ⋯ (MENUE.beleg); am Bildschirm zusätzlich PDF / Drucken und → Rechnung. „Spalten & Druck …“ (LIVE.spalten): die bisherigen data-h-Häkchen und „Druckoptionen …“ */
+const kmpB=()=>kmp()&&!!erw('kompaktBeleg'),kmpBH=()=>kmpB()&&HANDY.matches;
+function belegHaupt(b){const t=T[b.typ];
+  if(!b.fest)return{l:'Festschreiben …',act:'fest'};
+  if(!b.storno&&b.status!=='ersetzt'&&t.folge.length){if(b.typ==='AN'&&!b.status)return{l:'→ Auftragsbestätigung',lh:'→ Auftragsbest.',act:'folge',value:'AB'};if(['AB','LS','PR'].includes(b.typ))return{l:'→ Rechnung',act:'folgere'}}
+  return{l:'PDF / Drucken',act:'druck'}}
+const zuRE=b=>!b.storno&&T[b.typ].folge.length&&b.status!=='ersetzt'&&['AN','AB','LS','PR'].includes(b.typ); // „→ Rechnung“ wie bisher (Entwurf wird vorher festgeschrieben)
+function belegKopfbarK(b,ans){const t=T[b.typ],H=HANDY.matches,h=belegHaupt(b);
+  return`<div class="bar bkopf"><div class="bkt"><h1>${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut">Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}</div>
+    <div class="bka"><span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
+      ${H?'':`${h.act!=='druck'?'<button data-act="druck">PDF / Drucken</button>':''}${zuRE(b)&&h.act!=='folgere'?`<button data-act="folgere"${b.fest?'':' title="Wird vorher festgeschrieben"'}>→ Rechnung</button>`:''}`}<button class="p" data-act="${h.act}"${h.value?` value="${h.value}"`:''}>${esc(H&&h.lh||h.l)}</button><button class="mehr" data-act="menue" data-m="beleg" title="Weitere Aktionen: PDF speichern, Senden, Folgebeleg, Duplizieren …">⋯</button></div>
+  </div>${belegStatus(b)}${b.status==='ersetzt'?`<div class="hint">Dieses Angebot wurde durch eine Revision ersetzt.</div>`:''}`}
+MENUE.beleg=()=>{const b=curBeleg();if(!b)return[];const t=T[b.typ],H=HANDY.matches,h=belegHaupt(b),fo=!b.storno&&t.folge.length&&b.status!=='ersetzt',vf=b.fest?'':'Wird vorher festgeschrieben',anF=b.fest&&!b.storno&&b.typ==='AN'&&b.status!=='ersetzt';
+  const L=[H&&h.act!=='druck'&&{l:'PDF / Drucken',ic:'🖨',act:'druck'},{l:'PDF speichern',ic:'⤓',act:'pdfdl',titel:'PDF-Datei speichern'},{l:'Senden …',ic:'✉',act:'senden',titel:'Als PDF per E-Mail versenden'},{trenn:1},
+    H&&zuRE(b)&&h.act!=='folgere'&&{l:'→ Rechnung',ic:BICON.RE,act:'folgere',titel:vf},fo&&{l:'Folgebeleg',ic:'➜',sub:t.folge.map(f=>({l:T[f].bez,ic:BICON[f],act:'folge',value:f,titel:vf}))},
+    b.typ==='LS'&&!b.storno&&{l:'Sammelrechnung …',ic:'🧾',act:'sammelre'},{trenn:1},
+    !b.fest&&{l:'Spalten & Druck …',ic:'☰',act:'lpop',d:{lp:'spalten'},titel:'Rabatt, Lohn / Sonstiges, Langtext drucken, Druckoptionen'},{l:'Duplizieren',ic:'⧉',act:'dup'},
+    anF&&{l:'Neue Revision bearbeiten',ic:'✎',act:'anrev',titel:'Erstellt eine neue Revision zum Bearbeiten – dieser Stand bleibt unverändert gespeichert'},anF&&{l:'Folgeangebot',ic:BICON.AN,act:'anfolge'},
+    anF&&{l:b.status==='abgelehnt'?'wieder offen':'abgelehnt',ic:b.status==='abgelehnt'?'↺':'✗',act:'anst',d:{v:b.status==='abgelehnt'?'':'abgelehnt'}},
+    b.fest&&!b.storno&&REOPEN.includes(b.typ)&&b.status!=='ersetzt'&&{l:'Wieder öffnen (Inhalt bearbeiten)',ic:'🔓',act:'reopen',titel:'Die Nummer bleibt erhalten'},
+    !b.storno&&{l:b.fest?'Stornieren …':'Löschen …',ic:'🗑',act:'storno',gefahr:1}].filter(Boolean);
+  return L.filter((x,i)=>!x.trenn||(i>0&&!L[i-1].trenn&&L.slice(i+1).some(y=>!y.trenn&&!y.gefahr)))};
+LIVE.spalten=()=>{const b=curBeleg();if(!b||b.fest)return;livePop('Spalten &amp; Druck',()=>{const ohneP=OHNE_PREIS.includes(b.typ),dk=dKnopf(b,'Druckoptionen …');
+  return`${ohneP?'':`<label class="chk"><input type="checkbox" data-h="optRabatt" ${showRab(b)?'checked':''}> Spalte Rabatt</label><label class="chk"><input type="checkbox" data-h="optLS" ${b.optLS?'checked':''}> Lohn / Sonstiges (EP = Lohn + Sonstiges)</label>`}
+  <label class="chk" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''}> Langtext drucken</label>${dk?`<div class="bar" style="margin:14px 0 0">${dk}</div>`:''}`})};
 /* ---------- Bearbeiten direkt in der Vorschau ---------- */
 function deNum(s){s=String(s).replace(/[\s€%  ]/g,'');if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');const n=parseFloat(s);return isNaN(n)?0:n}
 function edUebernehmen(el,next){

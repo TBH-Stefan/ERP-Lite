@@ -1306,7 +1306,7 @@ function livePop(titel,inhalt,{verwerfen=null,breit=false}={}){
   d.innerHTML=`<div class="mbox"${breit?' style="max-width:760px"':''}><h2>${titel}</h2><div class="lpi">${inhalt()}</div><div class="bar" style="margin:14px 0 0">${alt?'<button id="lp-vw">Änderungen verwerfen</button>':''}<span class="sp"></span><button class="p" id="m-ok">Fertig</button></div></div>`;
   document.body.appendChild(d);
   const zeich=()=>{if(!d.isConnected)return;const a=document.activeElement,k=a&&d.contains(a)?['data-o','data-f','data-i','data-id','data-t','data-h','data-p','data-ed'].map(x=>a.hasAttribute(x)?`[${x}="${CSS.escape(a.getAttribute(x))}"]`:'').join(''):'';
-    d.querySelector('.lpi').innerHTML=inhalt();if(k)d.querySelector(k)?.focus()};
+    d.querySelector('.lpi').innerHTML=inhalt();if(k&&!/^(SELECT)$/.test(a.tagName)&&!/^(checkbox|radio)$/.test(a.type))d.querySelector(k)?.focus()}; // Auswahllisten nicht neu fokussieren: iOS öffnet sonst die Auswahl erneut
   d.addEventListener('change',()=>setTimeout(zeich,0)); // nach dem globalen change-Handler (der schreibt den Wert)
   d._zeich=zeich;d._weg=()=>{d.remove();document.removeEventListener('keydown',kd,true)}; // render() zeichnet offene Pop-ups mit (z. B. nach neuem Kunden, Preisverlauf, Artikel-Pop-up) bzw. schließt sie (_gilt)
   const fin=()=>{d.remove();document.removeEventListener('keydown',kd,true);render()},zu=()=>{document.activeElement?.blur?.();setTimeout(fin,0)};
@@ -2534,7 +2534,7 @@ function renderErhalten(){
   setTimeout(()=>{
     const a=document.activeElement,key=a?.dataset?.r&&a.dataset.f?`[data-r="${a.dataset.r}"][data-f="${a.dataset.f}"]`:null,y=scrollY;
     render();scrollTo(0,y);
-    if(key){const n=document.querySelector(key);if(n){n.focus();try{n.select?.()}catch(e){}}}
+    if(key&&a.tagName!=='SELECT'){const n=document.querySelector(key);if(n){n.focus();try{n.select?.()}catch(e){}}} // Auswahlliste nicht neu fokussieren (iOS öffnet sie sonst erneut)
   },0);
 }
 // Formular-Helfer (Pfad-gebunden)

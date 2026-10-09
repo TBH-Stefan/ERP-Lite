@@ -150,6 +150,10 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
 details.akk>.akb>.card{border:0;border-radius:0;padding:0;margin:0 0 8px;background:none;box-shadow:none}.kkl>.kkf{display:flex;align-items:center}
 details.akk[data-akk]>summary{position:relative;padding-left:30px}details.akk[data-akk]>summary::before{position:absolute;left:12px;top:13px} /* lange Titel umbrechen neben dem ▸ */
 .chain a{display:block;padding:2px 0;color:var(--acc);text-decoration:none}
+/* Kompakt (P30) Einstellungen: Abschnitte als Akkordeon (Kartenrahmen und doppelte Überschrift entfallen), Schalterzeilen der Erweiterungen */
+details[data-akk^="e-"]>.akb>.card{border:0;border-radius:0;padding:0;margin:0;background:none}details[data-akk^="e-"]>.akb>.card>h2:first-child{display:none}
+label.chk.erwz{margin-top:2px;align-items:flex-start;min-height:40px;padding:4px 0}label.chk.erwz>input{flex:none;margin-top:1px}
+@media(max-width:760px){body.kompakt details.ih>summary{min-width:40px;height:40px}body.kompakt main details:not(.akk):not(.ih)>summary{min-height:40px;display:flex;align-items:center}} /* Tippziele: ⓘ und aufklappbare Hinweise */
 .chain a.cur{font-weight:700;color:var(--ink)}
 /* Kompakt (P30) Listen als Karten am Handy: .kkl = Liste mit einer Karte je Zeile (td.kkc), Zellen davor/danach (Gruppenknopf, ⋯) schmal; Überblick/Journal mit Karten direkt in der Karte */
 .kkl table{table-layout:auto}.kkl td{padding:0;border-bottom:1px solid var(--line);vertical-align:middle}.kkl td.kkc{width:100%;max-width:0}.kkf{display:flex;align-items:center}.kkf>.kk{flex:1;min-width:0}.kkvz{flex:none;padding-left:6px;white-space:nowrap}.kkl td:not(.kkc):not([colspan]){width:1%;white-space:nowrap;padding:0 4px}
@@ -1255,8 +1259,8 @@ function menuePop(btn,eintraege){
 const karte=({t='',s='',u='',z='',b='',a=''})=>`<div class="kk"${a?' '+a:''}><div class="kk1"><span class="kkt">${t}</span>${s?`<span class="kks">${s}</span>`:''}</div>${u?`<div class="kku">${u}</div>`:''}${z||b?`<div class="kk3"><span class="kkz">${z}</span><span class="kkb">${b}</span></div>`:''}</div>`;
 const akkZ=()=>{try{const o=JSON.parse(lsGet('erp-akk')||'{}');return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}catch(e){return{}}};
 function akk(id,titel,inhalt,{offen=false,zusatz='',kopf=''}={}){if(!kmp())return inhalt;const z=akkZ(),auf=id in z?!!z[id]:offen;
-  return`<details class="akk" data-akk="${esc(id)}" data-std="${offen?1:0}"${auf?' open':''}><summary><span class="akt">${titel}</span>${zusatz?`<span class="akz">${zusatz}</span>`:''}${kopf}</summary><div class="akb">${inhalt}</div></details>`}
-document.addEventListener('toggle',e=>{const d=e.target;if(!d.matches?.('details[data-akk]'))return;const z=akkZ(),id=d.dataset.akk; // toggle steigt nicht auf → Capture
+  return`<details class="akk" data-akk="${esc(id)}" data-std="${offen?1:0}" data-auf="${auf?1:0}"${auf?' open':''}><summary><span class="akt">${titel}</span>${zusatz?`<span class="akz">${zusatz}</span>`:''}${kopf}</summary><div class="akb">${inhalt}</div></details>`}
+document.addEventListener('toggle',e=>{const d=e.target;if(!d.matches?.('details[data-akk]')||d.open===(d.dataset.auf==='1'))return;d.dataset.auf=d.open?1:0;const z=akkZ(),id=d.dataset.akk; // toggle steigt nicht auf → Capture; Ereignis beim Zeichnen (Zustand wie data-auf) ändert nichts
   if(d.open===(d.dataset.std==='1'))delete z[id];else z[id]=d.open?1:0;lsSet('erp-akk',Object.keys(z).length?JSON.stringify(z):null)},true);
 const hilfe=t=>`<details class="ih"><summary title="Erläuterung" aria-label="Erläuterung">ⓘ</summary><div class="ihx">${t}</div></details>`;
 function livePop(titel,inhalt,{verwerfen=null,breit=false}={}){
@@ -3220,41 +3224,80 @@ const lfNamen=a=>(a.lieferanten||[]).map(l=>kName(l.kontaktId)).filter(x=>x&&x!=
 const lfNr=a=>(a.lieferanten||[]).map(l=>l.artNr).filter(Boolean).join(', ');
 const lf1=a=>(a.lieferanten||[]).find(l=>+l.lp>0)||(a.lieferanten||[])[0]||{};
 
+/* ---------- Kompakt (P30): Einstellungen als Akkordeon; Steuersätze, Tarife und Nummernkreise am Handy als Karten mit Pop-up (Setter 'st' samt stGesperrt(), 'tf', 'nk', 'tx'),
+   Erweiterungen je Schalter eine Zeile mit ⓘ, Paket als Akkordeon (offen bei Abweichung), Druckprofil je Gruppe als Akkordeon ---------- */
+const einlesenInfo=(a,b)=>kmp()?`<p style="margin-top:0">E-Rechnungen und PDFs mit Textebene werden kostenlos gelesen, Fotos optional per KI-Erkennung (eigener Schlüssel). ${hilfe(a+'<br><br>'+b)}</p>`:`<p style="margin-top:0">${a}</p>
+  <p class="mut">${b}</p>`;
+function lpEntf(btn,act,liste){const n=liste().length;ACT[act](btn);if(liste().length<n)btn.closest('.modal')?.querySelector('#m-ok')?.click()} // Löschen im Pop-up: vorhandene Aktion, bei Erfolg schließen
+const stKarten=()=>{const stG=stGesperrt();return`<div class="kkl">${S().steuer.map((x,i)=>karte({t:esc(x.bez||x.code),s:stG.has(x.code)?tag('gesperrt'):'',u:esc(x.hinweis||''),z:'Code '+esc(x.code),b:fmtQ(x.satz)+' %',a:`onclick="ACT.lpop(this)" data-lp="st" data-i="${i}"`})).join('')}</div><button style="margin-top:8px" data-act="lpop" data-lp="stneu">+ Steuersatz</button>`};
+LIVE.st=el=>{const i=+el.dataset.i,x=S().steuer[i];if(!x)return;
+  livePop('Steuersatz',()=>{const y=S().steuer[i];if(y!==x)return'<p class="mut">Nicht mehr vorhanden.</p>';const g=stGesperrt().has(y.code),ds=g?' disabled':'',a=f=>`data-o="st" data-i="${i}" data-f="${f}"`;
+    return`${g?'<p class="hint" style="margin:0 0 8px">In festgeschriebenen Belegen verwendet – Code, Satz, Bezeichnung und Hinweistext bleiben unverändert (§ 11 UStG, § 131 BAO). Für einen neuen Satz einen neuen Code anlegen.</p>':''}
+    <div class="row"><label class="w05">Code<input ${a('code')} value="${esc(y.code)}"${ds}></label><label class="w05">Satz %<input type="number" step="any" inputmode="decimal" ${a('satz')} value="${y.satz}"${ds}></label><label class="w2">Bezeichnung<input ${a('bez')} value="${esc(y.bez)}"${ds}></label></div>
+    <div class="row"><label class="w2">Hinweistext auf Rechnung<input ${a('hinweis')} value="${esc(y.hinweis)}"${ds}></label></div>${g?'':`<div class="bar" style="margin:10px 0 0"><button class="d" data-i="${i}" onclick="lpEntf(this,'stdel',()=>S().steuer)">Steuersatz löschen</button></div>`}`},{verwerfen:x})};
+LIVE.stneu=()=>{S().steuer.push({code:'NEU',satz:0,bez:'',hinweis:''});persist();render();LIVE.st({dataset:{i:S().steuer.length-1}})};
+const tfKarten=()=>`<div class="kkl">${S().tarife.map((x,i)=>karte({t:`${esc(x.kz)} · ${esc(x.bez)}`,z:`Kostensatz ${fmt(x.kosten)} €/h (intern)`,b:fmt(x.vk)+' €/h',a:`onclick="ACT.lpop(this)" data-lp="tf" data-i="${i}"`})).join('')}</div><button style="margin-top:8px" data-act="lpop" data-lp="tfneu">+ Tarif</button>`;
+LIVE.tf=el=>{const i=+el.dataset.i,x=S().tarife[i];if(!x)return;
+  livePop('Stundentarif',()=>{const y=S().tarife[i];if(y!==x)return'<p class="mut">Nicht mehr vorhanden.</p>';const a=f=>`data-o="tf" data-i="${i}" data-f="${f}"`;
+    return`<div class="row"><label class="w05">Kürzel<input ${a('kz')} value="${esc(y.kz)}"></label><label class="w2">Bezeichnung<input ${a('bez')} value="${esc(y.bez)}"></label></div>
+    <div class="row"><label class="w05">Kostensatz €/h (intern)<input type="number" step="any" inputmode="decimal" ${a('kosten')} value="${y.kosten}"></label><label class="w05">Verkauf €/h<input type="number" step="any" inputmode="decimal" ${a('vk')} value="${y.vk}"></label></div>
+    <div class="bar" style="margin:10px 0 0"><button class="d" data-i="${i}" onclick="lpEntf(this,'tfdel',()=>S().tarife)">Tarif löschen</button></div>`},{verwerfen:x})};
+LIVE.tfneu=()=>{S().tarife.push({kz:'NEU',bez:'',kosten:0,vk:0});persist();render();LIVE.tf({dataset:{i:S().tarife.length-1}})};
+// Nummernkreise: am Handy Karten, am Bildschirm Tabelle ohne Textspalten; Kopf- und Fußtext im Pop-up „Texte …“
+const txKurz=t=>String(t||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+function nkK(){const s=S(),j=String(new Date().getFullYear()),nx=t=>`${s.nk[t].prefix}-${j}-${String((s.nk[t].zaehler[j]||0)+1).padStart(4,'0')}`;
+  return kmpH()?`<div class="kkl">${Object.keys(T).map(t=>karte({t:esc(T[t].bez),u:esc(txKurz(s.texte[t].kopf).slice(0,80))||'<i>kein Kopftext</i>',z:`Präfix ${esc(s.nk[t].prefix)} · letzte Nr. ${s.nk[t].zaehler[j]||0}`,b:esc(nx(t)),a:`onclick="ACT.lpop(this)" data-lp="nk" data-t="${t}"`})).join('')}</div>`
+    :`<p class="mut" style="margin-top:0">Format PRÄFIX-JAHR-0001. „Letzte Nummer“ nur bei Umstieg setzen (z. B. letzte Rechnungsnummer aus Excel).</p><table><thead><tr><th>Beleg</th><th>Präfix</th><th>Letzte Nummer ${j}</th><th>Kopf- und Fußtext</th></tr></thead><tbody>
+    ${Object.keys(T).map(t=>`<tr><td>${T[t].bez}</td><td style="width:80px"><input data-o="nk" data-t="${t}" data-f="prefix" value="${esc(s.nk[t].prefix)}"></td><td style="width:90px"><input type="number" data-o="nk" data-t="${t}" data-f="z" value="${s.nk[t].zaehler[j]||0}"></td>
+      <td><button class="s" data-act="lpop" data-lp="nk" data-t="${t}">Texte …</button> <span class="mut" style="font-size:12px">${esc(txKurz(s.texte[t].kopf).slice(0,70))}</span></td></tr>`).join('')}</tbody></table>`}
+LIVE.nk=el=>{const t=el.dataset.t;if(!T[t])return;
+  livePop(`Nummernkreis und Texte – ${T[t].bez}`,()=>{const s=S(),j=String(new Date().getFullYear()),z=s.nk[t].zaehler[j]||0;
+    return`<div class="row"><label class="w05">Präfix<input data-o="nk" data-t="${t}" data-f="prefix" value="${esc(s.nk[t].prefix)}"></label><label class="w05">Letzte Nummer ${j}<input type="number" data-o="nk" data-t="${t}" data-f="z" value="${z}"></label><span class="mut" style="flex:2;align-self:center">nächste Nummer: ${esc(s.nk[t].prefix)}-${j}-${String(z+1).padStart(4,'0')}</span></div>
+    <div class="row"><label class="w2">Kopftext<textarea data-o="tx" data-t="${t}" data-f="kopf" style="height:110px">${esc(s.texte[t].kopf)}</textarea></label></div>
+    <div class="row"><label class="w2">Fußtext<textarea data-o="tx" data-t="${t}" data-f="fuss" style="height:110px">${esc(s.texte[t].fuss)}</textarea></label></div>`},{breit:true})};
+function erwKarteK(){const pNr=p=>{const m=String(p).match(/\(P(\d+)\s*([a-z]?)/);return m?+m[1]*100+(m[2]?m[2].charCodeAt(0)-96:0):1e6}; // wie erwKarte()
+  const ab=ERW.filter(x=>erw(x.k)!==x.std),P=[...new Set(ERW.map(x=>x.p))].sort((a,c)=>pNr(a)-pNr(c));
+  return`<div class="bar" style="margin:0 0 8px"><span>${ab.length?tag(ab.length+' vom Standard abweichend','warn'):tag('alle Schalter auf Standard','ok')} ${hilfe('Zusätzliche Funktionen, einzeln ein- und ausschaltbar. Der Standard entspricht dem bisherigen Verhalten (außer Fehlerbehebungen). Ausschalten wirkt sofort; gespeicherte Angaben bleiben erhalten und gelten beim Wiedereinschalten wieder.'+(ab.length?'<br>Abweichend: '+ab.map(x=>esc(x.l)).join(' · '):''))}</span><span class="sp"></span><button data-act="erwstd" ${ab.length?'':'disabled'}>Alle Schalter auf Standard</button></div>
+  ${P.map(p=>{const L=ERW.filter(x=>x.p===p),d=L.some(x=>erw(x.k)!==x.std);return akk('erw-'+p,esc(p),L.map(x=>`<label class="chk erwz"><input type="checkbox" data-o="s" data-f="erw.${x.k}" ${erw(x.k)?'checked':''}> <span><b>${esc(x.l)}</b> <span class="mut">(Standard: ${x.std?'ein':'aus'})</span>${erw(x.k)!==x.std?' '+tag('geändert','warn'):''} ${hilfe(esc(x.info))}</span></label>`).join(''),
+    {offen:d,zusatz:d?tag('geändert','warn'):'',kopf:d?`<span class="sp"></span><button class="s" data-act="erwpk" data-p="${esc(p)}">Standard wiederherstellen</button>`:''})}).join('')}`}
+const erwAkk=()=>{const n=ERW.filter(x=>erw(x.k)!==x.std).length,d=Object.keys(S().druckprofil||{}).length;
+  return akk('e-erw','Erweiterungen',erwKarteK(),{zusatz:n?tag(n+' vom Standard abweichend','warn'):'alle auf Standard'})+akk('e-druck','Druck &amp; Belegdarstellung',dpKarte(),{zusatz:d?d+' Belegart(en) angepasst':'Standard'})};
+
 /* ---------- Einstellungen ---------- */
 V.einstellungen=()=>{
   const s=S(),f=s.firma,j=String(new Date().getFullYear()),stG=stGesperrt();
   const ff=(fl,l,cls='')=>`<label class="${cls}">${l}<input data-o="s" data-f="firma.${fl}" value="${esc(f[fl])}"></label>`;
   const sf=(fl,l,cls='w05',type='number')=>`<label class="${cls}">${l}<input type="${type}" step="any" data-o="s" data-f="${fl}" value="${esc(s[fl])}"></label>`;
   return`<h1>Einstellungen</h1>
-  <div class="card"><h2>Firma (erscheint auf allen Belegen)</h2>
+  ${akk('e-firma','Firma',`<div class="card"><h2>Firma (erscheint auf allen Belegen)</h2>
   <div class="row">${ff('name','Firmenname','w2')}${ff('zusatz','Zusatz (z. B. Inhaber, Gewerbe)','w2')}</div>
   <div class="row">${ff('strasse','Straße','w2')}${ff('plz','PLZ')}${ff('ort','Ort')}${ff('land','Land')}</div>
   <div class="row">${ff('uid','UID-Nr.')}${ff('fn','Firmenbuch-Nr.')}${ff('gericht','Firmenbuchgericht')}${ff('tel','Telefon')}${ff('mail','E-Mail')}${ff('web','Web')}</div>${pflichtHinweis()}
   <div class="row">${ff('bank','Bank')}${ff('iban','IBAN','w2')}${ff('bic','BIC')}<label>Bearbeiter<input data-o="s" data-f="bearbeiter" value="${esc(s.bearbeiter)}"></label><label title="Druck, PDF und Vorschau (Seitenumbruch, Seitenzahl)">Papierformat<select data-o="s" data-f="papier">${Object.entries(PAPIER).map(([k,x])=>opt(k,x.l,s.papier||'A4')).join('')}</select></label></div>
   <div class="row">${ff('zeichner','Unterzeichner (z. B. Horvath Stefan, BSc.)','w2')}${ff('zeichnerFkt','Funktion')}<label class="w2">Untertitel (nur bei eigenem Logo)<textarea data-o="s" data-f="firma.slogan" style="height:44px">${esc(f.slogan)}</textarea></label></div>
-  <div class="row"><label>Logo (PNG/JPG/SVG, max. 300 kB; leer = TBH-Briefkopf)<input type="file" id="logo" accept="image/*"></label><img src="${f.logo||KOPF_TBH}" style="max-height:50px">${f.logo?`<button data-act="logodel">Logo entfernen</button>`:''}<span style="flex:2"></span></div></div>
-  <div class="card"><h2>Belege einlesen</h2>
-  <p style="margin-top:0">Kostenlos und ohne Internetdienst werden gelesen: <b>E-Rechnungen</b> (ZUGFeRD/Factur-X, XRechnung, ebInterface) und <b>PDFs mit Textebene</b> (z. B. PDF aus der E-Mail des Lieferanten). Fotos und eingescannte Papierbelege enthalten keinen Text – Positionen dann manuell erfassen.</p>
-  <p class="mut">Optional (kostenpflichtig): KI-Erkennung für Fotos durch Claude (Anthropic) – nur wenn hier ein Schlüssel eingetragen ist. Den API-Schlüssel erhalten Sie in der Anthropic Console (console.anthropic.com → API Keys). Er wird nur in diesem Browser gespeichert, nicht in der Datenbank – auf jedem Gerät einmal eintragen. Kosten ca. 1–3 Cent je Seite; das Bild wird zur Auswertung an Anthropic übertragen.</p>
-  <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${lsGet('erp-ki-key')?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><span style="flex:2"></span></div></div>
-  <div class="card"><h2>Kaufmännisch</h2><div class="row">
+  <div class="row"><label>Logo (PNG/JPG/SVG, max. 300 kB; leer = TBH-Briefkopf)<input type="file" id="logo" accept="image/*"></label><img src="${f.logo||KOPF_TBH}" style="max-height:50px">${f.logo?`<button data-act="logodel">Logo entfernen</button>`:''}<span style="flex:2"></span></div></div>`,{zusatz:esc(f.name||'–')+(pflichtFehlt(f).length?' '+tag('Pflichtangaben fehlen','warn'):'')})}
+  ${akk('e-ein','Belege einlesen',`<div class="card"><h2>Belege einlesen</h2>
+  ${einlesenInfo(`Kostenlos und ohne Internetdienst werden gelesen: <b>E-Rechnungen</b> (ZUGFeRD/Factur-X, XRechnung, ebInterface) und <b>PDFs mit Textebene</b> (z. B. PDF aus der E-Mail des Lieferanten). Fotos und eingescannte Papierbelege enthalten keinen Text – Positionen dann manuell erfassen.`,
+  `Optional (kostenpflichtig): KI-Erkennung für Fotos durch Claude (Anthropic) – nur wenn hier ein Schlüssel eingetragen ist. Den API-Schlüssel erhalten Sie in der Anthropic Console (console.anthropic.com → API Keys). Er wird nur in diesem Browser gespeichert, nicht in der Datenbank – auf jedem Gerät einmal eintragen. Kosten ca. 1–3 Cent je Seite; das Bild wird zur Auswertung an Anthropic übertragen.`)}
+  <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${lsGet('erp-ki-key')?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><span style="flex:2"></span></div></div>`,{zusatz:lsGet('erp-ki-key')?'KI-Schlüssel gespeichert':'PDF-Text und E-Rechnung'})}
+  ${akk('e-kfm','Kaufmännisch',`<div class="card"><h2>Kaufmännisch</h2><div class="row">
     <label class="w05">Letzte Kunden-Nr.<input type="number" data-o="s" data-f="knr.K" value="${s.knr.K}" title="Nächster Kunde erhält diese Nummer + 1"></label><label class="w05">Letzte Lieferanten-Nr.<input type="number" data-o="s" data-f="knr.L" value="${s.knr.L}"></label>
     ${sf('zahlungsziel','Zahlungsziel Tage')}${sf('skonto','Skonto %')}${sf('skontoTage','Skonto Tage')}${sf('angebotGueltig','Angebot gültig Tage')}
     <label class="w05">Langtext drucken<select data-o="s" data-f="ltDruck" data-t="b">${opt('true','ja (Standard)',String(s.ltDruck!==false))}${opt('false','nein',String(s.ltDruck!==false))}</select></label>
     ${sf('zielDB2','Ziel-DB II %')}${sf('mgz','MGZ % auf Material')}${sf('abwGrenze','Prüfgrenze Abweichung %')}
     <label class="w05">USt-Besteuerung<select data-o="s" data-f="besteuerung">${opt('soll','Soll (vereinbarte Entgelte)',s.besteuerung)}${opt('ist','Ist (vereinnahmte Entgelte)',s.besteuerung)}</select></label>
     <label class="w05">Standard-USt<select data-o="s" data-f="stdSteuer">${s.steuer.map(x=>opt(x.code,x.bez,s.stdSteuer)).join('')}</select></label></div>
-  <div class="row"><label>Mengeneinheiten (durch Komma getrennt)<input data-o="s" data-f="einheitenStr" value="${esc(s.einheiten.join(', '))}"></label></div></div>
-  <div class="card"><h2>Steuersätze</h2><table><thead><tr><th>Code</th><th>Satz %</th><th>Bezeichnung</th><th>Hinweistext auf Rechnung</th><th></th></tr></thead><tbody>
+  <div class="row"><label>Mengeneinheiten (durch Komma getrennt)<input data-o="s" data-f="einheitenStr" value="${esc(s.einheiten.join(', '))}"></label></div></div>`,{zusatz:`Zahlungsziel ${esc(s.zahlungsziel)} Tage · Skonto ${fmtQ(s.skonto)} % · ${s.besteuerung==='ist'?'Ist':'Soll'}besteuerung`})}
+  ${akk('e-st','Steuersätze',kmpH()?stKarten():`<div class="card"><h2>Steuersätze</h2><table><thead><tr><th>Code</th><th>Satz %</th><th>Bezeichnung</th><th>Hinweistext auf Rechnung</th><th></th></tr></thead><tbody>
   ${s.steuer.map((x,i)=>{const ds=stG.has(x.code)?' disabled title="In festgeschriebenen Belegen verwendet – nicht änderbar"':'';return`<tr><td style="width:80px"><input data-o="st" data-i="${i}" data-f="code" value="${esc(x.code)}"${ds}></td><td style="width:80px"><input type="number" step="any" data-o="st" data-i="${i}" data-f="satz" value="${x.satz}"${ds}></td><td><input data-o="st" data-i="${i}" data-f="bez" value="${esc(x.bez)}"${ds}></td><td><input data-o="st" data-i="${i}" data-f="hinweis" value="${esc(x.hinweis)}"${ds}></td><td>${ds?tag('gesperrt'):`<button class="s d" data-act="stdel" data-i="${i}">✕</button>`}</td></tr>`}).join('')}
-  </tbody></table>${stG.size?'<p class="mut" style="margin:6px 0 0;font-size:13px">Gesperrte Steuersätze werden in festgeschriebenen Belegen verwendet; Code, Satz, Bezeichnung und Hinweistext bleiben deshalb unverändert (§ 11 UStG, § 131 BAO). Für einen neuen Satz einen neuen Code anlegen und ihn als Standard-USt bzw. im Artikel wählen.</p>':''}<button style="margin-top:8px" data-act="stadd">+ Steuersatz</button></div>
-  <div class="card"><h2>Stundentarife</h2><table><thead><tr><th>Kürzel</th><th>Bezeichnung</th><th>Kostensatz €/h (intern)</th><th>Verkauf €/h</th><th></th></tr></thead><tbody>
+  </tbody></table>${stG.size?'<p class="mut" style="margin:6px 0 0;font-size:13px">Gesperrte Steuersätze werden in festgeschriebenen Belegen verwendet; Code, Satz, Bezeichnung und Hinweistext bleiben deshalb unverändert (§ 11 UStG, § 131 BAO). Für einen neuen Satz einen neuen Code anlegen und ihn als Standard-USt bzw. im Artikel wählen.</p>':''}<button style="margin-top:8px" data-act="stadd">+ Steuersatz</button></div>`,{zusatz:`${s.steuer.length} Sätze${stG.size?` · ${stG.size} gesperrt`:''}`})}
+  ${akk('e-tf','Stundentarife',kmpH()?tfKarten():`<div class="card"><h2>Stundentarife</h2><table><thead><tr><th>Kürzel</th><th>Bezeichnung</th><th>Kostensatz €/h (intern)</th><th>Verkauf €/h</th><th></th></tr></thead><tbody>
   ${s.tarife.map((x,i)=>`<tr><td style="width:100px"><input data-o="tf" data-i="${i}" data-f="kz" value="${esc(x.kz)}"></td><td><input data-o="tf" data-i="${i}" data-f="bez" value="${esc(x.bez)}"></td><td><input type="number" step="any" data-o="tf" data-i="${i}" data-f="kosten" value="${x.kosten}"></td><td><input type="number" step="any" data-o="tf" data-i="${i}" data-f="vk" value="${x.vk}"></td><td><button class="s d" data-act="tfdel" data-i="${i}">✕</button></td></tr>`).join('')}
-  </tbody></table><button style="margin-top:8px" data-act="tfadd">+ Tarif</button></div>
-  <div class="card"><h2>Nummernkreise ${j}</h2><p class="mut" style="margin-top:0">Format PRÄFIX-JAHR-0001. „Letzte Nummer“ nur bei Umstieg setzen (z. B. letzte Rechnungsnummer aus Excel).</p><table><thead><tr><th>Beleg</th><th>Präfix</th><th>Letzte Nummer ${j}</th><th>Kopftext</th><th>Fußtext</th></tr></thead><tbody>
+  </tbody></table><button style="margin-top:8px" data-act="tfadd">+ Tarif</button></div>`,{zusatz:esc(s.tarife.map(x=>x.kz).join(', '))})}
+  ${akk('e-nk','Nummernkreise &amp; Texte',kmp()?nkK():`<div class="card"><h2>Nummernkreise ${j}</h2><p class="mut" style="margin-top:0">Format PRÄFIX-JAHR-0001. „Letzte Nummer“ nur bei Umstieg setzen (z. B. letzte Rechnungsnummer aus Excel).</p><table><thead><tr><th>Beleg</th><th>Präfix</th><th>Letzte Nummer ${j}</th><th>Kopftext</th><th>Fußtext</th></tr></thead><tbody>
   ${Object.keys(T).map(t=>`<tr><td>${T[t].bez}</td><td style="width:80px"><input data-o="nk" data-t="${t}" data-f="prefix" value="${esc(s.nk[t].prefix)}"></td><td style="width:90px"><input type="number" data-o="nk" data-t="${t}" data-f="z" value="${s.nk[t].zaehler[j]||0}"></td><td><textarea data-o="tx" data-t="${t}" data-f="kopf">${esc(s.texte[t].kopf)}</textarea></td><td><textarea data-o="tx" data-t="${t}" data-f="fuss">${esc(s.texte[t].fuss)}</textarea></td></tr>`).join('')}
-  </tbody></table></div>
-  ${erwKarte()}`;
+  </tbody></table></div>`,{zusatz:`Format PRÄFIX-${j}-0001`})}
+  ${kmp()?erwAkk():erwKarte()}`;
 };
 // Karte „Erweiterungen“: alle Funktionsschalter mit Beschreibung, Abweichungen vom Standard, Zurücksetzen je Paket bzw. alle
 function erwKarte(){
@@ -3267,15 +3310,15 @@ function erwKarte(){
 // Unterkarte „Druck & Belegdarstellung“: Druckprofil der gewählten Belegart (UI.dpTyp); gespeichert werden nur Abweichungen von DRUCK_STD
 function dpKarte(){
   const typ=T[UI.dpTyp]?UI.dpTyp:'AN',P=S().druckprofil?.[typ]||{},w=dProfil(typ),re=RE_V.includes(typ),L=DRUCKOPT.filter(x=>dGilt(x,typ)),G=[...new Set(L.map(x=>x.p))],hw=L.map(x=>x.warn?.(w)).filter(Boolean);
-  const feld=x=>{const a=`data-o="s" data-f="druckprofil.${typ}.${x.k}"${re&&x.k in DRUCK_RE?' disabled':''}`,v=w[x.k],kopf=`<b>${esc(x.l)}</b> <span class="mut">(Standard: ${esc(dStdTxt(x))})</span>${x.k in P?' '+tag('geändert','warn'):''}`,inf=x.info?`<span class="mut" style="display:block;font-size:12px">${esc(x.info)}</span>`:'';
+  const feld=x=>{const a=`data-o="s" data-f="druckprofil.${typ}.${x.k}"${re&&x.k in DRUCK_RE?' disabled':''}`,v=w[x.k],kopf=`<b>${esc(x.l)}</b> <span class="mut">(Standard: ${esc(dStdTxt(x))})</span>${x.k in P?' '+tag('geändert','warn'):''}`,inf=x.info?(kmp()?' '+hilfe(esc(x.info)):`<span class="mut" style="display:block;font-size:12px">${esc(x.info)}</span>`):'';
     return x.typ==='chk'?`<label class="chk" style="margin-top:6px;flex:1 1 100%"><input type="checkbox" ${a} ${v?'checked':''}> <span>${kopf}${inf}</span></label>`
       :`<label style="flex:1 1 320px">${kopf}${x.max?` <span class="mut">höchstens ${x.max} Zeichen</span>`:''}${x.opts?`<select ${a}>${x.opts.map(([k,l])=>opt(k,l,v)).join('')}</select>`:x.typ==='ta'?`<textarea ${a} placeholder="${esc(x.ph||'')}" style="height:54px">${esc(v)}</textarea>`:`<input ${a} value="${esc(v)}" placeholder="${esc(x.ph||'')}"${x.max?` maxlength="${x.max}"`:''}>`}${inf}</label>`};
   return`<div id="dprof" style="border-top:1px solid var(--line);margin-top:14px;padding-top:8px"><div class="bar" style="margin:0"><b>Druck &amp; Belegdarstellung</b><select data-o="ui" data-f="dpTyp" title="Belegart">${Object.keys(T).map(t=>opt(t,T[t].bez,typ)).join('')}</select>${Object.keys(P).length?tag(Object.keys(P).length+' vom Standard abweichend','warn'):tag('Standard','ok')}<span class="sp"></span>
     <button class="s" data-act="dpre" title="Dieses Profil für Anzahlungs-, Teil-, Schlussrechnung, Rechnung und Gutschrift übernehmen">auf alle Rechnungsarten übertragen</button><button class="s" data-act="dpstd" ${Object.keys(P).length?'':'disabled'}>Standard wiederherstellen</button></div>
-    <p class="mut" style="margin:6px 0 0;font-size:13px">Darstellung in Vorschau, Druck, PDF und E-Mail je Belegart. Im Beleg legt „Druckoptionen …“ Abweichungen für diesen einen Beleg fest. Beim Festschreiben wird die Darstellung im Beleg eingefroren (Nachdruck wie das Original).${re?' Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG).':''}</p>
+    ${(t=>kmp()?`<p style="margin:6px 0 0">${hilfe(t)}</p>`:`<p class="mut" style="margin:6px 0 0;font-size:13px">${t}</p>`)(`Darstellung in Vorschau, Druck, PDF und E-Mail je Belegart. Im Beleg legt „Druckoptionen …“ Abweichungen für diesen einen Beleg fest. Beim Festschreiben wird die Darstellung im Beleg eingefroren (Nachdruck wie das Original).${re?' Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG).':''}`)}
     ${erw('druckprofil')?'':'<div class="hint" style="margin:8px 0 0">Das Druckprofil ist ausgeschaltet (Schalter „Druckprofil je Belegart“ oben): Entwürfe werden im Standard-Aussehen gedruckt, festgeschriebene Belege mit ihrem Stand beim Festschreiben. Die Einstellungen hier bleiben gespeichert.</div>'}
     ${hw.length?`<div class="hint" style="margin:8px 0 0">${hw.map(esc).join('<br>')}</div>`:''}
-    ${L.length?G.map(g=>`<div style="margin-top:10px"><div class="mut" style="font-weight:600">${esc(g)}</div><div class="row" style="align-items:flex-start">${L.filter(x=>x.p===g).map(feld).join('')}</div></div>`).join(''):'<p class="mut">Noch keine Darstellungsoptionen vorhanden.</p>'}</div>`}
+    ${L.length?G.map(g=>kmp()?akk('dp-'+g,esc(g),`<div class="row" style="align-items:flex-start">${L.filter(x=>x.p===g).map(feld).join('')}</div>`,{zusatz:(n=>n?tag(n+' geändert','warn'):'')(L.filter(x=>x.p===g&&x.k in P).length)}):`<div style="margin-top:10px"><div class="mut" style="font-weight:600">${esc(g)}</div><div class="row" style="align-items:flex-start">${L.filter(x=>x.p===g).map(feld).join('')}</div></div>`).join(''):'<p class="mut">Noch keine Darstellungsoptionen vorhanden.</p>'}</div>`}
 // Feld des Druckprofils setzen (Einstellungen): Abweichung speichern bzw. bei Standardwert löschen; Unterkarte neu zeichnen, Fokus bleibt im nächsten Feld
 function dpSetzen(pfad,v){const[,t,k]=pfad.split('.'),A=S().druckprofil??={},w=typeof v==='string'?v.trim():v;if(!T[t]||(RE_V.includes(t)&&k in DRUCK_RE))return;
   const p=A[t]??={};if(w===DRUCK_STD[k])delete p[k];else p[k]=w;if(!Object.keys(p).length)delete A[t];persist();
@@ -4059,7 +4102,7 @@ async function druckDialog(b){
   if(!b||b.fest)return;const L=DRUCKOPT.filter(x=>dGilt(x,b.typ));if(!L.length)return;
   const P=dProfil(b.typ),w=dOpt(b),re=RE_V.includes(b.typ),ab=Object.keys(b.druck||{}).filter(k=>L.some(x=>x.k===k));
   const felder=[{typ:'hinweis',l:`Abweichungen vom Druckprofil „${esc(T[b.typ].bez)}“ (Einstellungen → Erweiterungen → Druck &amp; Belegdarstellung). ${ab.length?`Dieser Beleg weicht ab bei: ${ab.map(k=>esc(L.find(x=>x.k===k).l)).join(', ')}.`:'Derzeit wie die Belegart.'}`}];
-  let p='';for(const x of L){if(x.p!==p){p=x.p;felder.push({typ:'hinweis',l:`<b>${esc(p)}</b>`,neu:1})}
+  let p='',g=0;for(const x of L){if(x.p!==p){p=x.p;felder.push({typ:'abschnitt',l:esc(p),neu:1,zu:g++>0})} // Abschnitt: ohne kompakt fette Zeile wie bisher, mit kompakt zuklappbar (erste Gruppe offen)
     felder.push({k:x.k,l:esc(x.l),wert:w[x.k],typ:x.typ==='chk'?'checkbox':x.typ==='ta'?'textarea':'text',opts:x.opts,dis:re&&x.k in DRUCK_RE,ph:x.ph,max:x.max,info:x.info,h:60,neu:1,cls:'w2'})}
   const r=await formDialog({titel:`Druckoptionen – ${esc(T[b.typ].bez)} ${esc(bNr(b))}`,ok:'Übernehmen',breit:true,scroll:true,extra:'Wie Belegart',felder});
   if(!r)return;

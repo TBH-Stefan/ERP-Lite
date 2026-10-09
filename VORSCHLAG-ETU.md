@@ -233,6 +233,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Nutzen** hoch · **Aufwand** S · **Abhängig von:** P1, P0 l) · **Recht:** –
 
 ### P3 – Schalter für Preise und Summen
+- **Stand:** ✅ umgesetzt (Commit 06ffa33, Einheit U9). Abweichungen vom Plan: Die Überschrift ist ein freier Text `druck.titel` (z. B. „PREISANFRAGE“, „LEISTUNGSBESCHREIBUNG“) für AN, AB, PR, LS, BE und WE, nicht bei Rechnungsarten; Nummer, Nummernkreis und Dateiname bleiben. „Als Einheitspreis“ (`nullMenge:'ep'`) gilt nicht bei Rechnungsarten (dort wie „drucken“), Striche stehen dann auch im Gesamtpreis. Ohne Preise werden Optionen und Alternativen weiter (ohne Preise und ohne den Zusatz „nicht in der Gesamtsumme enthalten“) gedruckt. Im Editor (Tabelle, einzeilige Zeile, Karten) sind nicht gedruckte Positionen und Gruppen grau mit „wird nicht gedruckt“ markiert (`ndSet()`, `updateCalc()` schaltet beim Ändern der Menge um). Korrektur: `dProfil()` zeigt bei Rechnungsarten die gesperrten Werte wie gedruckt (sonst stand nach „auf alle Rechnungsarten übertragen“ eines Profils ohne Preise ein gesperrtes, leeres Häkchen). Test: `docHTML`, Vorschau und PDF mit Standardeinstellungen 30/30 gleich, Funktionstest bei 390 und 1400 px ohne Fehler.
 - **Ziel:** Leistungsbeschreibung ohne Preise, Preisanfrage an Großhändler, Einheitspreisangebote, saubere Schlussrechnungen.
 - **ETU-Vorbild:** „Preise und Summen drucken“, „Preise drucken“, „Summenblock nicht drucken“, „0 Menge drucken“ (bei ETU standardmäßig **aus**), „Einzelartikelpreise unterhalb eines Titels drucken“, „Striche anstatt Artikelpreise“; Summenblock mit eigener €-Spalte.
 - **Heute:**
@@ -263,6 +264,16 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Nutzen** mittel · **Aufwand** S · **Abhängig von:** P1 · **Recht:** Bei Rechnungsarten sind Gesamtpreise und Summenblock gesperrt (§ 11 Abs. 1 Z 3 lit. e/f UStG). Einzelpreise dürfen fehlen. Bei den Beschriftungen ist nur der Text änderbar.
 
 ### P4 – Spalten und Positionsdarstellung
+- **Stand:** ✅ umgesetzt in zwei Commits (Einheit U9): Spalten 8a9b49b, Positionsdarstellung und `erw.zuschlag` 1d7338f. Abweichungen vom Plan:
+  - `spEinheit` aus setzt die Einheit in die Mengenspalte („40 Stk“), statt sie wegzulassen; so bleibt die Menge eindeutig. `spMenge` ist bei Rechnungsarten über `DRUCK_RE` gesperrt.
+  - `artNr:'spalte'`: Spaltenkopf „Art.-Nr.“, im Einkauf die Lieferanten-Art.-Nr. (sonst die eigene); bei „Menge vorn“ steht die Spalte vor der Bezeichnung (wie ETU). Die Langtextzeile „Ihre Art.-Nr.: …“ älterer Einkaufspositionen entfällt nur im Druck (`ohneIAN()`), in der bearbeitbaren Vorschau bleibt der Langtext unverändert (sonst würde ihn schon ein Klick ins Feld ändern).
+  - Klassen statt `nth-child` nur bei abweichender Spaltenfolge (`table.p.sp`, Zellen `pn`/`an`/`bz`, Kopf `l`/`n`); im Standard bleibt das HTML byte-gleich.
+  - `nrForm` wirkt über `posNummern(b,kurz)` mit der Vorgabe aus `dOpt(b)` auch im Editor.
+  - `zusForm`: Standard `'spalte'` = wie bisher negativ in der Rabattspalte („-10 %“), damit bestehende Belege gleich aussehen; „+10 %“ ist die Auswahl `'plus'` (Spaltenkopf „Rab./Zuschl. %“ bzw. „Zuschlag %“), dazu `'text'` (Kleinzeile `zusTxt`).
+  - `lsForm:'aus'` lässt auch „davon Lohn … · Sonstiges …“ im Summenblock weg; `kurz` aus druckt den Langtext in normaler Schrift (`.lt.lk`); `grpFarbe` nur als #RRGGBB (sonst Standardfarbe und Hinweis); `rabForm:'netto'` mit Hinweis auf die Cent-Rundung.
+  - Langtext breit: `tr.ltz` nach `tr.mlt`; `vorschauSeiten()` nimmt die Positionszeile mit, `brk` in `pdfAusBeleg()` schließt `tr.mlt` aus, im Druck `break-after:avoid`.
+  - `erw.zuschlag` (Standard aus) ändert nur die Beschriftung im Editor („Rabatt/Zuschlag %“ mit Hinweis „−10 = 10 % Zuschlag“, Karte „+ 10 % Zuschlag“, Häkchen „Spalte Rabatt/Zuschlag“). Auswertungen summieren keine Positionsrabatte (geprüft), daher keine Anpassung.
+  - Test: `docHTML`, Vorschau und PDF mit Standardeinstellungen 30/30 gleich; je Variante stimmt die Spaltenzahl jeder Zeile mit dem Kopf überein; Langtext breit in einem fünfseitigen Angebot in Vorschau und PDF nie von seiner Position getrennt; Funktionstest bei 390 und 1400 px ohne Fehler.
 - **ETU-Vorbild:**
   - Bild 10, „Anzeige Spalten“: Positionsnummer, Menge, Mengeneinheit, Artikelnummer, Leistung, Einzelpreis.
   - Bild 9, Spaltenfolge Position | Menge | ME | Leistung | Einzel-Preis € | Gesamt €; Menge rechtsbündig, ME linksbündig; Positionsnummern „1.1“.
@@ -1163,7 +1174,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
       - **Korrektur nach Prüfung** („U8: Korrektur Beleg-Pop-ups beim Belegwechsel, Gruppensumme“): Ein offenes Beleg-Pop-up (Position, Kopfdaten, Spalten & Druck, Summen, Zahlung) blieb nach einem Belegwechsel (Zurück-Taste am Handy, Link) bzw. nach dem Abgleich offen und schrieb dann in den gerade angezeigten Beleg; es schließt jetzt (`anBeleg()`, `d._gilt`). Die Gruppensumme (Akkordeon-Kopf, Gruppenzeile) und der GP von Positionen einer Pauschalgruppe („(…)“) laufen bei Änderungen mit (`updateCalc()`, auch ohne kompakte Ansicht).
       - **Offen:** Test an echten Geräten (Android, iOS: Bildschirmtastatur im Positions-Pop-up, Aktionsleiste mit Safe-Area); LV-Positionen als Karten (optional).
 - **Passung der Stufe-2-Pakete:**
-  - **P3/P4 (Preise, Summen, Spalten, Positionsdarstellung):**
+  - **P3/P4 (Preise, Summen, Spalten, Positionsdarstellung):** ✅ umgesetzt (U9); die Druckoptionen stehen im Dialog und in der Unterkarte als Abschnitte „Preise und Summen (P3)“, „Spalten (P4)“ und „Positionsdarstellung (P4)“, im Editor nur die Markierung „wird nicht gedruckt“, die Nummern „1.1“ und die Beschriftung „Rabatt/Zuschlag“.
     - Die Druckoptionen wirken nur in `docHTML()`; P30 berührt sie nicht.
     - Neue Optionen erscheinen ohne eigene Gestaltung im Dialog „Druckoptionen“ und in `dpKarte()`. Beide sind in kompakt nach Gruppen (`DRUCKOPT.p`) als Akkordeon mit ⓘ-Hilfen aufgebaut, der Dialog über `typ:'abschnitt'`.
     - Anteile im Editor: die Spalte „Rabatt/Zuschlag %“ (P4, `erw.zuschlag`), Nummern „1.1“ im Editor und die Spalten „Aufschl. %“/„DB %“ aus dem Rest von P11 (`b.optKalk`).
@@ -1299,6 +1310,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - P0 b (af99b8d): vorher zusätzlich P0 c; Grundgerüst (4094cd5): ganz zuletzt, nach allen Paketen mit Schaltern und 05429d5
   - seit der Kompakten Ansicht (P30 U7, 09.10.2026): U7 einzeln wie bei P30 beschrieben (Commit 2 nach 3–6). P6 (Teil, 072ff14), Korrektur b626535 und P5 (7bca588): vorher U7 Commit 3 (439ca23), 4 (7160459) und 5 Stammdaten (050e6d5). P19 c (2aa2bf6) und P1 (d5237b2) samt allen Commits, die P1 voraussetzen (P0 b, c, d, e, n, Grundgerüst): vorher U7 Commit 2 (4e15709) und damit U7 Commit 3–6. U7 Commit 1 (7acb6e1) bleibt unabhängig.
   - seit dem kompakten Beleg-Editor (P30 U8, 09.10.2026): U8 rückwärts 6 → 1 (c5a105f, 281c9b9, d1dc351, f974f09, 8311235, fcfbee7), einzeln nur Commit 6 und 4; alle U8-Commits vor U7 Commit 2 (4e15709) und damit vor P1, P19 c und P0 b, c, d, e, n. P5 (7bca588): vorher zusätzlich U8 Commit 6 bis 2 (8311235 verlagert die Formularzeilen samt „Gültig bis“ aus P5 in `kopfFelder()`). Alle übrigen Commits sind wie vor U8 rücknehmbar (geprüft: jeder Code-Commit seit ETU einzeln gegen den Stand vor U8, Ketten von P0 j, m, P14, P19 a, P11, P6, U7). Vor allen U8-Commits zuerst die Korrektur „U8: Korrektur Beleg-Pop-ups beim Belegwechsel, Gruppensumme“ zurücknehmen (ändert Zeilen aus U8 Commit 1, 2, 3, 5 und 6).
+  - seit U9 (P3/P4, 09.10.2026): U9 rückwärts P4 Positionsdarstellung (1d7338f) → P4 Spalten (8a9b49b) → P3 (06ffa33); einzeln nur 1d7338f. U9 vor: P0 c, P0 j, P0 l (66bc2b7, `brk`), P0 n, P1, P2, P5, P19 c, U7 Commit 2 (4e15709), U8 Commit 1, 3, 4, 5, 6 und der Korrektur 68e30f6 (geändert bzw. direkt angrenzend; neu ist die Abhängigkeit für P0 l, P2, U8 Commit 4 und die Korrektur 68e30f6, die vorher einzeln rücknehmbar waren). Geprüft: U9 rückwärts konfliktfrei, Programm nach jedem Schritt ohne Konsolenfehler (390 und 1400 px), danach `index.html` gleich dem Stand ohne U9. Hinweis: U7 Commit 5 Stammdaten (050e6d5) ist seit dem Commit 1e322aa (Pflichtfelder) erst nach dessen Rücknahme rücknehmbar (nicht durch U9).
 - Noch offen: Test an echten Geräten (Edge, Firefox, Android, iOS; Druck, Strg+P, Browsermenü), echter Mailversand und Abgleich über OneDrive mit zwei Geräten, Tag `vor-etu` (nicht gesetzt).
 
 **Stufe 2: Kernfunktionen nach ETU (ca. 12–13 Tage)**
@@ -1306,7 +1318,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - P12 DB je Stunde und Lohnkalkulation (M)
 - P8 Platzhalter (M), danach P9 Lohnkostennachweis (M)
 - P6 Anrede und Briefanrede, vollständig (M)
-- P3 Schalter für Preise und Summen (S), P4 Spalten und Positionsdarstellung (M–L)
+- P3 Schalter für Preise und Summen (S), P4 Spalten und Positionsdarstellung (M–L) – ✅ umgesetzt (U9: Commits 06ffa33, 8a9b49b, 1d7338f)
 - P14 Preiseinheit, vollständig (M)
 - P18 Gliederung (M), P20 globale Suche (M)
 
@@ -1369,7 +1381,7 @@ Jedes Paket wird erst nach Ihrem Test im Browser nach `main` übernommen. Bis da
 6. **Bedienung (P22):** Wollen Sie Reiter wie bei ETU oder die lange Belegseite behalten, ergänzt um Gliederung und Statuszeile?
    *Vorschlag:* zuerst Gliederung (P18) und Statuszeile (P19). Reiter später als Option, Standard aus.
 7. **Zuschlag je Position (P4):** Brauchen Sie einen für den Kunden sichtbaren Zuschlag je Position, z. B. für Erschwernis, Kleinmengen oder Nachtarbeit, wie ETU „Aufschlag je Position“?
-   *Vorschlag:* nur bei Bedarf einschalten (`erw.zuschlag`).
+   *Vorschlag:* nur bei Bedarf einschalten (`erw.zuschlag`). *Umgesetzt (U9):* Schalter `erw.zuschlag` (Standard aus) für die Beschriftung im Editor, Druck über das Druckprofil (Positionsdarstellung → Zuschlag je Position).
 8. **Pflichtangaben und Duplikat (P0 m/n):** Ist das Firmenbuchgericht der TBH GmbH das Landesgericht Wiener Neustadt? Soll eine erneute Ausgabe einer Rechnung als „DUPLIKAT“ gekennzeichnet werden?
    *Vorschlag:* Gericht in den Einstellungen eintragen; Duplikat einschalten.
 9. **E-Mail-Versand:** Versenden Sie über ein Microsoft-365-Firmenkonto oder auch über ein privates Outlook.com- bzw. Hotmail-Konto (ETU „per HotMail versenden“)?

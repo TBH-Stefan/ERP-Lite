@@ -226,6 +226,53 @@ dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
 .doc .ft{position:fixed;bottom:0;left:-2.2mm;right:4.7mm;font:7.5pt/1.3 Arial,Helvetica,sans-serif;color:#000;border-top:1mm solid #80704d;padding-top:1mm;text-align:center}
 .doc .dupl{font-size:14pt;font-weight:700;letter-spacing:.35em;margin:-8mm 0 1mm} /* Vermerk erneute Ausgabe (P0 n), steht im Abstand unter der Anschrift */
 .doc .wm{position:absolute;top:1mm;left:0;color:#b42318;font-weight:700;font-size:12pt;margin-bottom:3mm}
+/* Kompakt (P30, erw.kompakt) Grundbausteine: ⋯-Menü .mpop (am Handy Blatt von unten), Listenkarte .kk, Akkordeon details.akk, ⓘ-Hilfe details.ih;
+   unter body.kompakt: Dialoge mit stets sichtbarem Titel und Knopfleiste (am Handy Blatt von unten), Kennzahlen, Tippziele und Abstände, Seitenleiste bei niedriger Fensterhöhe */
+.pop.mpop{z-index:45;padding:6px;width:320px}
+.mpop .mi{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:8px 10px;border:0;border-radius:6px;background:none;font:inherit;color:inherit;text-align:left;text-decoration:none;white-space:normal;cursor:pointer}
+.mpop .mi:hover{background:var(--acc2)}.mpop .mi:disabled{opacity:.45;cursor:default;background:none}.mpop .mi.d{color:var(--err)}
+.mpop .mi .ic{flex:none;width:22px;text-align:center;font-size:17px;line-height:1}.mpop hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+.pop.mpop.unten{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;max-width:none;max-height:80vh;overflow-y:auto;border-radius:14px 14px 0 0;padding:8px 8px calc(10px + env(safe-area-inset-bottom))}
+.pop.mbg{position:fixed;inset:0;z-index:44;width:auto;max-width:none;padding:0;border:0;border-radius:0;box-shadow:none;background:rgba(15,20,30,.35)}
+button.mehr{min-width:40px;min-height:40px;padding:0 8px;font-size:20px;line-height:1}
+.kk{padding:9px 12px;min-height:48px;line-height:1.35}
+.kk1,.kk3{display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+.kkt{font-weight:600;min-width:0;overflow-wrap:anywhere}.kks{flex:none;white-space:nowrap}
+.kku,.kkz{color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.kku{font-size:13px}.kkz{font-size:12px}
+.kkb{flex:none;font-weight:700;white-space:nowrap}
+details.akk{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:10px;min-width:0}
+details.akk>summary{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-height:44px;margin:0;padding:8px 12px;font-size:15px;cursor:pointer}
+details.akk>summary::-webkit-details-marker{display:none}
+details.akk>summary::before{content:'▸';flex:none;width:12px;color:var(--mut);transition:transform .15s}details.akk[open]>summary::before{transform:rotate(90deg)}
+details.akk>summary .akt{font-weight:700}details.akk>summary .akz{color:var(--mut);font-size:13px}details.akk>summary .sp{flex:1}
+details.akk>.akb{padding:0 12px 12px;min-width:0;overflow-x:auto}
+details.akk.fa{margin:8px 0 0}details.akk.fa>summary{font-size:14px;min-height:40px}
+details.ih{display:inline-block;vertical-align:middle;margin:0 0 0 4px;font-size:13px;font-weight:400;line-height:1.45;color:var(--mut);text-transform:none;letter-spacing:0}
+details.ih>summary{list-style:none;display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;margin:0;border-radius:14px;color:var(--acc);font-size:17px;cursor:pointer}
+details.ih>summary::-webkit-details-marker{display:none}details.ih>summary:hover{background:var(--acc2)}
+details.ih[open]{display:block;flex-basis:100%;order:9;margin:2px 0 6px}
+.ihx{background:#f6f8fb;border:1px solid var(--line);border-radius:6px;padding:8px 10px;color:var(--ink)}
+body.kompakt .pop{z-index:110}body.kompakt .pop.mbg{z-index:109}body.kompakt:has(.modal) .undo{bottom:auto;top:12px}
+body.kompakt .mbox{max-height:calc(90vh - 12px);overflow-y:auto}
+body.kompakt .mbox>h2:first-child{position:sticky;top:-18px;z-index:3;margin:-18px -20px 10px;padding:16px 20px 8px;background:#fff}
+body.kompakt .mbox>.bar:last-child{position:sticky;bottom:-18px;z-index:3;margin:12px -20px -18px!important;padding:10px 20px 14px;background:#fff;border-top:1px solid var(--line)}
+body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}body.kompakt .kpi{padding:9px 12px}body.kompakt .kpi b{font-size:18px}
+@media(max-width:760px){
+  body.kompakt .modal{align-items:flex-end;padding:0}
+  body.kompakt .mbox{max-width:none!important;max-height:92vh!important;max-height:92dvh!important;border-radius:14px 14px 0 0;padding:0 14px}
+  body.kompakt .mbox>h2:first-child{top:0;margin:0 -14px 8px;padding:14px 14px 8px}
+  body.kompakt .mbox>.bar:last-child{bottom:0;margin:12px -14px 0!important;padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+  body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
+  body.kompakt .kpi{min-width:0;padding:8px 10px;font-size:12px;line-height:1.35}body.kompakt .kpi b{font-size:17px;overflow-wrap:anywhere}
+  body.kompakt .kpi>span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.kompakt main{padding:10px 10px 90px}body.kompakt .card{padding:10px;margin-bottom:10px}
+  body.kompakt :is(main,.mbox) :is(button,.btn,select,input:not([type=checkbox]):not([type=radio]):not([type=file])):not(table.pos *){min-height:40px}
+  body.kompakt :is(main,.mbox) button.s:not(table.pos *){min-width:36px;padding:4px 10px;font-size:14px}
+  body.kompakt :is(main,.mbox) input[type=checkbox]:not(table.pos *){width:20px;height:20px}
+  body.kompakt .card h2>a:first-child{display:inline-block;padding:6px 0}
+}
+@media(pointer:coarse) and (min-width:761px){body.kompakt :is(main,.mbox) :is(button,.btn,select,input:not([type=checkbox]):not([type=radio]):not([type=file])):not(table.pos *){min-height:40px}}
+@media(min-width:761px) and (max-height:820px){body.kompakt nav a,body.kompakt nav button.zl{padding:4px 18px}body.kompakt nav .grp{padding:8px 18px 2px}body.kompakt nav .logo{padding:10px 18px 6px}}
 </style>
 </head>
 <body>
@@ -364,6 +411,7 @@ const ERW=[
   {k:'druckprofil',std:true,p:'Druckprofil (P1)',l:'Druckprofil je Belegart',info:'Darstellungsoptionen für Vorschau, Druck, PDF und E-Mail je Belegart (unten unter „Druck & Belegdarstellung“) und je Beleg über „Druckoptionen …“ (dort nur Abweichungen). Beim Festschreiben wird die Darstellung im Beleg eingefroren, ein Nachdruck sieht wie das Original aus; „Bearbeiten“ hebt das wieder auf. Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG). Aus: Entwürfe im Standard-Aussehen, festgeschriebene Belege weiter mit ihrem eingefrorenen Stand; alle Einstellungen bleiben gespeichert. Die Vorgaben entsprechen dem bisherigen Aussehen.'},
   {k:'statuszeile',std:true,p:'Navigation (P19)',l:'Statuszeile unter dem Belegtitel',info:'Zeigt unter dem Titel eines Belegs den Pfad „Verkauf › Angebote“ (anklickbar, führt zur gefilterten Liste), das Belegdatum, den Kunden bzw. Lieferanten, den Nettobetrag (läuft bei Änderungen mit) und wann der Beleg angelegt bzw. festgeschrieben wurde (mit Uhrzeit). Reine Anzeige, daher Standard ein.'},
   {k:'kopfFix',std:false,p:'Navigation (P19)',l:'Statuszeile beim Scrollen oben festhalten',info:'Die Statuszeile bleibt mit Nummer und Status beim Scrollen am oberen Rand stehen (am Handy unter der Kopfzeile). Standard aus, weil sie am Handy eine Zeile Platz kostet. Wirkt nur mit eingeschalteter Statuszeile.'},
+  {k:'kompakt',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht (Handy und Bildschirm)',info:'Weniger Bedienelemente auf einmal: Seltenes liegt in Menüs (⋯, „+ Neu ▾“) und Pop-ups, Listen erscheinen am Handy als Karten, Filter in einem Pop-up, lange Abschnitte (z. B. Einstellungen) zum Auf- und Zuklappen, Erklärtexte hinter ⓘ. Dialoge öffnen am Handy als Blatt von unten, Titel und Knöpfe bleiben beim Scrollen sichtbar; Knöpfe und Felder sind am Handy und auf Tablets mindestens 40 px hoch. Welche Abschnitte offen sind, merkt sich das Gerät. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Entscheidung des Anwenders (09.10.2026), daher Standard ein. Aus: bisherige Darstellung.'},
 ];
 const ERW_STD=Object.fromEntries(ERW.map(x=>[x.k,x.std]));
 const erw=k=>DB?.settings?.erw?.[k]??ERW_STD[k];
@@ -1115,6 +1163,7 @@ function render(){
   closePop();
   document.body.classList.toggle('navkl',!!(erw('navKL')&&erw('kFilter'))); // Untereinträge Kunden/Lieferanten (P6)
   const f=V[view]||V.dash;
+  document.body.classList.toggle('kompakt',kmp()); // Kompakte Ansicht (P30): CSS für bestehende Elemente nur unter body.kompakt
   $('#main').innerHTML=f(arg);
   document.body.classList.toggle('zlaus',!erw('zuletzt'));if(arg&&ZL_V.includes(view))zuletztMerk(view+'/'+arg); // Zuletzt geöffnet (P19 a)
   requestAnimationFrame(vorschauSeiten);
@@ -1156,6 +1205,56 @@ function zuletztPop(btn){
   document.body.appendChild(d);
 }
 function renderFocus(sel){render();const e=$(sel);if(e){e.focus();e.select?.()}}
+
+/* ---------- Kompakte Ansicht (P30, erw.kompakt): Grundbausteine ----------
+   kmp() = Schalter ein, kmpH() = zusätzlich Handy (bis 760 px, dieselbe Grenze wie im CSS); ohne Schalter liefern alle Ansichten dasselbe HTML wie bisher.
+   menuePop(btn,eintraege) ⋯-Menü: Einträge {l,ic,act,d:{data-…},value,dis,titel,gefahr,trenn,sub:[…],datei:{id,accept},href}; je Ansicht MENUE.<name>=btn=>[…], Auslöser data-act="menue" data-m="<name>".
+   karte({t,s,u,z,b,a}) Listenkarte (Titel/Status, Unterzeile, Zusatz/Betrag; a = Attribute), akk(id,titel,inhalt,{offen,zusatz,kopf}) Akkordeon (Zustand je Gerät in erp-akk),
+   hilfe(text) ⓘ-Erklärtext, livePop(titel,inhalt,{verwerfen}) Bearbeiten-Pop-up: Felder mit den Attributen der bisherigen Formulare, geschrieben vom change-Handler
+   (je Änderung ein persist()-Schritt), neu gezeichnet nach jeder Änderung; je Ansicht LIVE.<name>=el=>livePop(…), Auslöser data-act="lpop" data-lp="<name>" */
+const HANDY=matchMedia('(max-width:760px)');
+const kmp=()=>!!erw('kompakt'),kmpH=()=>kmp()&&HANDY.matches;
+HANDY.addEventListener?.('change',()=>{if(!DB||!kmp()||document.querySelector('.modal'))return;document.activeElement?.blur?.();render()}); // Handy gedreht bzw. Fenster über die Grenze: neu zeichnen
+const MENUE={},LIVE={};let MPOP=null;
+function menuePop(btn,eintraege){
+  closePop();MPOP=btn;const blatt=HANDY.matches,d=document.createElement('div');d.className='pop mpop'+(blatt?' unten':'');let bg=null;
+  const da=o=>Object.entries(o||{}).map(([k,v])=>` data-${k}="${esc(v)}"`).join(''),ic=x=>`<span class="ic">${x.ic||''}</span>`,zu=()=>setTimeout(()=>{d.remove();bg?.remove()},0);
+  const ein=(x,i)=>x.trenn?'<hr>':x.datei?`<label class="mi">${ic(x)}<span>${esc(x.l)}</span><input type="file" id="${x.datei.id}" accept="${esc(x.datei.accept||'')}" multiple hidden></label>`
+    :x.sub?`<button class="mi" data-msub="${i}">${ic(x)}<span class="sp">${esc(x.l)}</span>▸</button>`
+    :x.href?`<a class="mi" href="${x.href}">${ic(x)}<span>${esc(x.l)}</span></a>`
+    :`<button class="mi${x.gefahr?' d':''}" data-act="${x.act}"${da(x.d)}${x.value!=null?` value="${esc(x.value)}"`:''}${x.dis?' disabled':''}${x.titel?` title="${esc(x.titel)}"`:''}>${ic(x)}<span>${esc(x.l)}</span></button>`;
+  const zeich=(L,zur)=>{const n=L.map((x,i)=>[x,i]),g=n.filter(([x])=>!x.gefahr),gf=n.filter(([x])=>x.gefahr); // Löschen/Stornieren abgesetzt am Ende
+    d.innerHTML=(zur?'<button class="mi" data-mzur="1"><span class="ic">‹</span><span>Zurück</span></button><hr>':'')+g.map(([x,i])=>ein(x,i)).join('')+(gf.length?'<hr>'+gf.map(([x,i])=>ein(x,i)).join(''):'')};
+  const L=eintraege.filter(Boolean);zeich(L);
+  d.addEventListener('click',e=>{const s=e.target.closest('[data-msub],[data-mzur]');
+    if(s){e.stopPropagation();if(s.dataset.mzur)zeich(L);else zeich(L[+s.dataset.msub].sub.filter(Boolean),1);return}
+    if(e.target.closest('[data-act],a[href]'))zu()});
+  d.addEventListener('change',e=>{if(e.target.type==='file')zu()}); // Dateiauswahl: erst danach schließen (iOS)
+  if(blatt){bg=document.createElement('div');bg.className='pop mbg';bg.dataset.act='hclose';document.body.appendChild(bg)}
+  document.body.appendChild(d);
+  if(!blatt){const r=btn.getBoundingClientRect(),cw=document.documentElement.clientWidth,w=Math.min(320,cw-16);d.style.width=w+'px';d.style.top=(r.bottom+scrollY+4)+'px';
+    d.style.left=Math.max(8,Math.min(r.left<cw/2?r.left:r.right-w,cw-w-8))+scrollX+'px'}
+}
+const karte=({t='',s='',u='',z='',b='',a=''})=>`<div class="kk"${a?' '+a:''}><div class="kk1"><span class="kkt">${t}</span>${s?`<span class="kks">${s}</span>`:''}</div>${u?`<div class="kku">${u}</div>`:''}${z||b?`<div class="kk3"><span class="kkz">${z}</span><span class="kkb">${b}</span></div>`:''}</div>`;
+const akkZ=()=>{try{const o=JSON.parse(lsGet('erp-akk')||'{}');return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}catch(e){return{}}};
+function akk(id,titel,inhalt,{offen=false,zusatz='',kopf=''}={}){if(!kmp())return inhalt;const z=akkZ(),auf=id in z?!!z[id]:offen;
+  return`<details class="akk" data-akk="${esc(id)}" data-std="${offen?1:0}"${auf?' open':''}><summary><span class="akt">${titel}</span>${zusatz?`<span class="akz">${zusatz}</span>`:''}${kopf}</summary><div class="akb">${inhalt}</div></details>`}
+document.addEventListener('toggle',e=>{const d=e.target;if(!d.matches?.('details[data-akk]'))return;const z=akkZ(),id=d.dataset.akk; // toggle steigt nicht auf → Capture
+  if(d.open===(d.dataset.std==='1'))delete z[id];else z[id]=d.open?1:0;lsSet('erp-akk',Object.keys(z).length?JSON.stringify(z):null)},true);
+const hilfe=t=>`<details class="ih"><summary title="Erläuterung" aria-label="Erläuterung">ⓘ</summary><div class="ihx">${t}</div></details>`;
+function livePop(titel,inhalt,{verwerfen=null,breit=false}={}){
+  document.querySelectorAll('.modal.live').forEach(x=>x.remove());
+  const d=document.createElement('div');d.className='modal live';const alt=verwerfen?JSON.stringify(verwerfen):null;
+  d.innerHTML=`<div class="mbox"${breit?' style="max-width:760px"':''}><h2>${titel}</h2><div class="lpi">${inhalt()}</div><div class="bar" style="margin:14px 0 0">${alt?'<button id="lp-vw">Änderungen verwerfen</button>':''}<span class="sp"></span><button class="p" id="m-ok">Fertig</button></div></div>`;
+  document.body.appendChild(d);
+  const zeich=()=>{if(!d.isConnected)return;const a=document.activeElement,k=a&&d.contains(a)?['data-o','data-f','data-i','data-id','data-t'].map(x=>a.hasAttribute(x)?`[${x}="${CSS.escape(a.getAttribute(x))}"]`:'').join(''):'';
+    d.querySelector('.lpi').innerHTML=inhalt();if(k)d.querySelector(k)?.focus()};
+  d.addEventListener('change',()=>setTimeout(zeich,0)); // nach dem globalen change-Handler (der schreibt den Wert)
+  const fin=()=>{d.remove();document.removeEventListener('keydown',kd,true);render()},zu=()=>{document.activeElement?.blur?.();setTimeout(fin,0)};
+  const kd=e=>{const M=document.querySelectorAll('.modal');if(e.key==='Escape'&&M[M.length-1]===d){e.stopPropagation();zu()}};document.addEventListener('keydown',kd,true);
+  d.querySelector('#m-ok').onclick=zu;
+  if(alt)d.querySelector('#lp-vw').onclick=()=>{if(JSON.stringify(verwerfen)===alt)return;const o=JSON.parse(alt);for(const k of Object.keys(verwerfen))delete verwerfen[k];Object.assign(verwerfen,o);persist();zeich()};
+  return d}
 
 /* ---------- Überblick ---------- */
 // Überblick → zugehörige Liste mit gesetztem Filter (Verkauf/Einkauf)
@@ -1430,18 +1529,21 @@ function dialog({titel,html,ok='OK',check='',gefahr=false}){
 function formDialog({titel,felder,ok='Anlegen',breit=false,extra='',scroll=false}){
   return new Promise(res=>{
     const d=document.createElement('div');d.className='modal';
-    const fld=f=>{const ds=f.dis?' disabled':'',ph=f.ph?` placeholder="${esc(f.ph)}"`:'',mx=f.max?` maxlength="${f.max}"`:'',inf=f.info?`<span class="mut" style="display:block;font-size:11px;margin-top:2px">${esc(f.info)}</span>`:'';
+    const K=kmp(),fld=f=>{const ds=f.dis?' disabled':'',ph=f.ph?` placeholder="${esc(f.ph)}"`:'',mx=(f.max?` maxlength="${f.max}"`:'')+(K&&f.im?` inputmode="${f.im}"`:''),inf=f.info&&!K?`<span class="mut" style="display:block;font-size:11px;margin-top:2px">${esc(f.info)}</span>`:'',ik=f.info&&K?' '+hilfe(esc(f.info)):'';
       if(f.typ==='hinweis')return`<p class="mut" style="margin:4px 0 0;flex-basis:100%">${f.l}</p>`;
-      return f.typ==='kette'?`<label class="${f.cls||''}">${f.l}<div data-k="${f.k}" data-wert="${esc(f.wert||'')}">${ketteHTML(f.baum,f.wert||'','data-fk="1"'+ds)}</div></label>`:`<label class="${f.cls||''}">${f.l}${f.pflicht?' *':''}${f.max?` <span data-cnt="${f.k}">(${String(f.wert??'').length}/${f.max})</span>`:''}${f.opts?`<select data-k="${f.k}"${ds}>${f.opts.map(([v,t])=>opt(v,t,f.wert??'')).join('')}</select>`:f.typ==='checkbox'?`<br><input type="checkbox" data-k="${f.k}" ${f.wert?'checked':''}${ds}>`:f.typ==='textarea'?`<textarea data-k="${f.k}" style="height:${f.h||190}px"${ph}${mx}${ds}>${esc(f.wert??'')}</textarea>`:`<input data-k="${f.k}" type="${f.typ||'text'}" ${f.typ==='number'?'step="any"':''} value="${esc(f.wert??'')}"${ph}${mx}${ds}>`}${inf}</label>`};
-    const zeilen=[];let z=[];for(const f of felder){if(f.neu&&z.length){zeilen.push(z);z=[]}z.push(f)}if(z.length)zeilen.push(z);
-    d.innerHTML=`<div class="mbox" style="${breit?'max-width:760px':''}${scroll?';max-height:84vh;overflow:auto':''}"><h2>${titel}</h2>${zeilen.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('')}
+      if(f.typ==='abschnitt')return`<p class="mut" style="margin:4px 0 0;flex-basis:100%"><b>${f.l}</b></p>`; // Abschnitt {typ:'abschnitt',l,zu}: ohne kompakt fette Zeile, mit kompakt zuklappbar (abschn)
+      if(K&&f.typ==='checkbox')return`<label class="chk ${f.cls||''}"><input type="checkbox" data-k="${f.k}" ${f.wert?'checked':''}${ds}> <span>${f.l}${ik}</span></label>`;
+      return f.typ==='kette'?`<label class="${f.cls||''}">${f.l}<div data-k="${f.k}" data-wert="${esc(f.wert||'')}">${ketteHTML(f.baum,f.wert||'','data-fk="1"'+ds)}</div></label>`:`<label class="${f.cls||''}">${f.l}${f.pflicht?' *':''}${ik}${f.max?` <span data-cnt="${f.k}">(${String(f.wert??'').length}/${f.max})</span>`:''}${f.opts?`<select data-k="${f.k}"${ds}>${f.opts.map(([v,t])=>opt(v,t,f.wert??'')).join('')}</select>`:f.typ==='checkbox'?`<br><input type="checkbox" data-k="${f.k}" ${f.wert?'checked':''}${ds}>`:f.typ==='textarea'?`<textarea data-k="${f.k}" style="height:${f.h||190}px"${ph}${mx}${ds}>${esc(f.wert??'')}</textarea>`:`<input data-k="${f.k}" type="${f.typ||'text'}" ${f.typ==='number'?'step="any"':''} value="${esc(f.wert??'')}"${ph}${mx}${ds}>`}${inf}</label>`};
+    const zeilen=[];let z=[];for(const f of felder){if((f.neu||f.typ==='abschnitt')&&z.length){zeilen.push(z);z=[]}z.push(f)}if(z.length)zeilen.push(z);
+    const abschn=Z=>{let o='',auf=0;for(let r of Z){if(r[0].typ==='abschnitt'){o+=(auf?'</div></details>':'')+`<details class="akk fa"${r[0].zu?'':' open'}><summary><span class="akt">${r[0].l}</span></summary><div class="akb">`;auf=1;r=r.slice(1);if(!r.length)continue}o+=`<div class="row">${r.map(fld).join('')}</div>`}return o+(auf?'</div></details>':'')};
+    d.innerHTML=`<div class="mbox" style="${breit?'max-width:760px':''}${scroll?';max-height:84vh;overflow:auto':''}"><h2>${titel}</h2>${K&&felder.some(f=>f.typ==='abschnitt')?abschn(zeilen):zeilen.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('')}
       <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0">${extra?`<button id="m-x">${esc(extra)}</button><span class="sp"></span>`:''}<button id="m-no">Abbrechen</button><button class="p" id="m-ok">${ok}</button></div></div>`;
     document.body.appendChild(d);setTimeout(()=>d.querySelector('input:not([disabled]),select:not([disabled])')?.focus(),0);
     const fin=v=>{d.remove();document.removeEventListener('keydown',kd);res(v)};
     d.addEventListener('click',async e=>{const t=e.target.closest('[data-bw]');if(!t||t.disabled)return;e.preventDefault();const box=t.closest('[data-k]'),f=felder.find(x=>x.k===box.dataset.k),v=await baumWahl(f.baum,box.dataset.wert);
       if(v!==null){box.dataset.wert=v;box.innerHTML=ketteHTML(f.baum,v,'data-fk="1"')}});
     d.addEventListener('input',e=>{const f=felder.find(x=>x.max&&x.k===e.target.dataset.k),c=f&&d.querySelector(`[data-cnt="${f.k}"]`);if(c)c.textContent=`(${e.target.value.length}/${f.max})`});
-    const lesen=()=>{const o={};for(const f of felder){if(f.typ==='hinweis')continue;const e=d.querySelector(`[data-k="${f.k}"]`);o[f.k]=f.typ==='kette'?e.dataset.wert:f.typ==='checkbox'?e.checked:f.typ==='number'?num(e.value):e.value.trim()}return o};
+    const lesen=()=>{const o={};for(const f of felder){if(f.typ==='hinweis'||f.typ==='abschnitt')continue;const e=d.querySelector(`[data-k="${f.k}"]`);o[f.k]=f.typ==='kette'?e.dataset.wert:f.typ==='checkbox'?e.checked:f.typ==='number'?num(e.value):e.value.trim()}return o};
     const okf=()=>{const o=lesen(),fehlt=felder.find(f=>f.pflicht&&!o[f.k]);if(fehlt){d.querySelector('#m-err').textContent=`Bitte „${fehlt.l}“ ausfüllen.`;return}fin(o)};
     const kd=e=>{if(e.key==='Escape')fin(null);if(e.key==='Enter'&&e.target.tagName==='INPUT')okf()};document.addEventListener('keydown',kd);
     d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#m-ok').onclick=okf;if(extra)d.querySelector('#m-x').onclick=()=>fin('extra');
@@ -4067,6 +4169,8 @@ const ACT={
   klohn:()=>lohnBuchung(),kuva:()=>uvaZahllast(),kabg:()=>abgabeZahlen(),
   btyp:el=>{UI[el.dataset.k+'Typ']=el.dataset.t;render()},
   qneu:el=>{const b=neuBeleg(el.dataset.t);persist();go('beleg/'+b.id)},
+  menue:el=>{if(MPOP===el&&document.querySelector('.mpop')){closePop();return}const f=MENUE[el.dataset.m];if(f)menuePop(el,f(el))}, // ⋯-Menü (P30)
+  lpop:el=>LIVE[el.dataset.lp]?.(el), // Bearbeiten-Pop-up mit Live-Feldern (P30)
 };
 Object.assign(ACT,ACT_LV,ACT_LB,ACT_FB);
 // Live-Suche: Suchfelder (UI.*Q) filtern beim Tippen, Fokus und Cursor bleiben erhalten

@@ -84,6 +84,12 @@ table.pos tr.ing td:first-child{border-left:3px solid #c9d4e6}
 al{display:inline-block;min-width:60px;border-bottom:1px dotted #888;background:#fff7d6}
 al:empty::before{content:'……'}
 table.k td{padding:3px 5px;vertical-align:middle}table.k input,table.k select{padding:3px 6px}
+/* Kompakt (P30) Beleg: einzeilige Positionszeile am Bildschirm (table.pos.pz) – passt bei 1024 und 1400 px ohne Bildlauf; „Beides“ erst ab 1280 px */
+table.pos.pz .pzn{width:46px;padding-top:7px;white-space:nowrap}.pzk{display:inline-block;margin-left:3px;padding:0 4px;border-radius:6px;background:#eef0f3;color:#374151;font-size:10px;line-height:15px;vertical-align:1px}
+table.pos.pz .pzr{width:88px}table.pos.pz .pzm{width:58px}table.pos.pz .pze{width:62px}table.pos.pz .pzp{width:74px}table.pos.pz .pzq{width:50px}table.pos.pz .pzg{width:84px;padding-top:7px}table.pos.pz .pza{width:72px;white-space:nowrap;text-align:right}
+table.pos.pz select{padding-left:3px;padding-right:0}.pzb{display:flex;gap:4px;align-items:center}.pzb>input{flex:1;min-width:0}.pzb>.tag{flex:none}.pzt{margin-top:3px}.pzt .tag{margin-right:4px}.pzl{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:96px}
+table.pos.pz .pza .mehr{min-width:30px;min-height:26px;padding:0 4px;font-size:16px;margin-left:4px}
+@media(max-width:1279px){.bka .seg button[data-m="beides"]{display:none}}
 table.k tr.kh td{background:#f6f7f9;padding-top:8px}table.k tr.ks td{color:var(--mut)}table.k tr.kt td{font-weight:700;border-top:2px solid var(--line)}
 table.ps td{white-space:nowrap}
 .lv-LG{background:#eef2f8;border:1px solid #d5deea;border-radius:8px;padding:8px 10px;margin:12px 0 6px}
@@ -1539,10 +1545,11 @@ V.beleg=id=>{
   const steuerOpts=c=>S().steuer.map(s=>opt(s.code,s.bez,c)).join('');
   const einhOpts=p=>{const a=artikel(p.artikelId);const l=a?[a.einheit,...(a.einheiten||[]).map(x=>x.e)]:S().einheiten;if(!l.includes(p.einheit))l.unshift(p.einheit);return l.map(e=>opt(e,e,p.einheit)).join('')};
   const zRab=showRab(b),zLS=!!b.optLS&&!ohneP,gi=gruppenInfo(b),pnr=posNummern(b);
+  const zl=kmpB()&&!posK(b),zc=zl?{gi,pnr,zRab,zLS,ohneP,V_,einhOpts:p=>einhOpts(p),n:4+(ohneP?0:(zLS?2:1)+(zRab?1:0)+1)}:null; // einzeilige Positionszeile am Bildschirm (kompakt, P30)
   const nSp=4+(ohneP?0:4+(zRab?1:0)+(zLS?2:0))+1; // Spalten zwischen „Art“ und Aktionen (inkl. Kz)
   const kzSel=(i,p)=>`<select data-p="${i}" data-f="kz" ${dis}>${opt('','–',p.kz)}${opt('OPT','Option',p.kz)}${opt('ALT','Altern.',p.kz)}</select>`;
   const rte=(key,val,ph)=>`<div class="rte" ${b.fest?'':'contenteditable="true"'} data-ed="${key}" data-ph="${esc(ph)}">${rt(val)}</div>`;
-  const rows=b.pos.map((p,i)=>{
+  const rows=b.pos.map((p,i)=>{if(zl)return posZeileK(b,p,i,zc);
     const artSel=`<td data-l="Art"><select data-p="${i}" data-f="art" ${dis} style="width:72px">${Object.keys(ART).map(k=>opt(k,ART[k],p.art)).join('')}</select></td>`;
     const akt=`<td class="fw" style="white-space:nowrap">${b.fest?'':`<button class="s" data-act="pup" data-i="${i}" title="nach oben">↑</button><button class="s" data-act="pdown" data-i="${i}" title="nach unten">↓</button>${isInfo(p)?'':`<button class="s" data-act="hist" data-i="${i}" title="Preisverlauf">€</button>${V_?`<button class="s" data-act="partik" data-i="${i}" title="Artikel bearbeiten: Texte, Preise, Einkauf, Herstellkosten; im Artikelstamm speichern">✎</button>`:p.artikelId?'':`<button class="s" data-act="mkart" data-i="${i}" title="als Artikel speichern">+A</button>`}`}<button class="s d" data-act="pdel" data-i="${i}" title="löschen">✕</button>`}</td>`;
     if(p.art==='T')return`<tr class="t"><td></td>${artSel}<td class="fw" colspan="${nSp}">${rte(`p:${i}:text`,p.text,'Text …')}</td>${akt}</tr>`;
@@ -1592,7 +1599,7 @@ V.beleg=id=>{
       ${ohneP?'':`<label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optRabatt" ${zRab?'checked':''} ${dis}> Rabatt</label>
       <label class="chk" style="margin:0;font-size:13px"><input type="checkbox" data-h="optLS" ${zLS?'checked':''} ${dis}> Lohn / Sonstiges</label>`}
       <label class="chk" style="margin:0;font-size:13px" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''} ${dis}> Langtext drucken</label>${dKnopf(b,'Druckoptionen …')}</div>`}
-    <table class="pos"><thead><tr><th></th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonstiges</th>':''}<th>${zLS?'PP':'EP netto'}</th>${zRab?'<th>Rab. %</th>':''}<th class="n">${zLS?'GP':'GP netto'}</th><th>USt</th><th title="Einstandspreis je Einheit">EK</th>`}<th>Kz</th><th></th></tr></thead>
+    <table class="pos${zl?' pz':''}"><thead>${zl?`<tr><th>Pos</th><th>Art.-Nr.</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonst.</th>':'<th>EP netto</th>'}${zRab?'<th>Rab. %</th>':''}<th class="n">GP netto</th>`}<th></th></tr>`:`<tr><th></th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonstiges</th>':''}<th>${zLS?'PP':'EP netto'}</th>${zRab?'<th>Rab. %</th>':''}<th class="n">${zLS?'GP':'GP netto'}</th><th>USt</th><th title="Einstandspreis je Einheit">EK</th>`}<th>Kz</th><th></th></tr>`}</thead>
     <tbody>${rows||`<tr><td colspan="14" class="mut">Noch keine Positionen.</td></tr>`}</tbody></table>
     ${b.fest?'':`<div class="bar" style="margin:8px 0 0"><button data-act="padd" data-art="G">+ Gruppe</button><button data-act="padd" data-art="W">+ Ware</button><button data-act="padd" data-art="L">+ Leistung</button><button data-act="padd" data-art="F">+ Fremdleistung</button><button data-act="padd" data-art="T">+ Text</button>${V_?`<button data-act="pzeit">+ Stunden aus Zeiterfassung</button>`:''}</div>`}
   </div>`}`;
@@ -1622,7 +1629,22 @@ function belegStatus(b){
     b.fest?`festgeschrieben${b.festAm?' '+dtAT(b.festAm):''}`:b.erstellt?`angelegt ${dtAT(b.erstellt)}`:''].filter(Boolean);
   return`<div class="bstat${fix?' fix':''}"${fix?` style="top:${$('.topbar')?.offsetHeight||0}px"`:''}>${teile.join('<span class="mut"> · </span>')}</div>`;
 }
-function ansicht(){const m=lsGet('erp-ansicht')||'form';return m==='beides'&&window.innerWidth<1000?'form':m}
+function ansicht(){const m=lsGet('erp-ansicht')||'form';return m==='beides'&&window.innerWidth<(kmpB()?1280:1000)?'form':m} // kompakt (P30): „Beides“ erst ab 1280 px
+/* Kompakt (P30 U8): einzeilige Positionszeile am Bildschirm (posZeileK): Pos (Art als Kürzel) | Art.-Nr. | Bezeichnung (Langtext nur, wenn vorhanden; 📝 = ACT.plt) | Menge | Einh. | EP bzw. Lohn/Sonst. |
+   (Rabatt) | GP | ✎ (posPopup: EK, Kennzeichen, USt …) ⋯ (MENUE.pos); Kennzeichen und abweichende USt als Tag, Gruppenpreis/Einzelpreise im Gruppen-Pop-up. In „Beides“ (linke Spalte schmal) Karten */
+function posZeileK(b,p,i,c){const ed=!b.fest,dis=b.fest?' disabled':'',a=f=>`data-p="${i}" data-f="${f}"`,zf=(f,v,x='')=>`<input type="number" step="any" inputmode="decimal" ${a(f)} value="${v??''}"${dis}${x}>`;
+  const akt=`<td class="pza">${ed?`<button class="s" data-act="pbear" data-i="${i}" title="Bearbeiten: alle Felder (EK, Kennzeichen, USt, Langtext …)">✎</button>${posMehr(i)}`:''}</td>`,lt=!!p.text||!!UI.ltAuf?.includes(p.id);
+  const rte=ph=>`<div class="rte" ${ed?'contenteditable="true"':''} data-ed="p:${i}:text" data-ph="${esc(ph)}">${rt(p.text)}</div>`,plt=ed&&!lt?`<button class="s" data-act="plt" data-i="${i}" title="Langtext hinzufügen">📝</button>`:'';
+  if(p.art==='T')return`<tr class="t"><td></td><td colspan="${c.n}">${rte('Text …')}</td>${akt}</tr>`;
+  if(p.art==='G'){const tg=[+p.pauschal>0?tag('Pauschal '+fmt(p.pauschal)):'',p.ohneEP?tag('Einzelpreise ausgeblendet'):'',p.kz?tag(p.kz==='OPT'?'Option':'Alternative','warn'):''].join('');
+    return`<tr class="grp"><td class="mut pzn">${c.pnr[p.id]||''}</td><td colspan="${c.n-(c.ohneP?0:1)}"><div class="pzb"><input ${a('bez')} value="${esc(p.bez)}"${dis} placeholder="Gruppenbezeichnung" style="font-weight:600">${plt}${tg}</div>${lt?rte('Gruppentext …'):''}</td>${c.ohneP?'':`<td class="n pzg" id="gs${i}"><b>${fmt(gruppePreis(p,c.gi))}</b></td>`}${akt}</tr>`}
+  const g=c.gi.grp[p.id],pa=g&&+g.pauschal>0,kz=effKz(p,c.gi),st=p.steuer&&p.steuer!==S().stdSteuer?stDef(b,p.steuer).bez:'',ak={L:'L',F:'F'}[p.art]||'';
+  return`<tr class="${g?'ing':''}"><td class="mut pzn" title="${esc(ART[p.art]||'')}">${c.pnr[p.id]||''}${ak?`<span class="pzk">${ak}</span>`:''}</td>
+    <td class="pzr"><input list="dl-art" ${a('artikel')} value="${esc(p.nr)}"${dis} placeholder="Art.-Nr.">${!c.V_&&p.lnr?`<div class="mut pzl" title="Art.-Nr. des Lieferanten (Druck: „Ihre Art.-Nr.“): ${esc(p.lnr)}">Lief.: ${esc(p.lnr)}</div>`:''}</td>
+    <td><div class="pzb"><input ${a('bez')} value="${esc(p.bez)}"${dis} placeholder="Bezeichnung">${plt}</div>${lt?rte('Langtext …'):''}${kz||st?`<div class="pzt">${kz?tag(kz==='OPT'?'Option':'Alternative','warn'):''}${st?tag(esc(st)):''}</div>`:''}</td>
+    <td class="pzm">${zf('menge',p.menge)}</td><td class="pze"><select ${a('einheit')}${dis}>${c.einhOpts(p)}</select></td>
+    ${c.ohneP?'':`${c.zLS?`<td class="pzp">${zf('epL',p.epL,' title="Lohn"')}</td><td class="pzp">${zf('epS',p.epS,' title="Sonstiges"')}</td>`:`<td class="pzp">${zf('ep',p.ep)}</td>`}${c.zRab?`<td class="pzq">${zf('rabatt',p.rabatt||'',' placeholder="%"')}</td>`:''}
+    <td class="n pzg" id="gp${i}">${pa?`<span class="mut" title="im Gruppenpreis enthalten">(${fmt(posGP(p))})</span>`:fmt(posGP(p))}</td>`}${akt}</tr>`}
 function vorschlagNr(b){
   if(b.nr)return b.nr;
   if(b.typ==='AN'&&b.rev)return`${b.basisNr}-R${b.rev}`;
@@ -1923,7 +1945,7 @@ function showHist(b,i,btn){
 /* Kompakt (P30 U8): Positionen am Handy als Karten (posKartenK, posKarte; Gruppe als Akkordeon-Kopf mit Summe, antippen des Titels öffnet das Gruppen-Pop-up), „+ Position ▾“ (MENUE.pneu → ACT.pneu = ACT.padd
    und Pop-up), ⋯ je Karte (MENUE.pos: Bearbeiten, ↑ ↓, Preisverlauf, Artikel, Löschen). posPopup(b,i) = Live-Pop-up mit allen Feldern der Zeile (data-p/data-f, Langtext data-ed;
    geschrieben von onPos bzw. edUebernehmen, je Änderung ein persist()-Schritt), folgt der Position beim Verschieben, schließt beim Löschen. popLage(): Preisverlauf am Handy als Blatt */
-const posK=b=>kmpBH();
+const posK=b=>kmpBH()||(kmpB()&&ansicht()==='beides');
 function popLage(d,btn){if(!kmp())return;if(HANDY.matches){d.classList.add('blatt');return}const r=btn?.getBoundingClientRect?.();
   if(r&&btn.closest?.('.modal')){d.style.position='fixed';d.style.top=Math.max(8,Math.min(r.bottom+4,innerHeight-d.offsetHeight-8))+'px';d.style.left=Math.max(8,Math.min(r.right-d.offsetWidth,innerWidth-d.offsetWidth-8))+'px'}}
 const posMehr=i=>`<button class="mehr" data-act="menue" data-m="pos" data-i="${i}" title="Verschieben, Preisverlauf, Artikel, Löschen">⋯</button>`;
@@ -4487,6 +4509,7 @@ const ACT={
     log('Zahlung',`${b.nr}: ${fmt(bet)}${sk?' + Skonto '+fmt(sk):''}`);commit();render()},
   zdel:el=>{const b=curBeleg(),z=b.zahlungen[+el.dataset.i];if(!confirm(`Zahlung ${fmt(z.betrag)} vom ${dAT(z.datum)} löschen?`))return;b.zahlungen.splice(+el.dataset.i,1);log('Zahlung gelöscht',`${b.nr}: ${fmt(z.betrag)}`);commit();render()},
   abe:el=>{const b=neuBeleg('BE',{auftragId:el.dataset.id,betreff:'Projekt: '+(beleg(el.dataset.id)?.betreff||'')});persist();go('beleg/'+b.id)},
+  plt:el=>{const b=curBeleg(),i=+el.dataset.i,p=b?.pos[i];if(!p||b.fest)return;(UI.ltAuf=UI.ltAuf||[]).push(p.id);render();setTimeout(()=>document.querySelector(`#main .rte[data-ed="p:${i}:text"]`)?.focus(),0)}, // leeren Langtext einblenden (einzeilige Positionszeile, P30)
   aer:el=>{const b=neuBeleg('ER',{auftragId:el.dataset.id,kopf:'',fuss:''});persist();go('beleg/'+b.id)},
   zabr:el=>zeitenAbrechnen(el.dataset.id),
   scanok:()=>scanUebernehmen(curBeleg()),scanstamm:()=>scanUebernehmen(curBeleg(),true),scanneu:()=>scanStart(curBeleg()),

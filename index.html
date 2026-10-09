@@ -146,6 +146,9 @@ table.pos tr.t td{background:#fbfbf6}
 dl.kv{display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:0}
 dl.kv dt{color:var(--mut)}dl.kv dd{margin:0;text-align:right;white-space:nowrap}
 dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
+/* Kompakt (P30) Kaufmännisch: Karten im Akkordeon ohne eigenen Rahmen, Kartenzeile mit Knopf rechts (Buchen, ⋯) */
+details.akk>.akb>.card{border:0;border-radius:0;padding:0;margin:0 0 8px;background:none;box-shadow:none}.kkl>.kkf{display:flex;align-items:center}
+details.akk[data-akk]>summary{position:relative;padding-left:30px}details.akk[data-akk]>summary::before{position:absolute;left:12px;top:13px} /* lange Titel umbrechen neben dem ▸ */
 .chain a{display:block;padding:2px 0;color:var(--acc);text-decoration:none}
 .chain a.cur{font-weight:700;color:var(--ink)}
 /* Kompakt (P30) Listen als Karten am Handy: .kkl = Liste mit einer Karte je Zeile (td.kkc), Zellen davor/danach (Gruppenknopf, ⋯) schmal; Überblick/Journal mit Karten direkt in der Karte */
@@ -1865,8 +1868,8 @@ function phase(docs){
 }
 V.auftraege=()=>{
   const L=auftragsListe().filter(a=>!a.docs.every(d=>d.storno));
-  return`<h1>Aufträge &amp; Kalkulation DB II</h1>
-  <p class="mut">Ein Auftrag umfasst alle Belege einer Belegkette (Angebot → … → Rechnung) sowie zugeordnete Eingangsrechnungen und Stunden. Ziel-DB II: ${fmtQ(S().zielDB2)} % vom Umsatz nach Skonto.</p>
+  return`<h1>Aufträge &amp; Kalkulation DB II${kmp()?' '+hilfe(auftragInfo()):''}</h1>
+  ${kmp()?'':`<p class="mut">${auftragInfo()}</p>`}
   ${(()=>{const K=new Map(L.map(a=>{const vb=a.docs.filter(d=>['AB','AN'].includes(d.typ)&&!d.storno&&d.status!=='ersetzt').sort((x,y)=>(x.typ==='AB'?-1:1)-(y.typ==='AB'?-1:1))[0];return[a.id,{v:vb?vorkalk(vb):null,n:nachkalk(a.id)}]}));const v=a=>K.get(a.id).v,n=a=>K.get(a.id).n;
   return tabelle('auftraege',[
     {k:'nr',l:'Auftrag',f:a=>esc(bNr(a.root))},{k:'datum',l:'Datum',f:a=>dAT(a.root.datum),std:false},{k:'kunde',l:'Kunde',f:a=>esc(kName(a.root.kontaktId))},{k:'betreff',l:'Betreff',f:a=>esc(a.root.betreff)},{k:'phase',l:'Phase',f:a=>phase(a.docs)},
@@ -1885,17 +1888,17 @@ V.auftrag=aid=>{
   const zt=DB.zeiten.filter(z=>z.auftragId===aid).sort((a,c)=>a.datum.localeCompare(c.datum));
   const offenZ=zt.filter(z=>!z.belegId);
   const row=(l,a,b)=>`<tr><td>${l}</td><td class="n">${a}</td><td class="n">${b}</td></tr>`;
-  return`<div class="bar"><h1 style="margin:0">Auftrag ${esc(bNr(root))}</h1>${phase(docs)}<span class="sp"></span>
+  return`${kmp()?auftragKopfK(aid,root,docs,offenZ,v,n):`<div class="bar"><h1 style="margin:0">Auftrag ${esc(bNr(root))}</h1>${phase(docs)}<span class="sp"></span>
     <button data-act="abe" data-id="${aid}">+ Bestellung</button><button data-act="aer" data-id="${aid}">+ Eingangsrechnung</button>
-    ${offenZ.length?`<button class="p" data-act="zabr" data-id="${aid}">${offenZ.length} Zeiten abrechnen</button>`:''}</div>
+    ${offenZ.length?`<button class="p" data-act="zabr" data-id="${aid}">${offenZ.length} Zeiten abrechnen</button>`:''}</div>`}
   <p>${esc(kName(root.kontaktId))} · ${esc(root.betreff)}</p>
   <div class="cols"><div>
-  <div class="card"><h2>Belege</h2><table><thead><tr><th>Datum</th><th>Beleg</th><th>Partner</th><th class="n">Netto</th><th>Status</th></tr></thead><tbody>
+  ${kmpH()?auftragListenK(docs,zt):`<div class="card"><h2>Belege</h2><table><thead><tr><th>Datum</th><th>Beleg</th><th>Partner</th><th class="n">Netto</th><th>Status</th></tr></thead><tbody>
   ${docs.map(b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${dAT(b.datum)}</td><td>${T[b.typ].bez} ${esc(bNr(b))}</td><td>${esc(kName(b.kontaktId))}</td><td class="n">${fmt(sgn(b)*summen(b).nettoEff)}</td><td>${statusTag(b)}</td></tr>`).join('')}
   </tbody></table></div>
   <div class="card"><h2>Stunden</h2><table><thead><tr><th>Datum</th><th>Tarif</th><th>Tätigkeit</th><th class="n">Std.</th><th class="n">Kosten</th><th>abgerechnet</th></tr></thead><tbody>
   ${zt.map(z=>`<tr><td>${dAT(z.datum)}</td><td>${esc(z.tarif)}</td><td>${esc(z.text)}</td><td class="n">${fmtQ(z.stunden)}</td><td class="n">${fmt(z.stunden*z.kosten)}</td><td>${z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn')}</td></tr>`).join('')||'<tr><td colspan="6" class="mut">keine – Erfassung unter <a href="#/zeiten">Zeiterfassung</a></td></tr>'}
-  </tbody></table></div>
+  </tbody></table></div>`}
   </div><div>
   <div class="card"><h2>Vor- / Nachkalkulation</h2><table><thead><tr><th></th><th class="n">Vorkalk.</th><th class="n">Ist</th></tr></thead><tbody>
   ${row('Umsatz nach Skonto',v?fmt(v.uS):'–',fmt(n.uN))}
@@ -1907,7 +1910,7 @@ V.auftrag=aid=>{
   ${row('DB II % vom Umsatz',v?dbTag(v.db2p):'–',dbTag(n.db2p))}
   ${row('Aufschlag auf HK',v?pct(v.aufschlag):'–',pct(n.aufschlag))}
   </tbody></table>
-  <p class="mut" style="font-size:12px;margin:8px 0 0">Ist: Rechnungen netto (abzgl. Gutschriften, gezogenes Skonto) − Lagerabgänge zu Ø-EK − Eingangsrechnungen dieses Auftrags − Stunden × Kostensatz.</p></div>
+  ${(t=>kmp()?`<div style="margin-top:6px">${hilfe(t)}</div>`:`<p class="mut" style="font-size:12px;margin:8px 0 0">${t}</p>`)('Ist: Rechnungen netto (abzgl. Gutschriften, gezogenes Skonto) − Lagerabgänge zu Ø-EK − Eingangsrechnungen dieses Auftrags − Stunden × Kostensatz.')}</div>
   </div></div>`;
 };
 function zeitenAbrechnen(aid){
@@ -2006,27 +2009,27 @@ V.kosten=()=>{
       <td>${KINT[k.intervall]?.[0]||''}</td><td class="n">${fmt(k.betrag)}${k.stArt?'<br><span class="mut" style="font-size:12px">inkl. '+fmtQ(k.satz)+' % USt</span>':''}</td><td class="n">${KINT[k.intervall]?.[1]?fmt(kMonat(k)):''}</td><td>${k.aktiv===false?'inaktiv':dAT(naechste(k))}</td>
       <td>${k.bis?'bis '+dAT(k.bis):'unbefristet'}${t?`<br><span class="${t<=addDays(heute,90)?'err':'mut'}" style="font-size:12px">kündbar bis ${dAT(t)}</span>`:''}</td><td>${kKonto(k)} <span class="mut" style="font-size:12px">${esc(kontoBez(kKonto(k)))}</span></td>
       <td style="white-space:nowrap"><button class="s" data-act="kpedit" data-id="${k.id}" title="bearbeiten">✎</button><button class="s d" data-act="kpdel" data-id="${k.id}" title="löschen">✕</button></td></tr>`}).join('')}`}).join('');
-  return`<div class="bar"><h1 style="margin:0">Laufende Kosten</h1><span class="sp"></span><button class="p" data-act="kpneu">+ Kostenposition</button></div>
-  <p class="mut" style="margin-top:0">Versicherungen, Miete, Energie, Kfz/Leasing, Telefon/IT, Steuerberatung, Kammer, Steuern & Abgaben … einmal erfassen – Fälligkeiten und Kündigungstermine im Blick, Buchung in die Finanzbuchhaltung mit einem Klick.</p>
+  return`<div class="bar"><h1 style="margin:0">Laufende Kosten</h1>${kmp()?hilfe(KOSTEN_INFO)+'<span class="sp"></span><button data-act="menue" data-m="kbuchh">Buchungshilfen ▾</button>':'<span class="sp"></span>'}<button class="p" data-act="kpneu">+ Kostenposition</button></div>
+  ${kmp()?'':`<p class="mut" style="margin-top:0">${KOSTEN_INFO}</p>`}
   <div class="grid">
     <div class="kpi">Laufende Kosten / Monat<b>${fmt(mon)} €</b><span class="mut">${fmt(mon*12)} € / Jahr · ${akt.length} Position(en)</span></div>
     <div class="kpi">Fällig, noch nicht gebucht<b class="${ueber.length?'err':''}">${fmt(sum(ueber,x=>x.k.betrag))} €</b><span class="mut">${ueber.length} Zahlung(en)</span></div>
     <div class="kpi">Nächste 45 Tage<b>${fmt(sum(offen.filter(x=>x.d>heute),x=>x.k.betrag))} €</b><span class="mut">${offen.filter(x=>x.d>heute).length} Zahlung(en)</span></div>
     <div class="kpi">Offen an Finanzamt / ÖGK<b>${fmt(kontoOffen(KV.fa))} € / ${fmt(kontoOffen(KV.sv))} €</b><span class="mut">Saldo Verrechnungskonten</span></div>
   </div>
-  <div class="card" style="overflow-x:auto"><h2>Fällig &amp; demnächst (45 Tage) ${ueber.length?`<button class="s p" data-act="kbuchalle" style="margin-left:8px">Alle fälligen buchen (${ueber.length})</button>`:''}</h2>
-    ${offen.length?`<table><thead><tr><th>Fällig</th><th>Kosten</th><th>Partner</th><th>Kategorie</th><th class="n">Betrag</th><th>Konto</th><th></th></tr></thead><tbody>${offen.map(zeile).join('')}</tbody></table>`:'<p class="mut">Nichts fällig.</p>'}</div>
+  ${kmp()?kostenFaelligK(offen,ueber,heute,zeile):`<div class="card" style="overflow-x:auto"><h2>Fällig &amp; demnächst (45 Tage) ${ueber.length?`<button class="s p" data-act="kbuchalle" style="margin-left:8px">Alle fälligen buchen (${ueber.length})</button>`:''}</h2>
+    ${offen.length?`<table><thead><tr><th>Fällig</th><th>Kosten</th><th>Partner</th><th>Kategorie</th><th class="n">Betrag</th><th>Konto</th><th></th></tr></thead><tbody>${offen.map(zeile).join('')}</tbody></table>`:'<p class="mut">Nichts fällig.</p>'}</div>`}
   ${kuend.length?`<div class="card"><h2>⚠ Kündigungstermine (90 Tage)</h2><table>${kuend.map(k=>`<tr><td>${dAT(kKuend(k))}</td><td><a href="javascript:void 0" data-act="kpedit" data-id="${k.id}">${esc(k.bez)}</a></td><td>${esc(k.partner||'')}</td><td>Laufzeit bis ${dAT(k.bis)}, Frist ${k.kuendFrist} Monat(e)</td></tr>`).join('')}</table></div>`:''}
-  <div class="card"><h2>Abgaben &amp; Löhne buchen</h2><p class="mut" style="margin-top:0">Über Verrechnungskonten: Vorschreibung bzw. Lohnjournal buchen, später die Zahlung – der Saldo entspricht dann dem Abgabenkonto (FinanzOnline) bzw. dem Beitragskonto der ÖGK.</p>
+  ${kmp()?kostenAbgK():`<div class="card"><h2>Abgaben &amp; Löhne buchen</h2><p class="mut" style="margin-top:0">${ABG_INFO}</p>
     <div class="bar" style="flex-wrap:wrap"><button data-act="klohn">👥 Lohnbuchung (Monat)</button><button data-act="kuva">🧾 USt-Zahllast umbuchen (UVA)</button><button data-act="kabg">🏦 Zahlung Finanzamt / ÖGK / Gemeinde / Löhne</button></div>
-    <table style="margin-top:8px">${[[KV.fa,'Verrechnung Finanzamt'],[KV.sv,'Verrechnung Sozialversicherung'],[KV.gem,'Verrechnung Gemeinde'],[KV.lohn,'Nettolöhne (noch auszuzahlen)']].map(([nr,t])=>`<tr><td>${nr} ${t}</td><td class="n">${fmt(kontoOffen(nr))} €</td></tr>`).join('')}</table></div>
-  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Kostenposition</th><th>Partner / Vertrag</th><th>Intervall</th><th class="n">Betrag</th><th class="n">je Monat</th><th>Nächste</th><th>Laufzeit</th><th>Konto</th><th></th></tr></thead><tbody>
-    ${reg||'<tr><td colspan="9" class="mut">Noch keine Kostenpositionen – mit „+ Kostenposition“ anlegen (z. B. Betriebshaftpflicht, Kfz-Versicherung, Büromiete, Strom, Telefon, Steuerberater, WKO-Grundumlage, KöSt-Vorauszahlung).</td></tr>'}</tbody></table></div>
-  <div class="card"><h2>Jahresübersicht <select data-o="ui" data-f="kJahr" style="width:auto;margin-left:8px">${jahre.map(x=>opt(x,x,j)).join('')}</select></h2>
+    ${kostenSalden()}</div>`}
+  ${kmpH()?kostenRegH(alle,naechste):akk('k-reg','Register',`<div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Kostenposition</th><th>Partner / Vertrag</th><th>Intervall</th><th class="n">Betrag</th><th class="n">je Monat</th><th>Nächste</th><th>Laufzeit</th><th>Konto</th><th></th></tr></thead><tbody>
+    ${reg||'<tr><td colspan="9" class="mut">Noch keine Kostenpositionen – mit „+ Kostenposition“ anlegen (z. B. Betriebshaftpflicht, Kfz-Versicherung, Büromiete, Strom, Telefon, Steuerberater, WKO-Grundumlage, KöSt-Vorauszahlung).</td></tr>'}</tbody></table></div>`,{zusatz:`${alle.length} Position(en) · ${fmt(mon)} € / Monat`})}
+  ${akk('k-jahr',`Jahresübersicht ${j}`,`<div class="card"><h2>Jahresübersicht <select data-o="ui" data-f="kJahr" style="width:auto;margin-left:8px">${jahre.map(x=>opt(x,x,j)).join('')}</select></h2>
     <table><thead><tr><th>Kategorie</th><th class="n">Plan ${j} (Register)</th><th class="n">Gebucht ${j}</th><th class="n">Differenz</th></tr></thead><tbody>
     ${Object.entries(KKAT).filter(([c])=>plan[c]||ist[c]).map(([c,[n]])=>`<tr><td>${esc(n)}</td><td class="n">${fmt(plan[c]||0)}</td><td class="n">${fmt(ist[c]||0)}</td><td class="n">${fmt((plan[c]||0)-(ist[c]||0))}</td></tr>`).join('')||'<tr><td colspan="4" class="mut">keine</td></tr>'}</tbody>
     <tfoot><tr><td>Summe</td><td class="n">${fmt(sum(Object.values(plan),x=>x))}</td><td class="n">${fmt(sum(Object.values(ist),x=>x))}</td><td></td></tr></tfoot></table>
-    <p class="mut" style="font-size:12px;margin:6px 0 0">Beträge = Zahlbeträge (bei Vorsteuer brutto). Die Buchungen erscheinen im Journal der Finanzbuchhaltung und in der GuV.</p></div>`;
+    <p class="mut" style="font-size:12px;margin:6px 0 0">Beträge = Zahlbeträge (bei Vorsteuer brutto). Die Buchungen erscheinen im Journal der Finanzbuchhaltung und in der GuV.</p></div>`,{zusatz:`Plan ${fmt(sum(Object.values(plan),x=>x))} € · gebucht ${fmt(sum(Object.values(ist),x=>x))} €`})}`;
 };
 V.zeiten=()=>{
   const L=[...DB.zeiten].sort((a,c)=>c.datum.localeCompare(a.datum)).slice(0,300);
@@ -2276,17 +2279,17 @@ V.auswertung=()=>{
     <div class="kpi">Angebote<b>${an.length} · ${fmt(sum(an,b=>summen(b).netto))} €</b><span class="mut">Trefferquote ${an.length?pct(anA.length/an.length):'–'} (${anA.length} angenommen, ${anX.length} abgelehnt)</span></div>
     <div class="kpi">Lagerwert aktuell<b>${fmt(sum(DB.artikel.filter(a=>a.lager),a=>bestand(a.id).wert))} €</b></div>
   </div>
-  <div class="card" style="overflow-x:auto"><h2>Monatsübersicht ${j}</h2><table><thead><tr><th>Monat</th><th class="n">Umsatz netto</th>${codes.map(c=>`<th class="n">Bem.-Gr. ${esc(steuerDef(c).bez)}</th><th class="n">USt ${esc(c)}</th>`).join('')}<th class="n">Vorsteuer</th><th class="n">Zahllast</th><th class="n">Einnahmen</th><th class="n">Ausgaben</th></tr></thead><tbody>
-  ${M.map(m=>{const ust=codes.reduce((s,c)=>s+(m.ust[c]||0),0);return`<tr><td>${mn[m.m-1]}</td><td class="n">${fmt(m.u)}</td>${codes.map(c=>`<td class="n">${fmt(m.ust['B'+c])}</td><td class="n">${fmt(m.ust[c])}</td>`).join('')}<td class="n">${fmt(m.vst)}</td><td class="n">${fmt(ust-m.vst)}</td><td class="n">${fmt(m.ein)}</td><td class="n">${fmt(m.aus)}</td></tr>`}).join('')}
+  ${akk('aw-ust','Umsatz &amp; USt',`<div class="card" style="overflow-x:auto"><h2>Monatsübersicht ${j}${kmp()?` <label class="chk" style="display:inline-flex;margin:0 0 0 8px;font-weight:400"><input type="checkbox" data-o="ui" data-f="awAlle" ${UI.awAlle?'checked':''}> alle Monate</label>`:''}</h2><table><thead><tr><th>Monat</th><th class="n">Umsatz netto</th>${codes.map(c=>`<th class="n">Bem.-Gr. ${esc(steuerDef(c).bez)}</th><th class="n">USt ${esc(c)}</th>`).join('')}<th class="n">Vorsteuer</th><th class="n">Zahllast</th><th class="n">Einnahmen</th><th class="n">Ausgaben</th></tr></thead><tbody>
+  ${M.filter(m=>!kmp()||UI.awAlle||m.u||m.vst||m.ein||m.aus||codes.some(c=>m.ust[c]||m.ust['B'+c])).map(m=>{const ust=codes.reduce((s,c)=>s+(m.ust[c]||0),0);return`<tr><td>${mn[m.m-1]}</td><td class="n">${fmt(m.u)}</td>${codes.map(c=>`<td class="n">${fmt(m.ust['B'+c])}</td><td class="n">${fmt(m.ust[c])}</td>`).join('')}<td class="n">${fmt(m.vst)}</td><td class="n">${fmt(ust-m.vst)}</td><td class="n">${fmt(m.ein)}</td><td class="n">${fmt(m.aus)}</td></tr>`}).join('')}
   </tbody><tfoot><tr><td>Summe</td><td class="n">${fmt(sum(M,m=>m.u))}</td>${codes.map(c=>`<td class="n">${fmt(sum(M,m=>m.ust['B'+c]))}</td><td class="n">${fmt(sum(M,m=>m.ust[c]))}</td>`).join('')}<td class="n">${fmt(sum(M,m=>m.vst))}</td><td class="n">${fmt(sum(M,m=>codes.reduce((s,c)=>s+(m.ust[c]||0),0)-m.vst))}</td><td class="n">${fmt(sum(M,m=>m.ein))}</td><td class="n">${fmt(sum(M,m=>m.aus))}</td></tr></tfoot></table>
-  <p class="mut" style="font-size:12px;margin:8px 0 0">USt nach ${S().besteuerung==='ist'?'Istbesteuerung (Zahlungsdatum)':'Sollbesteuerung (Rechnungsdatum)'}; Anzahlungsrechnungen stets nach Zahlungseingang. Vorsteuer nach Rechnungsdatum der Eingangsrechnung. <b>Hilfswerte</b> – Skontokorrekturen der USt sind nicht berücksichtigt; UVA-Kennzahlen mit dem Steuerberater abstimmen. Einnahmen/Ausgaben: nur über ERP-Belege erfasste Zahlungen.</p></div>
-  <div class="card" style="padding:0"><table><thead><tr><th>Auftrag ${j}</th><th>Kunde</th><th class="n">Umsatz n. Skonto</th><th class="n">HK</th><th class="n">DB II</th><th class="n">DB II %</th></tr></thead><tbody>
+  ${(t=>kmp()?`<div style="margin-top:6px">${hilfe(t)}</div>`:`<p class="mut" style="font-size:12px;margin:8px 0 0">${t}</p>`)(`USt nach ${S().besteuerung==='ist'?'Istbesteuerung (Zahlungsdatum)':'Sollbesteuerung (Rechnungsdatum)'}; Anzahlungsrechnungen stets nach Zahlungseingang. Vorsteuer nach Rechnungsdatum der Eingangsrechnung. <b>Hilfswerte</b> – Skontokorrekturen der USt sind nicht berücksichtigt; UVA-Kennzahlen mit dem Steuerberater abstimmen. Einnahmen/Ausgaben: nur über ERP-Belege erfasste Zahlungen.`)}</div>`,{offen:true,zusatz:`${fmt(sum(M,m=>m.u))} € netto`})}
+  ${akk('aw-auf','Aufträge',`<div class="card" style="padding:0"><table><thead><tr><th>Auftrag ${j}</th><th>Kunde</th><th class="n">Umsatz n. Skonto</th><th class="n">HK</th><th class="n">DB II</th><th class="n">DB II %</th></tr></thead><tbody>
   ${aufJ.sort((x,y)=>y.n.uN-x.n.uN).map(({a,n})=>`<tr class="click" onclick="nav('auftrag/${a.id}')"><td>${esc(bNr(a.root))} ${esc(a.root.betreff)}</td><td>${esc(kName(a.root.kontaktId))}</td><td class="n">${fmt(n.uN)}</td><td class="n">${fmt(n.hk)}</td><td class="n">${fmt(n.db2)}</td><td class="n">${dbTag(n.db2p)}</td></tr>`).join('')||'<tr><td colspan="6" class="mut">keine</td></tr>'}
-  </tbody></table></div>
-  <div class="cols" style="grid-template-columns:1fr 1fr">
-  <div class="card"><h2>Umsatz nach Kunde ${j}</h2><table>${Object.entries(kunden).sort((a,c)=>c[1]-a[1]).map(([k,u])=>`<tr><td>${esc(kName(k))}</td><td class="n">${fmt(u)}</td></tr>`).join('')||'<tr><td class="mut">keine</td></tr>'}</table></div>
-  <div class="card"><h2>Umsatz nach Artikel/Leistung ${j}</h2><table>${Object.entries(artk).sort((a,c)=>c[1].u-a[1].u).slice(0,40).map(([k,x])=>`<tr><td>${esc(k)}</td><td class="n">${fmtQ(x.m)} ${esc(x.e)}</td><td class="n">${fmt(x.u)}</td></tr>`).join('')||'<tr><td class="mut">keine</td></tr>'}</table></div>
-  <div class="card" style="grid-column:1/-1"><h2>Skonto ${j}</h2>
+  </tbody></table></div>`,{zusatz:`${aufJ.length} Aufträge · DB II ${fmt(sum(aufJ,x=>x.n.db2))} €`})}
+  ${kmp()?'<div>':'<div class="cols" style="grid-template-columns:1fr 1fr">'}
+  ${akk('aw-ku','Kunden &amp; Artikel',`<div class="card"><h2>Umsatz nach Kunde ${j}</h2><table>${Object.entries(kunden).sort((a,c)=>c[1]-a[1]).map(([k,u])=>`<tr><td>${esc(kName(k))}</td><td class="n">${fmt(u)}</td></tr>`).join('')||'<tr><td class="mut">keine</td></tr>'}</table></div>
+  <div class="card"><h2>Umsatz nach Artikel/Leistung ${j}</h2><table>${Object.entries(artk).sort((a,c)=>c[1].u-a[1].u).slice(0,40).map(([k,x])=>`<tr><td>${esc(k)}</td><td class="n">${fmtQ(x.m)} ${esc(x.e)}</td><td class="n">${fmt(x.u)}</td></tr>`).join('')||'<tr><td class="mut">keine</td></tr>'}</table></div>`,{zusatz:`${Object.keys(kunden).length} Kunden`})}
+  ${akk('aw-sk','Skonto',`<div class="card" style="grid-column:1/-1"><h2>Skonto ${j}</h2>
     <div class="grid" style="margin-bottom:10px">
       <div class="kpi">Kundenskonto gewährt<b>${fmt(sum(skV,x=>x.z.skonto))} €</b><span class="mut">${skV.length} Zahlung(en) · netto ${fmt(sum(skV,x=>x.net))} €${skV.some(x=>!x.frist)?` · <span class="err">${skV.filter(x=>!x.frist).length} außerhalb der Frist</span>`:''}</span></div>
       <div class="kpi">Lieferantenskonto erhalten<b>${fmt(sum(skE,x=>x.z.skonto))} €</b><span class="mut">${skE.length} Zahlung(en) · netto ${fmt(sum(skE,x=>x.net))} €</span></div>
@@ -2302,9 +2305,9 @@ V.auswertung=()=>{
       ${SK.sort((a,c)=>a.z.datum.localeCompare(c.z.datum)).map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${dAT(x.z.datum)}</td><td>${esc(x.b.nr)}${x.b.fremdNr?' / '+esc(x.b.fremdNr):''}</td><td>${esc(kName(x.b.kontaktId))}</td><td class="n">${fmt(x.z.betrag)}</td><td class="n">${fmt(x.z.skonto)}</td><td class="n">${fmtQ(r2(x.z.skonto/((+x.z.betrag||0)+x.z.skonto)*100))}</td><td>${x.frist?'bis '+dAT(skontoBis(x.b)):'<span class="err">außerhalb</span>'}</td></tr>`).join('')||'<tr><td colspan="7" class="mut">keine</td></tr>'}</tbody></table></details>
     ${verpasst.length?`<details style="margin-top:6px"><summary>Nicht genutzte Lieferantenskonti (${verpasst.length})</summary><table>${verpasst.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${esc(x.b.nr)} / ${esc(x.b.fremdNr||'')}</td><td>${esc(kName(x.b.kontaktId))}</td><td>${fmtQ(x.b.skonto)} % bis ${dAT(skontoBis(x.b))}</td><td class="n">${fmt(x.pot)}</td></tr>`).join('')}</table></details>`:''}
     ${nutzbar.length?`<details open style="margin-top:6px"><summary>Jetzt noch Skonto nutzen (${nutzbar.length})</summary><table>${nutzbar.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${esc(x.b.nr)} / ${esc(x.b.fremdNr||'')}</td><td>${esc(kName(x.b.kontaktId))}</td><td>${fmtQ(x.b.skonto)} % bis <b>${dAT(skontoBis(x.b))}</b></td><td class="n">${fmt(x.pot)}</td></tr>`).join('')}</table></details>`:''}
-  </div>
-  <div class="card"><h2>Offene Posten Kunden</h2>${opT(deb)}</div>
-  <div class="card"><h2>Offene Posten Lieferanten</h2>${opT(kred)}</div>
+  </div>`,{zusatz:`gewährt ${fmt(sum(skV,x=>x.z.skonto))} € · erhalten ${fmt(sum(skE,x=>x.z.skonto))} €`})}
+  ${akk('aw-op','Offene Posten',`<div class="card"><h2>Offene Posten Kunden</h2>${opT(deb)}</div>
+  <div class="card"><h2>Offene Posten Lieferanten</h2>${opT(kred)}</div>`,{zusatz:`Kunden ${fmt(sum(deb,offen))} € · Lieferanten ${fmt(sum(kred,offen))} €`})}
   </div>`;
 };
 
@@ -2398,7 +2401,7 @@ const POSART={'':'Normal',E:'Eventual',W:'Wahl'};
 V.kbs=id=>{
   if(id)return kbEdit(id);
   return`<div class="bar"><h1 style="margin:0">K-Blätter (ÖNORM B 2061)</h1><span class="sp"></span><button class="p" data-act="kbneu" data-a="eigen">+ Eigene Kalkulation</button><button data-act="kbneu" data-a="bieter">+ K-Blätter eines Bieters (Prüfung)</button></div>
-  <p class="mut">Eine Kalkulationsbasis enthält K2 (Gesamtzuschlag), K3 (Personalpreise), K4 (Materialpreise), K5 (zusammengesetzte Preiskomponenten) und K6 (Gerätepreise). K7 entsteht je Position im Leistungsverzeichnis.</p>
+  ${kmp()?`<p style="margin:-6px 0 8px">${hilfe(KB_INFO)}</p>`:`<p class="mut">${KB_INFO}</p>`}
   ${tabelle('kbs',[{k:'name',l:'Bezeichnung',f:kb=>esc(kb.name)},{k:'art',l:'Art',f:kb=>kb.art==='bieter'?tag('Prüfung Bieter','warn'):tag('eigen','acc')},{k:'bp',l:'Bieter / Projekt',f:kb=>`${esc(kb.bieter)} ${esc(kb.projekt)}`},
     {k:'gzl',l:'GZ Lohn',n:1,f:kb=>fmt(k2gz(kb).l)+' %'},{k:'gzs',l:'GZ Sonst.',n:1,f:kb=>fmt(k2gz(kb).s)+' %'},{k:'mlp',l:'Mittellohnpreis',n:1,f:kb=>kb.k3[0]?fmt(k3calc(kb,kb.k3[0]).mlp):''},
     {k:'k4',l:'K4-Zeilen',n:1,f:kb=>kb.k4.length,std:false}],DB.kalk,{zeile:kb=>`class="click" onclick="nav('kbs/${kb.id}')"`,leer:'Noch keine K-Blätter.',
@@ -2993,7 +2996,7 @@ V.fibu=()=>{
     }
   }
   if(tab==='konten'){
-    body=`<div class="card" style="padding:0"><table><thead><tr><th>Konto</th><th>Bezeichnung</th><th>UVA-KZ</th><th></th></tr></thead><tbody>
+    body=kmp()?kontenK(fb):`<div class="card" style="padding:0"><table><thead><tr><th>Konto</th><th>Bezeichnung</th><th>UVA-KZ</th><th></th></tr></thead><tbody>
     ${fb.konten.map((k,i)=>`<tr><td style="width:100px">${esc(k.nr)}</td><td><input data-o="fbk" data-i="${i}" data-f="bez" value="${esc(k.bez)}"></td><td style="width:100px"><input data-o="fbk" data-i="${i}" data-f="kz" value="${esc(k.kz)}"></td><td><button class="s d" data-act="fbkdel" data-i="${i}">✕</button></td></tr>`).join('')}
     </tbody></table></div><div class="bar"><input id="fbk-nr" placeholder="Kontonummer" style="width:130px"><input id="fbk-bez" placeholder="Bezeichnung" style="width:280px"><button data-act="fbkadd">+ Konto</button></div>`;
   }
@@ -3058,9 +3061,9 @@ V.export=()=>{
   <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>
   <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}</div>
   <div class="bar"><button data-act="exp" data-k="json">Gesamtdaten exportieren (JSON)</button><label class="btn" style="font-size:14px;color:inherit">Daten importieren (ersetzt alles)<input type="file" id="imp" accept=".json" style="display:none"></label><button data-act="savenow">Jetzt speichern</button></div></div>
-  <div class="card"><h2>Papierkorb</h2>${DB.papierkorb.length?`<table><thead><tr><th>Gelöscht am</th><th>Art</th><th>Eintrag</th><th></th></tr></thead><tbody>${DB.papierkorb.slice().reverse().map(e=>`<tr><td style="white-space:nowrap">${new Date(e.ts).toLocaleString('de-AT')}</td><td>${PK[e.c]?.n||e.c}</td><td>${esc(e.info)}</td><td style="white-space:nowrap"><button class="s" data-act="pkrest" data-id="${e.id}">Wiederherstellen</button> <button class="s d" data-act="pkdel" data-id="${e.id}">Endgültig löschen</button></td></tr>`).join('')}</tbody></table>
-    <div class="bar" style="margin-top:8px"><button data-act="pkrestall">Alle wiederherstellen</button><button class="d" data-act="pkleer">Papierkorb leeren …</button></div>`:'<p class="mut" style="margin:0">leer</p>'}</div>
-  <div class="card"><h2>Protokoll (letzte 100)</h2><table>${DB.log.slice(-100).reverse().map(l=>`<tr><td style="white-space:nowrap">${new Date(l.ts).toLocaleString('de-AT')}</td><td>${esc(l.aktion)}</td><td>${esc(l.info)}</td></tr>`).join('')||'<tr><td class="mut">leer</td></tr>'}</table></div>`;
+  ${kmp()&&!DB.papierkorb.length?'<div class="card mut">Papierkorb: leer</div>':`<div class="card"><h2>Papierkorb</h2>${DB.papierkorb.length?`<table><thead><tr><th>Gelöscht am</th><th>Art</th><th>Eintrag</th><th></th></tr></thead><tbody>${DB.papierkorb.slice().reverse().map(e=>`<tr><td style="white-space:nowrap">${new Date(e.ts).toLocaleString('de-AT')}</td><td>${PK[e.c]?.n||e.c}</td><td>${esc(e.info)}</td><td style="white-space:nowrap"><button class="s" data-act="pkrest" data-id="${e.id}">Wiederherstellen</button> <button class="s d" data-act="pkdel" data-id="${e.id}">Endgültig löschen</button></td></tr>`).join('')}</tbody></table>
+    <div class="bar" style="margin-top:8px"><button data-act="pkrestall">Alle wiederherstellen</button><button class="d" data-act="pkleer">Papierkorb leeren …</button></div>`:'<p class="mut" style="margin:0">leer</p>'}</div>`}
+  ${kmp()?protokollK():`<div class="card"><h2>Protokoll (letzte 100)</h2><table>${DB.log.slice(-100).reverse().map(l=>`<tr><td style="white-space:nowrap">${new Date(l.ts).toLocaleString('de-AT')}</td><td>${esc(l.aktion)}</td><td>${esc(l.info)}</td></tr>`).join('')||'<tr><td class="mut">leer</td></tr>'}</table></div>`}`;
 };
 
 /* ---------- Einstellbare Tabellenspalten (je Liste, in den Einstellungen gespeichert) ---------- */
@@ -3849,6 +3852,62 @@ async function scanUebernehmen(b,nurStamm=false){ // nurStamm: Angebot nur in de
   log(b.typ==='ER'?'Rechnung übernommen':'Lieferschein übernommen',`${d.lieferscheinNr||''}: ${plan.length} Pos., ${neu.length} neue Artikel, ${aend.length} Änderungen`);
   b.scan={status:'übernommen',datum:isoD()};artDatalist();commit();render();
 }
+/* ---------- Kompakt (P30): Kosten, Verrechnung, Aufträge, Auswertung, FiBu-Kontenplan, Export – Akkordeons, ⓘ-Erklärtexte, Karten am Handy ---------- */
+const KOSTEN_INFO='Versicherungen, Miete, Energie, Kfz/Leasing, Telefon/IT, Steuerberatung, Kammer, Steuern & Abgaben … einmal erfassen – Fälligkeiten und Kündigungstermine im Blick, Buchung in die Finanzbuchhaltung mit einem Klick.';
+const ABG_INFO='Über Verrechnungskonten: Vorschreibung bzw. Lohnjournal buchen, später die Zahlung – der Saldo entspricht dann dem Abgabenkonto (FinanzOnline) bzw. dem Beitragskonto der ÖGK.';
+const KB_INFO='Eine Kalkulationsbasis enthält K2 (Gesamtzuschlag), K3 (Personalpreise), K4 (Materialpreise), K5 (zusammengesetzte Preiskomponenten) und K6 (Gerätepreise). K7 entsteht je Position im Leistungsverzeichnis.';
+const auftragInfo=()=>`Ein Auftrag umfasst alle Belege einer Belegkette (Angebot → … → Rechnung) sowie zugeordnete Eingangsrechnungen und Stunden. Ziel-DB II: ${fmtQ(S().zielDB2)} % vom Umsatz nach Skonto.`;
+const kostenSalden=()=>`<table style="margin-top:8px">${[[KV.fa,'Verrechnung Finanzamt'],[KV.sv,'Verrechnung Sozialversicherung'],[KV.gem,'Verrechnung Gemeinde'],[KV.lohn,'Nettolöhne (noch auszuzahlen)']].map(([nr,t])=>`<tr><td>${nr} ${t}</td><td class="n">${fmt(kontoOffen(nr))} €</td></tr>`).join('')}</table>`;
+MENUE.kbuchh=()=>[{l:'Lohnbuchung (Monat) …',ic:'👥',act:'klohn'},{l:'USt-Zahllast umbuchen (UVA) …',ic:'🧾',act:'kuva'},{l:'Zahlung Finanzamt / ÖGK / Gemeinde / Löhne …',ic:'🏦',act:'kabg'}];
+MENUE.kosten=el=>[{l:'Bearbeiten …',ic:'✎',act:'kpedit',d:{id:el.dataset.id}},{l:'Löschen',ic:'🗑',act:'kpdel',d:{id:el.dataset.id},gefahr:1}];
+// Fällig & demnächst: am Handy Karten mit sichtbarem „Buchen“, am Bildschirm je Kostenposition eine Zeile (weitere Termine aufklappbar)
+function kostenFaelligK(offen,ueber,heute,zeile){const G=new Map();for(const x of offen){if(!G.has(x.k.id))G.set(x.k.id,[]);G.get(x.k.id).push(x)}
+  const inh=!offen.length?'<p class="mut" style="margin:0">Nichts fällig.</p>':kmpH()?`<div class="kkl">${offen.map(x=>`<div class="kkf">${karte({t:esc(x.k.bez),s:x.d<=heute?tag('fällig','err'):'',u:esc([x.k.partner,KKAT[x.k.kat]?.[0]].filter(Boolean).join(' · ')),z:`${dAT(x.d)} · Konto ${kKonto(x.k)}`,b:fmt(x.k.betrag)+' €',a:`onclick="ACT.kpedit(this)" data-id="${x.k.id}"`})}<button class="${x.d<=heute?'p':''}" data-act="kbuch" data-id="${x.k.id}" data-d="${x.d}">Buchen</button></div>`).join('')}</div>`
+    :`<table><thead><tr><th>Fällig</th><th>Kosten</th><th>Partner</th><th>Kategorie</th><th class="n">Betrag</th><th>Konto</th><th></th></tr></thead><tbody>${[...G.values()].map(L=>zeile(L[0])+(L.length>1?`<tr class="kind"><td></td><td colspan="6"><details><summary>${L.length-1} weitere Fälligkeit(en): ${L.slice(1).map(x=>dAT(x.d)).join(', ')}</summary><table>${L.slice(1).map(zeile).join('')}</table></details></td></tr>`:'')).join('')}</tbody></table>`;
+  return akk('k-faellig','Fällig &amp; demnächst (45 Tage)',inh,{offen:true,zusatz:`${offen.length} Zahlung(en)${ueber.length?` · <span class="err">${ueber.length} fällig</span>`:''}`,kopf:ueber.length?`<span class="sp"></span><button class="s p" data-act="kbuchalle">Alle fälligen buchen (${ueber.length})</button>`:''})}
+const kostenAbgK=()=>akk('k-abg','Abgaben &amp; Löhne',`<p style="margin:0">Salden der Verrechnungskonten ${hilfe(ABG_INFO)}</p>${kostenSalden()}<p class="mut" style="margin:8px 0 0;font-size:13px">Buchen über „Buchungshilfen ▾“ oben.</p>`,{zusatz:`Finanzamt ${fmt(kontoOffen(KV.fa))} € · ÖGK ${fmt(kontoOffen(KV.sv))} €`});
+// Register am Handy: je Kategorie ein Akkordeon, Positionen als Karten (Antippen = bearbeiten, Löschen im ⋯)
+function kostenRegH(alle,naechste){const heute=isoD(),A=Object.entries(KKAT).map(([c,[n]])=>{const L=alle.filter(k=>k.kat===c);if(!L.length)return'';
+  return akk('k-reg-'+c,esc(n),`<div class="kkl">${L.map(k=>{const t=kKuend(k),nx=k.aktiv===false?'':naechste(k);return`<div class="kkf">${karte({t:esc(k.bez),s:k.aktiv===false?tag('inaktiv'):t&&t>=heute&&t<=addDays(heute,90)?tag('kündbar bis '+dAT(t),'err'):'',u:esc([k.partner,k.vertragNr].filter(Boolean).join(' · ')),z:[KINT[k.intervall]?.[0],nx?'nächste '+dAT(nx):'',k.bis?'bis '+dAT(k.bis):''].filter(Boolean).join(' · '),b:fmt(k.betrag)+' €',a:`onclick="ACT.kpedit(this)" data-id="${k.id}"`})}<button class="mehr" data-act="menue" data-m="kosten" data-id="${k.id}" title="Bearbeiten, Löschen">⋯</button></div>`}).join('')}</div>`,{zusatz:`${fmt(sum(L.filter(k=>k.aktiv!==false),kMonat))} € / Monat`})}).join('');
+  return`<h2 style="margin:14px 0 8px">Register</h2>${A||'<div class="card mut">Noch keine Kostenpositionen – mit „+ Kostenposition“ anlegen.</div>'}`}
+// Zu verrechnen: je Auftrag eine Karte, je Wareneingang eine Zwischenzeile (Lieferant · LS-Nr., „nicht verrechnen“), darunter die Positionen
+MENUE.wv=el=>[{l:'Wareneingang öffnen',ic:'📦',href:'#/beleg/'+el.dataset.id},{l:'nicht verrechnen …',ic:'⊘',act:'wvnein',d:{id:el.dataset.id},gefahr:1}];
+function verrechnungK(L,gr,wert,alle){const H=kmpH();
+  return`<h1>Zu verrechnen ${hilfe('Wareneingänge auf Aufträge oder mit Direktlieferung auf die Baustelle, die noch nicht per Lieferschein oder Rechnung an den Kunden weiterverrechnet sind.')}</h1>
+  <div class="bar"><label class="chk" style="margin:0"><input type="checkbox" data-o="ui" data-f="wvAlle" ${alle?'checked':''}> auch bereits verrechnete anzeigen</label><span class="sp"></span><b>Offen gesamt (EK): ${fmt(sum(L,wert))} €</b></div>
+  ${Object.entries(gr).map(([aid,xs])=>{const W=new Map();for(const x of xs){if(!W.has(x.b.id))W.set(x.b.id,[]);W.get(x.b.id).push(x)}
+    const kopf=b=>`<a href="#/beleg/${b.id}">${esc(kName(b.kontaktId))} · ${esc(b.fremdNr||bNr(b))}</a> <span class="mut">${dAT(b.datum)}</span>${b.fest?'':' '+tag('Entwurf')}`;
+    const inh=H?[...W.values()].map(ps=>`<div class="kkf" style="background:#f6f8fb"><div class="kk" style="min-height:40px">${kopf(ps[0].b)}</div><button class="mehr" data-act="menue" data-m="wv" data-id="${ps[0].b.id}" title="nicht verrechnen …">⋯</button></div>
+        ${ps.map(x=>karte({t:`${esc(x.p.nr)} ${esc(x.p.bez)}`,s:x.offen?'':tag('erledigt','ok'),z:`${fmtQ(x.m)} ${esc(x.p.einheit)} · verrechnet ${fmtQ(x.v)}${x.offen?` · <b>${fmtQ(x.offen)} offen</b>`:''}`,b:fmt(wert(x))+' €'})).join('')}`).join('')
+      :`<table><thead><tr><th>Artikel</th><th class="n">Menge</th><th class="n">verrechnet</th><th class="n">offen</th><th class="n">EK-Wert offen</th></tr></thead><tbody>${[...W.values()].map(ps=>`<tr class="prjz"><td colspan="4">${kopf(ps[0].b)}</td><td class="n"><button class="s" data-act="wvnein" data-id="${ps[0].b.id}" title="Wareneingang nicht weiterverrechnen">nicht verrechnen</button></td></tr>
+        ${ps.map(x=>`<tr><td>${esc(x.p.nr)} ${esc(x.p.bez)}</td><td class="n">${fmtQ(x.m)} ${esc(x.p.einheit)}</td><td class="n">${fmtQ(x.v)}</td><td class="n">${x.offen?`<b>${fmtQ(x.offen)}</b>`:tag('erledigt','ok')}</td><td class="n">${fmt(wert(x))}</td></tr>`).join('')}`).join('')}</tbody></table>`;
+    return`<div class="card${H?' kkl':''}" style="padding:${H?0:'8px'}"><div class="bar" style="margin:0;padding:${H?'10px 12px':'0 0 6px'}"><h2 style="margin:0">${aid?esc(auftragLabel(aid)):'Ohne Auftrag (Direktlieferung)'}</h2><span class="sp"></span>
+    ${aid?`<button class="p" data-act="wvre" data-a="${aid}" ${xs.some(x=>x.offen>0)?'':'disabled'}>→ Rechnung erstellen</button>`:'<span class="mut">Für die Rechnung bitte im Wareneingang einen Auftrag wählen.</span>'}</div>${inh}</div>`}).join('')||'<div class="card"><p class="mut" style="margin:0">Nichts offen.</p></div>'}`}
+// Auftrag: Hauptknopf „Zeiten abrechnen“, Bestellung/Eingangsrechnung im Menü „+ ▾“, Kennzahlen 2 × 2; am Handy Belege und Stunden als Karten
+MENUE.auftragneu=el=>[{l:'Bestellung',ic:BICON.BE,act:'abe',d:{id:el.dataset.id}},{l:'Eingangsrechnung',ic:BICON.ER,act:'aer',d:{id:el.dataset.id}}];
+function auftragKopfK(aid,root,docs,offenZ,v,n){
+  return`<div class="bar"><h1 style="margin:0">Auftrag ${esc(bNr(root))}</h1>${phase(docs)}<span class="sp"></span><button data-act="menue" data-m="auftragneu" data-id="${aid}" title="Bestellung, Eingangsrechnung">+ ▾</button>${offenZ.length?`<button class="p" data-act="zabr" data-id="${aid}">${offenZ.length} Zeiten abrechnen</button>`:''}</div>
+  <div class="grid"><div class="kpi">Umsatz (Ist)<b>${fmt(n.uN)} €</b>${v?`<span class="mut">Vorkalk. ${fmt(v.uS)} €</span>`:''}</div><div class="kpi">Herstellkosten (Ist)<b>${fmt(n.hk)} €</b>${v?`<span class="mut">Vorkalk. ${fmt(v.hk)} €</span>`:''}</div>
+    <div class="kpi">DB II Vorkalkulation<b>${v?fmt(v.db2)+' €':'–'}</b>${v?dbTag(v.db2p):''}</div><div class="kpi">DB II Ist<b>${fmt(n.db2)} €</b>${dbTag(n.db2p)}</div></div>`}
+const auftragListenK=(docs,zt)=>`<div class="card kkl" style="padding:0"><h2>Belege</h2>${docs.map(b=>karte({t:`${BICON[b.typ]||''} ${T[b.typ].bez} ${esc(bNr(b))}`,s:statusTag(b),z:dAT(b.datum),b:fmt(sgn(b)*summen(b).nettoEff)+' €',a:`onclick="nav('beleg/${b.id}')"`})).join('')}</div>
+  <div class="card kkl" style="padding:0"><h2>Stunden</h2>${zt.map(z=>karte({t:`${esc(z.tarif)} · ${fmtQ(z.stunden)} h`,s:z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn'),u:esc(z.text),z:dAT(z.datum),b:fmt(z.stunden*z.kosten)+' €'})).join('')||'<p class="mut" style="margin:0;padding:0 12px 10px">keine – Erfassung unter <a href="#/zeiten">Zeiterfassung</a></p>'}</div>`;
+// FiBu-Kontenplan als Leseliste je Kontenklasse (Akkordeon) mit Suche; Antippen öffnet das Pop-up „Konto“ (Setter 'fbk'), gelöscht wird nur dort
+const KKL={0:'Anlagevermögen',1:'Vorräte',2:'Forderungen, Geld, sonstiges Umlaufvermögen',3:'Rückstellungen und Verbindlichkeiten',4:'Erlöse',5:'Material- und Leistungsaufwand',6:'Personalaufwand',7:'Sonstige betriebliche Aufwendungen',8:'Finanzerfolg und Steuern',9:'Eigenkapital und Abschluss'};
+function kontenK(fb){const q=(UI.fbkQ||'').toLowerCase(),idx=fb.konten.map((k,i)=>[k,i]),passt=([k])=>(k.nr+' '+k.bez+' '+(k.kz||'')).toLowerCase().includes(q);
+  const kk=([k,i])=>karte({t:`${esc(k.nr)} ${esc(k.bez)}`,s:k.kz?tag('KZ '+esc(k.kz)):'',a:`onclick="ACT.lpop(this)" data-lp="fbk" data-i="${i}" title="bearbeiten"`});
+  const liste=q?`<div class="card kkl" style="padding:0">${idx.filter(passt).map(kk).join('')||'<p class="mut" style="margin:0;padding:10px 12px">Kein Konto gefunden.</p>'}</div>`
+    :[...'0123456789'].map(c=>{const L=idx.filter(([k])=>k.nr[0]===c);return L.length?akk('fbk-'+c,`Klasse ${c} · ${KKL[c]}`,`<div class="kkl">${L.map(kk).join('')}</div>`,{zusatz:L.length+' Konten'}):''}).join('');
+  return`<div class="bar"><input data-o="ui" data-f="fbkQ" placeholder="Konto suchen (Nummer, Bezeichnung, KZ)" value="${esc(UI.fbkQ||'')}" style="flex:1 1 220px;width:auto;max-width:420px"></div>${liste}
+  <div class="bar"><input id="fbk-nr" placeholder="Kontonummer" style="width:130px"><input id="fbk-bez" placeholder="Bezeichnung" style="width:280px"><button data-act="fbkadd">+ Konto</button></div>`}
+LIVE.fbk=el=>{const i=+el.dataset.i,k=FB().konten[i];if(!k)return;
+  livePop('Konto '+esc(k.nr),()=>{const x=FB().konten[i];if(x!==k)return'<p class="mut">Konto nicht mehr vorhanden.</p>';
+    return`<div class="row"><label class="w05">Konto<input value="${esc(x.nr)}" disabled></label><label class="w2">Bezeichnung<input data-o="fbk" data-i="${i}" data-f="bez" value="${esc(x.bez)}"></label><label class="w05">UVA-KZ<input data-o="fbk" data-i="${i}" data-f="kz" value="${esc(x.kz)}"></label></div>
+    <div class="bar" style="margin:10px 0 0"><button class="d" data-i="${i}" onclick="kontoLoeschen(this)">Konto löschen</button></div>`},{verwerfen:k})};
+function kontoLoeschen(btn){const n=FB().konten.length;ACT.fbkdel(btn);if(FB().konten.length<n)btn.closest('.modal')?.querySelector('#m-ok')?.click()} // ACT.fbkdel prüft wie bisher (bebucht/zugeordnet)
+// Export: Protokoll als Akkordeon (20 Einträge + „weitere“), am Handy als Karten
+function protokollK(){const N=UI.logMehr||20,L=DB.log.slice(-100).reverse(),Z=L.slice(0,N),z=l=>new Date(l.ts).toLocaleString('de-AT');
+  const inh=kmpH()?`<div class="kkl">${Z.map(l=>karte({t:esc(l.aktion),u:esc(l.info),z:z(l)})).join('')}</div>`:`<table>${Z.map(l=>`<tr><td style="white-space:nowrap">${z(l)}</td><td>${esc(l.aktion)}</td><td>${esc(l.info)}</td></tr>`).join('')}</table>`;
+  return akk('exp-log','Protokoll (letzte 100)',(Z.length?inh:'<p class="mut" style="margin:0">leer</p>')+(L.length>N?`<button class="s" style="margin-top:8px" onclick="UI.logMehr=${N+20};render()">weitere ${Math.min(20,L.length-N)} anzeigen</button>`:''),{zusatz:`${DB.log.length} Einträge`})}
 /* Wareneingänge, die an Kunden weiterzuverrechnen sind (auf Auftrag oder direkt auf Baustelle geliefert) */
 function zuVerrechnen(){
   const out=[];
@@ -3862,7 +3921,7 @@ V.verrechnung=()=>{
   const alle=UI.wvAlle,L=zuVerrechnen().filter(x=>alle||x.offen>0),gr={};
   for(const x of L)(gr[x.b.auftragId||'']=gr[x.b.auftragId||'']||[]).push(x);
   const wert=x=>r2(x.offen*(+x.p.ep||+x.p.ek||0));
-  return`<h1>Zu verrechnen</h1>
+  return kmp()?verrechnungK(L,gr,wert,alle):`<h1>Zu verrechnen</h1>
   <p class="mut" style="margin-top:0">Wareneingänge auf Aufträge oder mit Direktlieferung auf die Baustelle, die noch nicht per Lieferschein oder Rechnung an den Kunden weiterverrechnet sind.</p>
   <div class="bar"><label class="chk" style="margin:0"><input type="checkbox" data-o="ui" data-f="wvAlle" ${alle?'checked':''}> auch bereits verrechnete anzeigen</label><span class="sp"></span><b>Offen gesamt (EK): ${fmt(sum(L,wert))} €</b></div>
   ${Object.entries(gr).map(([aid,xs])=>`<div class="card" style="padding:8px"><div class="bar" style="margin:0 0 6px"><h2 style="margin:0">${aid?esc(auftragLabel(aid)):'Ohne Auftrag (Direktlieferung)'}</h2><span class="sp"></span>

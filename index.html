@@ -2,11 +2,13 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d2330">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ERP-Lite">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
 <title>ERP-Lite</title>
 <style>
 :root{--bg:#f4f5f7;--card:#fff;--ink:#1d2330;--mut:#6b7280;--line:#e2e5ea;--acc:#1f5fbf;--acc2:#e8f0fc;--ok:#1e7a46;--warn:#9a5b00;--err:#b42318;--side:#1d2330}
@@ -329,6 +331,42 @@ body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150p
 }
 @media(pointer:coarse) and (min-width:761px){body.kompakt :is(main,.mbox) :is(button,.btn,select,input:not([type=checkbox]):not([type=radio]):not([type=file])):not(table.pos *){min-height:40px}}
 @media(min-width:761px) and (max-height:820px){body.kompakt nav a,body.kompakt nav button.zl{padding:4px 18px}body.kompakt nav .grp{padding:8px 18px 2px}body.kompakt nav .logo{padding:10px 18px 6px}}
+/* iOS (P30, erw.ios): sichere Bereiche (Notch, Home-Indikator) immer; Gestaltung nach Apple-Vorgaben nur unter body.ios am Handy (Systemschrift, 44-pt-Tippziele, Blätter mit Griff, Segmente, Schalter) */
+@media(max-width:760px){
+  .topbar{padding-top:calc(8px + env(safe-area-inset-top));padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+  nav{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  main{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+  #dirtybar{bottom:calc(8px + env(safe-area-inset-bottom))}
+  body.ios{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  body.ios :is(a,button,input,select,textarea,label,summary,[data-act]){-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  body.ios :is(button,.btn,summary,.mi){-webkit-user-select:none;user-select:none}
+  body.ios :is(main,.mbox,.mpop,.aktl,#dirtybar) :is(button,.btn):not(:disabled){min-height:44px}
+  body.ios :is(button,.btn,.mi,nav a):active{opacity:.55}
+  body.ios nav a,body.ios nav button.zl{min-height:44px;display:flex;align-items:center}
+  body.ios .topbar button{min-width:44px;min-height:44px}
+  body.ios h1{font-size:24px;font-weight:700;letter-spacing:-.3px}
+  body.ios :is(main,.mbox) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select){min-height:44px;border-radius:10px;padding:8px 12px}
+  body.ios :is(main,.mbox) :is(textarea,.rte){border-radius:10px}
+  body.ios :is(.card,.kk){border-radius:12px}
+  body.ios .seg{background:#e9e9ee;border:0;border-radius:9px;padding:2px;gap:2px}
+  body.ios .seg button{border:0!important;border-radius:7px;background:none}
+  body.ios .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+  body.ios .modal .mbox::before,body.ios .mpop.unten::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:#c7c7cc;margin:8px auto 6px}
+  body.ios:has(.modal),body.ios:has(.mpop.unten){overflow:hidden}
+  body.ios :is(.modal,.mbox,.mpop){overscroll-behavior:contain}
+  body.ios .aktl{background:rgba(255,255,255,.86);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
+  body.ios label.chk>input[type=checkbox]{-webkit-appearance:none;appearance:none;flex:none;width:51px;height:31px;border-radius:16px;background:#e9e9ea;position:relative;transition:background .2s;margin:0;cursor:pointer}
+  body.ios label.chk>input[type=checkbox]::before{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:transform .2s}
+  body.ios label.chk>input[type=checkbox]:checked{background:#34c759}
+  body.ios label.chk>input[type=checkbox]:checked::before{transform:translateX(20px)}
+  body.ios label.chk>input[type=checkbox]:disabled{opacity:.5}
+  .segw{flex:1 1 100%;font-size:12px;color:var(--mut)}
+  .segr{display:flex;background:#e9e9ee;border-radius:9px;padding:2px;gap:2px;margin-top:3px}
+  .segr label{flex:1;min-width:0;text-align:center;margin:0;position:relative}
+  .segr input{position:absolute;opacity:0;pointer-events:none}
+  .segr span{display:flex;align-items:center;justify-content:center;min-height:40px;padding:0 2px;border-radius:7px;font-size:13px;color:var(--ink);cursor:pointer}
+  .segr input:checked+span{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18);font-weight:600}
+}
 </style>
 </head>
 <body>
@@ -469,6 +507,7 @@ const ERW=[
   {k:'kopfFix',std:false,p:'Navigation (P19)',l:'Statuszeile beim Scrollen oben festhalten',info:'Die Statuszeile bleibt mit Nummer und Status beim Scrollen am oberen Rand stehen (am Handy unter der Kopfzeile). Standard aus, weil sie am Handy eine Zeile Platz kostet. Wirkt nur mit eingeschalteter Statuszeile.'},
   {k:'kompakt',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht (Handy und Bildschirm)',info:'Weniger Bedienelemente auf einmal: Seltenes liegt in Menüs (⋯, „+ Neu ▾“) und Pop-ups, Listen erscheinen am Handy als Karten, Filter in einem Pop-up, lange Abschnitte (z. B. Einstellungen) zum Auf- und Zuklappen, Erklärtexte hinter ⓘ. Dialoge öffnen am Handy als Blatt von unten, Titel und Knöpfe bleiben beim Scrollen sichtbar; Knöpfe und Felder sind am Handy und auf Tablets mindestens 40 px hoch. Welche Abschnitte offen sind, merkt sich das Gerät. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Entscheidung des Anwenders (09.10.2026), daher Standard ein. Aus: bisherige Darstellung.'},
   {k:'kompaktBeleg',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht im Beleg-Editor',info:'Wirkt nur mit eingeschalteter kompakter Ansicht. Im Beleg stehen oben nur Eingabe | Vorschau, die Hauptaktion (z. B. Festschreiben, Zahlung erfassen, → Rechnung) und ⋯ mit allen weiteren Belegaktionen (PDF, Senden, Folgebeleg, Duplizieren, Revision, Löschen bzw. Stornieren …); Kopfdaten, Positionen und Zahlungen werden in Pop-ups bearbeitet, am Handy erscheinen die Positionen als Karten und Summe und Hauptaktion in einer Leiste am unteren Rand. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Aus: Beleg-Editor wie bisher (übrige kompakte Ansicht bleibt).'},
+  {k:'ios',std:true,p:'Ansicht (P30)',l:'iOS-Darstellung am Handy',info:'Wirkt nur mit eingeschalteter kompakter Ansicht und nur am Handy. Bedienung nach den Vorgaben von Apple: Systemschrift, Tippziele mindestens 44 pt, Pop-ups und Menüs als Blatt von unten mit Griff, Segmente wie in iOS (z. B. Art der Position: Ware | Leistung | …), Schalter statt Häkchen, Hintergrund bleibt beim offenen Pop-up stehen, durchscheinende Leisten. Sichere Bereiche (Notch, Home-Indikator) gelten immer. Aus: kompakte Ansicht ohne iOS-Gestaltung.'},
 ];
 const ERW_STD=Object.fromEntries(ERW.map(x=>[x.k,x.std]));
 const erw=k=>DB?.settings?.erw?.[k]??ERW_STD[k];
@@ -1221,6 +1260,7 @@ function render(){
   document.body.classList.toggle('navkl',!!(erw('navKL')&&erw('kFilter'))); // Untereinträge Kunden/Lieferanten (P6)
   const f=V[view]||V.dash;
   document.body.classList.toggle('kompakt',kmp()); // Kompakte Ansicht (P30): CSS für bestehende Elemente nur unter body.kompakt
+  document.body.classList.toggle('ios',kmp()&&erw('ios')); // iOS-Darstellung am Handy (CSS nur unter body.ios in @media max-width 760px)
   $('#main').innerHTML=f(arg);
   document.body.classList.toggle('zlaus',!erw('zuletzt'));if(arg&&ZL_V.includes(view))zuletztMerk(view+'/'+arg); // Zuletzt geöffnet (P19 a)
   requestAnimationFrame(vorschauSeiten);
@@ -2042,7 +2082,7 @@ MENUE.pos=el=>{const b=curBeleg(),i=+el.dataset.i,p=b?.pos[i];if(!p||b.fest)retu
 function posFelder(b,i){const p=b.pos[i],V_=T[b.typ].b==='V',ohneP=OHNE_PREIS.includes(b.typ),zLS=!!b.optLS&&!ohneP,gi=gruppenInfo(b),g=gi.grp[p.id],pa=g&&+g.pauschal>0;
   const a=f=>`data-p="${i}" data-f="${f}"`,zf=(f,l,v,x='')=>`<label class="w05">${l}<input type="number" step="any" inputmode="decimal" ${a(f)} value="${v??''}"${x}></label>`;
   const stO=c=>S().steuer.map(s=>opt(s.code,s.bez,c)).join(''),ar=artikel(p.artikelId),el=ar?[ar.einheit,...(ar.einheiten||[]).map(x=>x.e)]:[...S().einheiten];if(!el.includes(p.einheit))el.unshift(p.einheit);
-  const art=`<label class="w05">Art<select ${a('art')}>${Object.keys(ART).map(k=>opt(k,ART[k],p.art)).join('')}</select></label>`,kz=`<label class="w05">Kennzeichen<select ${a('kz')}>${opt('','–',p.kz)}${opt('OPT','Option',p.kz)}${opt('ALT','Alternative',p.kz)}</select></label>`;
+  const art=kmpH()&&erw('ios')?`<div class="segw">Art<div class="segr">${Object.keys(ART).map(k=>`<label><input type="radio" name="art${i}" ${a('art')} value="${k}"${p.art===k?' checked':''}><span>${{F:'Fremd'}[k]||ART[k]}</span></label>`).join('')}</div></div>`:`<label class="w05">Art<select ${a('art')}>${Object.keys(ART).map(k=>opt(k,ART[k],p.art)).join('')}</select></label>`,kz=`<label class="w05">Kennzeichen<select ${a('kz')}>${opt('','–',p.kz)}${opt('OPT','Option',p.kz)}${opt('ALT','Alternative',p.kz)}</select></label>`;
   const rte=ph=>`<div class="rte" contenteditable="true" data-ed="p:${i}:text" data-ph="${esc(ph)}">${rt(p.text)}</div>`;
   const kn=`<div class="bar pkn2"><button class="s" data-act="pup" data-i="${i}" title="nach oben"${i?'':' disabled'}>↑</button><button class="s" data-act="pdown" data-i="${i}" title="nach unten"${i<b.pos.length-1?'':' disabled'}>↓</button>${isInfo(p)?'':`<button data-act="hist" data-i="${i}" title="Preisverlauf">€ Preisverlauf</button>${V_?`<button data-act="partik" data-i="${i}" title="Artikel bearbeiten: Texte, Preise, Einkauf, Herstellkosten; im Artikelstamm speichern">✎ Artikel …</button>`:p.artikelId?'':`<button data-act="mkart" data-i="${i}" title="als Artikel speichern">+A Artikel</button>`}`}<span class="sp"></span><button class="d" data-act="pdel" data-i="${i}">Löschen</button></div>`;
   if(p.art==='T')return`<div class="row">${art}</div><div class="row"><label class="w2">Text${rte('Text …')}</label></div>${kn}`;

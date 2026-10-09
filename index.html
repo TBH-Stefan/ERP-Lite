@@ -135,6 +135,8 @@ body.kompakt td .nw{white-space:nowrap}
 @media(max-width:760px){body.kompakt .quick>*{flex:1 1 0;min-width:0;padding:10px 4px}
   body.kompakt .aws{position:fixed;left:0;right:0;bottom:0;z-index:50;margin:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.1)}
   body.kompakt:has(#dirtybar) .aws{bottom:96px}}
+/* Kompakt (P30) Korrektur: am Handy bleiben die letzten Artikelkarten über der festen Auswahlleiste (.aws) erreichbar */
+@media(max-width:760px){body.kompakt main:has(.aws){padding-bottom:190px}body.kompakt:has(#dirtybar) main:has(.aws){padding-bottom:290px}}
 .sp{flex:1}
 .cols{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
 @media(max-width:1100px){.cols{grid-template-columns:1fr}}

@@ -1219,6 +1219,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - U7 Commit 1 lässt sich einzeln zurücknehmen.
   - Die U8-Commits werden in umgekehrter Reihenfolge zurückgenommen, von 7 bis 1.
   - U7 Commits 3–6 sind einzeln rücknehmbar, aber vor U7 Commit 2. Geprüft (09.10.2026): U7 Commit 1, 3, 4, 5 (beide Teile) und 6 jeweils einzeln per `git revert` konfliktfrei, Programm danach ohne Konsolenfehler; U7 Commit 2 erst nach 3–6 (diese nutzen `kmp()`, `karte()`, `akk()` …; Commit 6 ändert außerdem `akk()`); alle U7-Commits in umgekehrter Reihenfolge ergeben wieder genau den Stand vor U7.
+  - Die Korrektur „U7: Korrektur Auswahlleiste Artikel …“ (nur CSS) vor U7 Commit 4 zurücknehmen.
   - U7 Commit 2 kommt erst nach allen U8-Commits dran.
   - P19 c lässt sich erst zurücknehmen, wenn U8 Commit 6 zurückgenommen ist, weil dieser `belegStatus()` ändert.
 - **Einordnung:**

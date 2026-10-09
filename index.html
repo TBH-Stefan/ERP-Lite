@@ -1005,14 +1005,14 @@ async function festschreiben(b0){
   if(b.pos.some(p=>!isInfo(p)&&!String(p.bez).trim()))err.push('Position ohne Bezeichnung.');
   if(t.b==='V'&&t.re){
     {const pf=pflichtFehlt(S().firma);if(pf.length)warn.push(`Pflichtangaben der Firma fehlen: ${pf.join(', ')} (§ 14 UGB, § 11 UStG) – bitte unter Einstellungen → Firma ergänzen.`)}
-    if(b.pos.some(p=>!isInfo(p)&&!p.kz&&['RC','IGL'].includes(p.steuer))&&!k?.uid)err.push('Reverse Charge / ig. Lieferung erfordert die UID-Nr. des Kunden.');
+    if(s.steuern.some(x=>['RC','IGL'].includes(x.code))&&!k?.uid)err.push('Reverse Charge / ig. Lieferung erfordert die UID-Nr. des Kunden.'); // nur verrechnete Steuercodes wie im Ausdruck (summen(): ohne Option/Alternative, auch über die Gruppe)
     if(s.brutto>10000&&!k?.uid)warn.push('Rechnung über 10.000 € brutto: UID-Nr. des Empfängers ist Pflichtangabe (wenn Unternehmer).');
     if(!String(b.leistung).trim()){if(confirm('Liefer-/Leistungsdatum fehlt (§ 11 UStG).\nRechnungsdatum übernehmen?'))b.leistung=dAT(b.datum);else err.push('Liefer-/Leistungsdatum fehlt.')}
     if(b.pos.some(p=>p.kz))warn.push('Rechnung enthält Options-/Alternativpositionen – diese werden NICHT verrechnet.');
   }
   if(b.typ==='ER'&&!String(b.fremdNr).trim())err.push('Rechnungsnummer des Lieferanten fehlt.');
   if(FB().sperre&&b.datum<=FB().sperre)err.push('Die Buchungsperiode bis '+dAT(FB().sperre)+' ist gesperrt (Finanzbuchhaltung → Einstellungen).');
-  if(!OHNE_PREIS.includes(b.typ)&&b.pos.some(p=>!isInfo(p)&&!p.kz&&!(+p.ep)))warn.push('Position(en) mit Preis 0.');
+  if(!OHNE_PREIS.includes(b.typ)&&b.pos.some(p=>!isInfo(p)&&!effKz(p,s.gi)&&!(+p.ep)))warn.push('Position(en) mit Preis 0.'); // Option/Alternative auch über die Gruppe
   if(err.length){alert('Festschreiben nicht möglich:\n\n• '+err.join('\n• '));return}
   const fix=t.re||OHNE_PREIS.includes(b.typ),nrNeu=vorschlagNr(b);
   const ok=await dialog({
@@ -1597,7 +1597,7 @@ function kalkBox(b){
   <dt class="tot">DB II</dt><dd class="tot">${fmt(v.db2)} ${dbTag(v.db2p)}</dd>
   <dt>Aufschlag auf HK</dt><dd>${pct(v.aufschlag)}</dd>
   ${v.fehl>0.005?`<dt class="err">Fehlbetrag zu Ziel ${fmtQ(S().zielDB2)} %</dt><dd class="err">${fmt(v.fehl)}</dd>`:''}</dl>
-  ${b.pos.some(p=>!isInfo(p)&&!p.kz&&!(+p.ek))?'<p class="warnc" style="margin:6px 0 0;font-size:12px">Positionen ohne EK – DB II zu hoch ausgewiesen.</p>':''}`;
+  ${(gi=>b.pos.some(p=>!isInfo(p)&&!effKz(p,gi)&&!(+p.ek)))(gruppenInfo(b))?'<p class="warnc" style="margin:6px 0 0;font-size:12px">Positionen ohne EK – DB II zu hoch ausgewiesen.</p>':''}`;
 }
 /* Skonto: innerhalb der Frist (Belegdatum + Skontotage) wird der Abzug beim Buchen der Zahlung vorgeschlagen (auf den offenen Bruttobetrag) */
 const skontoBis=b=>addDays(b.datum,+b.skontoTage||0);
@@ -1982,7 +1982,7 @@ V.auswertung=()=>{
   for(const b of DB.belege.filter(b=>T[b.typ].re&&b.fest))for(const z of b.zahlungen||[])if(z.datum.startsWith(j)){const m=M[+z.datum.slice(5,7)-1];if(T[b.typ].b==='V')m.ein+=sgn(b)*z.betrag;else m.aus+=z.betrag}
   const codes=S().steuer.map(s=>s.code).filter(c=>M.some(m=>m.ust[c]||m.ust['B'+c]));
   const kunden={},artk={};
-  for(const b of reJ){const s=sgn(b);kunden[b.kontaktId]=(kunden[b.kontaktId]||0)+s*summen(b).nettoEff;for(const p of b.pos){if(isInfo(p)||p.kz)continue;const key=p.artikelId?(artikel(p.artikelId)?.nr+' '+artikel(p.artikelId)?.bez):p.bez;artk[key]=artk[key]||{m:0,u:0,e:p.einheit};artk[key].m+=s*p.menge;artk[key].u+=s*posGP(p)}}
+  for(const b of reJ){const s=sgn(b),sb=summen(b);kunden[b.kontaktId]=(kunden[b.kontaktId]||0)+s*sb.nettoEff;for(const p of b.pos){if(isInfo(p)||effKz(p,sb.gi))continue;const key=p.artikelId?(artikel(p.artikelId)?.nr+' '+artikel(p.artikelId)?.bez):p.bez;artk[key]=artk[key]||{m:0,u:0,e:p.einheit};artk[key].m+=s*p.menge;artk[key].u+=s*posGP(p)}}
   const an=DB.belege.filter(b=>b.typ==='AN'&&b.fest&&!b.storno&&b.status!=='ersetzt'&&b.datum.startsWith(j));
   const anA=an.filter(b=>b.status==='angenommen'),anX=an.filter(b=>b.status==='abgelehnt');
   const deb=DB.belege.filter(b=>T[b.typ].re&&T[b.typ].b==='V'&&Math.abs(offen(b))>0.005).sort((a,c)=>faellig(a).localeCompare(faellig(c)));
@@ -3928,7 +3928,7 @@ async function versenden(b){
 }
 
 /* ---------- Rechnung aus mehreren Lieferscheinen (Sammelrechnung) ---------- */
-function offeneLS(kid){return DB.belege.filter(x=>x.typ==='LS'&&x.fest&&!x.storno&&(!kid||x.kontaktId===kid)&&x.pos.some(p=>!isInfo(p)&&!p.kz&&(+p.menge||0)-kinderMenge(p.id,['RE','TR','SR'])>0.0001)).sort((a,c)=>a.datum.localeCompare(c.datum))}
+function offeneLS(kid){return DB.belege.filter(x=>x.typ==='LS'&&x.fest&&!x.storno&&(!kid||x.kontaktId===kid)&&(gi=>x.pos.some(p=>!isInfo(p)&&!effKz(p,gi)&&(+p.menge||0)-kinderMenge(p.id,['RE','TR','SR'])>0.0001))(gruppenInfo(x))).sort((a,c)=>a.datum.localeCompare(c.datum))}
 function sammelRechnung(kid0=''){
   return new Promise(res=>{
     const d=document.createElement('div');d.className='modal';const kunden=[...new Set(offeneLS().map(x=>x.kontaktId))].map(kontakt).filter(Boolean);
@@ -3946,7 +3946,7 @@ function sammelRechnung(kid0=''){
       bezug:'Lieferschein'+(L.length>1?'e ':' ')+L.map(bNr).join(', '),vorgaengerId:L[0].id,zahlungsziel:k.zahlungsziel!==''&&k.zahlungsziel!=null?+k.zahlungsziel:S().zahlungsziel,
       leistung:L.length>1?`${dAT(L[0].datum)} – ${dAT(L[L.length-1].datum)}`:dAT(L[0].leistung?isoAus(L[0].leistung)||L[0].datum:L[0].datum)});
     for(const x of L){if(L.length>1)re.pos.push(neuPos({art:'T',text:`<b>Lieferschein ${bNr(x)} vom ${dAT(x.datum)}</b>`,menge:0}));
-      for(const p of x.pos){if(p.kz)continue;const m=isInfo(p)?+p.menge||0:r3((+p.menge||0)-kinderMenge(p.id,['RE','TR','SR']));if(!isInfo(p)&&m<=0)continue;re.pos.push(neuPos({...p,id:uid(),herkunftPosId:p.id,menge:m}))}}
+      const gi=gruppenInfo(x);for(const p of x.pos){if(effKz(p,gi))continue;const m=isInfo(p)?+p.menge||0:r3((+p.menge||0)-kinderMenge(p.id,['RE','TR','SR']));if(!isInfo(p)&&m<=0)continue;re.pos.push(neuPos({...p,id:uid(),herkunftPosId:p.id,menge:m}))}}
     log('Sammelrechnung',`aus ${L.map(bNr).join(', ')}`);persist();go('beleg/'+re.id)});
 }
 

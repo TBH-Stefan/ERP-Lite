@@ -81,6 +81,7 @@ body.kompakt .pop.blatt{position:fixed;left:0!important;right:0;bottom:0;top:aut
 #rtebar button{background:none;border:0;color:#fff;padding:3px 9px;font-size:13px}#rtebar button:hover{background:#2c3446}
 table.pos tr.grp td{background:#eef2f8;border-top:2px solid #c9d4e6}
 table.pos tr.ing td:first-child{border-left:3px solid #c9d4e6}
+tr.nd>td:not(:last-child),.kkf.nd>.kk{opacity:.55}.ndh{display:none}.nd .ndh{display:inline-block;margin:2px 0 0 4px;padding:0 6px;border-radius:8px;background:#eef0f3;color:#4b5563;font-size:11px} /* Menge 0 wird nicht gedruckt (P3) */
 .doc tr.grpz td{padding-top:3mm;border-bottom:1px solid #999}
 .doc tr.gsum td{font-weight:700;border-bottom:1px solid #999;text-align:right}
 .doc tr.gsum td.n{text-align:right}
@@ -274,6 +275,7 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .doc .tot td{border:0;padding:3px 4px;text-align:right}
 .doc .tot td:first-child{padding-right:8mm}
 .doc .tot tr.b td{font-weight:700;padding-top:4px}
+.doc .tot td.eu{padding-left:0;width:3mm;text-align:left} /* € in eigener Spalte (P3, druck.euroSp) */
 .doc .tot tr.g td{color:#000;border-bottom:1.5px solid #000}
 .doc table.zs{width:100%;margin:6mm 0 2mm;break-inside:avoid} /* Zusammenfassung der Titel (P2) */
 .doc table.zs th,.doc table.zs td{background:none;color:#000;font-size:9pt;font-weight:400;border-bottom:1px solid #bbb;padding:3px 5px}
@@ -1598,26 +1600,26 @@ V.beleg=id=>{
   const t=T[b.typ],dis=b.fest?'disabled':'',V_=t.b==='V',ohneP=OHNE_PREIS.includes(b.typ);
   const steuerOpts=c=>S().steuer.map(s=>opt(s.code,s.bez,c)).join('');
   const einhOpts=p=>{const a=artikel(p.artikelId);const l=a?[a.einheit,...(a.einheiten||[]).map(x=>x.e)]:S().einheiten;if(!l.includes(p.einheit))l.unshift(p.einheit);return l.map(e=>opt(e,e,p.einheit)).join('')};
-  const zRab=showRab(b),zLS=!!b.optLS&&!ohneP,gi=gruppenInfo(b),pnr=posNummern(b);
-  const zl=kmpB()&&!posK(b),zc=zl?{gi,pnr,zRab,zLS,ohneP,V_,einhOpts:p=>einhOpts(p),n:4+(ohneP?0:(zLS?2:1)+(zRab?1:0)+1)}:null; // einzeilige Positionszeile am Bildschirm (kompakt, P30)
+  const zRab=showRab(b),zLS=!!b.optLS&&!ohneP,gi=gruppenInfo(b),pnr=posNummern(b),wg=ndSet(b);
+  const zl=kmpB()&&!posK(b),zc=zl?{gi,pnr,zRab,zLS,ohneP,V_,wg,einhOpts:p=>einhOpts(p),n:4+(ohneP?0:(zLS?2:1)+(zRab?1:0)+1)}:null; // einzeilige Positionszeile am Bildschirm (kompakt, P30)
   const nSp=4+(ohneP?0:4+(zRab?1:0)+(zLS?2:0))+1; // Spalten zwischen „Art“ und Aktionen (inkl. Kz)
   const kzSel=(i,p)=>`<select data-p="${i}" data-f="kz" ${dis}>${opt('','–',p.kz)}${opt('OPT','Option',p.kz)}${opt('ALT','Altern.',p.kz)}</select>`;
   const rte=(key,val,ph)=>`<div class="rte" ${b.fest?'':'contenteditable="true"'} data-ed="${key}" data-ph="${esc(ph)}">${rt(val)}</div>`;
   const rows=b.pos.map((p,i)=>{if(zl)return posZeileK(b,p,i,zc);
     const artSel=`<td data-l="Art"><select data-p="${i}" data-f="art" ${dis} style="width:72px">${Object.keys(ART).map(k=>opt(k,ART[k],p.art)).join('')}</select></td>`;
     const akt=`<td class="fw" style="white-space:nowrap">${b.fest?'':`<button class="s" data-act="pup" data-i="${i}" title="nach oben">↑</button><button class="s" data-act="pdown" data-i="${i}" title="nach unten">↓</button>${isInfo(p)?'':`<button class="s" data-act="hist" data-i="${i}" title="Preisverlauf">€</button>${V_?`<button class="s" data-act="partik" data-i="${i}" title="Artikel bearbeiten: Texte, Preise, Einkauf, Herstellkosten; im Artikelstamm speichern">✎</button>`:p.artikelId?'':`<button class="s" data-act="mkart" data-i="${i}" title="als Artikel speichern">+A</button>`}`}<button class="s d" data-act="pdel" data-i="${i}" title="löschen">✕</button>`}</td>`;
-    if(p.art==='T')return`<tr class="t"><td></td>${artSel}<td class="fw" colspan="${nSp}">${rte(`p:${i}:text`,p.text,'Text …')}</td>${akt}</tr>`;
-    if(p.art==='G')return`<tr class="grp"><td class="mut" data-l="Gr.">${pnr[p.id]||''}</td>${artSel}
-      <td class="fw" colspan="${nSp-(ohneP?1:4)}"><input data-p="${i}" data-f="bez" value="${esc(p.bez)}" ${dis} placeholder="Gruppenbezeichnung" style="font-weight:600">${rte(`p:${i}:text`,p.text,'Gruppentext …')}
+    if(p.art==='T')return`<tr class="t${ndCls(wg,p)}"${ndAttr(wg,i)}><td></td>${artSel}<td class="fw" colspan="${nSp}">${rte(`p:${i}:text`,p.text,'Text …')}${ndTag(wg)}</td>${akt}</tr>`;
+    if(p.art==='G')return`<tr class="grp${ndCls(wg,p)}"${ndAttr(wg,i)}><td class="mut" data-l="Gr.">${pnr[p.id]||''}</td>${artSel}
+      <td class="fw" colspan="${nSp-(ohneP?1:4)}"><input data-p="${i}" data-f="bez" value="${esc(p.bez)}" ${dis} placeholder="Gruppenbezeichnung" style="font-weight:600">${rte(`p:${i}:text`,p.text,'Gruppentext …')}${ndTag(wg)}
         ${ohneP?'':`<label class="chk" style="font-size:12px;margin-top:4px"><input type="checkbox" data-p="${i}" data-f="ohneEP" ${p.ohneEP?'checked':''} ${dis}> Einzelpreise im Ausdruck ausblenden (nur Gruppenpreis)</label>`}</td>
       ${ohneP?'':`<td data-l="Gruppenpreis" colspan="1"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="pauschal" value="${+p.pauschal||''}" ${dis} placeholder="${fmt(gi.sumG[p.id]||0)}" title="leer = Summe der Positionen; Betrag = pauschaler Gruppenpreis"></td>
       <td class="n gp" data-l="Summe Gruppe" id="gs${i}"><b>${fmt(gruppePreis(p,gi))}</b></td><td data-l="USt">${+p.pauschal?`<select data-p="${i}" data-f="steuer" ${dis}>${steuerOpts(p.steuer||S().stdSteuer)}</select>`:''}</td>`}
       <td data-l="Kz">${kzSel(i,p)}</td>${akt}</tr>`;
     const g=gi.grp[p.id],pausch=g&&+g.pauschal>0;
-    return`<tr class="${g?'ing':''}">
+    return`<tr class="${g?'ing':''}${ndCls(wg,p)}"${ndAttr(wg,i)}>
       <td class="mut" data-l="Pos">${pnr[p.id]}</td>${artSel}
       <td class="c2" data-l="Artikel" style="width:110px"><input list="dl-art" data-p="${i}" data-f="artikel" value="${esc(p.nr)}" ${dis} placeholder="Art.-Nr.">${!V_&&p.lnr?`<div class="mut" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px" title="Art.-Nr. des Lieferanten (Druck: „Ihre Art.-Nr.“): ${esc(p.lnr)}">Lief.: ${esc(p.lnr)}</div>`:''}</td>
-      <td class="fw" data-l="Bezeichnung" style="min-width:220px"><input data-p="${i}" data-f="bez" value="${esc(p.bez)}" ${dis} placeholder="Bezeichnung">${rte(`p:${i}:text`,p.text,'Langtext …')}</td>
+      <td class="fw" data-l="Bezeichnung" style="min-width:220px"><input data-p="${i}" data-f="bez" value="${esc(p.bez)}" ${dis} placeholder="Bezeichnung">${rte(`p:${i}:text`,p.text,'Langtext …')}${ndTag(wg)}</td>
       <td data-l="Menge" style="width:78px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="menge" value="${p.menge}" ${dis}></td>
       <td data-l="Einheit" style="width:72px"><select data-p="${i}" data-f="einheit" ${dis}>${einhOpts(p)}</select></td>
       ${ohneP?'':`
@@ -1688,13 +1690,13 @@ function ansicht(){const m=lsGet('erp-ansicht')||'form';return m==='beides'&&win
 function posZeileK(b,p,i,c){const ed=!b.fest,dis=b.fest?' disabled':'',a=f=>`data-p="${i}" data-f="${f}"`,zf=(f,v,x='')=>`<input type="number" step="any" inputmode="decimal" ${a(f)} value="${v??''}"${dis}${x}>`;
   const akt=`<td class="pza">${ed?`<button class="s" data-act="pbear" data-i="${i}" title="Bearbeiten: alle Felder (EK, Kennzeichen, USt, Langtext …)">✎</button>${posMehr(i)}`:''}</td>`,lt=!!p.text||!!UI.ltAuf?.includes(p.id);
   const rte=ph=>`<div class="rte" ${ed?'contenteditable="true"':''} data-ed="p:${i}:text" data-ph="${esc(ph)}">${rt(p.text)}</div>`,plt=ed&&!lt?`<button class="s" data-act="plt" data-i="${i}" title="Langtext hinzufügen">📝</button>`:'';
-  if(p.art==='T')return`<tr class="t"><td></td><td colspan="${c.n}">${rte('Text …')}</td>${akt}</tr>`;
+  if(p.art==='T')return`<tr class="t${ndCls(c.wg,p)}"${ndAttr(c.wg,i)}><td></td><td colspan="${c.n}">${rte('Text …')}${ndTag(c.wg)}</td>${akt}</tr>`;
   if(p.art==='G'){const tg=[+p.pauschal>0?tag('Pauschal '+fmt(p.pauschal)):'',p.ohneEP?tag('Einzelpreise ausgeblendet'):'',p.kz?tag(p.kz==='OPT'?'Option':'Alternative','warn'):''].join('');
-    return`<tr class="grp"><td class="mut pzn">${c.pnr[p.id]||''}</td><td colspan="${c.n-(c.ohneP?0:1)}"><div class="pzb"><input ${a('bez')} value="${esc(p.bez)}"${dis} placeholder="Gruppenbezeichnung" style="font-weight:600">${plt}${tg}</div>${lt?rte('Gruppentext …'):''}</td>${c.ohneP?'':`<td class="n pzg" id="gs${i}"><b>${fmt(gruppePreis(p,c.gi))}</b></td>`}${akt}</tr>`}
+    return`<tr class="grp${ndCls(c.wg,p)}"${ndAttr(c.wg,i)}><td class="mut pzn">${c.pnr[p.id]||''}</td><td colspan="${c.n-(c.ohneP?0:1)}"><div class="pzb"><input ${a('bez')} value="${esc(p.bez)}"${dis} placeholder="Gruppenbezeichnung" style="font-weight:600">${plt}${tg}</div>${lt?rte('Gruppentext …'):''}${ndTag(c.wg)}</td>${c.ohneP?'':`<td class="n pzg" id="gs${i}"><b>${fmt(gruppePreis(p,c.gi))}</b></td>`}${akt}</tr>`}
   const g=c.gi.grp[p.id],pa=g&&+g.pauschal>0,kz=effKz(p,c.gi),st=p.steuer&&p.steuer!==S().stdSteuer?stDef(b,p.steuer).bez:'',ak={L:'L',F:'F'}[p.art]||'';
-  return`<tr class="${g?'ing':''}"><td class="mut pzn" title="${esc(ART[p.art]||'')}">${c.pnr[p.id]||''}${ak?`<span class="pzk">${ak}</span>`:''}</td>
+  return`<tr class="${g?'ing':''}${ndCls(c.wg,p)}"${ndAttr(c.wg,i)}><td class="mut pzn" title="${esc(ART[p.art]||'')}">${c.pnr[p.id]||''}${ak?`<span class="pzk">${ak}</span>`:''}</td>
     <td class="pzr"><input list="dl-art" ${a('artikel')} value="${esc(p.nr)}"${dis} placeholder="Art.-Nr.">${!c.V_&&p.lnr?`<div class="mut pzl" title="Art.-Nr. des Lieferanten (Druck: „Ihre Art.-Nr.“): ${esc(p.lnr)}">Lief.: ${esc(p.lnr)}</div>`:''}</td>
-    <td><div class="pzb"><input ${a('bez')} value="${esc(p.bez)}"${dis} placeholder="Bezeichnung">${plt}</div>${lt?rte('Langtext …'):''}${kz||st?`<div class="pzt">${kz?tag(kz==='OPT'?'Option':'Alternative','warn'):''}${st?tag(esc(st)):''}</div>`:''}</td>
+    <td><div class="pzb"><input ${a('bez')} value="${esc(p.bez)}"${dis} placeholder="Bezeichnung">${plt}</div>${lt?rte('Langtext …'):''}${ndTag(c.wg)}${kz||st?`<div class="pzt">${kz?tag(kz==='OPT'?'Option':'Alternative','warn'):''}${st?tag(esc(st)):''}</div>`:''}</td>
     <td class="pzm">${zf('menge',p.menge)}</td><td class="pze"><select ${a('einheit')}${dis}>${c.einhOpts(p)}</select></td>
     ${c.ohneP?'':`${c.zLS?`<td class="pzp">${zf('epL',p.epL,' title="Lohn"')}</td><td class="pzp">${zf('epS',p.epS,' title="Sonstiges"')}</td>`:`<td class="pzp">${zf('ep',p.ep)}</td>`}${c.zRab?`<td class="pzq">${zf('rabatt',p.rabatt||'',' placeholder="%"')}</td>`:''}
     <td class="n pzg" id="gp${i}">${pa?`<span class="mut" title="im Gruppenpreis enthalten">(${fmt(posGP(p))})</span>`:fmt(posGP(p))}</td>`}${akt}</tr>`}
@@ -2017,6 +2019,7 @@ function updateCalc(b){
     const x=p.art==='G'&&$('#gs'+i);if(x)(x.querySelector('b')||x).textContent=fmt(gruppePreis(p,gi))}); // Gruppensumme läuft mit
   const s=$('#sumbox');if(s)s.innerHTML=sumBox(b);const k=$('#kalkbox');if(k)k.innerHTML=kalkBox(b);
   const st=$('.bstat');if(st)st.outerHTML=belegStatus(b); // Statuszeile (P19 c): Datum, Netto
+  const nd=document.querySelector('[data-nd]')&&ndSet(b);if(nd)document.querySelectorAll('[data-nd]').forEach(e=>e.classList.toggle('nd',nd.has(b.pos[+e.dataset.nd]?.id))); // Menge 0 wird nicht gedruckt (P3)
   const a=$('#aktsum');if(a)a.textContent=fmt(summen(b).netto)+' €'; // Aktionsleiste (kompakt, P30)
   const v=$('#vorschau');if(v){v.innerHTML=docHTML(b,vEdit());vorschauSeiten()}
 }
@@ -2059,15 +2062,15 @@ function popLage(d,btn){if(!kmp())return;if(HANDY.matches){d.classList.add('blat
   if(r&&btn.closest?.('.modal')){d.style.position='fixed';d.style.top=Math.max(8,Math.min(r.bottom+4,innerHeight-d.offsetHeight-8))+'px';d.style.left=Math.max(8,Math.min(r.right-d.offsetWidth,innerWidth-d.offsetWidth-8))+'px'}}
 const posMehr=i=>`<button class="mehr" data-act="menue" data-m="pos" data-i="${i}" title="Verschieben, Preisverlauf, Artikel, Löschen">⋯</button>`;
 function posKarte(b,p,i,c){const at=c.ed?` data-act="pbear" data-i="${i}" role="button" title="Position bearbeiten"`:'',mehr=c.ed?posMehr(i):'';
-  if(p.art==='T')return`<div class="kkf pkf"><div class="kk pk pkt"${at}><div class="kku">${esc(rtText(p.text))||'<i class="mut">leerer Text</i>'}</div></div>${mehr}</div>`;
+  if(p.art==='T')return`<div class="kkf pkf${ndCls(c.wg,p)}"${ndAttr(c.wg,i)}><div class="kk pk pkt"${at}><div class="kku">${esc(rtText(p.text))||'<i class="mut">leerer Text</i>'}${ndTag(c.wg)}</div></div>${mehr}</div>`;
   const g=c.gi.grp[p.id],pa=g&&+g.pauschal>0,kz=effKz(p,c.gi),gp=fmt(posGP(p)),lt=rtText(p.text),st=p.steuer&&p.steuer!==c.std?stDef(b,p.steuer).bez:'';
   const z2=[esc(p.nr||''),`${fmtQ(p.menge)} ${esc(p.einheit||'')}${c.ohneP?'':` × ${fmtP(p.ep)}`}${+p.rabatt?` − ${fmtQ(p.rabatt)} %`:''}`,c.zLS?`L ${fmtP(+p.epL||0)} + S ${fmtP(+p.epS||0)}`:''].filter(Boolean).join(' · ');
   const tags=[kz==='OPT'?tag('Option','warn'):kz==='ALT'?tag('Alternative','warn'):'',p.art==='L'?tag('Leistung'):p.art==='F'?tag('Fremdleistung'):'',st?tag(esc(st)):'',!c.V_&&p.lnr?tag('Lief.: '+esc(p.lnr)):''].join('');
-  return`<div class="kkf pkf${kz?' pko':''}"><div class="kk pk"${at}><div class="kk1"><span class="kkt"><span class="pnr">${c.pnr[p.id]||''}</span> ${esc(p.bez)||'<i class="mut">ohne Bezeichnung</i>'}</span>${c.ohneP?'':`<span class="kkb" id="gp${i}">${pa?`(${gp})`:gp}</span>`}</div>
-    <div class="kku">${z2}${tags?' '+tags:''}</div>${lt?`<div class="kkz">${esc(lt)}</div>`:''}</div>${mehr}</div>`}
-function posKartenK(b){const ohneP=OHNE_PREIS.includes(b.typ),c={gi:gruppenInfo(b),pnr:posNummern(b),ohneP,zLS:!!b.optLS&&!ohneP,std:S().stdSteuer,V_:T[b.typ].b==='V',ed:!b.fest};
+  return`<div class="kkf pkf${kz?' pko':''}${ndCls(c.wg,p)}"${ndAttr(c.wg,i)}><div class="kk pk"${at}><div class="kk1"><span class="kkt"><span class="pnr">${c.pnr[p.id]||''}</span> ${esc(p.bez)||'<i class="mut">ohne Bezeichnung</i>'}</span>${c.ohneP?'':`<span class="kkb" id="gp${i}">${pa?`(${gp})`:gp}</span>`}</div>
+    <div class="kku">${z2}${tags?' '+tags:''}${ndTag(c.wg)}</div>${lt?`<div class="kkz">${esc(lt)}</div>`:''}</div>${mehr}</div>`}
+function posKartenK(b){const ohneP=OHNE_PREIS.includes(b.typ),c={gi:gruppenInfo(b),pnr:posNummern(b),ohneP,zLS:!!b.optLS&&!ohneP,std:S().stdSteuer,V_:T[b.typ].b==='V',ed:!b.fest,wg:ndSet(b)};
   let o='',g=null,inn='';
-  const zu=()=>{if(g){const p=g.p,t=[+p.pauschal>0?tag('Pauschal '+fmt(p.pauschal)):'',p.ohneEP?tag('Einzelpreise ausgeblendet'):'',p.kz==='OPT'?tag('Option','warn'):p.kz==='ALT'?tag('Alternative','warn'):''].join(' '),lt=rtText(p.text);
+  const zu=()=>{if(g){const p=g.p,t=[+p.pauschal>0?tag('Pauschal '+fmt(p.pauschal)):'',p.ohneEP?tag('Einzelpreise ausgeblendet'):'',p.kz==='OPT'?tag('Option','warn'):p.kz==='ALT'?tag('Alternative','warn'):''].join(' ')+(c.wg?` <span class="${ndCls(c.wg,p).trim()}"${ndAttr(c.wg,g.i)}>${ndTag(c.wg)}</span>`:''),lt=rtText(p.text);
       o+=akk('pg-'+p.id,`<span class="pgt"${c.ed?` data-act="pbear" data-i="${g.i}" role="button" title="Gruppe bearbeiten"`:''}><span class="pnr">${c.pnr[p.id]||''}</span> ${esc(p.bez)||'Gruppe'}${c.ed?' <span class="kzed">✎</span>':''}</span>`,
         (lt?`<div class="pgx mut">${esc(lt)}</div>`:'')+(inn||'<p class="mut" style="margin:6px 0">Keine Positionen in dieser Gruppe.</p>'),{offen:true,zusatz:t,kopf:`<span class="sp"></span>${ohneP?'':`<b id="gs${g.i}">${fmt(gruppePreis(p,c.gi))}</b>`}${c.ed?posMehr(g.i):''}`})}
     else o+=inn;inn=''};
@@ -4244,35 +4247,36 @@ const fussZeilen=f=>[[f.name,f.strasse,(f.plz+' '+f.ort).trim()].filter(Boolean)
 const fusszeile=fz=>`<div class="ft" data-fz="${esc(JSON.stringify(fz))}">${fz.map(esc).join('<br>')}</div>`;
 const ftZeilen=el=>{const e=el?.querySelector('.ft');if(!e)return null;try{return JSON.parse(e.dataset.fz)}catch(x){return fussZeilen(S().firma)}};
 function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute Ausgabe, P0 n)
-  const f=S().firma,k=b.fest&&b.adresse?b.adresse:adressSnapshot(kontakt(b.kontaktId)),s=summen(b),t=T[b.typ],ohneP=OHNE_PREIS.includes(b.typ);
+  const f=S().firma,k=b.fest&&b.adresse?b.adresse:adressSnapshot(kontakt(b.kontaktId)),s=summen(b),t=T[b.typ];
   const fx=fixAktiv(b),fv=x=>fx?fx[x]||'':x==='bearbeiter'?S().bearbeiter:f[x]; // eingefrorene Werte ohne Rückfall auf die aktuellen Einstellungen
-  const dp=dOpt(b); // Druckprofil der Belegart mit den Abweichungen des Belegs (festgeschrieben: Schnappschuss b.druckFix)
+  const dp=dOpt(b),ohneP=OHNE_PREIS.includes(b.typ)||!dp.preise; // Druckprofil der Belegart mit den Abweichungen des Belegs (festgeschrieben: Schnappschuss b.druckFix); ohne Preise: LS, WE bzw. druck.preise aus (P3)
   edit=edit&&!b.fest;
   // bearbeitbares Feld in der Vorschau (key: h:<feld> | p:<index>:<feld>)
   const ed=(key,val,ph='',ml=false)=>edit?`<span class="ed${ml?' ml':''}" contenteditable="true" spellcheck="true" data-ed="${key}" data-ph="${esc(ph)}">${ml?rt(val):esc(val)}</span>`:(ml?rt(val):esc(val));
   const pi=p=>b.pos.indexOf(p),gi=s.gi,pnr=posNummern(b);
+  const nm=dp.nullMenge==='aus'||(dp.nullMenge==='ep'&&!RE_V.includes(b.typ))?dp.nullMenge:'',weg=nullWeg(b,nm),oEP=g=>!!g.ohneEP||!dp.epGrp,str=dp.striche?'–':''; // Menge 0, Einzelpreise in Gruppen, Striche (P3)
   const opt_=p=>p.art==='G'?!!p.kz:p.art==='T'?false:!!effKz(p,gi);
   const haupt=b.pos.filter(p=>!opt_(p)),nebn=b.pos.filter(p=>opt_(p));
   const mehrSt=s.steuern.length>1,rab=showRab(b),ls=!!b.optLS&&!ohneP;
   const ncol=4+(ohneP?0:(ls?2:0)+1+(rab?1:0)+(mehrSt?1:0)+1);
   const zeile=p=>{
-    const i=pi(p);
+    const i=pi(p);if(weg.has(p.id))return''; // Menge 0 nicht drucken (P3)
     if(p.art==='T')return`<tr><td></td><td colspan="${ncol-1}" class="lt">${ed(`p:${i}:text`,p.text,'Text …',true)}</td></tr>`;
-    if(p.art==='G'){const zeigP=!ohneP&&(+p.pauschal>0||p.ohneEP||gsA);
+    if(p.art==='G'){const zeigP=!ohneP&&(+p.pauschal>0||oEP(p)||gsA);
       return`<tr class="grpz"><td><b>${pnr[p.id]}</b></td><td colspan="${ncol-(zeigP?2:1)}"><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Gruppe')}</b>${p.text||edit?`<div class="lt">${ed(`p:${i}:text`,p.text,'Gruppentext …',true)}</div>`:''}</td>${zeigP?`<td class="n"><b>${fmt(gruppePreis(p,gi))}</b></td>`:''}</tr>`}
-    const g=gi.grp[p.id],ohne=ohneP||(g&&(+g.pauschal>0||g.ohneEP));
-    const pr=ohneP?'':ohne?`<td colspan="${ncol-4}"></td>`:`${ls?`<td class="n">${edit?ed(`p:${i}:epL`,fmt(p.epL)):fmt(p.epL)}</td><td class="n">${edit?ed(`p:${i}:epS`,fmt(p.epS)):fmt(p.epS)}</td>`:''}<td class="n">${edit&&!ls?ed(`p:${i}:ep`,fmt(p.ep)):fmt(p.ep)}</td>${rab?`<td class="n">${edit?ed(`p:${i}:rabatt`,+p.rabatt?fmtQ(p.rabatt):'','%'):(+p.rabatt?fmtQ(p.rabatt)+' %':'')}</td>`:''}${mehrSt?`<td class="n">${esc(stDef(b,p.steuer).satz)} %</td>`:''}<td class="n">${fmt(posGP(p))}</td>`;
+    const g=gi.grp[p.id],ohne=ohneP||(g&&(+g.pauschal>0||oEP(g))),na=nm==='ep'&&!ohneP&&!(+p.menge); // Einheitspreis: Menge „n. A.“, ohne Gesamtpreis (P3)
+    const pr=ohneP?'':ohne?(str?`${ls?'<td class="n">–</td><td class="n">–</td>':''}<td class="n">–</td>${rab?'<td></td>':''}${mehrSt?'<td></td>':''}<td class="n">–</td>`:`<td colspan="${ncol-4}"></td>`):`${ls?`<td class="n">${edit?ed(`p:${i}:epL`,fmt(p.epL)):fmt(p.epL)}</td><td class="n">${edit?ed(`p:${i}:epS`,fmt(p.epS)):fmt(p.epS)}</td>`:''}<td class="n">${edit&&!ls?ed(`p:${i}:ep`,fmt(p.ep)):fmt(p.ep)}</td>${rab?`<td class="n">${edit?ed(`p:${i}:rabatt`,+p.rabatt?fmtQ(p.rabatt):'','%'):(+p.rabatt?fmtQ(p.rabatt)+' %':'')}</td>`:''}${mehrSt?`<td class="n">${esc(stDef(b,p.steuer).satz)} %</td>`:''}<td class="n">${na?str:fmt(posGP(p))}</td>`;
     return`<tr><td>${pnr[p.id]}</td><td><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Bezeichnung')}</b>${(()=>{const ln=t.b==='E'?(fx?p.lnr||fx.lnr?.[p.id]||lnrEk(b,p):p.lnr||lnrStamm(b,p)||(!b.fest&&erw('snapshot')?lnrEk(b,p):'')):'';return ln?` <span style="color:#555">(Ihre Art.-Nr. ${esc(ln)})</span>`:p.nr?` <span style="color:#555">(${esc(p.nr)})</span>`:''})()}${b.ltDruck!==false&&(p.text||edit)?`<div class="lt">${ed(`p:${i}:text`,p.text,'Langtext …',true)}</div>`:''}</td>
-    <td class="c">${edit?ed(`p:${i}:menge`,fmtQ(p.menge)):fmtQ(p.menge)}</td><td class="c">${esc(p.einheit)}</td>${pr}</tr>`;
+    <td class="c">${edit?ed(`p:${i}:menge`,na?'':fmtQ(p.menge),na?'n. A.':''):na?'n. A.':fmtQ(p.menge)}</td><td class="c">${esc(p.einheit)}</td>${pr}</tr>`;
   };
   // Gruppensumme (P2, dp.grpSumme): am Ende (Standard), am Anfang im Gruppenkopf, beides oder keine (Options-/Alternativgruppen dann weiter am Ende); Beschriftung dp.grpSumLbl
   const gs=['anfang','beide','aus'].includes(dp.grpSumme)?dp.grpSumme:'ende',gsA=gs==='anfang'||gs==='beide',gsE=g=>gs==='ende'||gs==='beide'||(gs==='aus'&&!!g.kz);
   const gsLbl=g=>esc(dp.grpSumLbl||DRUCK_STD.grpSumLbl).replace(/\{Nr\}/g,()=>pnr[g.id]).replace(/\{Bez\}/g,()=>esc(g.bez));
   // Zeilen inkl. Gruppensummen (bei Gruppen ohne Pauschalpreis und mit Einzelpreisen)
-  const tr=liste=>{let o='',g=null;const ende=()=>{if(g&&!ohneP&&!(+g.pauschal>0)&&!g.ohneEP&&gsE(g))o+=`<tr class="gsum"><td></td><td colspan="${ncol-2}">${gsLbl(g)}</td><td class="n">${fmt(gi.sumG[g.id])}</td></tr>`};
+  const tr=liste=>{let o='',g=null;const ende=()=>{if(g&&!weg.has(g.id)&&!ohneP&&!(+g.pauschal>0)&&!oEP(g)&&gsE(g))o+=`<tr class="gsum"><td></td><td colspan="${ncol-2}">${gsLbl(g)}</td><td class="n">${fmt(gi.sumG[g.id])}</td></tr>`};
     for(const p of liste){if(p.art==='G'){ende();g=p}o+=zeile(p)}ende();return o};
   // Zusammenfassung der Titel (P2, dp.zus): Summe je Gruppe ohne Optionen/Alternativen vor dem Summenblock; entfällt, wenn sie nicht den Nettobetrag ergibt
-  const zs=(()=>{if(ohneP||!['auto','immer'].includes(dp.zus))return'';const G=haupt.filter(p=>p.art==='G');if(G.length<(dp.zus==='auto'?2:1))return'';
+  const zs=(()=>{if(ohneP||!['auto','immer'].includes(dp.zus))return'';const G=haupt.filter(p=>p.art==='G'&&!weg.has(p.id));if(G.length<(dp.zus==='auto'?2:1))return'';
     const og=haupt.filter(p=>!isInfo(p)&&!gi.grp[p.id]),Z=[...(og.length?[['','Positionen ohne Gruppe',sum(og,posGP)]]:[]),...G.map(g=>[pnr[g.id],esc(g.bez),gruppePreis(g,gi)])];
     if(Math.abs(sum(Z,z=>z[2])-s.netto)>0.005)return'';
     return`<table class="zs"><tr><th colspan="2">Zusammenfassung</th><th class="n">Gesamt €</th></tr>${Z.map(([n,t,v])=>`<tr><td>${n}</td><td>${t}</td><td class="n">${fmt(v)}</td></tr>`).join('')}</table>`})();
@@ -4285,23 +4289,23 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   const info=[[datLbl,dAT(b.datum)],t.b==='E'&&k.kdNrLief?['Unsere Kunden-Nr.',k.kdNrLief]:[t.b==='V'?'Kunden-Nr.':'Lieferanten-Nr.',k.nr],dp.nrInfo?[NRL[b.typ]||'Beleg-Nr.',nrTxt,RE_V.includes(b.typ)?dp.nrHinweisRE:dp.nrHinweis]:null,k.uid?['Ihre UID',k.uid]:null,b.typ==='ER'?['Rechnung Lief.',b.fremdNr]:null,b.fremdNr&&b.typ==='BE'?['Ihr Angebot',b.fremdNr]:null,b.leistung||(edit&&mitLeistung)?['Leistung',{h:ed('h:leistung',b.leistung,'TT.MM.JJJJ')}]:null,b.gueltigBis?[dp.lblGueltig||'Gültig bis',dAT(b.gueltigBis)]:null,b.liefertermin?['Liefertermin',dAT(b.liefertermin)]:null,fv('bearbeiter')?['Ansprechperson',fv('bearbeiter')]:null,fv('mail')?['E-Mail',fv('mail')]:null,fv('tel')?['Telefon',fv('tel')]:null].filter(Boolean);
   let zb='';
   if(t.re&&t.b==='V'&&b.typ!=='GS'){zb=`Zahlbar bis ${dAT(faellig(b))} ohne Abzug`+(+b.skonto?`, bei Zahlung bis ${dAT(addDays(b.datum,b.skontoTage))} abzüglich ${fmtQ(b.skonto)} % Skonto`:'')+'.'}
-  else if(['AN','AB','PR'].includes(b.typ)){zb=`Zahlungsbedingungen: ${b.zahlungsziel} Tage netto`+(+b.skonto?`, ${b.skontoTage} Tage ${fmtQ(b.skonto)} % Skonto`:'')+'. Alle Preise in EUR zuzüglich gesetzlicher Umsatzsteuer.'}
+  else if(!ohneP&&['AN','AB','PR'].includes(b.typ)){zb=`Zahlungsbedingungen: ${b.zahlungsziel} Tage netto`+(+b.skonto?`, ${b.skontoTage} Tage ${fmtQ(b.skonto)} % Skonto`:'')+'. Alle Preise in EUR zuzüglich gesetzlicher Umsatzsteuer.'}
   return`<div class="doc">
   ${b.fest?'':'<div class="wm">ENTWURF – nicht gültig</div>'}
   ${briefkopf(f)}
   <div class="adr"><div class="to">${esc(k.name)}<br>${k.zusatz?esc(k.zusatz)+'<br>':''}${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.land&&k.land!=='Österreich'?'<br>'+esc(k.land):''}</div>
   <div class="info">${dp.infoTab?`<table class="infot">${info.map(([a,v,h])=>`<tr><td>${esc(a)}:</td><td>${v&&v.h!=null?v.h:esc(v)}${h?`<div class="nrh">${esc(h)}</div>`:''}</td></tr>`).join('')}</table>`:info.map(([a,v,h])=>`<div>${esc(a)}: ${v&&v.h!=null?v.h:esc(v)}</div>${h?`<div class="nrh">${esc(h)}</div>`:''}`).join('')}</div></div>
-  ${o.dup?'<div class="dupl">DUPLIKAT</div>':''}<h3>${esc(t.bez.toUpperCase())}${dp.nrInfo?'':` NR.: ${esc(nrTxt)}`}</h3>
+  ${o.dup?'<div class="dupl">DUPLIKAT</div>':''}<h3>${esc(((!RE_V.includes(b.typ)&&dp.titel)||t.bez).toUpperCase())}${dp.nrInfo?'':` NR.: ${esc(nrTxt)}`}</h3>
   ${b.betreff||edit?`<div>Projekt: ${ed('h:betreff',b.betreff,'Betreff / Projekt')}</div>`:''}${b.bezug||edit?`<div>Bezug: ${ed('h:bezug',b.bezug,'z. B. Ihre Anfrage vom …')}</div>`:''}
   ${b.kopf||edit?`<div class="txt">${ed('h:kopf',b.kopf,'Kopftext …',true)}</div>`:''}
   <table class="p"><thead>${th}</thead><tbody>${tr(haupt)}</tbody></table>
-  ${zs}${ohneP?'':`<table class="tot"><tr><td>Nettobetrag</td><td class="n">${fmt(s.netto)} €</td></tr>${ls?`<tr><td style="font-size:8.5pt">davon Lohn ${fmt(s.lohn)} € · Sonstiges ${fmt(s.sonst)} €${Math.abs(s.netto-s.lohn-s.sonst)>0.005?` · ohne Aufteilung (Gruppenpreise) ${fmt(s.netto-s.lohn-s.sonst)} €`:''}</td><td></td></tr>`:''}
-  ${s.steuern.map(x=>`<tr><td>${x.satz?`zzgl. Umsatzsteuer ${fmtQ(x.satz)} %${mehrSt?' auf '+fmt(x.basis):''}`:esc(x.bez)+' '+fmt(x.basis)}</td><td class="n">${fmt(x.betrag)} €</td></tr>`).join('')}
-  <tr class="b g"><td>Gesamtbetrag</td><td class="n">${fmt(s.brutto)} €</td></tr>
-  ${s.abz.map(a=>`<tr><td>abzgl. ${T[a.typ].bez} ${esc(a.nr)} vom ${dAT(a.datum)}<br><span style="font-size:8pt">netto ${fmt(a.netto)}, USt ${fmt(sum(a.steuern,x=>x.betrag))}</span></td><td class="n">−${fmt(a.brutto)} €</td></tr>`).join('')}
-  ${s.abz.length?`<tr class="b"><td>Zu zahlender Betrag</td><td class="n">${fmt(s.zahlbar)} €</td></tr>`:''}</table>`}
+  ${zs}${ohneP||!dp.summen?'':(eu=>`<table class="tot"><tr><td>${esc(dp.lblNetto||'Nettobetrag')}</td>${eu(fmt(s.netto))}</tr>${ls?`<tr><td style="font-size:8.5pt">davon Lohn ${fmt(s.lohn)} € · Sonstiges ${fmt(s.sonst)} €${Math.abs(s.netto-s.lohn-s.sonst)>0.005?` · ohne Aufteilung (Gruppenpreise) ${fmt(s.netto-s.lohn-s.sonst)} €`:''}</td><td></td>${dp.euroSp?'<td></td>':''}</tr>`:''}
+  ${s.steuern.map(x=>`<tr><td>${x.satz?`${esc(dp.lblUSt||'zzgl. Umsatzsteuer')} ${fmtQ(x.satz)} %${mehrSt?' auf '+fmt(x.basis):''}`:esc(x.bez)+' '+fmt(x.basis)}</td>${eu(fmt(x.betrag))}</tr>`).join('')}
+  <tr class="b g"><td>${esc(dp.lblBrutto||'Gesamtbetrag')}</td>${eu(fmt(s.brutto))}</tr>
+  ${s.abz.map(a=>`<tr><td>abzgl. ${T[a.typ].bez} ${esc(a.nr)} vom ${dAT(a.datum)}<br><span style="font-size:8pt">netto ${fmt(a.netto)}, USt ${fmt(sum(a.steuern,x=>x.betrag))}</span></td>${eu('−'+fmt(a.brutto))}</tr>`).join('')}
+  ${s.abz.length?`<tr class="b"><td>Zu zahlender Betrag</td>${eu(fmt(s.zahlbar))}</tr>`:''}</table>`)(v=>dp.euroSp?`<td class="n">${v}</td><td class="eu">€</td>`:`<td class="n">${v} €</td>`)}
   ${hinweise.map(h=>`<div class="txt"><b>${esc(h)}</b></div>`).join('')}
-  ${nebn.length&&!ohneP?`<div style="margin-top:6mm"><b>Optionale Positionen / Alternativen</b> (nicht in der Gesamtsumme enthalten)</div><table class="p"><thead>${th}</thead><tbody>${tr(nebn)}</tbody></table>`:''}
+  ${(n=>n?`<div style="margin-top:6mm"><b>Optionale Positionen / Alternativen</b>${ohneP?'':' (nicht in der Gesamtsumme enthalten)'}</div><table class="p"><thead>${th}</thead><tbody>${n}</tbody></table>`:'')(nebn.length&&!OHNE_PREIS.includes(b.typ)?tr(nebn):'')}
   ${zb?`<div class="txt">${zb}</div>`:''}${b.typ==='AN'&&privat&&dp.kvTxt?`<div class="txt">${esc(dp.kvTxt)}</div>`:''}
   ${b.typ==='LS'?'<div class="txt" style="margin-top:12mm">Ware vollständig und unbeschädigt erhalten:<br><br><br>______________________________<br>Datum, Unterschrift</div>':''}
   ${b.fuss||edit?`<div class="txt">${ed('h:fuss',b.fuss,'Fußtext …',true)}</div>`:''}
@@ -4320,6 +4324,18 @@ const DRUCKOPT=[
   {k:'grpSumme',std:'ende',p:'Zusammenfassung und Gruppensummen (P2)',l:'Gruppensumme',opts:[['ende','am Ende der Gruppe'],['anfang','am Anfang (im Gruppenkopf)'],['beide','am Anfang und am Ende'],['aus','keine (nur mit Zusammenfassung)']],preis:true,info:'Gruppen mit Pauschalpreis oder ohne Einzelpreise zeigen ihren Preis immer im Gruppenkopf. Options- und Alternativgruppen zeigen ihre Summe bei „keine“ weiter am Ende (sie stehen nicht in der Zusammenfassung).',
     warn:o=>o.grpSumme==='aus'&&o.zus==='aus'?'Gruppensumme „keine“ ohne Zusammenfassung der Titel: Die Summen der Gruppen erscheinen dann nirgends.':''},
   {k:'grpSumLbl',std:'Summe {Nr} {Bez}',p:'Zusammenfassung und Gruppensummen (P2)',l:'Beschriftung der Gruppensumme',typ:'txt',ph:'Summe {Nr} {Bez}',preis:true,info:'{Nr} = Gruppennummer, {Bez} = Gruppenbezeichnung; leer = Standard.'},
+  // Preise und Summen (P3); Rechnungsarten: Preise und Summenblock gesperrt (DRUCK_RE)
+  {k:'preise',std:true,p:'Preise und Summen (P3)',l:'Preise drucken',typ:'chk',preis:true,info:'aus: Leistungsbeschreibung bzw. Preisanfrage ohne Einzel- und Gesamtpreise, Summenblock und Zahlungsbedingungen (nur Darstellung, die Summen im Beleg bleiben). Bei Rechnungen immer ein (§ 11 UStG).'},
+  {k:'summen',std:true,p:'Preise und Summen (P3)',l:'Summenblock drucken',typ:'chk',preis:true,info:'Nettobetrag, Umsatzsteuer und Gesamtbetrag am Ende; bei Rechnungen immer ein (Entgelt, Steuersatz und Steuerbetrag – § 11 Abs. 1 Z 3 lit. e/f UStG).'},
+  {k:'titel',std:'',p:'Preise und Summen (P3)',l:'Überschrift statt Belegart',typ:'txt',max:30,nur:['AN','AB','PR','LS','BE','WE'],ph:'z. B. PREISANFRAGE',info:'z. B. „PREISANFRAGE“ bei einer Bestellung ohne Preise oder „LEISTUNGSBESCHREIBUNG“; Nummer, Nummernkreis und Dateiname bleiben; leer = Belegart'},
+  {k:'nullMenge',std:'zeigen',p:'Preise und Summen (P3)',l:'Positionen mit Menge 0',opts:[['zeigen','drucken'],['aus','nicht drucken'],['ep','als Einheitspreis (Menge „n. A.“)']],info:'„nicht drucken“: auch Gruppen, deren Positionen alle Menge 0 haben (außer mit Pauschalpreis); die Nummern behalten ihre Lücken, damit der Bezug zu Angebot und LV stimmt; im Editor sind diese Positionen grau markiert. „als Einheitspreis“: Menge „n. A.“ (nach Aufwand) ohne Gesamtpreis, z. B. für Einheitspreis- und Regieangebote; nicht bei Rechnungen (dort wie „drucken“).',
+    warn:o=>o.nullMenge==='ep'&&o.preise===false?'Positionen mit Menge 0 „als Einheitspreis“ wirkt nur, wenn Preise gedruckt werden.':''},
+  {k:'epGrp',std:true,p:'Preise und Summen (P3)',l:'Einzelpreise in Gruppen drucken',typ:'chk',preis:true,info:'aus: Positionen in Gruppen ohne Einzel- und Gesamtpreis, der Gruppenpreis steht im Gruppenkopf (wie „Einzelpreise ausblenden“ je Gruppe, hier für alle Gruppen). Auch bei Rechnungen zulässig.'},
+  {k:'striche',std:false,p:'Preise und Summen (P3)',l:'Striche statt leerer Preisfelder',typ:'chk',preis:true,info:'„–“ in den Preisspalten von Positionen ohne eigenen Preis (Pauschalgruppe, ausgeblendete Einzelpreise, Einheitspreis ohne Gesamtpreis)'},
+  {k:'lblNetto',std:'Nettobetrag',p:'Preise und Summen (P3)',l:'Beschriftung „Nettobetrag“',typ:'txt',max:40,preis:true,info:'leer = Standard'},
+  {k:'lblUSt',std:'zzgl. Umsatzsteuer',p:'Preise und Summen (P3)',l:'Beschriftung „zzgl. Umsatzsteuer“',typ:'txt',max:40,preis:true,info:'Steuersatz und Steuerbetrag werden immer angehängt (z. B. „… 20 %“); leer = Standard'},
+  {k:'lblBrutto',std:'Gesamtbetrag',p:'Preise und Summen (P3)',l:'Beschriftung „Gesamtbetrag“',typ:'txt',max:40,preis:true,info:'leer = Standard'},
+  {k:'euroSp',std:false,p:'Preise und Summen (P3)',l:'€ im Summenblock in eigener Spalte',typ:'chk',preis:true,info:'Beträge rechtsbündig, das €-Zeichen in einer schmalen Spalte daneben'},
   // Infoblock, Grußformel, Fußzeile, Kostenvoranschlag (P5)
   {k:'nrInfo',std:false,p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Beleg-Nr. im Infoblock',typ:'chk',info:'Die Nummer steht im Infoblock nach der Kunden-Nr. (z. B. „Angebots-Nr.“) mit einem Hinweis darunter; die Überschrift zeigt dann nur die Belegart.'},
   {k:'nrHinweis',std:'Bei Rückfragen bitte angeben',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Hinweis unter der Beleg-Nr.',typ:'txt',nur:Object.keys(T).filter(t=>!RE_V.includes(t)),info:'nur mit „Beleg-Nr. im Infoblock“; leer = kein Hinweis'},
@@ -4339,8 +4355,14 @@ const fzBreite=s=>{const c=fzBreite.c||(fzBreite.c=document.createElement('canva
 const DRUCK_RE={preise:true,summen:true}; // Rechnungsarten (RE_V): Gesamtpreise und Summenblock immer (Entgelt, Steuersatz, Steuerbetrag – § 11 Abs. 1 Z 3 lit. e/f UStG)
 const DRUCK_STD={...DRUCK_RE,...Object.fromEntries(DRUCKOPT.map(x=>[x.k,x.std]))};
 const dGilt=(x,typ)=>(!x.nur||x.nur.includes(typ))&&!(x.preis&&OHNE_PREIS.includes(typ)); // Option bei dieser Belegart einstellbar
-const dProfil=typ=>({...DRUCK_STD,...(S().druckprofil?.[typ]||{})});
+const dProfil=typ=>({...DRUCK_STD,...(S().druckprofil?.[typ]||{}),...(RE_V.includes(typ)?DRUCK_RE:{})}); // Rechnungsarten: gesperrte Werte (DRUCK_RE) wie gedruckt
 const dOpt=b=>{const o=b.fest?{...DRUCK_STD,...(b.druckFix||{})}:{...DRUCK_STD,...(erw('druckprofil')?{...(S().druckprofil?.[b.typ]||{}),...(b.druck||{})}:{})};if(RE_V.includes(b.typ))Object.assign(o,DRUCK_RE);return o};
+/* Positionen mit Menge 0 nicht drucken (P3, druck.nullMenge 'aus'): Positionen ohne Menge, dazu Gruppen ohne Pauschalpreis, deren Positionen alle Menge 0 haben,
+   samt Gruppen- und Textzeilen (die Nummern behalten ihre Lücken). Editor: Markierung „wird nicht gedruckt“ (data-nd, Klasse nd), updateCalc() schaltet sie um */
+function nullWeg(b,nm){const w=new Set();if(nm!=='aus')return w;let g=null,inn=[];
+  const zu=()=>{if(g&&!(+g.pauschal>0)&&inn.some(p=>!isInfo(p))&&inn.every(p=>isInfo(p)||w.has(p.id)))[g,...inn].forEach(p=>w.add(p.id))};
+  for(const p of b.pos){if(p.art==='G'){zu();g=p;inn=[];continue}if(!isInfo(p)&&!(+p.menge))w.add(p.id);if(g)inn.push(p)}zu();return w}
+const ndSet=b=>dOpt(b).nullMenge==='aus'?nullWeg(b,'aus'):null,ndAttr=(w,i)=>w?` data-nd="${i}"`:'',ndCls=(w,p)=>w?.has(p.id)?' nd':'',ndTag=w=>w?'<span class="ndh">wird nicht gedruckt</span>':'';
 const dStdTxt=x=>x.typ==='chk'?(x.std?'ein':'aus'):x.opts?x.opts.find(o=>o[0]===x.std)?.[1]||x.std:x.std?`„${x.std}“`:'leer';
 // Knopf im Beleg (Formular: „Druckoptionen …“, über der Vorschau: „Druckformat …“)
 const dKnopf=(b,l)=>erw('druckprofil')&&DRUCKOPT.some(x=>dGilt(x,b.typ))?`<button class="s" data-act="dopt"${b.fest?' disabled title="Festgeschrieben – die Darstellung wurde beim Festschreiben eingefroren"':' title="Darstellung dieses Belegs in Vorschau, Druck und PDF (Abweichungen vom Druckprofil der Belegart)"'}>${l}${!b.fest&&b.druck&&Object.keys(b.druck).length?' (geändert)':''}</button>`:'';

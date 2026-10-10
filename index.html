@@ -4482,16 +4482,18 @@ const phH=(h,w)=>w?String(h).replace(PHRE,(m,n)=>n in w?esc(w[n]):m):h; // ferti
 // „{…} Platzhalter“: Pop-up mit allen Platzhaltern (im Beleg mit den aktuellen Werten), eingefügt an der Schreibmarke des zuletzt bearbeiteten Textfelds (PHZ)
 const PHZ_SEL='[data-ed="h:kopf"],[data-ed="h:fuss"],[data-ed="h:anrede"],[data-h="anrede"],textarea[data-o="tx"],[data-f^="mailVorlage."],input[data-f^="druckprofil."]:not([type=checkbox]),textarea[data-f^="druckprofil."]';
 let PHZ=null;
-document.addEventListener('focusin',e=>{const t=e.target;if(t.matches?.(PHZ_SEL))PHZ={el:t,ed:t.dataset.ed};else if(t.matches?.('input,textarea,select,[contenteditable="true"]'))PHZ=null});
+document.addEventListener('focusin',e=>{const t=e.target;if(t.matches?.(PHZ_SEL))PHZ={el:t,ed:t.dataset.ed,sel:['o','t','f','h','i','id'].filter(k=>t.dataset[k]!=null).map(k=>`[data-${k}="${CSS.escape(t.dataset[k])}"]`).join(''),m:!!t.closest('.modal')};else if(t.matches?.('input,textarea,select,[contenteditable="true"]'))PHZ=null});
 document.addEventListener('selectionchange',()=>{const a=document.activeElement;if(PHZ&&a===PHZ.el&&a.isContentEditable){const s=getSelection();if(s.rangeCount&&a.contains(s.anchorNode))PHZ.r=s.getRangeAt(0).cloneRange()}});
+for(const ev of ['selectionchange','input','keyup','mouseup'])document.addEventListener(ev,()=>{const a=document.activeElement;if(PHZ&&a===PHZ.el&&!a.isContentEditable&&a.selectionStart!=null){PHZ.a=a.selectionStart;PHZ.e=a.selectionEnd}},true); // Schreibmarke in Eingabefeldern merken: ein Pop-up (z. B. „Texte …“) zeichnet das Feld nach der Änderung neu
 const phKnopf=()=>'<button class="s" data-act="phpop" title="Platzhalter einfügen (z. B. {Kunde}, {Nr}) – an der Schreibmarke des zuletzt bearbeiteten Textfelds; bei der Ausgabe durch die Werte des Belegs ersetzt">{…} Platzhalter</button>';
 const phMenue=()=>{const b=curBeleg(),w=b?phWerte(b):null;return PLATZH.map(([n,l])=>({l:`{${n}} – ${w?w[n]||'(leer)':l}`,act:'phins',d:{n},titel:l}))};
 function phEinfuegen(n){const z=PHZ,t=`{${n}}`;let el=z?.el;
   if(el&&!el.isConnected&&z.ed){el=[...document.querySelectorAll(`[data-ed="${z.ed}"]`)].sort((a,c)=>!!a.closest('#vorschau')-!!c.closest('#vorschau'))[0];if(el?.dataset.roh!=null){el.innerHTML=el.dataset.roh;el.removeAttribute('data-roh')}if(el)z.r=null} // Vorschau neu gezeichnet: Formularfeld bzw. neues Feld, am Ende einfügen
+  else if(el&&!el.isConnected&&z.sel){const L=[...document.querySelectorAll(z.sel)];el=L.find(x=>!!x.closest('.modal')===z.m)||L[0];if(el&&z.a!=null&&z.a<=el.value.length)try{el.setSelectionRange(z.a,z.e)}catch(x){}} // Eingabefeld neu gezeichnet (Pop-up nach der Änderung): gemerkte Schreibmarke
   if(!el||!el.isConnected||el.disabled){alert('Bitte zuerst in ein Textfeld klicken (z. B. Kopftext), dann den Platzhalter wählen.');return}
   if(el.isContentEditable){let r=z.r&&el.contains(z.r.startContainer)?z.r:null;if(!r){r=document.createRange();r.selectNodeContents(el);r.collapse(false)}
     r.deleteContents();const tn=document.createTextNode(t);r.insertNode(tn);r.setStartAfter(tn);r.collapse(true);PHZ={el,ed:z.ed,r};edUebernehmen(el)}
-  else{const v=el.value,a=el.selectionStart??v.length,e=el.selectionEnd??a;el.value=v.slice(0,a)+t+v.slice(e);try{el.setSelectionRange(a+t.length,a+t.length)}catch(x){}el.dispatchEvent(new Event('change',{bubbles:true}))}}
+  else{const v=el.value,a=el.selectionStart??v.length,e=el.selectionEnd??a;el.value=v.slice(0,a)+t+v.slice(e);try{el.setSelectionRange(a+t.length,a+t.length)}catch(x){}PHZ={...z,el,a:a+t.length,e:a+t.length};el.dispatchEvent(new Event('change',{bubbles:true}))}}
 // E-Mail-Vorlage (Einstellungen, S().mailVorlage {betreff,text}; leer = Standardtext): Platzhalter wie in den Belegtexten
 const MAIL_BSP='{Anrede}\n\nanbei erhalten Sie {Belegart} {Nr} („{Betreff}“).\n\nFür Rückfragen stehen wir gerne zur Verfügung.\n\nMit freundlichen Grüßen\n{Bearbeiter}\n{Firma}';
 const mailKarte=()=>{const m=S().mailVorlage||{};return`<div class="card"><h2>E-Mail-Vorlage</h2>${(t=>kmp()?`<p style="margin:0 0 6px">${hilfe(t)}</p>`:`<p class="mut" style="margin-top:0">${t}</p>`)('Betreff und Text der E-Mail beim Versenden eines Belegs (✉ Senden); leer = Standardtext. Platzhalter wie {Anrede}, {Belegart}, {Nr} oder {Betreff} werden beim Versenden durch die Werte des Belegs ersetzt.')}
@@ -4820,7 +4822,7 @@ const ACT={
   kedit:async()=>{const b=curBeleg(),k=kontakt(b.kontaktId);if(!k)return;const va=briefAnrede(k),r=await kontaktPopup(k.typ==='L'||(k.typ==='KL'&&T[b.typ].b==='E')?'L':'K',{},k);if(r){konditionenUebernehmen(b,r,true);anrNeu(b,va,r);persist()}render()},
   anrk:()=>{const b=curBeleg();if(!b||b.fest||b.anrede==null)return;delete b.anrede;persist();render()}, // Briefanrede wieder aus dem Kontakt (P6)
   phpop:el=>{if(MPOP===el&&document.querySelector('.mpop')){closePop();return}menuePop(el,phMenue())},phins:el=>phEinfuegen(el.dataset.n), // Platzhalter einfügen (P8)
-  lnw:el=>{const b=curBeleg();if(!b||b.fest)return;const v=el.checked?'text':'ls',d={...(b.druck||{})};if(v===dProfil(b.typ).lohnNw)delete d.lohnNw;else d.lohnNw=v;if(Object.keys(d).length)b.druck=d;else delete b.druck;persist();render()}, // Lohnkostennachweis je Beleg (P9)
+  lnw:el=>{const b=curBeleg();if(!b||b.fest)return;const P=dProfil(b.typ).lohnNw,an=['text','privat'].includes(P),v=el.checked?(an?P:'text'):(an?'ls':P),d={...(b.druck||{})};if(v===P)delete d.lohnNw;else d.lohnNw=v;if(Object.keys(d).length)b.druck=d;else delete b.druck;persist();render()}, // Lohnkostennachweis je Beleg (P9)
   aopen:async el=>{const u=artikel(el.dataset.id).unterlagen[+el.dataset.i];try{await STORE.openFile(u)}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
   aldel:el=>{artikel(el.dataset.id).lieferanten.splice(+el.dataset.i,1);persist();render()},
   lgbook:()=>{const a=$('#lg-a').value,m=$('#lg-m').value,q=num($('#lg-q').value),p=$('#lg-p').value,t=$('#lg-t').value;if(!a){alert('Artikel wählen.');return}

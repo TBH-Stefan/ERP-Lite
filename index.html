@@ -1579,7 +1579,7 @@ function kopfFelder(b,teil=''){
   const kont=DB.kontakte.filter(k=>V_?k.typ!=='L':k.typ!=='K').sort((a,c)=>a.name.localeCompare(c.name));
   const rte=(key,val,ph)=>`<div class="rte" ${b.fest?'':'contenteditable="true"'} data-ed="${key}" data-ph="${esc(ph)}">${rt(val)}</div>`;
   const auftragOpts=()=>opt('','– kein Auftrag (Lager/Gemeinkosten) –',b.auftragId)+auftragsListe().map(a=>opt(a.id,auftragLabel(a.id),b.auftragId)).join('');
-  if(teil==='texte')return V_||b.typ==='BE'?`${anrFeld(b)}<div class="row"><label class="w2">Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label></div><div class="row"><label class="w2">Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>`:'';
+  if(teil==='texte')return V_||b.typ==='BE'?`${anrFeld(b)}<div class="row"><label class="w2">Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label></div><div class="row"><label class="w2">Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>${phB(b)}`:'';
   const K=`<div class="row">
       <label class="w2">${V_?'Kunde':'Lieferant'}<select data-h="kontaktId" ${dis}>${opt('','– wählen –',b.kontaktId)}${kont.map(k=>opt(k.id,k.name+(k.ort?' · '+k.ort:''),b.kontaktId)).join('')}${opt('__neu',V_?'+ Neuer Kunde …':'+ Neuer Lieferant …','')}</select>${b.kontaktId&&!b.fest?`<span style="display:flex;gap:6px;align-items:center;margin-top:4px"><button class="s" data-act="kedit">✎ ${V_?'Kundendaten':'Lieferantendaten'} bearbeiten</button>${kontaktFehlt(kontakt(b.kontaktId)).length?`<span class="err" style="font-size:12px">fehlt: ${kontaktFehlt(kontakt(b.kontaktId)).join(', ')}</span>`:''}${kontakt(b.kontaktId)?.kundenart==='privat'?tag('Privat'):''}</span>`:''}</label>
       <label class="w05">Datum<input type="date" data-h="datum" value="${b.datum}" ${dis}></label>
@@ -1604,7 +1604,7 @@ function kopfFelder(b,teil=''){
   return`<div class="card">
     ${K}
     ${Z}
-    ${V_||b.typ==='BE'?`${anrFeld(b)}<div class="row"><label>Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label><label>Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>`:''}
+    ${V_||b.typ==='BE'?`${anrFeld(b)}<div class="row"><label>Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label><label>Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>${phB(b)}`:''}
   </div>`}
 // Feld „Briefanrede“ im Beleg (P6, nur mit druck.briefAnrede): leer = automatisch aus dem Kontakt (als Platzhalter angezeigt), „↻ aus Kontakt“ verwirft die eigene Anrede
 const anrFeld=b=>dOpt(b).briefAnrede&&(T[b.typ].b==='V'||b.typ==='BE')?`<div class="row"><label class="w2">Briefanrede<input data-h="anrede" value="${esc(b.anrede||'')}" placeholder="${esc(anrAuto(b))}" ${b.fest?'disabled':''}></label>${b.fest?'':`<button class="s" data-act="anrk" style="align-self:flex-end;margin-bottom:6px" title="Eigene Briefanrede verwerfen – automatisch aus Anrede, Titel und Nachname des Kontakts bzw. aus der Briefanrede im Kontakt">↻ aus Kontakt</button>`}</div>`:'';
@@ -1783,6 +1783,7 @@ function edUebernehmen(el,next){
   if(key){const n=document.querySelector(`#vorschau [data-ed="${key}"]`);if(n){n.focus();const r=document.createRange();r.selectNodeContents(n);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r)}}
 }
 document.addEventListener('focusout',e=>{const el=e.target.closest?.('[data-ed]');if(el)edUebernehmen(el,e.relatedTarget?.closest?.('[data-ed]'))});
+document.addEventListener('focusin',e=>{const el=e.target.closest?.('[data-roh]');if(!el||!el.isContentEditable)return;el.innerHTML=el.dataset.roh;el.removeAttribute('data-roh');const r=document.createRange();r.selectNodeContents(el);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r)}); // Platzhalter (P8): zum Bearbeiten den Rohtext zeigen
 document.addEventListener('keydown',e=>{const el=e.target.closest?.('[data-ed]');if(el&&e.key==='Enter'&&!el.classList.contains('ml')&&!el.classList.contains('rte')){e.preventDefault();el.blur()}});
 document.addEventListener('paste',e=>{if(!e.target.closest?.('[data-ed]'))return;e.preventDefault();document.execCommand('insertText',false,(e.clipboardData||window.clipboardData).getData('text/plain'))});
 
@@ -3543,7 +3544,7 @@ LIVE.nk=el=>{const t=el.dataset.t;if(!T[t])return;
   livePop(`Nummernkreis und Texte – ${T[t].bez}`,()=>{const s=S(),j=String(new Date().getFullYear()),z=s.nk[t].zaehler[j]||0;
     return`<div class="row"><label class="w05">Präfix<input data-o="nk" data-t="${t}" data-f="prefix" value="${esc(s.nk[t].prefix)}"></label><label class="w05">Letzte Nummer ${j}<input type="number" data-o="nk" data-t="${t}" data-f="z" value="${z}"></label><span class="mut" style="flex:2;align-self:center">nächste Nummer: ${esc(s.nk[t].prefix)}-${j}-${String(z+1).padStart(4,'0')}</span></div>
     <div class="row"><label class="w2">Kopftext<textarea data-o="tx" data-t="${t}" data-f="kopf" style="height:110px">${esc(s.texte[t].kopf)}</textarea></label></div>
-    <div class="row"><label class="w2">Fußtext<textarea data-o="tx" data-t="${t}" data-f="fuss" style="height:110px">${esc(s.texte[t].fuss)}</textarea></label></div>`},{breit:true})};
+    <div class="row"><label class="w2">Fußtext<textarea data-o="tx" data-t="${t}" data-f="fuss" style="height:110px">${esc(s.texte[t].fuss)}</textarea></label></div><div class="bar" style="margin:4px 0 0">${phKnopf()}</div>`},{breit:true})};
 function erwKarteK(){const pNr=p=>{const m=String(p).match(/\(P(\d+)\s*([a-z]?)/);return m?+m[1]*100+(m[2]?m[2].charCodeAt(0)-96:0):1e6}; // wie erwKarte()
   const ab=ERW.filter(x=>erw(x.k)!==x.std),P=[...new Set(ERW.map(x=>x.p))].sort((a,c)=>pNr(a)-pNr(c));
   return`<div class="bar" style="margin:0 0 8px"><span>${ab.length?tag(ab.length+' vom Standard abweichend','warn'):tag('alle Schalter auf Standard','ok')} ${hilfe('Zusätzliche Funktionen, einzeln ein- und ausschaltbar. Der Standard entspricht dem bisherigen Verhalten (außer Fehlerbehebungen). Ausschalten wirkt sofort; gespeicherte Angaben bleiben erhalten und gelten beim Wiedereinschalten wieder.'+(ab.length?'<br>Abweichend: '+ab.map(x=>esc(x.l)).join(' · '):''))}</span><span class="sp"></span><button data-act="erwstd" ${ab.length?'':'disabled'}>Alle Schalter auf Standard</button></div>
@@ -3583,9 +3584,10 @@ V.einstellungen=()=>{
   ${akk('e-tf','Stundentarife',kmpH()?tfKarten():`<div class="card"><h2>Stundentarife</h2><table><thead><tr><th>Kürzel</th><th>Bezeichnung</th><th>Kostensatz €/h (intern)</th><th>Verkauf €/h</th><th></th></tr></thead><tbody>
   ${s.tarife.map((x,i)=>`<tr><td style="width:100px"><input data-o="tf" data-i="${i}" data-f="kz" value="${esc(x.kz)}"></td><td><input data-o="tf" data-i="${i}" data-f="bez" value="${esc(x.bez)}"></td><td><input type="number" step="any" data-o="tf" data-i="${i}" data-f="kosten" value="${x.kosten}"></td><td><input type="number" step="any" data-o="tf" data-i="${i}" data-f="vk" value="${x.vk}"></td><td><button class="s d" data-act="tfdel" data-i="${i}">✕</button></td></tr>`).join('')}
   </tbody></table><button style="margin-top:8px" data-act="tfadd">+ Tarif</button></div>`,{zusatz:esc(s.tarife.map(x=>x.kz).join(', '))})}
-  ${akk('e-nk','Nummernkreise &amp; Texte',kmp()?nkK():`<div class="card"><h2>Nummernkreise ${j}</h2><p class="mut" style="margin-top:0">Format PRÄFIX-JAHR-0001. „Letzte Nummer“ nur bei Umstieg setzen (z. B. letzte Rechnungsnummer aus Excel).</p><table><thead><tr><th>Beleg</th><th>Präfix</th><th>Letzte Nummer ${j}</th><th>Kopftext</th><th>Fußtext</th></tr></thead><tbody>
+  ${akk('e-nk','Nummernkreise &amp; Texte',kmp()?nkK():`<div class="card"><h2>Nummernkreise ${j}</h2><p class="mut" style="margin-top:0">Format PRÄFIX-JAHR-0001. „Letzte Nummer“ nur bei Umstieg setzen (z. B. letzte Rechnungsnummer aus Excel).</p><div class="bar" style="margin:0 0 6px">${phKnopf()}<span class="mut" style="font-size:13px">in Kopf- und Fußtext, z. B. {Anrede}, {Kunde}, {Nr} – ersetzt bei der Ausgabe</span></div><table><thead><tr><th>Beleg</th><th>Präfix</th><th>Letzte Nummer ${j}</th><th>Kopftext</th><th>Fußtext</th></tr></thead><tbody>
   ${Object.keys(T).map(t=>`<tr><td>${T[t].bez}</td><td style="width:80px"><input data-o="nk" data-t="${t}" data-f="prefix" value="${esc(s.nk[t].prefix)}"></td><td style="width:90px"><input type="number" data-o="nk" data-t="${t}" data-f="z" value="${s.nk[t].zaehler[j]||0}"></td><td><textarea data-o="tx" data-t="${t}" data-f="kopf">${esc(s.texte[t].kopf)}</textarea></td><td><textarea data-o="tx" data-t="${t}" data-f="fuss">${esc(s.texte[t].fuss)}</textarea></td></tr>`).join('')}
   </tbody></table></div>`,{zusatz:`Format PRÄFIX-${j}-0001`})}
+  ${akk('e-mail','E-Mail-Vorlage',mailKarte(),{zusatz:S().mailVorlage?.text||S().mailVorlage?.betreff?'eigene Vorlage':'Standardtext'})}
   ${kmp()?erwAkk():erwKarte()}`;
 };
 // Karte „Erweiterungen“: alle Funktionsschalter mit Beschreibung, Abweichungen vom Standard, Zurücksetzen je Paket bzw. alle
@@ -3602,7 +3604,7 @@ function dpKarte(){
   const feld=x=>{const a=`data-o="s" data-f="druckprofil.${typ}.${x.k}"${re&&x.k in DRUCK_RE?' disabled':''}`,v=w[x.k],kopf=`<b>${esc(x.l)}</b> <span class="mut">(Standard: ${esc(dStdTxt(x))})</span>${x.k in P?' '+tag('geändert','warn'):''}`,inf=x.info?(kmp()?' '+hilfe(esc(x.info)):`<span class="mut" style="display:block;font-size:12px">${esc(x.info)}</span>`):'';
     return x.typ==='chk'?`<label class="chk" style="margin-top:6px;flex:1 1 100%"><input type="checkbox" ${a} ${v?'checked':''}> <span>${kopf}${inf}</span></label>`
       :`<label style="flex:1 1 320px">${kopf}${x.max?` <span class="mut">höchstens ${x.max} Zeichen</span>`:''}${x.opts?`<select ${a}>${x.opts.map(([k,l])=>opt(k,l,v)).join('')}</select>`:x.typ==='ta'?`<textarea ${a} placeholder="${esc(x.ph||'')}" style="height:54px">${esc(v)}</textarea>`:`<input ${a} value="${esc(v)}" placeholder="${esc(x.ph||'')}"${x.max?` maxlength="${x.max}"`:''}>`}${inf}</label>`};
-  return`<div id="dprof" style="border-top:1px solid var(--line);margin-top:14px;padding-top:8px"><div class="bar" style="margin:0"><b>Druck &amp; Belegdarstellung</b><select data-o="ui" data-f="dpTyp" title="Belegart">${Object.keys(T).map(t=>opt(t,T[t].bez,typ)).join('')}</select>${Object.keys(P).length?tag(Object.keys(P).length+' vom Standard abweichend','warn'):tag('Standard','ok')}<span class="sp"></span>
+  return`<div id="dprof" style="border-top:1px solid var(--line);margin-top:14px;padding-top:8px"><div class="bar" style="margin:0"><b>Druck &amp; Belegdarstellung</b><select data-o="ui" data-f="dpTyp" title="Belegart">${Object.keys(T).map(t=>opt(t,T[t].bez,typ)).join('')}</select>${Object.keys(P).length?tag(Object.keys(P).length+' vom Standard abweichend','warn'):tag('Standard','ok')}<span class="sp"></span>${phKnopf()}
     <button class="s" data-act="dpre" title="Dieses Profil für Anzahlungs-, Teil-, Schlussrechnung, Rechnung und Gutschrift übernehmen">auf alle Rechnungsarten übertragen</button><button class="s" data-act="dpstd" ${Object.keys(P).length?'':'disabled'}>Standard wiederherstellen</button></div>
     ${(t=>kmp()?`<p style="margin:6px 0 0">${hilfe(t)}</p>`:`<p class="mut" style="margin:6px 0 0;font-size:13px">${t}</p>`)(`Darstellung in Vorschau, Druck, PDF und E-Mail je Belegart. Im Beleg legt „Druckoptionen …“ Abweichungen für diesen einen Beleg fest. Beim Festschreiben wird die Darstellung im Beleg eingefroren (Nachdruck wie das Original).${re?' Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG).':''}`)}
     ${erw('druckprofil')?'':'<div class="hint" style="margin:8px 0 0">Das Druckprofil ist ausgeschaltet (Schalter „Druckprofil je Belegart“ oben): Entwürfe werden im Standard-Aussehen gedruckt, festgeschriebene Belege mit ihrem Stand beim Festschreiben. Die Einstellungen hier bleiben gespeichert.</div>'}
@@ -4292,6 +4294,7 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   edit=edit&&!b.fest;
   // bearbeitbares Feld in der Vorschau (key: h:<feld> | p:<index>:<feld>)
   const ed=(key,val,ph='',ml=false)=>edit?`<span class="ed${ml?' ml':''}" contenteditable="true" spellcheck="true" data-ed="${key}" data-ph="${esc(ph)}">${ml?rt(val):esc(val)}</span>`:(ml?rt(val):esc(val));
+  const pw=dp.platzhalter!==false?phWerte(b,s):null,edP=(key,val,ph,ml=false)=>{const r=ml?rt(val):esc(val),a=phH(r,pw);return edit?`<span class="ed${ml?' ml':''}" contenteditable="true" spellcheck="true" data-ed="${key}" data-ph="${esc(ph)}"${a!==r?` data-roh="${esc(r)}"`:''}>${a}</span>`:a}; // Texte mit Platzhaltern (P8): aufgelöst, beim Bearbeiten Rohtext
   const pi=p=>b.pos.indexOf(p),gi=s.gi,pnr=posNummern(b);
   const nm=dp.nullMenge==='aus'||(dp.nullMenge==='ep'&&!RE_V.includes(b.typ))?dp.nullMenge:'',weg=nullWeg(b,nm),oEP=g=>!!g.ohneEP||!dp.epGrp,str=dp.striche?'–':''; // Menge 0, Einzelpreise in Gruppen, Striche (P3)
   const opt_=p=>p.art==='G'?!!p.kz:p.art==='T'?false:!!effKz(p,gi);
@@ -4345,7 +4348,7 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   <div class="info">${dp.infoTab?`<table class="infot">${info.map(([a,v,h])=>`<tr><td>${esc(a)}:</td><td>${v&&v.h!=null?v.h:esc(v)}${h?`<div class="nrh">${esc(h)}</div>`:''}</td></tr>`).join('')}</table>`:info.map(([a,v,h])=>`<div>${esc(a)}: ${v&&v.h!=null?v.h:esc(v)}</div>${h?`<div class="nrh">${esc(h)}</div>`:''}`).join('')}</div></div>
   ${o.dup?'<div class="dupl">DUPLIKAT</div>':''}<h3>${esc(((!RE_V.includes(b.typ)&&dp.titel)||t.bez).toUpperCase())}${dp.nrInfo?'':` NR.: ${esc(nrTxt)}`}</h3>
   ${b.betreff||edit?`<div>Projekt: ${ed('h:betreff',b.betreff,'Betreff / Projekt')}</div>`:''}${b.bezug||edit?`<div>Bezug: ${ed('h:bezug',b.bezug,'z. B. Ihre Anfrage vom …')}</div>`:''}
-  ${dp.briefAnrede&&(t.b==='V'||b.typ==='BE')?`<div class="txt">${ed('h:anrede',anrBeleg(b),'Briefanrede')}</div>`:''}${b.kopf||edit?`<div class="txt">${ed('h:kopf',b.kopf,'Kopftext …',true)}</div>`:''}
+  ${dp.briefAnrede&&(t.b==='V'||b.typ==='BE')?`<div class="txt">${edP('h:anrede',anrBeleg(b),'Briefanrede')}</div>`:''}${b.kopf||edit?`<div class="txt">${edP('h:kopf',b.kopf,'Kopftext …',true)}</div>`:''}
   <table class="p${sp?' sp':''}"><thead>${th}</thead><tbody>${tr(haupt)}</tbody></table>
   ${zs}${ohneP||!dp.summen?'':(eu=>`<table class="tot"><tr><td>${esc(dp.lblNetto||'Nettobetrag')}</td>${eu(fmt(s.netto))}</tr>${lsA&&lsf!=='aus'?`<tr><td style="font-size:8.5pt">davon Lohn ${fmt(s.lohn)} € · Sonstiges ${fmt(s.sonst)} €${Math.abs(s.netto-s.lohn-s.sonst)>0.005?` · ohne Aufteilung (Gruppenpreise) ${fmt(s.netto-s.lohn-s.sonst)} €`:''}</td><td></td>${dp.euroSp?'<td></td>':''}</tr>`:''}
   ${s.steuern.map(x=>`<tr><td>${x.satz?`${esc(dp.lblUSt||'zzgl. Umsatzsteuer')} ${fmtQ(x.satz)} %${mehrSt?' auf '+fmt(x.basis):''}`:esc(x.bez)+' '+fmt(x.basis)}</td>${eu(fmt(x.betrag))}</tr>`).join('')}
@@ -4354,11 +4357,11 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   ${s.abz.length?`<tr class="b"><td>Zu zahlender Betrag</td>${eu(fmt(s.zahlbar))}</tr>`:''}</table>`)(v=>dp.euroSp?`<td class="n">${v}</td><td class="eu">€</td>`:`<td class="n">${v} €</td>`)}
   ${hinweise.map(h=>`<div class="txt"><b>${esc(h)}</b></div>`).join('')}
   ${(n=>n?`<div style="margin-top:6mm"><b>Optionale Positionen / Alternativen</b>${ohneP?'':' (nicht in der Gesamtsumme enthalten)'}</div><table class="p${sp?' sp':''}"><thead>${th}</thead><tbody>${n}</tbody></table>`:'')(nebn.length&&!OHNE_PREIS.includes(b.typ)?tr(nebn):'')}
-  ${zb?`<div class="txt">${zb}</div>`:''}${b.typ==='AN'&&privat&&dp.kvTxt?`<div class="txt">${esc(dp.kvTxt)}</div>`:''}
+  ${zb?`<div class="txt">${zb}</div>`:''}${b.typ==='AN'&&privat&&dp.kvTxt?`<div class="txt">${esc(phT(dp.kvTxt,pw))}</div>`:''}
   ${b.typ==='LS'?'<div class="txt" style="margin-top:12mm">Ware vollständig und unbeschädigt erhalten:<br><br><br>______________________________<br>Datum, Unterschrift</div>':''}
-  ${b.fuss||edit?`<div class="txt">${ed('h:fuss',b.fuss,'Fußtext …',true)}</div>`:''}
-  ${(t.b==='V'?fv('zeichner')||dp.gruss:b.typ==='BE'&&dp.gruss)?`<div class="sig${dp.gruss||dp.sigFirma?' gr':''}${dp.sigLinks?' li':''}">${dp.gruss||dp.sigFirma?`${dp.gruss?`<div>${esc(dp.gruss)}</div>`:''}${dp.sigFirma&&fv('name')?`<div>${esc(fv('name'))}</div>`:''}<div class="gsp"></div>`:''}${fv('zeichner')?`<b>${esc(fv('zeichner'))}</b>${fv('zeichnerFkt')?`<div>${esc(fv('zeichnerFkt'))}</div>`:''}`:''}</div>`:''}
-  ${fusszeile([...(fx?fx.fz||[]:fussZeilen(f)),...(dp.fussZusatz&&!(dp.fussNurB2B&&privat)?[String(dp.fussZusatz)]:[])])}
+  ${b.fuss||edit?`<div class="txt">${edP('h:fuss',b.fuss,'Fußtext …',true)}</div>`:''}
+  ${(t.b==='V'?fv('zeichner')||dp.gruss:b.typ==='BE'&&dp.gruss)?`<div class="sig${dp.gruss||dp.sigFirma?' gr':''}${dp.sigLinks?' li':''}">${dp.gruss||dp.sigFirma?`${dp.gruss?`<div>${esc(phT(dp.gruss,pw))}</div>`:''}${dp.sigFirma&&fv('name')?`<div>${esc(fv('name'))}</div>`:''}<div class="gsp"></div>`:''}${fv('zeichner')?`<b>${esc(fv('zeichner'))}</b>${fv('zeichnerFkt')?`<div>${esc(fv('zeichnerFkt'))}</div>`:''}`:''}</div>`:''}
+  ${fusszeile([...(fx?fx.fz||[]:fussZeilen(f)),...(dp.fussZusatz&&!(dp.fussNurB2B&&privat)?[phT(dp.fussZusatz,pw)]:[])])}
   </div>`;
 }
 /* Druckprofil (P1, erw.druckprofil): Darstellungsoptionen je Belegart in S().druckprofil.<typ>.<k> (nur Abweichungen), Vorgaben DRUCK_STD = bisheriges Aussehen.
@@ -4422,6 +4425,8 @@ const DRUCKOPT=[
   // Anrede (P6): wirkt nur bei Kontakten mit eingetragener Anrede bzw. Briefanrede
   {k:'adrAnrede',std:false,p:'Anrede (P6)',l:'Anrede im Adressblock',typ:'chk',info:'Privatkunden: „Herr“, „Frau“ bzw. „Familie“ über dem Namen (mit Titel, Vor- und Nachname, wenn eingetragen); Unternehmen: „z. H. Herrn Ing. Max Mustermann“ unter dem Firmennamen, wenn kein Zusatz eingetragen ist; Anrede „Firma“: „Firma“ über dem Namen. Kontakte ohne Anrede bleiben unverändert.'},
   {k:'briefAnrede',std:false,p:'Anrede (P6)',l:'Briefanrede vor dem Kopftext',typ:'chk',nur:Object.keys(T).filter(t=>T[t].b==='V'||t==='BE'),info:'Österreichische Form aus Anrede, Titel und Nachname des Kontakts: „Sehr geehrter Herr Ing. Mustermann,“ bzw. „Sehr geehrte Frau …“, ohne Nachname „Sehr geehrte Damen und Herren,“. Im Kontakt frei überschreibbar (Feld „Briefanrede“), im Beleg über das Feld „Briefanrede“ bzw. direkt in der Vorschau. Auch als Anrede der E-Mail.'},
+  // Platzhalter (P8): bestehende Texte enthalten keine {…}, unbekannte Platzhalter bleiben stehen – daher Standard ein
+  {k:'platzhalter',std:true,p:'Platzhalter (P8)',l:'Platzhalter in Texten ersetzen',typ:'chk',info:'{Anrede}, {Kunde}, {KundenNr}, {Person}, {Belegart}, {Nr}, {Datum}, {GueltigBis}, {Faellig}, {Betreff}, {Netto}, {Brutto}, {Firma}, {Bearbeiter} in Kopf- und Fußtext, Briefanrede, Grußformel, Kostenvoranschlag, Zusatzzeile der Fußzeile und E-Mail werden bei der Ausgabe durch die Werte des Belegs ersetzt („{…} Platzhalter“ fügt sie ein). Gespeichert bleibt der Text mit Platzhaltern; festgeschriebene Belege verwenden die eingefrorenen Werte. Unbekannte Platzhalter bleiben stehen. Aus: Texte werden wörtlich gedruckt.'},
 ];
 const NRL={AN:'Angebots-Nr.',AB:'Auftrags-Nr.',PR:'Proforma-Nr.',LS:'Lieferschein-Nr.',AR:'Rechnungs-Nr.',TR:'Rechnungs-Nr.',RE:'Rechnungs-Nr.',SR:'Rechnungs-Nr.',GS:'Gutschrift-Nr.',BE:'Bestell-Nr.',WE:'Wareneingangs-Nr.',ER:'Beleg-Nr.'}; // Beleg-Nr. im Infoblock (P5)
 const fzBreite=s=>{const c=fzBreite.c||(fzBreite.c=document.createElement('canvas').getContext('2d'));c.font='10px Arial';return c.measureText(String(s)).width*0.75}; // Breite einer Fußzeile in pt (7,5 pt Arial wie pdfAusBeleg)
@@ -4454,6 +4459,36 @@ async function druckDialog(b){
     const neu={...(b.druck||{})};for(const x of L){if(re&&x.k in DRUCK_RE)continue;const v=r[x.k];if(v===P[x.k])delete neu[x.k];else neu[x.k]=v}
     if(JSON.stringify(neu)===JSON.stringify(b.druck||{}))return;if(Object.keys(neu).length)b.druck=neu;else delete b.druck}
   persist();render()}
+/* Platzhalter in Texten (P8, druck.platzhalter): {Name} in Kopf- und Fußtext, Briefanrede, Grußformel, Kostenvoranschlag, Fußzeilen-Zusatz und E-Mail.
+   Aufgelöst wird nur bei der Ausgabe (Vorschau, Druck, PDF, E-Mail), gespeichert bleibt immer der Text mit Platzhaltern (auch beim Festschreiben);
+   festgeschriebene Belege: Werte aus Adress-Schnappschuss, b.fix und Positionen. Unbekannte Platzhalter bleiben stehen. Bearbeitbare Vorschau: aufgelöst, beim Fokus Rohtext (data-roh) */
+const PLATZH=[['Anrede','Briefanrede, z. B. „Sehr geehrter Herr Ing. Mustermann,“'],['Kunde','Name des Kunden bzw. Lieferanten'],['KundenNr','Kunden- bzw. Lieferanten-Nr.'],['Person','Ansprechperson des Kontakts (Titel, Vor- und Nachname)'],
+  ['Belegart','z. B. Angebot, Rechnung'],['Nr','Belegnummer'],['Datum','Belegdatum'],['GueltigBis','Angebot gültig bis'],['Faellig','Rechnung zahlbar bis'],['Betreff','Betreff / Projekt'],['Netto','Nettobetrag'],['Brutto','Gesamtbetrag'],['Firma','eigene Firma'],['Bearbeiter','Ansprechperson (Bearbeiter)']];
+function phWerte(b,s=summen(b)){const k=b.fest&&b.adresse?b.adresse:adressSnapshot(kontakt(b.kontaktId)),fx=fixAktiv(b),t=T[b.typ];
+  return{Anrede:anrBeleg(b),Kunde:k.name||'',KundenNr:k.nr||'',Person:persName(k),Belegart:t.bez,Nr:bNr(b),Datum:dAT(b.datum),GueltigBis:b.gueltigBis?dAT(b.gueltigBis):'',Faellig:t.re&&t.b==='V'?dAT(faellig(b)):'',
+    Betreff:b.betreff||'',Netto:fmt(s.netto),Brutto:fmt(s.brutto),Firma:fx?fx.name||'':S().firma.name||'',Bearbeiter:fx?fx.bearbeiter||'':S().bearbeiter||''}}
+const PHRE=/\{([A-Za-zÄÖÜäöüß]+)\}/g;
+const phT=(s,w)=>w?String(s??'').replace(PHRE,(m,n)=>n in w?w[n]:m):String(s??''); // Klartext (danach maskieren)
+const phH=(h,w)=>w?String(h).replace(PHRE,(m,n)=>n in w?esc(w[n]):m):h; // fertiges HTML: Werte maskiert einsetzen
+// „{…} Platzhalter“: Pop-up mit allen Platzhaltern (im Beleg mit den aktuellen Werten), eingefügt an der Schreibmarke des zuletzt bearbeiteten Textfelds (PHZ)
+const PHZ_SEL='[data-ed="h:kopf"],[data-ed="h:fuss"],[data-ed="h:anrede"],[data-h="anrede"],textarea[data-o="tx"],[data-f^="mailVorlage."],input[data-f^="druckprofil."]:not([type=checkbox]),textarea[data-f^="druckprofil."]';
+let PHZ=null;
+document.addEventListener('focusin',e=>{const t=e.target;if(t.matches?.(PHZ_SEL))PHZ={el:t,ed:t.dataset.ed};else if(t.matches?.('input,textarea,select,[contenteditable="true"]'))PHZ=null});
+document.addEventListener('selectionchange',()=>{const a=document.activeElement;if(PHZ&&a===PHZ.el&&a.isContentEditable){const s=getSelection();if(s.rangeCount&&a.contains(s.anchorNode))PHZ.r=s.getRangeAt(0).cloneRange()}});
+const phKnopf=()=>'<button class="s" data-act="phpop" title="Platzhalter einfügen (z. B. {Kunde}, {Nr}) – an der Schreibmarke des zuletzt bearbeiteten Textfelds; bei der Ausgabe durch die Werte des Belegs ersetzt">{…} Platzhalter</button>';
+const phMenue=()=>{const b=curBeleg(),w=b?phWerte(b):null;return PLATZH.map(([n,l])=>({l:`{${n}} – ${w?w[n]||'(leer)':l}`,act:'phins',d:{n},titel:l}))};
+function phEinfuegen(n){const z=PHZ,t=`{${n}}`;let el=z?.el;
+  if(el&&!el.isConnected&&z.ed){el=[...document.querySelectorAll(`[data-ed="${z.ed}"]`)].sort((a,c)=>!!a.closest('#vorschau')-!!c.closest('#vorschau'))[0];if(el?.dataset.roh!=null){el.innerHTML=el.dataset.roh;el.removeAttribute('data-roh')}if(el)z.r=null} // Vorschau neu gezeichnet: Formularfeld bzw. neues Feld, am Ende einfügen
+  if(!el||!el.isConnected||el.disabled){alert('Bitte zuerst in ein Textfeld klicken (z. B. Kopftext), dann den Platzhalter wählen.');return}
+  if(el.isContentEditable){let r=z.r&&el.contains(z.r.startContainer)?z.r:null;if(!r){r=document.createRange();r.selectNodeContents(el);r.collapse(false)}
+    r.deleteContents();const tn=document.createTextNode(t);r.insertNode(tn);r.setStartAfter(tn);r.collapse(true);PHZ={el,ed:z.ed,r};edUebernehmen(el)}
+  else{const v=el.value,a=el.selectionStart??v.length,e=el.selectionEnd??a;el.value=v.slice(0,a)+t+v.slice(e);try{el.setSelectionRange(a+t.length,a+t.length)}catch(x){}el.dispatchEvent(new Event('change',{bubbles:true}))}}
+// E-Mail-Vorlage (Einstellungen, S().mailVorlage {betreff,text}; leer = Standardtext): Platzhalter wie in den Belegtexten
+const MAIL_BSP='{Anrede}\n\nanbei erhalten Sie {Belegart} {Nr} („{Betreff}“).\n\nFür Rückfragen stehen wir gerne zur Verfügung.\n\nMit freundlichen Grüßen\n{Bearbeiter}\n{Firma}';
+const mailKarte=()=>{const m=S().mailVorlage||{};return`<div class="card"><h2>E-Mail-Vorlage</h2>${(t=>kmp()?`<p style="margin:0 0 6px">${hilfe(t)}</p>`:`<p class="mut" style="margin-top:0">${t}</p>`)('Betreff und Text der E-Mail beim Versenden eines Belegs (✉ Senden); leer = Standardtext. Platzhalter wie {Anrede}, {Belegart}, {Nr} oder {Betreff} werden beim Versenden durch die Werte des Belegs ersetzt.')}
+  <div class="row"><label class="w2">Betreff<input data-o="s" data-f="mailVorlage.betreff" value="${esc(m.betreff||'')}" placeholder="{Belegart} {Nr} – {Betreff} – {Firma}"></label></div>
+  <div class="row"><label class="w2">Text<textarea data-o="s" data-f="mailVorlage.text" style="height:170px" placeholder="${esc(MAIL_BSP)}">${esc(m.text||'')}</textarea></label></div><div class="bar" style="margin:4px 0 0">${phKnopf()}</div></div>`};
+const phB=b=>!b.fest&&dOpt(b).platzhalter!==false?`<div class="bar" style="margin:2px 0 0;justify-content:flex-end">${phKnopf()}</div>`:''; // Knopf unter Kopf- und Fußtext im Beleg
 /* Papierformat (Einstellungen): das Layout bleibt im A4-Maß und wird für Druck und PDF auf das Format skaliert */
 const PAPIER={A4:{l:'A4 (210 × 297 mm)',w:210,h:297},A5:{l:'A5 (148 × 210 mm)',w:148,h:210},Letter:{l:'US-Letter (216 × 279 mm)',w:215.9,h:279.4}};
 const papier=()=>{const p=PAPIER[S().papier]||PAPIER.A4,k=p.w/210;return{...p,k,hc:p.h/k-27.3}}; // hc = nutzbare Höhe je Seite (A4-mm, Ränder oben 10 / unten 17,3 mm)
@@ -4624,8 +4659,9 @@ const b64aus=async bl=>{const u=new Uint8Array(await bl.arrayBuffer());let s='';
 function mailVorlage(b){const f=S().firma,t=T[b.typ],k=kontakt(b.kontaktId),offenB=t.re?offen(b):0;
   const anr=dOpt(b).briefAnrede&&(t.b==='V'||b.typ==='BE')?anrBeleg(b).replace(/,\s*$/,''):'Sehr geehrte Damen und Herren'; // persönliche Briefanrede (P6, druck.briefAnrede)
   const satz={AN:'anbei erhalten Sie unser Angebot',AB:'anbei erhalten Sie unsere Auftragsbestätigung',LS:'anbei erhalten Sie den Lieferschein',PR:'anbei erhalten Sie die Proformarechnung',BE:'anbei erhalten Sie unsere Bestellung',GS:'anbei erhalten Sie die Gutschrift'}[b.typ]||`anbei erhalten Sie die ${t.bez}`;
-  return{betreff:`${t.bez} ${bNr(b)}${b.betreff?' – '+b.betreff:''} – ${f.name}`,
-    text:`${anr},\n\n${satz} ${bNr(b)}${b.betreff?' („'+b.betreff+'“)':''}.${t.re&&b.typ!=='GS'&&offenB>0?`\nZahlbar bis ${dAT(faellig(b))}: ${fmt(offenB)} €.`:''}\n\nFür Rückfragen stehen wir gerne zur Verfügung.\n\nMit freundlichen Grüßen\n${f.zeichner||S().bearbeiter||''}\n${f.name}${f.tel?'\nTel. '+f.tel:''}${f.mail?'\n'+f.mail:''}`,an:k?.email||''}}
+  const mv=S().mailVorlage||{},pw=dOpt(b).platzhalter!==false?phWerte(b):null; // E-Mail-Vorlage aus den Einstellungen mit Platzhaltern (P8), leer = Standardtext
+  return{betreff:mv.betreff?phT(mv.betreff,pw):`${t.bez} ${bNr(b)}${b.betreff?' – '+b.betreff:''} – ${f.name}`,
+    text:mv.text?phT(mv.text,pw):`${anr},\n\n${satz} ${bNr(b)}${b.betreff?' („'+b.betreff+'“)':''}.${t.re&&b.typ!=='GS'&&offenB>0?`\nZahlbar bis ${dAT(faellig(b))}: ${fmt(offenB)} €.`:''}\n\nFür Rückfragen stehen wir gerne zur Verfügung.\n\nMit freundlichen Grüßen\n${f.zeichner||S().bearbeiter||''}\n${f.name}${f.tel?'\nTel. '+f.tel:''}${f.mail?'\n'+f.mail:''}`,an:k?.email||''}}
 async function versenden(b){
   if(!b.fest&&!confirm('Der Beleg ist noch nicht festgeschrieben (Ausdruck mit „ENTWURF“). Trotzdem versenden?'))return;
   const v=mailVorlage(b),od=STORE.art==='od';
@@ -4634,6 +4670,7 @@ async function versenden(b){
     {k:'betreff',l:'Betreff',wert:v.betreff,neu:1,pflicht:true},{k:'text',l:'Nachricht',typ:'textarea',wert:v.text,neu:1},
     {k:'kopie',l:'Kopie an mich',typ:'checkbox',wert:false,neu:1,cls:'w05'}]});
   if(!o)return;
+  if(dOpt(b).platzhalter!==false){const w=phWerte(b);o.betreff=phT(o.betreff,w);o.text=phT(o.text,w)} // im Dialog eingetragene Platzhalter (P8)
   const an=o.an.split(/[;,]\s*/).filter(Boolean),cc=o.cc.split(/[;,]\s*/).filter(Boolean);
   if(an.some(x=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x))){alert('Bitte gültige E-Mail-Adresse(n) angeben.');return}
   const da=await dupFrage(b);if(!da)return;
@@ -4754,6 +4791,7 @@ const ACT={
   spalten:el=>spaltenDialog(el.dataset.id),
   kedit:async()=>{const b=curBeleg(),k=kontakt(b.kontaktId);if(!k)return;const va=briefAnrede(k),r=await kontaktPopup(k.typ==='L'||(k.typ==='KL'&&T[b.typ].b==='E')?'L':'K',{},k);if(r){konditionenUebernehmen(b,r,true);anrNeu(b,va,r);persist()}render()},
   anrk:()=>{const b=curBeleg();if(!b||b.fest||b.anrede==null)return;delete b.anrede;persist();render()}, // Briefanrede wieder aus dem Kontakt (P6)
+  phpop:el=>{if(MPOP===el&&document.querySelector('.mpop')){closePop();return}menuePop(el,phMenue())},phins:el=>phEinfuegen(el.dataset.n), // Platzhalter einfügen (P8)
   aopen:async el=>{const u=artikel(el.dataset.id).unterlagen[+el.dataset.i];try{await STORE.openFile(u)}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
   aldel:el=>{artikel(el.dataset.id).lieferanten.splice(+el.dataset.i,1);persist();render()},
   lgbook:()=>{const a=$('#lg-a').value,m=$('#lg-m').value,q=num($('#lg-q').value),p=$('#lg-p').value,t=$('#lg-t').value;if(!a){alert('Artikel wählen.');return}

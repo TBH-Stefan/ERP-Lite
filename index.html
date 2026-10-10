@@ -184,6 +184,15 @@ table.pos tr.t td{background:#fbfbf6}
 .pop{position:absolute;z-index:30;background:#fff;border:1px solid var(--line);box-shadow:0 8px 28px rgba(0,0,0,.18);border-radius:8px;padding:10px;width:620px;max-width:95vw}
 dl.kv{display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:0}
 dl.kv dt{color:var(--mut)}dl.kv dd{margin:0;text-align:right;white-space:nowrap}
+/* Gesamtkalkulation (P10): Pop-up mit Tabelle je Kostenart (am Handy eine Karte je Kostenart), Verteilung und Rundung, Ergebnis aktuell | neu, Rücknahme je Position */
+.gkw{overflow-x:auto}table.gkt td,table.gkt th{padding:4px 6px;vertical-align:middle}table.gkt td.gkk{font-weight:600;white-space:nowrap}table.gkt tr.gkg td{background:#f6f8fb;font-weight:600}table.gkt th.gkn{color:var(--acc)}
+table.gkt input{width:104px;text-align:right;padding:4px 6px}table.gkt .gkx{display:block;font-size:11px;color:var(--warn);text-align:right;font-weight:400}
+.gko{display:flex;flex-wrap:wrap;align-items:center;gap:4px 16px;margin-top:8px}.gko label.chk{margin-top:0}.gko>label:not(.chk){display:flex;align-items:center;gap:6px}.gko select{width:auto}
+table.gke{width:auto;min-width:min(100%,440px);margin-top:10px}table.gke td,table.gke th{padding:3px 12px 3px 0;border:0;background:none}
+.gkb{margin:8px 0 0;gap:6px}.gkra0{margin:6px 0 0;font-size:12px}.gkra0 a{color:var(--acc)}.gkra{margin:0 0 6px}.gkra label.chk{margin-top:0}table.gkr tr.gkh td{background:#fffaf0}
+@media(max-width:760px){.gkw{overflow:visible}table.gkt thead{display:none}table.gkt,table.gkt tbody{display:block}table.gkt tr{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px 6px;padding:8px 0;border-bottom:1px solid var(--line)}table.gkt td{grid-column:span 3;font-size:13px}table.gkt td:nth-child(n+6){grid-column:span 4}
+  table.gkt td{display:block;padding:0;border:0;text-align:left!important;white-space:normal}table.gkt td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--mut);font-weight:400}table.gkt td.gkk{grid-column:1/-1}
+  table.gkt tr.gkg{background:#f6f8fb;border-radius:8px;padding:8px}table.gkt tr.gkg td{background:none}table.gkt input{width:100%}table.gkt .gkx{text-align:left}table.gke{width:100%;font-size:13px}table.gkr th:nth-child(4),table.gkr td:nth-child(4){display:none}}
 dl.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
 /* Kompakt (P30) Kaufmännisch: Karten im Akkordeon ohne eigenen Rahmen, Kartenzeile mit Knopf rechts (Buchen, ⋯) */
 details.akk>.akb>.card{border:0;border-radius:0;padding:0;margin:0 0 8px;background:none;box-shadow:none}.kkl>.kkf{display:flex;align-items:center}
@@ -521,6 +530,8 @@ const ERW=[
   {k:'zuschlag',std:false,p:'Zuschlag je Position (P4)',l:'Rabattspalte im Editor als „Rabatt/Zuschlag“',info:'Ein für den Kunden sichtbarer Zuschlag je Position (z. B. Erschwernis, Kleinmenge, Nachtarbeit) wird als negativer Rabatt erfasst: −10 = 10 % Zuschlag. Summen, Folgebelege und Auswertungen rechnen damit unverändert. Mit diesem Schalter heißt die Spalte im Beleg-Editor „Rabatt/Zuschlag %“ mit diesem Hinweis, die Positionskarte zeigt „+ 10 % Zuschlag“. Wie Zuschläge gedruckt werden (negativ in der Rabattspalte, als „+10 %“ oder als Textzeile), legt das Druckprofil fest (Positionsdarstellung). Aus: Bezeichnung „Rabatt“ wie bisher.'},
   {k:'kompaktBeleg',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht im Beleg-Editor',info:'Wirkt nur mit eingeschalteter kompakter Ansicht. Im Beleg stehen oben nur Eingabe | Vorschau, die Hauptaktion (z. B. Festschreiben, Zahlung erfassen, → Rechnung) und ⋯ mit allen weiteren Belegaktionen (PDF, Senden, Folgebeleg, Duplizieren, Revision, Löschen bzw. Stornieren …); Kopfdaten, Positionen und Zahlungen werden in Pop-ups bearbeitet, am Handy erscheinen die Positionen als Karten und Summe und Hauptaktion in einer Leiste am unteren Rand. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Aus: Beleg-Editor wie bisher (übrige kompakte Ansicht bleibt).'},
   {k:'ios',std:true,p:'Ansicht (P30)',l:'iOS-Darstellung am Handy',info:'Wirkt nur mit eingeschalteter kompakter Ansicht und nur am Handy. Bedienung nach den Vorgaben von Apple: Systemschrift, Tippziele mindestens 44 pt, Pop-ups und Menüs als Blatt von unten mit Griff, Segmente wie in iOS (z. B. Art der Position: Ware | Leistung | …), Schalter statt Häkchen, Hintergrund bleibt beim offenen Pop-up stehen, durchscheinende Leisten. Sichere Bereiche (Notch, Home-Indikator) gelten immer. Aus: kompakte Ansicht ohne iOS-Gestaltung.'},
+  {k:'gkalk',std:true,p:'Gesamtkalkulation (P10)',l:'Gesamtkalkulation: alle Preise eines Entwurfs auf einmal neu kalkulieren',info:'In Verkaufsbelegen (Entwurf) steht unter „Kalkulation DB II“ (am Handy im Summen-Pop-up) und im ⋯-Menü „Gesamtkalkulation …“: ein Pop-up mit EK/HK-GP, Aufschlag aktuell in % und €, VK-GP aktuell und „Aufschlag neu“ je Kostenart (Gesamt, Material, Fremdleistung, Lohn). Eingabe in % oder € bzw. VK-GP neu (Ziel-VK) für eine Kostenart, in der Zeile Gesamt für alle; „Ziel-DB II“ setzt den VK, der den Ziel-DB II erreicht, „→ auf Ziel anheben …“ öffnet das Pop-up damit. Verteilung proportional (alle Preise einer Kostenart mit demselben Faktor, die Preisverhältnisse bleiben; Standard) oder einheitlicher Aufschlag auf EK/HK der Position (Positionen ohne EK, negative und mit Rabatt ab 100 % bleiben unverändert und werden gemeldet); wahlweise mit Optionen/Alternativen und Rundung auf 0,05 bzw. 0,10. Vorher zeigt das Pop-up Netto, DB und DB II neu; Übernehmen ist ein Schritt (Strg+Z), danach steht das erreichte Netto da. Nur Entwürfe, der Artikelstamm bleibt unverändert; gedruckt werden nur die neuen Preise. Es kommt nur eine Schaltfläche dazu, daher Standard ein. Aus: Schaltflächen ausgeblendet.'},
+  {k:'gkMerken',std:true,p:'Gesamtkalkulation (P10)',l:'Preisanpassung für eine spätere Rücknahme merken',info:'Beim Übernehmen der Gesamtkalkulation merkt sich der Beleg die bisherigen Preise der geänderten Positionen (nur im Entwurf, Festschreiben löscht sie; eine neue Preisanpassung ersetzt sie). Unter „Kalkulation DB II“ steht dann „Letzte Preisanpassung vom … zurücknehmen …“: ganz oder teilweise je Position bzw. je Kostenart; seither von Hand geänderte Positionen sind markiert und nicht vorgewählt. Aus: es wird nichts gemerkt (Strg+Z bleibt möglich).'},
 ];
 const ERW_STD=Object.fromEntries(ERW.map(x=>[x.k,x.std]));
 const erw=k=>DB?.settings?.erw?.[k]??ERW_STD[k];
@@ -1212,6 +1223,7 @@ async function festschreiben(b0){
   b.fix=belegFix(b);b.druckFix=dOpt(b);b.fest=true;b.festAm=new Date().toISOString();b.adresse=adressSnapshot(k);
   if(b.typ==='SR')b.abzuege=abzuegeLive(b);
   if(b.stornoVon){const o=beleg(b.stornoVon);if(o){o.storno=true;log('storniert',`${T[o.typ].bez} ${o.nr} durch ${b.nr}`)}}
+  delete b.kalkAlt; // Rücknahme der Gesamtkalkulation (P10) nur im Entwurf
   lagerBeiFest(b);
   log('festgeschrieben',`${t.bez} ${b.nr} · ${k.name} · ${fmt(s.brutto)}`);
   commit();render();
@@ -1989,7 +2001,8 @@ function sumBox(b){
   ${T[b.typ].re&&b.fest?`<dt>Offen</dt><dd><b>${fmt(offen(b))}</b></dd>`:''}</dl>`;
 }
 function kalkBox(b){
-  const v=vorkalk(b);
+  const v=vorkalk(b);return kalkKv(b,v)+gkKalk(b,v)} // Gesamtkalkulation (P10): Schaltflächen unter den Kennzahlen
+function kalkKv(b,v){ // Kennzahlen der Vorkalkulation
   return`<dl class="kv"><dt>Umsatz netto</dt><dd>${fmt(v.u)}</dd>
   ${+b.skonto?`<dt>nach ${fmtQ(b.skonto)} % Skonto</dt><dd>${fmt(v.uS)}</dd>`:''}
   <dt>Material/Fremd (EK)</dt><dd>${fmt(v.mat)}</dd><dt>Eigenleistung (EK)</dt><dd>${fmt(v.eig)}</dd>
@@ -2000,6 +2013,129 @@ function kalkBox(b){
   ${v.fehl>0.005?`<dt class="err">Fehlbetrag zu Ziel ${fmtQ(S().zielDB2)} %</dt><dd class="err">${fmt(v.fehl)}</dd>`:''}</dl>
   ${(gi=>b.pos.some(p=>!isInfo(p)&&!effKz(p,gi)&&!(+p.ek)))(gruppenInfo(b))?'<p class="warnc" style="margin:6px 0 0;font-size:12px">Positionen ohne EK – DB II zu hoch ausgewiesen.</p>':''}`;
 }
+/* Gesamtkalkulation (P10, erw.gkalk): alle Preise eines Verkaufsbeleg-Entwurfs auf einmal neu kalkulieren (Vorbild ETU). gkWerte(b) = EK/HK- und VK-GP je Kostenart M Material (Art W),
+   F Fremdleistung, L Lohn (mit Lohn / Sonstiges zählt epL zum Lohn, der Rest nach Art), Pauschalgruppen anteilig (gkVkPos), Optionen/Alternativen wie in vorkalk() nicht.
+   Pop-up gesamtKalk(b): je Kostenart Aufschlag neu % | € | VK-GP neu (verknüpft), die Zeile Gesamt verteilt auf alle; Verteilung 'faktor' (proportional, Standard: Preise × VK neu ÷ VK akt.)
+   oder 'aufschlag' (einheitlicher Aufschlag auf EK/HK der Position, gkAuf: so gewählt, dass das Ziel erreicht wird; ohne EK, negativ, Rabatt ≥ 100 % bleiben unverändert); Rundung;
+   Vorschau aus der Probeberechnung gkNeu(). Übernehmen = ein persist()-Schritt; vorher b.kalkAlt {ts,text,pos:{id:{ep,epL,epS}|{pauschal}},neu:{id:ep|pauschal}} (erw.gkMerken) für gkRueck() */
+const GKZ=[['M','Material'],['F','Fremdleistung'],['L','Lohn']],gkZ=p=>p.art==='L'?'L':p.art==='F'?'F':'M';
+const gkDarf=b=>!!b&&erw('gkalk')&&T[b.typ].b==='V'&&!OHNE_PREIS.includes(b.typ)&&b.typ!=='GS';
+const gkPosOk=p=>+p.ek>0&&(+p.ep||0)>=0&&(+p.rabatt||0)<100; // einheitlicher Aufschlag nur mit EK, nicht bei negativen Positionen (z. B. Nachlass) und Rabatt ab 100 %
+const gkGanz=(b,g,gi)=>{const L=b.pos.filter(p=>gi.grp[p.id]===g&&!isInfo(p)&&!p.kz);return L.length>0&&L.every(gkPosOk)}; // Pauschalgruppe: neuer Gruppenpreis nur, wenn alle Positionen einen EK haben
+function gkTeile(b,p,v){const t={M:0,F:0,L:0},r=gkZ(p),ls=b.optLS&&(p.epL!=null||p.epS!=null)&&+p.ep,l=ls?v*(+p.epL||0)/(+p.ep):0;t.L+=l;t[ls&&r==='L'?'M':r]+=v-l;return t} // VK v einer Position je Kostenart
+function gkVkPos(b,gi,alle=false){const o={},gw={}; // VK je Position; Pauschalgruppe: Gruppenpreis anteilig nach GP (ersatzweise nach EK bzw. gleich), Gruppe ohne Positionen unter Material
+  for(const p of b.pos){if(isInfo(p)||(!alle&&effKz(p,gi)))continue;const g=gi.grp[p.id];if(g&&+g.pauschal>0&&!p.kz){(gw[g.id]=gw[g.id]||[]).push(p);continue}o[p.id]=gkTeile(b,p,posGP(p))}
+  for(const g of b.pos){if(g.art!=='G'||!(+g.pauschal>0)||(!alle&&g.kz))continue;const L=gw[g.id]||[],P=r2(+g.pauschal),sg=gi.sumG[g.id],ek=p=>(+p.menge||0)*(+p.ek||0),se=L.reduce((s,p)=>s+ek(p),0);
+    if(!L.length){o[g.id]={M:P,F:0,L:0};continue}for(const p of L)o[p.id]=gkTeile(b,p,P*(sg?posGP(p)/sg:se?ek(p)/se:1/L.length))}
+  return o}
+function gkWerte(b){const gi=gruppenInfo(b),A=gkVkPos(b,gi),z={M:{ek:0,vk:0},F:{ek:0,vk:0},L:{ek:0,vk:0}};let ek=0;
+  for(const p of b.pos){if(isInfo(p)||effKz(p,gi))continue;const x=(+p.menge||0)*(+p.ek||0);z[gkZ(p)].ek+=x;ek+=x}
+  for(const id in A)for(const k in A[id])z[k].vk+=A[id][k];
+  for(const k in z){z[k].ek=r2(z[k].ek);z[k].vk=r2(z[k].vk)}return{...z,G:{ek:r2(ek),vk:summen(b).netto}}}
+// Einheitlicher Aufschlag: Faktor (1 + Aufschlag) je Kostenart, mit dem die Zeile ihr Ziel vk[k] erreicht (nicht anpassbare Positionen zählen mit ihrem VK);
+// mit gesamt = ein gemeinsamer Faktor für das Ziel Gesamt und die daraus folgenden Ziele je Kostenart
+function gkAuf(b,vk,W,gesamt=null){const gi=gruppenInfo(b),A=gkVkPos(b,gi),E={M:0,F:0,L:0},F={M:0,F:0,L:0},V={M:0,F:0,L:0};
+  for(const p of b.pos){if(isInfo(p)||effKz(p,gi))continue;const r=gkZ(p),x=A[p.id]||{},v=(x.M||0)+(x.F||0)+(x.L||0),g=gi.grp[p.id];V[r]+=v;
+    if(gkPosOk(p)&&!(g&&+g.pauschal>0&&!gkGanz(b,g,gi)))E[r]+=(+p.menge||0)*(+p.ek);else F[r]+=v}
+  if(gesamt!=null){const e=E.M+E.F+E.L,x=e?(V.M+V.F+V.L+gesamt-W.G.vk-F.M-F.F-F.L)/e:null,o={};for(const[k]of GKZ)o[k]=x>0&&E[k]?r2(W[k].vk+F[k]+x*E[k]-V[k]):W[k].vk;return{vk:o,fa:x>0?x:null,E}}
+  const fa={};for(const[k]of GKZ){const x=E[k]?(V[k]+vk[k]-W[k].vk-F[k])/E[k]:null;fa[k]=x>0?x:null}return{fa,E}}
+// Probeberechnung (ändert nichts): neue Werte je Position {ep,epL,epS} bzw. Pauschalgruppe {pauschal}; st = {modus,vk:{M,F,L} Ziele,mitOpt,rund}; unveränderte Kostenarten bleiben unberührt
+function gkNeu(b,st){const W=gkWerte(b),gi=gruppenInfo(b),A=gkVkPos(b,gi,true),neu={},m={ohneEK:0,neg:0,rab:0,pausch:0},auf=st.modus==='aufschlag',ch={},f={};
+  const rd=x=>st.rund>0.01?r2(Math.round(x/st.rund)*st.rund):r2(x);
+  for(const[k]of GKZ){ch[k]=Math.abs(st.vk[k]-W[k].vk)>0.004;f[k]=W[k].vk?st.vk[k]/W[k].vk:1}
+  const fa=!auf?{}:st.faG!=null?{M:st.faG,F:st.faG,L:st.faG}:gkAuf(b,st.vk,W).fa; // Ziel Gesamt: ein gemeinsamer Aufschlag
+  for(const p of b.pos){if(isInfo(p)||(effKz(p,gi)&&!st.mitOpt))continue;const r=gkZ(p),sp=p.epL!=null||p.epS!=null,ls=b.optLS&&sp,g=gi.grp[p.id];
+    if(!auf){if(ls){const rS=r==='L'?'M':r;if(!ch.L&&!ch[rS])continue;const L=ch.L?rd((+p.epL||0)*f.L):+p.epL||0,S_=ch[rS]?rd((+p.epS||0)*f[rS]):+p.epS||0;neu[p.id]={ep:r2(L+S_),epL:L,epS:S_}}
+      else if(ch[r]){const x={ep:rd((+p.ep||0)*f[r])};if(sp){x.epL=r2((+p.epL||0)*f[r]);x.epS=r2((+p.epS||0)*f[r])}neu[p.id]=x}continue}
+    if(!ch[r]||fa[r]==null||(g&&+g.pauschal>0&&!p.kz&&!gkGanz(b,g,gi)))continue;
+    if(!gkPosOk(p)){m[!(+p.ek>0)?'ohneEK':(+p.rabatt||0)>=100?'rab':'neg']++;continue}
+    const ep=rd(+p.ek*fa[r]/(1-(+p.rabatt||0)/100)),q=+p.ep?ep/(+p.ep):null,x={ep};
+    if(ls){x.epL=q!=null?rd((+p.epL||0)*q):(r==='L'?ep:0);x.epS=r2(ep-x.epL)}else if(sp&&q!=null){x.epL=r2((+p.epL||0)*q);x.epS=r2((+p.epS||0)*q)}
+    neu[p.id]=x}
+  for(const g of b.pos){if(g.art!=='G'||!(+g.pauschal>0)||(g.kz&&!st.mitOpt))continue;const L=b.pos.filter(p=>gi.grp[p.id]===g&&!isInfo(p)&&!p.kz),va=p=>GKZ.reduce((s,[k])=>s+(A[p.id]?.[k]||0),0);let t;
+    if(!auf)t=L.length?L.reduce((s,p)=>s+GKZ.reduce((s2,[k])=>s2+(A[p.id]?.[k]||0)*(ch[k]?f[k]:1),0),0):+g.pauschal*(ch.M?f.M:1);
+    else{if(!L.some(p=>ch[gkZ(p)]&&fa[gkZ(p)]!=null))continue;if(!gkGanz(b,g,gi)){m.pausch++;continue}t=L.reduce((s,p)=>{const r=gkZ(p);return s+(ch[r]&&fa[r]!=null?(+p.menge||0)*(+p.ek)*fa[r]:va(p))},0)}
+    t=rd(t);if(Math.abs(t-(+g.pauschal))>0.004)neu[g.id]={pauschal:t}}
+  return{neu,m,fa}}
+// Karte „Kalkulation DB II“: Schaltflächen (nur Entwurf) und Hinweis auf die letzte Preisanpassung
+function gkKalk(b,v){if(!gkDarf(b))return'';
+  if(b.fest)return b.typ==='AN'&&!b.storno&&b.status!=='ersetzt'?'<p class="mut gkra0">Gesamtkalkulation nur im Entwurf – über „✎ Bearbeiten (Revision)“.</p>':'';
+  const ka=b.kalkAlt&&b.pos.some(p=>b.kalkAlt.pos?.[p.id]);
+  return`<div class="bar gkb"><button class="s" data-act="gkalk" title="Alle Preise auf einmal neu kalkulieren: Aufschlag neu in % oder €, VK neu, Ziel-DB II">∑ Gesamtkalkulation …</button>${v.fehl>0.005?`<button class="s" data-act="gkalk" data-ziel="1" title="Gesamtkalkulation mit dem VK öffnen, der den Ziel-DB II erreicht">→ auf Ziel ${fmtQ(S().zielDB2)} % anheben …</button>`:''}</div>${ka?`<p class="mut gkra0">Letzte Preisanpassung vom ${dtAT(b.kalkAlt.ts)} · <a href="javascript:void 0" data-act="gkrueck">zurücknehmen …</a></p>`:''}`}
+function gkMeldung(t){document.getElementById('undo')?.remove();const d=document.createElement('div');d.id='undo';d.className='undo';d.style.cssText='width:max-content;height:max-content';d.innerHTML=`<span>${esc(t)}</span><button>↶ Rückgängig</button><button class="x" title="Schließen">✕</button>`;document.body.appendChild(d);
+  const weg=()=>d.remove(),tm=setTimeout(weg,15000);d.querySelector('button').onclick=()=>{clearTimeout(tm);weg();zurueck()};d.querySelector('.x').onclick=()=>{clearTimeout(tm);weg()}}
+function gesamtKalk(b,{ziel=false}={}){
+  if(!gkDarf(b))return;if(b.fest){alert(b.typ==='AN'?'Festgeschriebene Angebote bleiben unverändert. Für neue Preise „✎ Bearbeiten (Revision)“ wählen und dort die Gesamtkalkulation öffnen.':'Die Gesamtkalkulation ist nur im Entwurf möglich – festgeschriebene Belege bleiben unverändert.');return}
+  if(!b.pos.some(p=>!isInfo(p))){alert('Noch keine Positionen.');return}
+  const W=gkWerte(b),v0=vorkalk(b),Z=['G',...GKZ.map(x=>x[0]).filter(k=>W[k].ek||W[k].vk)],LB={G:'Gesamt',...Object.fromEntries(GKZ)},K=kmp(),E=gkAuf(b,{M:0,F:0,L:0},W).E;
+  const st={modus:'faktor',mitOpt:true,rund:0.01,vk:{M:W.M.vk,F:W.F.vk,L:W.L.vk},G:W.G.vk,quelle:''},zDB=S().zielDB2/100,sk=+b.skonto||0,zielVK=zDB<1&&sk<100&&v0.hk>0?r2(v0.hk/(1-zDB)/(1-sk/100)):null;
+  const zelle=(k,f,l)=>`<td data-l="${l}"><input type="number" step="any" inputmode="decimal" data-z="${k}" data-gk="${f}">${f==='v'?`<span class="gkx" data-x="${k}"></span>`:''}</td>`;
+  const zeile=k=>{const w=W[k],a=r2(w.vk-w.ek);return`<tr${k==='G'?' class="gkg"':''}><td class="gkk">${LB[k]}</td><td class="n" data-l="EK/HK-GP">${fmt(w.ek)}</td><td class="n" data-l="Aufschl. akt. %">${w.ek?pct(a/w.ek):'–'}</td><td class="n" data-l="Aufschl. akt. €">${fmt(a)}</td><td class="n" data-l="VK-GP akt.">${fmt(w.vk)}</td>${zelle(k,'p','Aufschlag neu %')}${zelle(k,'e','Aufschlag neu €')}${zelle(k,'v','VK-GP neu')}</tr>`};
+  const hw='Aufschlag in dieser Tabelle = auf EK/HK der Positionen (wie ETU), ohne MGZ und Skonto. Die Karte „Kalkulation DB II“ rechnet den Aufschlag auf die Herstellkosten mit MGZ und nach Skonto und zeigt deshalb einen anderen Wert.';
+  const d=document.createElement('div');d.className='modal';
+  d.innerHTML=`<div class="mbox gkm" style="max-width:940px"><h2>Gesamtkalkulation – ${esc(T[b.typ].bez)} ${esc(bNr(b))}</h2>
+    <p class="mut" style="margin:0 0 6px">Alle Preise auf einmal neu kalkulieren: „Aufschlag neu“ in % oder € bzw. VK-GP neu je Kostenart, in der Zeile Gesamt für alle. Optionen/Alternativen zählen in den Summen nicht.${K?' '+hilfe(hw):''}</p>
+    <div class="gkw"><table class="gkt"><thead><tr><th>Kostenart</th><th class="n">EK/HK-GP</th><th class="n">Aufschlag akt. %</th><th class="n">Aufschlag akt. €</th><th class="n">VK-GP akt.</th><th class="n gkn">Aufschlag neu %</th><th class="n gkn">Aufschlag neu €</th><th class="n gkn">VK-GP neu</th></tr></thead><tbody>${Z.map(zeile).join('')}</tbody></table></div>
+    <div class="gko"><span class="mut">Verteilung:</span><label class="chk"><input type="radio" name="gkm" value="faktor" checked> proportional (Preisverhältnisse bleiben)</label><label class="chk"><input type="radio" name="gkm" value="aufschlag"> einheitlicher Aufschlag auf EK/HK der Position</label></div>
+    <div class="gko"><label class="chk"><input type="checkbox" id="gk-opt" checked> Optionen/Alternativen mit anpassen</label><label>Rundung EP<select id="gk-rd">${[[0.01,'auf Cent'],[0.05,'auf 0,05'],[0.1,'auf 0,10']].map(([x,l])=>opt(x,l,0.01)).join('')}</select></label>
+      ${zielVK!=null?`<button id="gk-ziel" title="VK-GP neu Gesamt = Herstellkosten ÷ (1 − Ziel-DB II) ÷ (1 − Skonto) = ${fmt(zielVK)}">Ziel-DB II ${fmtQ(S().zielDB2)} %</button>`:''}<button id="gk-0" title="Alle Eingaben verwerfen">Zurücksetzen</button></div>
+    <div id="gk-erg"></div>${K?'':`<p class="mut" style="font-size:12px;margin:6px 0 0">${hw}</p>`}
+    <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Übernehmen</button></div></div>`;
+  document.body.appendChild(d);
+  const q=(k,f)=>d.querySelector(`[data-z="${k}"][data-gk="${f}"]`),sperre=k=>k!=='G'&&(st.modus==='aufschlag'?!E[k]:!W[k].vk);let erg=null;
+  const verteilen=()=>{st.faG=null;if(st.modus==='aufschlag'){const x=gkAuf(b,null,W,st.G);Object.assign(st.vk,x.vk);st.faG=x.fa}else{const F=W.G.vk?st.G/W.G.vk:1;for(const[k]of GKZ)st.vk[k]=r2(W[k].vk*F)}};
+  const summeG=()=>{st.G=r2(W.G.vk+GKZ.reduce((s,[k])=>s+st.vk[k]-W[k].vk,0))};
+  const ergHTML=()=>{const c={...b,pos:b.pos.map(p=>erg.neu[p.id]?{...p,...erg.neu[p.id]}:p)},v1=vorkalk(c),W1=gkWerte(c),n=Object.keys(erg.neu).length,dn=r2(v1.u-v0.u),m=erg.m,h=[];
+    for(const k of Z){const x=d.querySelector(`[data-x="${k}"]`),t=k==='G'?st.G:st.vk[k];if(x)x.textContent=n&&Math.abs(W1[k].vk-t)>0.004?'erreicht '+fmt(W1[k].vk):''}
+    if(st.modus==='aufschlag'){const a=GKZ.filter(([k])=>erg.fa[k]!=null&&Math.abs(st.vk[k]-W[k].vk)>0.004).map(([k,l])=>`${l} ${fmtQ(r2((erg.fa[k]-1)*100))} %`);if(a.length)h.push('Aufschlag je Position auf EK/HK: '+a.join(' · '))}
+    const mz=(x,t)=>x?h.push(`${x} ${x>1?'Positionen':'Position'} ${t}`):0;mz(m.ohneEK,'ohne EK nicht angepasst');mz(m.neg,'mit negativem Preis nicht angepasst');mz(m.rab,'mit Rabatt ab 100 % nicht angepasst');
+    if(m.pausch)h.push(`${m.pausch} Pauschalgruppe${m.pausch>1?'n':''} mit Positionen ohne EK: Gruppenpreis unverändert`);
+    if(st.modus==='aufschlag'&&GKZ.some(([k])=>Math.abs(st.vk[k]-W[k].vk)>0.004&&E[k]&&erg.fa[k]==null))h.push('Ziel unter den nicht anpassbaren Positionen – Kostenart unverändert');
+    const r=(l,a,x)=>`<tr><td>${l}</td><td class="n">${a}</td><td class="n">${x}</td></tr>`;
+    return`<table class="gke"><thead><tr><th></th><th class="n">aktuell</th><th class="n">neu</th></tr></thead><tbody>${r('Netto',fmt(v0.u),`<b>${fmt(v1.u)}</b>`)}${r('DB gesamt (VK − EK)',fmt(W.G.vk-W.G.ek),fmt(W1.G.vk-W1.G.ek))}
+      ${r('DB II (MGZ, Skonto)',`${fmt(v0.db2)} ${dbTag(v0.db2p)}`,`${fmt(v1.db2)} ${dbTag(v1.db2p)}`)}${r('Aufschlag auf HK',pct(v0.aufschlag),pct(v1.aufschlag))}</tbody></table>
+      <p style="margin:6px 0 0">${n?`${n} ${n>1?'Preise ändern':'Preis ändert'} sich · Differenz netto <b>${dn>0?'+':''}${fmt(dn)} €</b>${Math.abs(v1.u-st.G)>0.004?` · <span class="warnc">erreicht ${fmt(v1.u)} statt ${fmt(st.G)}</span>`:''}`:'<span class="mut">Noch keine Änderung.</span>'}</p>${h.length?`<p class="mut" style="margin:4px 0 0;font-size:13px">${h.map(esc).join(' · ')}</p>`:''}`};
+  const zeich=ohne=>{for(const k of Z){const w=W[k],t=k==='G'?st.G:st.vk[k],s=sperre(k);
+      for(const f of ['p','e','v']){const e=q(k,f);e.disabled=s||(f==='p'&&!w.ek);e.title=s?(st.modus==='aufschlag'?'keine Position mit EK/HK – bleibt unverändert':'ohne VK – proportional nicht anpassbar (einheitlichen Aufschlag wählen)'):'';if(e!==ohne)e.value=f==='p'?(w.ek?r2((t-w.ek)/w.ek*100):''):r2(f==='e'?t-w.ek:t)}}
+    erg=gkNeu(b,st);d.querySelector('#gk-erg').innerHTML=ergHTML();d.querySelector('#m-err').textContent=''};
+  d.addEventListener('input',e=>{const t=e.target,k=t.dataset.z,f=t.dataset.gk;if(!k||!f||t.value.trim()==='')return;const w=W[k],x=num(t.value),z=f==='p'?w.ek*(1+x/100):f==='e'?w.ek+x:x;
+    if(k==='G'){st.G=r2(z);st.quelle='G';verteilen()}else{st.vk[k]=r2(z);st.quelle='Z';st.faG=null;summeG()}zeich(t)});
+  d.addEventListener('change',e=>{const t=e.target;
+    if(t.name==='gkm'){st.modus=t.value;for(const[k]of GKZ)if(sperre(k))st.vk[k]=W[k].vk;if(st.quelle==='G')verteilen();else{st.faG=null;summeG()}}else if(t.id==='gk-opt')st.mitOpt=t.checked;else if(t.id==='gk-rd')st.rund=+t.value;else if(!t.dataset.gk)return;zeich()}); // Felder nach dem Verlassen formatieren
+  const fin=()=>{d.remove();document.removeEventListener('keydown',kd,true)},kd=e=>{if(e.key==='Escape'&&[...document.querySelectorAll('.modal')].pop()===d){e.stopPropagation();fin()}};document.addEventListener('keydown',kd,true);
+  d.querySelector('#m-no').onclick=fin;
+  d.querySelector('#gk-0').onclick=()=>{st.vk={M:W.M.vk,F:W.F.vk,L:W.L.vk};st.G=W.G.vk;st.quelle='';st.faG=null;zeich()};
+  d.querySelector('#gk-ziel')?.addEventListener('click',()=>{st.G=zielVK;st.quelle='G';verteilen();zeich()});
+  d.querySelector('#m-ok').onclick=()=>{if(curBeleg()!==b||b.fest){fin();return}const n=Object.keys(erg.neu).length;if(!n){d.querySelector('#m-err').textContent='Keine Preisänderung – bitte „Aufschlag neu“ oder „VK-GP neu“ eingeben.';return}
+    const u0=summen(b).netto,txt=(st.modus==='aufschlag'?'einheitlicher Aufschlag auf EK/HK':'proportional')+(st.rund>0.01?', EP gerundet auf '+fmt(st.rund):''),alt={},nw={};
+    for(const p of b.pos){const x=erg.neu[p.id];if(!x)continue;alt[p.id]=p.art==='G'?{pauschal:+p.pauschal||0}:{ep:+p.ep||0,...(p.epL!=null?{epL:p.epL}:{}),...(p.epS!=null?{epS:p.epS}:{})};nw[p.id]=p.art==='G'?x.pauschal:x.ep;Object.assign(p,x)}
+    const u1=summen(b).netto;if(erw('gkMerken'))b.kalkAlt={ts:new Date().toISOString(),text:`${txt}, netto ${fmt(u0)} → ${fmt(u1)}`,pos:alt,neu:nw};else delete b.kalkAlt;
+    log('Preisanpassung',`${T[b.typ].bez} ${bNr(b)}: ${txt}, ${n} ${n>1?'Preise':'Preis'}, netto ${fmt(u0)} → ${fmt(u1)}`);persist();fin();render();
+    gkMeldung(`Preise angepasst: netto ${fmt(u0)} → ${fmt(u1)} €${Math.abs(u1-st.G)>0.004?` (Ziel ${fmt(st.G)})`:''}`)};
+  if(ziel&&zielVK!=null){st.G=zielVK;st.quelle='G';verteilen()}
+  zeich();if(!HANDY.matches)setTimeout(()=>q('G','p')?.focus(),0)}
+// Letzte Preisanpassung ganz oder teilweise zurücknehmen (b.kalkAlt): je Position bzw. alle einer Kostenart; seither von Hand geänderte Preise markiert und nicht vorgewählt
+function gkRueck(b){const ka=b?.kalkAlt;if(!ka||b.fest)return;const pnr=posNummern(b),L=b.pos.filter(p=>ka.pos?.[p.id]);
+  if(!L.length){delete b.kalkAlt;persist();render();return}
+  const jetzt=p=>p.art==='G'?+p.pauschal||0:+p.ep||0,hand=p=>Math.abs(jetzt(p)-(+ka.neu?.[p.id]||0))>0.004,altW=p=>p.art==='G'?ka.pos[p.id].pauschal:ka.pos[p.id].ep,kat=p=>p.art==='G'?'G':gkZ(p);
+  const KL={G:'Gruppenpreis',...Object.fromEntries(GKZ)},ks=[...new Set(L.map(kat))],d=document.createElement('div');d.className='modal';
+  d.innerHTML=`<div class="mbox" style="max-width:760px"><h2>Preisanpassung zurücknehmen</h2><p class="mut" style="margin:0 0 6px">Letzte Preisanpassung vom ${dtAT(ka.ts)}${ka.text?': '+esc(ka.text):''}. Angehakte Positionen erhalten ihren Preis von vorher zurück.</p>
+    <div class="bar gkra"><label class="chk"><input type="checkbox" data-gr="*"> alle</label>${ks.length>1?ks.map(k=>`<label class="chk"><input type="checkbox" data-gr="${k}"> alle ${KL[k]}</label>`).join(''):''}</div>
+    <div class="gkw"><table class="gkr"><thead><tr><th></th><th>Pos</th><th>Bezeichnung</th><th>Kostenart</th><th class="n">vorher</th><th class="n">jetzt</th></tr></thead><tbody>
+    ${L.map(p=>`<tr${hand(p)?' class="gkh"':''}><td><input type="checkbox" data-id="${p.id}" data-k="${kat(p)}"${hand(p)?'':' checked'}></td><td class="mut">${pnr[p.id]||''}</td><td>${esc(p.bez||p.nr||'–')}${hand(p)?' '+tag('seither geändert','warn'):''}</td><td>${KL[kat(p)]}</td><td class="n">${fmtP(altW(p))}</td><td class="n">${fmtP(jetzt(p))}</td></tr>`).join('')}</tbody></table></div>
+    <p id="gkr-erg" style="margin:8px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Zurücknehmen</button></div></div>`;
+  document.body.appendChild(d);
+  const wahl=()=>[...d.querySelectorAll('input[data-id]')].filter(x=>x.checked).map(x=>x.dataset.id),box=g=>[...d.querySelectorAll(`input[data-id]${g==='*'?'':`[data-k="${g}"]`}`)];
+  const sync=()=>{const w=wahl();for(const g of d.querySelectorAll('[data-gr]')){const B=box(g.dataset.gr);g.checked=B.every(x=>x.checked);g.indeterminate=!g.checked&&B.some(x=>x.checked)}
+    const c={...b,pos:b.pos.map(p=>w.includes(p.id)?{...p,...ka.pos[p.id]}:p)};d.querySelector('#gkr-erg').innerHTML=`${w.length} von ${L.length} gewählt · netto ${fmt(summen(b).netto)} → <b>${fmt(summen(c).netto)} €</b>`;d.querySelector('#m-ok').disabled=!w.length};
+  d.addEventListener('change',e=>{const g=e.target.dataset.gr;if(g)box(g).forEach(x=>x.checked=e.target.checked);sync()});
+  const fin=()=>{d.remove();document.removeEventListener('keydown',kd,true)},kd=e=>{if(e.key==='Escape'&&[...document.querySelectorAll('.modal')].pop()===d){e.stopPropagation();fin()}};document.addEventListener('keydown',kd,true);
+  d.querySelector('#m-no').onclick=fin;
+  d.querySelector('#m-ok').onclick=()=>{if(curBeleg()!==b||b.fest){fin();return}const w=wahl();if(!w.length)return;for(const p of b.pos)if(w.includes(p.id))Object.assign(p,ka.pos[p.id]);
+    for(const id of Object.keys(ka.pos))if(w.includes(id)||!b.pos.some(p=>p.id===id)){delete ka.pos[id];if(ka.neu)delete ka.neu[id]}
+    if(!Object.keys(ka.pos).length)delete b.kalkAlt;log('Preisanpassung zurückgenommen',`${T[b.typ].bez} ${bNr(b)}: ${w.length} ${w.length>1?'Preise':'Preis'}`);persist();fin();render()};
+  sync()}
+{const m0=MENUE.beleg;MENUE.beleg=el=>{const L=m0(el),b=curBeleg();if(!gkDarf(b)||b.fest)return L;const i=L.findIndex(x=>x.act==='dup');L.splice(i<0?L.length:i,0,{l:'Gesamtkalkulation …',ic:'∑',act:'gkalk',titel:'Alle Preise auf einmal neu kalkulieren: Aufschlag neu in % oder €, VK neu, Ziel-DB II'});return L}} // ⋯-Menü des Belegs (kompakt)
 /* Skonto: innerhalb der Frist (Belegdatum + Skontotage) wird der Abzug beim Buchen der Zahlung vorgeschlagen (auf den offenen Bruttobetrag) */
 const skontoBis=b=>addDays(b.datum,+b.skontoTage||0);
 function skontoInfo(b,datum){const sk=+b.skonto||0,o=offen(b),bis=skontoBis(b);return{sk,bis,o,ok:sk>0&&o>0.005&&(datum||isoD())<=bis,betrag:r2(o*sk/100)}}
@@ -4848,6 +4984,7 @@ const ACT={
   kopfd:()=>kopfPop(curBeleg()), // Kopfdaten im Pop-up (kompakter Beleg, P30)
   ansicht:el=>{lsSet('erp-ansicht',el.dataset.m);render()},
   anrev:()=>angebotRevision(curBeleg()),
+  gkalk:el=>{const b=curBeleg();if(b)gesamtKalk(b,{ziel:!!el?.dataset?.ziel})},gkrueck:()=>{const b=curBeleg();if(b)gkRueck(b)}, // Gesamtkalkulation, Rücknahme (P10)
   anfolge:()=>folgeAngebot(curBeleg()),
   sumpop:()=>sumPop(curBeleg()), // Summen und Kalkulation im Pop-up (Aktionsleiste, P30)
   wechseln:()=>{if(pending&&!confirm('Nicht gespeicherte Änderungen gehen verloren. Fortfahren?'))return;lsSet('erp-modus',null);location.hash='';location.reload()},

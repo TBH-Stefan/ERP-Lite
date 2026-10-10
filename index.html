@@ -528,6 +528,19 @@ const kontakt=id=>DB.kontakte.find(k=>k.id===id);
 const artikel=id=>id?DB.artikel.find(a=>a.id===id):null;
 const beleg=id=>id?DB.belege.find(b=>b.id===id):null;
 const kName=id=>kontakt(id)?.name||'–';
+/* Anrede und Briefanrede (P6): Kontaktfelder anrede (''|H|F|FAM|FA), titel, vorname, nachname, titelNach, briefAnrede (freier Text statt der automatischen Form), alle optional;
+   ohne Eintrag bleibt alles wie bisher. Briefanrede österreichisch mit Titel, ohne Vorname: „Sehr geehrter Herr Ing. Mustermann,“, sonst „Sehr geehrte Damen und Herren,“ */
+const ANR={H:{a:'Herr',ak:'Herrn',b:'Sehr geehrter Herr'},F:{a:'Frau',ak:'Frau',b:'Sehr geehrte Frau'},FAM:{a:'Familie',ak:'Familie',b:'Sehr geehrte Familie'},FA:{a:'Firma',ak:'Firma',b:''}};
+const PERSF=['anrede','titel','vorname','nachname','titelNach','briefAnrede'],pT=x=>String(x??'').trim();
+const persName=p=>!p||!(pT(p.vorname)||pT(p.nachname))?'':[p.titel,p.vorname,p.nachname].map(pT).filter(Boolean).join(' ')+(pT(p.titelNach)?', '+pT(p.titelNach):''); // „Ing. Max Mustermann, BSc“
+const briefAnrede=p=>{const f=pT(p?.briefAnrede);if(f)return f;const a=ANR[p?.anrede],n=pT(p?.nachname);return a?.b&&n?`${a.b} ${[pT(p.titel),n].filter(Boolean).join(' ')},`:'Sehr geehrte Damen und Herren,'};
+const anrAuto=b=>briefAnrede(b.fest&&b.adresse?.name?b.adresse:kontakt(b.kontaktId)); // automatische Briefanrede des Belegs (festgeschrieben: aus dem Adress-Schnappschuss)
+const anrBeleg=b=>pT(b.anrede)||anrAuto(b); // b.anrede = eigene Briefanrede des Belegs (fehlt = automatisch aus dem Kontakt)
+// Name und Zusatz im Adressblock; mit druck.adrAnrede (P6): „Herr“/„Frau“/„Familie“ (Privat) bzw. „Firma“ über dem Namen, bei Unternehmen ohne Zusatz „z. H. Herrn Ing. Max Mustermann“
+function adrKopf(k,dp,privat){const a=dp.adrAnrede?ANR[k.anrede]:null,pn=persName(k),zh=a&&!privat&&['H','F'].includes(k.anrede)&&pT(k.nachname)&&!k.zusatz;
+  return`${a&&(privat||k.anrede==='FA')?esc(a.a)+'<br>':''}${esc(a&&privat&&k.anrede!=='FA'&&pn?pn:k.name)}<br>${k.zusatz?esc(k.zusatz)+'<br>':zh?`z. H. ${esc(a.ak)} ${esc(pn)}<br>`:''}`}
+// nach Kontaktwechsel bzw. geänderten Kontaktdaten (P6): eine eigene Briefanrede des Belegs bleibt nur auf Wunsch (war sie die bisherige automatische, gilt wieder die neue)
+function anrNeu(b,vorher,k){if(b.anrede==null||!dOpt(b).briefAnrede)return;const neu=briefAnrede(k);if(b.anrede===neu||b.anrede===vorher||confirm(`Briefanrede neu aus dem Kontakt übernehmen?\n\nbisher: ${b.anrede}\nneu: ${neu}`))delete b.anrede}
 const bNr=b=>b?(b.nr||'Entwurf'):'';
 const steuerDef=c=>S().steuer.find(s=>s.code===c)||{code:c,satz:0,bez:c,hinweis:''};
 // Nachdruck-Treue (erw.snapshot): beim Festschreiben eingefrorene Firmen-/Steuerwerte b.fix, gelesen nur bei festgeschriebenen Belegen (Entwurf: aktuelle Einstellungen)
@@ -1119,7 +1132,7 @@ function neuPos(o={}){return{id:uid(),art:'W',artikelId:'',nr:'',bez:'',text:'',
 function folge(src,typ,extra={}){
   if(!src.fest){alert('Bitte den Beleg zuerst festschreiben.');return null}
   const o={ltDruck:src.ltDruck!==false,optRabatt:!!src.optRabatt,optLS:!!src.optLS,auftragId:src.auftragId||'',vorgaengerId:src.id,betreff:src.betreff,bezug:`${T[src.typ].bez} ${src.nr} vom ${dAT(src.datum)}`,
-    kontaktId:typ==='BE'?'':src.kontaktId,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,...(src.druck&&typ!=='BE'?{druck:{...src.druck}}:{}),...extra}; // Druckabweichungen (P1) nicht auf die Bestellung an den Lieferanten
+    kontaktId:typ==='BE'?'':src.kontaktId,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,...(src.druck&&typ!=='BE'?{druck:{...src.druck}}:{}),...(src.anrede&&typ!=='BE'?{anrede:src.anrede}:{}),...extra}; // Druckabweichungen (P1) nicht auf die Bestellung an den Lieferanten
   if(typ==='BE'){o.zahlungsziel=S().zahlungsziel;o.skonto=0;o.skontoTage=0;o.betreff=src.betreff?'Projekt: '+src.betreff:''}
   if(typ==='AR'){
     const p=prompt('Anzahlung in % der Summe netto:','30');if(p===null)return null;
@@ -1149,7 +1162,7 @@ function folge(src,typ,extra={}){
 function folgeGo(src,typ){const b=folge(src,typ);if(b){log('Folgebeleg',`${T[typ].bez} aus ${src.nr}`);persist();go('beleg/'+b.id)}}
 
 /* ---------- Festschreiben / Storno ---------- */
-function adressSnapshot(k){return k?{nr:k.nr,name:k.name,zusatz:k.zusatz,strasse:k.strasse,plz:k.plz,ort:k.ort,land:k.land,uid:k.uid,kundenart:k.kundenart||'',...(k.kdNrLief?{kdNrLief:k.kdNrLief}:{})}:{}} // kundenart immer speichern ('' = Unternehmen), sonst liest der Nachdruck den aktuellen Kontakt
+function adressSnapshot(k){return k?{nr:k.nr,name:k.name,zusatz:k.zusatz,strasse:k.strasse,plz:k.plz,ort:k.ort,land:k.land,uid:k.uid,kundenart:k.kundenart||'',...(k.kdNrLief?{kdNrLief:k.kdNrLief}:{}),...Object.fromEntries(PERSF.filter(f=>pT(k[f])).map(f=>[f,k[f]]))}:{}} // kundenart immer speichern ('' = Unternehmen), sonst liest der Nachdruck den aktuellen Kontakt; Anrede, Titel, Name und Briefanrede nur, wenn eingetragen (P6)
 // verwendete Steuer-Codes (wie summen(): Gruppen nur mit Pauschalpreis; Optionen/Alternativen zählen mit, ihr Satz steht in der USt-Spalte)
 const steuerCodes=b=>[...new Set(b.pos.filter(p=>p.art!=='T'&&(p.art!=='G'||+p.pauschal>0)).map(p=>p.art==='G'?p.steuer||S().stdSteuer:p.steuer).filter(Boolean))];
 // Steuersätze schützen: Codes aus festgeschriebenen Belegen sind gesperrt (Code, Satz, Bezeichnung, Hinweis) – schützt Nachdruck, FiBu und UVA alter Rechnungen
@@ -1225,7 +1238,7 @@ function stornieren(b){
 }
 function duplizieren(b){ // Darstellung (Langtext, Rabatt-, Lohn/Sonstiges-Spalten) wie in folge() mitnehmen
   const n=neuBeleg(b.typ,{kontaktId:b.kontaktId,betreff:b.betreff,kopf:b.kopf,fuss:b.fuss,zahlungsziel:b.zahlungsziel,skonto:b.skonto,skontoTage:b.skontoTage,auftragId:T[b.typ].b==='E'?b.auftragId:'',
-    ltDruck:b.ltDruck!==false,optRabatt:!!b.optRabatt,optLS:!!b.optLS,...(b.druck?{druck:{...b.druck}}:{})});
+    ltDruck:b.ltDruck!==false,optRabatt:!!b.optRabatt,optLS:!!b.optLS,...(b.druck?{druck:{...b.druck}}:{}),...(b.anrede?{anrede:b.anrede}:{})});
   n.pos=b.pos.map(p=>({...p,id:uid(),herkunftPosId:''}));persist();go('beleg/'+n.id);
 }
 
@@ -1566,7 +1579,7 @@ function kopfFelder(b,teil=''){
   const kont=DB.kontakte.filter(k=>V_?k.typ!=='L':k.typ!=='K').sort((a,c)=>a.name.localeCompare(c.name));
   const rte=(key,val,ph)=>`<div class="rte" ${b.fest?'':'contenteditable="true"'} data-ed="${key}" data-ph="${esc(ph)}">${rt(val)}</div>`;
   const auftragOpts=()=>opt('','– kein Auftrag (Lager/Gemeinkosten) –',b.auftragId)+auftragsListe().map(a=>opt(a.id,auftragLabel(a.id),b.auftragId)).join('');
-  if(teil==='texte')return V_||b.typ==='BE'?`<div class="row"><label class="w2">Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label></div><div class="row"><label class="w2">Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>`:'';
+  if(teil==='texte')return V_||b.typ==='BE'?`${anrFeld(b)}<div class="row"><label class="w2">Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label></div><div class="row"><label class="w2">Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>`:'';
   const K=`<div class="row">
       <label class="w2">${V_?'Kunde':'Lieferant'}<select data-h="kontaktId" ${dis}>${opt('','– wählen –',b.kontaktId)}${kont.map(k=>opt(k.id,k.name+(k.ort?' · '+k.ort:''),b.kontaktId)).join('')}${opt('__neu',V_?'+ Neuer Kunde …':'+ Neuer Lieferant …','')}</select>${b.kontaktId&&!b.fest?`<span style="display:flex;gap:6px;align-items:center;margin-top:4px"><button class="s" data-act="kedit">✎ ${V_?'Kundendaten':'Lieferantendaten'} bearbeiten</button>${kontaktFehlt(kontakt(b.kontaktId)).length?`<span class="err" style="font-size:12px">fehlt: ${kontaktFehlt(kontakt(b.kontaktId)).join(', ')}</span>`:''}${kontakt(b.kontaktId)?.kundenart==='privat'?tag('Privat'):''}</span>`:''}</label>
       <label class="w05">Datum<input type="date" data-h="datum" value="${b.datum}" ${dis}></label>
@@ -1591,8 +1604,10 @@ function kopfFelder(b,teil=''){
   return`<div class="card">
     ${K}
     ${Z}
-    ${V_||b.typ==='BE'?`<div class="row"><label>Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label><label>Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>`:''}
+    ${V_||b.typ==='BE'?`${anrFeld(b)}<div class="row"><label>Kopftext${rte('h:kopf',b.kopf,'Kopftext …')}</label><label>Fußtext${rte('h:fuss',b.fuss,'Fußtext …')}</label></div>`:''}
   </div>`}
+// Feld „Briefanrede“ im Beleg (P6, nur mit druck.briefAnrede): leer = automatisch aus dem Kontakt (als Platzhalter angezeigt), „↻ aus Kontakt“ verwirft die eigene Anrede
+const anrFeld=b=>dOpt(b).briefAnrede&&(T[b.typ].b==='V'||b.typ==='BE')?`<div class="row"><label class="w2">Briefanrede<input data-h="anrede" value="${esc(b.anrede||'')}" placeholder="${esc(anrAuto(b))}" ${b.fest?'disabled':''}></label>${b.fest?'':`<button class="s" data-act="anrk" style="align-self:flex-end;margin-bottom:6px" title="Eigene Briefanrede verwerfen – automatisch aus Anrede, Titel und Nachname des Kontakts bzw. aus der Briefanrede im Kontakt">↻ aus Kontakt</button>`}</div>`:'';
 function kopfZus(b){const t=T[b.typ],V_=t.b==='V',k=kontakt(b.kontaktId),a=b.fest&&b.adresse?.name?b.adresse:k,f=b.fest?[]:kontaktFehlt(k);
   const z2=[(b.typ==='ER'?'Rechnung vom ':'vom ')+dAT(b.datum),b.typ==='AN'&&b.gueltigBis?esc(dOpt(b).lblGueltig||'Gültig bis')+' '+dAT(b.gueltigBis):'',['AB','BE'].includes(b.typ)&&b.liefertermin?'Liefertermin '+dAT(b.liefertermin):'',
     ((t.re&&V_)||b.typ==='LS')&&b.leistung?'Leistung '+esc(b.leistung):'',['ER','BE','WE'].includes(b.typ)&&b.fremdNr?{ER:'Re-Nr. Lief. ',BE:'Angebot Lief. ',WE:'LS-Nr. Lief. '}[b.typ]+esc(b.fremdNr):''].filter(Boolean);
@@ -1600,7 +1615,7 @@ function kopfZus(b){const t=T[b.typ],V_=t.b==='V',k=kontakt(b.kontaktId),a=b.fes
   return`<div class="card kzus"${b.fest?'':' data-act="kopfd" role="button" title="Kopfdaten bearbeiten"'}><div class="kz1"><b>${a?esc(a.name):`<span class="err">kein ${V_?'Kunde':'Lieferant'}</span>`}</b>${a?.ort?`<span class="mut">· ${esc(a.ort)}</span>`:''}${(a?.kundenart)==='privat'?tag('Privat'):''}${b.fest?'':'<span class="kzed" aria-hidden="true">✎</span>'}</div>
     ${f.length&&k?`<div class="err" style="font-size:13px">fehlt: ${f.join(', ')}</div>`:''}<div>${z2.join(' · ')}</div>${z3.length?`<div class="mut">${z3.join(' · ')}</div>`:''}${z4.length?`<div class="mut">${z4.join(' · ')}</div>`:''}</div>`}
 function kopfK(b){const V_=T[b.typ].b==='V',ohneP=OHNE_PREIS.includes(b.typ),z=[`${fmtQ(+b.zahlungsziel||0)} Tage`,+b.skonto?`${fmtQ(b.skonto)} % Skonto ${fmtQ(+b.skontoTage||0)} Tage`:''].filter(Boolean).join(' · ');
-  const tx=[b.kopf,b.fuss].map(rtText).filter(Boolean).join(' · ');
+  const tx=[dOpt(b).briefAnrede&&(V_||b.typ==='BE')?anrBeleg(b):'',b.kopf,b.fuss].map(rtText).filter(Boolean).join(' · '); // mit Briefanrede (P6)
   return`${kmpBH()&&(b.kontaktId||b.fest)?kopfZus(b):`<div class="card">${kopfFelder(b,'kopf')}</div>`}
   <div class="kakk">${ohneP?'':akk('b-zahl','Zahlungsbedingungen',kopfFelder(b,'zahl'),{zusatz:esc(z)})}${V_||b.typ==='BE'?akk('b-texte','Kopf- und Fußtext',kopfFelder(b,'texte'),{zusatz:esc(tx.length>50?tx.slice(0,48)+' …':tx)||'leer'}):''}</div>`}
 const anBeleg=(d,b)=>{if(d)d._gilt=()=>curBeleg()===b;return d}; // Pop-up gehört zu diesem Beleg: schließt, wenn ein anderer Beleg angezeigt bzw. der Datenstand ersetzt wird (Felder schreiben über curBeleg())
@@ -1752,7 +1767,7 @@ function edUebernehmen(el,next){
   const[t,a,f]=el.dataset.ed.split(':'),rich=(t==='h'&&['kopf','fuss'].includes(a))||(t==='p'&&f==='text');
   const txt=rich?clean(el.innerHTML):el.innerText.replace(/\u00a0/g,' ').replace(/\n+$/,'');
   let val;
-  if(t==='h'){if(b[a]===txt)return;b[a]=val=txt;const i=document.querySelector(`[data-h="${a}"]`);if(i)i.value=txt}
+  if(t==='h'){const w=a==='anrede'?(pT(txt)&&pT(txt)!==anrAuto(b)?pT(txt):undefined):txt;if(b[a]===w)return;if(w===undefined)delete b[a];else b[a]=w;val=a==='anrede'?anrBeleg(b):w;const i=document.querySelector(`[data-h="${a}"]`);if(i)i.value=w??''} // Briefanrede (P6): wie automatisch bzw. leer = nicht speichern
   else{
     const p=b.pos[+a];if(!p)return;
     const v=['menge','ep','rabatt','epL','epS'].includes(f)?deNum(txt):txt;
@@ -1818,17 +1833,20 @@ function formDialog({titel,felder,ok='Anlegen',breit=false,extra='',scroll=false
 // Kontakt anlegen oder bearbeiten (k = bestehender Kontakt). Pflicht: Name, Straße, PLZ, Ort, Land (§ 11 UStG: Name und Anschrift)
 async function kontaktPopup(typ,v={},k=null){ // typ K | L
   const s=S(),nrV=k?k.nr:String((s.knr[typ]||0)+1),src={...v,...(k||{})},istK=typ!=='L';
+  const K_=kmp(),pers=[...(K_?[{typ:'abschnitt',l:'Person und Briefanrede',zu:!PERSF.some(f=>pT(src[f]))}]:[]),{k:'anrede',l:'Anrede',wert:src.anrede||'',opts:[['','–'],...Object.entries(ANR).map(([x,a])=>[x,a.a])],neu:1,cls:'w05'},{k:'titel',l:'Titel',wert:src.titel||'',cls:'w05',ph:'z. B. Ing.'},
+    {k:'vorname',l:'Vorname',wert:src.vorname||''},{k:'nachname',l:'Nachname',wert:src.nachname||''},{k:'titelNach',l:'Titel nachgestellt',wert:src.titelNach||'',cls:'w05',ph:'z. B. BSc'},
+    {k:'briefAnrede',l:'Briefanrede',wert:src.briefAnrede||'',neu:1,cls:'w2',ph:briefAnrede({...src,briefAnrede:''}),info:'leer = automatisch aus Anrede, Titel und Nachname (z. B. „Sehr geehrter Herr Ing. Mustermann,“), ohne Nachname „Sehr geehrte Damen und Herren,“'}]; // Anrede (P6): ohne kompakt nach „Name / Firma“, in kompakt als zuklappbarer Abschnitt am Ende
   const o=await formDialog({titel:k?`${istK?'Kunde':'Lieferant'} bearbeiten`:(istK?'Neuer Kunde':'Neuer Lieferant'),ok:k?'Speichern':'Anlegen',breit:true,felder:[
     {k:'kundenart',l:'Art',wert:src.kundenart||(src.uid||typ==='L'?'B2B':'B2B'),opts:[['B2B','Unternehmen (B2B)'],['privat','Privat (B2C)']],cls:'w05'},
-    {k:'name',l:'Name / Firma',wert:src.name,cls:'w2',pflicht:true},{k:'nr',l:istK?'Kunden-Nr.':'Lieferanten-Nr.',wert:nrV,cls:'w05',pflicht:true},
+    {k:'name',l:'Name / Firma',wert:src.name,cls:'w2',pflicht:true},{k:'nr',l:istK?'Kunden-Nr.':'Lieferanten-Nr.',wert:nrV,cls:'w05',pflicht:true},...(K_?[]:pers),
     {k:'zusatz',l:'Zusatz / z. H.',wert:src.zusatz,neu:1},{k:'strasse',l:'Straße',wert:src.strasse,cls:'w2',pflicht:true},
     {k:'plz',l:'PLZ',wert:src.plz,neu:1,cls:'w05',pflicht:true},{k:'ort',l:'Ort',wert:src.ort,pflicht:true},{k:'land',l:'Land',wert:src.land||'Österreich',pflicht:true},
     {k:'uid',l:'UID-Nr. (B2B)',wert:src.uid,neu:1},{k:'email',l:'E-Mail',wert:src.email},{k:'tel',l:'Telefon',wert:src.tel},
     {k:'zahlungsziel',l:'Zahlungsziel Tage',typ:'number',wert:src.zahlungsziel??s.zahlungsziel,neu:1,cls:'w05'},{k:'skonto',l:'Skonto %',typ:'number',wert:src.skonto||'',cls:'w05'},{k:'skontoTage',l:'Skonto Tage',typ:'number',wert:src.skontoTage||'',cls:'w05'},
     ...(istK?[{k:'rabatt',l:'Kundenrabatt %',typ:'number',wert:src.rabatt||'',cls:'w05'}]:[]),
-    ...(!istK||src.typ==='KL'?[{k:'kdNrLief',l:'Unsere Kunden-Nr.',wert:src.kdNrLief||'',cls:'w05',ph:'beim Lieferanten'}]:[])]}); // steht auf Bestellungen statt der internen Lieferanten-Nr. (P6)
+    ...(!istK||src.typ==='KL'?[{k:'kdNrLief',l:'Unsere Kunden-Nr.',wert:src.kdNrLief||'',cls:'w05',ph:'beim Lieferanten'}]:[]),...(K_?pers:[])]}); // steht auf Bestellungen statt der internen Lieferanten-Nr. (P6)
   if(!o)return null;
-  if(!o.kdNrLief&&!(k&&'kdNrLief' in k))delete o.kdNrLief; // leeres neues Feld nicht anlegen
+  for(const f of ['kdNrLief',...PERSF])if(!pT(o[f])&&!(k&&f in k))delete o[f]; // leeres neues Feld nicht anlegen (Kontakte ohne Anrede bleiben unverändert, P6)
   if(o.kundenart==='B2B'&&!o.uid&&istK&&!confirm('Für Unternehmenskunden ist die UID-Nr. bei Rechnungen über 10.000 € brutto und bei Reverse Charge Pflicht.\nOhne UID-Nr. speichern?'))return null;
   if(DB.kontakte.some(x=>x!==k&&x.nr===o.nr)){alert('Nummer '+o.nr+' ist bereits vergeben.');return null}
   if(/^\d+$/.test(o.nr)&&+o.nr>(s.knr[typ==='L'?'L':'K']||0)&&+o.nr<(s.knr[typ==='L'?'L':'K']||0)+100000)s.knr[typ==='L'?'L':'K']=+o.nr; // nächste automatische Nummer folgt
@@ -1923,7 +1941,7 @@ function angebotRevision(src){
   const grund=prompt(`Angebot ${src.nr} bearbeiten → neue Revision ${basis}-R${rev}.\nDer bisherige Stand bleibt unverändert gespeichert.\n\nGrund der Änderung (optional, z. B. „Kundenwunsch: 2. Verteiler“):`,'');
   if(grund===null)return;
   const b=neuBeleg('AN',{kontaktId:src.kontaktId,betreff:src.betreff,bezug:src.bezug,kopf:src.kopf,fuss:src.fuss,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,
-    auftragId:src.auftragId,vorgaengerId:src.id,basisNr:basis,rev,revGrund:grund.trim(),optRabatt:src.optRabatt,optLS:src.optLS,ltDruck:src.ltDruck,leistung:src.leistung,...(src.druck?{druck:{...src.druck}}:{})});
+    auftragId:src.auftragId,vorgaengerId:src.id,basisNr:basis,rev,revGrund:grund.trim(),optRabatt:src.optRabatt,optLS:src.optLS,ltDruck:src.ltDruck,leistung:src.leistung,...(src.druck?{druck:{...src.druck}}:{}),...(src.anrede?{anrede:src.anrede}:{})});
   b.pos=src.pos.map(p=>({...p,id:uid(),herkunftPosId:'',revPosId:p.id}));
   log('Revision angelegt',`${basis}-R${rev}${grund.trim()?': '+grund.trim():''}`);persist();go('beleg/'+b.id);
 }
@@ -1939,7 +1957,7 @@ function revDiff(a,b){
     if(+q.ep!==+p.ep)d.push(`EP ${fmt(+q.ep||0)} → ${fmt(+p.ep||0)}`);if(+(q.rabatt||0)!==+(p.rabatt||0))d.push(`Rabatt ${fmtQ(q.rabatt||0)} → ${fmtQ(p.rabatt||0)} %`);
     if((q.text||'')!==(p.text||''))d.push('Langtext geändert');if(d.length)out.push(['~',p.bez||p.nr,d.join(', ')])}
   for(const q of rest)out.push(['−',q.bez||q.nr,fm(q)]);
-  for(const[f,l]of[['betreff','Betreff'],['kopf','Kopftext'],['fuss','Fußtext'],['zahlungsziel','Zahlungsziel'],['kontaktId','Kunde']])if((a[f]??'')!==(b[f]??''))out.push(['~',l,'geändert']);
+  for(const[f,l]of[['betreff','Betreff'],['anrede','Anrede'],['kopf','Kopftext'],['fuss','Fußtext'],['zahlungsziel','Zahlungsziel'],['kontaktId','Kunde']])if((a[f]??'')!==(b[f]??''))out.push(['~',l,'geändert']);
   return out}
 function revHistorie(b){
   const L=revListe(b);if(L.length<2&&!b.rev)return'';
@@ -2330,11 +2348,11 @@ V.kontakte=typ=>{
   // Filter Kunden/Lieferanten (P6, erw.kFilter): Route #/kontakte/K|L oder zuletzt gewählt (je Gerät); Kunde + Lieferant erscheint in beiden
   if(kf&&(typ==='K'||typ==='L')&&UI.kTyp!==typ){UI.kTyp=typ;lsSet('erp-kTyp',typ)}if(UI.kTyp==null)UI.kTyp=['K','L'].includes(lsGet('erp-kTyp'))?lsGet('erp-kTyp'):'';
   const kt=kf?UI.kTyp:'',passt=k=>!kt||k.typ===kt||k.typ==='KL';
-  const L=DB.kontakte.filter(k=>passt(k)&&(!q||(kf?[k.nr,k.name,k.zusatz,k.ort,k.uid,k.email,k.tel,k.kdNrLief]:[k.nr,k.name,k.ort,k.uid]).join(' ').toLowerCase().includes(q))).sort((a,c)=>a.name.localeCompare(c.name));
+  const L=DB.kontakte.filter(k=>passt(k)&&(!q||(kf?[k.nr,k.name,k.zusatz,k.ort,k.uid,k.email,k.tel,k.kdNrLief,persName(k)]:[k.nr,k.name,k.ort,k.uid]).join(' ').toLowerCase().includes(q))).sort((a,c)=>a.name.localeCompare(c.name));
   const anz=t=>DB.kontakte.filter(k=>!t||k.typ===t||k.typ==='KL').length;
   return`${kmp()?kontaktKopfK(kf,kt,anz):`<h1>Kunden &amp; Lieferanten</h1>${kf?`<div class="bar chips">${[['','Alle'],['K','Kunden'],['L','Lieferanten']].map(([t,l])=>`<button class="${kt===t?'on':''}" data-act="ktyp" data-t="${t}">${l} (${anz(t)})</button>`).join('')}</div>`:''}<div class="bar"><input data-o="ui" data-f="kQ" placeholder="Suche" value="${esc(UI.kQ)}" style="width:260px"><span class="sp"></span><button class="p" data-act="knew" data-t="K">+ Kunde</button><button data-act="knew" data-t="L">+ Lieferant</button></div>`}
   ${tabelle('kontakte',[
-    {k:'nr',l:'Nr',f:k=>esc(k.nr)},{k:'name',l:'Name',f:k=>esc(k.name)},{k:'zusatz',l:'Zusatz',f:k=>esc(k.zusatz||''),std:false},{k:'typ',l:'Typ',f:k=>({K:'Kunde',L:'Lieferant',KL:'Kunde + Lieferant'}[k.typ])},{k:'kart',l:'Art',f:k=>k.kundenart==='privat'?'Privat':'B2B'},
+    {k:'nr',l:'Nr',f:k=>esc(k.nr)},{k:'name',l:'Name',f:k=>esc(k.name)},{k:'zusatz',l:'Zusatz',f:k=>esc(k.zusatz||''),std:false},{k:'person',l:'Person',f:k=>esc(persName(k)),std:false},{k:'typ',l:'Typ',f:k=>({K:'Kunde',L:'Lieferant',KL:'Kunde + Lieferant'}[k.typ])},{k:'kart',l:'Art',f:k=>k.kundenart==='privat'?'Privat':'B2B'},
     {k:'strasse',l:'Straße',f:k=>esc(k.strasse||''),std:false},{k:'ort',l:'Ort',f:k=>`${esc(k.plz)} ${esc(k.ort)}`},{k:'land',l:'Land',f:k=>esc(k.land||''),std:false},{k:'uid',l:'UID',f:k=>esc(k.uid)},
     {k:'email',l:'E-Mail',f:k=>esc(k.email||''),std:false},{k:'tel',l:'Telefon',f:k=>esc(k.tel||''),std:false},{k:'ziel',l:'Zahlungsziel',n:1,f:k=>k.zahlungsziel!==''&&k.zahlungsziel!=null?k.zahlungsziel+' T.':'',std:false},{k:'skonto',l:'Skonto',n:1,f:k=>+k.skonto?`${fmtQ(k.skonto)} % / ${k.skontoTage||0} T.`:'',std:false},{k:'rabatt',l:'Kundenrabatt',n:1,f:k=>+k.rabatt?fmtQ(k.rabatt)+' %':'',std:false},
     {k:'umsatz',l:'Umsatz lfd. Jahr',n:1,f:k=>{const j=String(new Date().getFullYear()),u=sum(DB.belege.filter(b=>b.kontaktId===k.id&&zaehltUmsatz(b)&&b.datum.startsWith(j)),b=>sgn(b)*summen(b).nettoEff);return u?fmt(u):''},std:false},
@@ -2346,12 +2364,18 @@ V.kontakte=typ=>{
 // Felder eines Kontakts (Setter 'k'): Formular im Kontakt, in kompakt im Pop-up „Kontakt bearbeiten“ (P30)
 function kontaktFelder(k){
   const f=(fl,l,cls='',type='text')=>`<label class="${cls}">${l}<input type="${type}" data-o="k" data-id="${k.id}" data-f="${fl}" value="${esc(k[fl])}"></label>`;
-  return`<div class="row">${f('nr',k.typ==='L'?'Lieferanten-Nr.':k.typ==='KL'?'Kunden-/Lief.-Nr.':'Kunden-Nr.','w05')}<label class="w05">Typ<select data-o="k" data-id="${k.id}" data-f="typ">${opt('K','Kunde',k.typ)}${opt('L','Lieferant',k.typ)}${opt('KL','Kunde + Lieferant',k.typ)}</select></label>${f('name','Name / Firma *','w2')}${f('zusatz','Zusatz / z. H.')}</div>
+  return`<div class="row">${f('nr',k.typ==='L'?'Lieferanten-Nr.':k.typ==='KL'?'Kunden-/Lief.-Nr.':'Kunden-Nr.','w05')}<label class="w05">Typ<select data-o="k" data-id="${k.id}" data-f="typ">${opt('K','Kunde',k.typ)}${opt('L','Lieferant',k.typ)}${opt('KL','Kunde + Lieferant',k.typ)}</select></label>${f('name','Name / Firma *','w2')}${f('zusatz','Zusatz / z. H.')}</div>${kontaktPers(k)}
   <div class="row">${f('strasse','Straße *','w2')}${f('plz','PLZ *','w05')}${f('ort','Ort *')}${f('land','Land *','w05')}</div>
   <div class="row"><label class="w05">Art<select data-o="k" data-id="${k.id}" data-f="kundenart">${opt('B2B','Unternehmen (B2B)',k.kundenart||'B2B')}${opt('privat','Privat (B2C)',k.kundenart||'B2B')}</select></label>${f('uid',k.kundenart==='privat'?'UID-Nr.':'UID-Nr. (B2B)')}${f('email','E-Mail')}${f('tel','Telefon')}</div>
   <div class="row">${f('zahlungsziel','Zahlungsziel Tage','w05','number')}${f('skonto','Skonto %','w05','number')}${f('skontoTage','Skonto Tage','w05','number')}${k.typ!=='L'?f('rabatt','Kundenrabatt %','w05','number'):''}${k.typ!=='K'?`<label class="w05" title="Unsere Kunden-Nr. beim Lieferanten – steht auf Bestellungen und anderen Einkaufsbelegen statt der internen Lieferanten-Nr.">Unsere Kunden-Nr.<input data-o="k" data-id="${k.id}" data-f="kdNrLief" value="${esc(k.kdNrLief||'')}"></label>`:''}<span style="flex:2" class="mut">Optional: werden in neue Belege übernommen.</span></div>
   ${kontaktFehlt(k).length?`<div class="hint">Pflichtangaben fehlen: ${kontaktFehlt(k).join(', ')} (für Rechnungen nötig).</div>`:''}
   <div class="row"><label>Notiz<textarea data-o="k" data-id="${k.id}" data-f="notiz">${esc(k.notiz)}</textarea></label></div>`}
+// Person und Briefanrede eines Kontakts (P6, Setter 'k'): Anrede, Titel, Vor-/Nachname, nachgestellter Titel, Briefanrede (leer = automatisch); in kompakt zuklappbar
+function kontaktPers(k){const a=`data-o="k" data-id="${k.id}"`,f=(fl,l,cls='',ph='')=>`<label class="${cls}">${l}<input ${a} data-f="${fl}" value="${esc(k[fl])}"${ph?` placeholder="${esc(ph)}"`:''}></label>`;
+  return akk('k-pers','Person und Briefanrede',`<div class="row"><label class="w05">Anrede<select ${a} data-f="anrede">${opt('','–',k.anrede||'')}${Object.entries(ANR).map(([x,y])=>opt(x,y.a,k.anrede||'')).join('')}</select></label>${f('titel','Titel','w05','z. B. Ing.')}${f('vorname','Vorname')}${f('nachname','Nachname')}${f('titelNach','Titel nachgestellt','w05','z. B. BSc')}</div>
+  <div class="row">${f('briefAnrede','Briefanrede','w2',briefAnrede({...k,briefAnrede:''}))}<span style="flex:2;align-self:center;font-size:13px" class="mut" id="kba">${kbaTxt(k)}</span></div>`,{offen:PERSF.some(x=>pT(k[x])),zusatz:esc(briefAnrede(k))})}
+const kbaTxt=k=>`leer = automatisch: „${esc(briefAnrede({...k,briefAnrede:''}))}“${persName(k)?` · Person: ${esc(persName(k))}`:''}`;
+const kbaAkt=k=>{const e=$('#kba');if(e)e.innerHTML=kbaTxt(k);const i=document.querySelector('[data-o="k"][data-f="briefAnrede"]');if(i)i.placeholder=briefAnrede({...k,briefAnrede:''})};
 V.kontakt=id=>{
   const k=kontakt(id);if(!k)return'<p>Nicht gefunden.</p>';
   const docs=DB.belege.filter(b=>b.kontaktId===k.id).sort((a,c)=>c.datum.localeCompare(a.datum));
@@ -2374,7 +2398,7 @@ function kontaktKopfV(k,docs){const op=sum(docs,b=>T[b.typ].b==='V'?offen(b):-of
   return`<div class="bar"><h1 style="margin:0">${esc(k.nr)} ${esc(k.name||'Neuer Kontakt')}</h1></div>
   <div class="bar">${k.typ!=='L'?`<button data-act="kbel" data-t="AN" data-id="${k.id}">+ Angebot</button><button data-act="kbel" data-t="RE" data-id="${k.id}">+ Rechnung</button>`:''}${k.typ!=='K'?`<button data-act="kbel" data-t="BE" data-id="${k.id}">+ Bestellung</button><button data-act="kbel" data-t="ER" data-id="${k.id}">+ Eingangsrechnung</button>`:''}<span class="sp"></span><button class="mehr" data-act="menue" data-m="kontakt" data-id="${k.id}" title="Bearbeiten, Löschen">⋯</button></div>
   <div class="card vk"><div class="bar" style="margin:0"><b style="font-size:16px">${esc(k.name||'Neuer Kontakt')}</b><span class="mut">${esc(k.zusatz||'')}</span><span class="sp"></span><button data-act="lpop" data-lp="kontakt" data-id="${k.id}">✎ Bearbeiten</button></div>
-    <div>${adr||'<span class="mut">keine Anschrift</span>'}</div>
+    ${persName(k)?`<div>${esc([k.anrede!=='FA'&&ANR[k.anrede]?.a,persName(k)].filter(Boolean).join(' '))}</div>`:''}<div>${adr||'<span class="mut">keine Anschrift</span>'}</div>
     ${k.tel||k.email?`<div class="vkl">${k.tel?`<a href="tel:${esc(tel)}">📞 ${esc(k.tel)}</a>`:''}${k.email?`<a href="mailto:${esc(k.email)}">✉ ${esc(k.email)}</a>`:''}</div>`:''}
     <div class="mut">${[{K:'Kunde',L:'Lieferant',KL:'Kunde + Lieferant'}[k.typ],k.kundenart==='privat'?'Privat (B2C)':'Unternehmen (B2B)',k.uid?'UID '+esc(k.uid):''].filter(Boolean).join(' · ')}</div>
     ${kond.length?`<div class="mut">${kond.join(' · ')}</div>`:''}
@@ -4317,11 +4341,11 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   return`<div class="doc${dc}"${dc.includes('gf')?` style="--gf:${gfv}"`:''}>
   ${b.fest?'':'<div class="wm">ENTWURF – nicht gültig</div>'}
   ${briefkopf(f)}
-  <div class="adr"><div class="to">${esc(k.name)}<br>${k.zusatz?esc(k.zusatz)+'<br>':''}${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.land&&k.land!=='Österreich'?'<br>'+esc(k.land):''}</div>
+  <div class="adr"><div class="to">${adrKopf(k,dp,privat)}${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.land&&k.land!=='Österreich'?'<br>'+esc(k.land):''}</div>
   <div class="info">${dp.infoTab?`<table class="infot">${info.map(([a,v,h])=>`<tr><td>${esc(a)}:</td><td>${v&&v.h!=null?v.h:esc(v)}${h?`<div class="nrh">${esc(h)}</div>`:''}</td></tr>`).join('')}</table>`:info.map(([a,v,h])=>`<div>${esc(a)}: ${v&&v.h!=null?v.h:esc(v)}</div>${h?`<div class="nrh">${esc(h)}</div>`:''}`).join('')}</div></div>
   ${o.dup?'<div class="dupl">DUPLIKAT</div>':''}<h3>${esc(((!RE_V.includes(b.typ)&&dp.titel)||t.bez).toUpperCase())}${dp.nrInfo?'':` NR.: ${esc(nrTxt)}`}</h3>
   ${b.betreff||edit?`<div>Projekt: ${ed('h:betreff',b.betreff,'Betreff / Projekt')}</div>`:''}${b.bezug||edit?`<div>Bezug: ${ed('h:bezug',b.bezug,'z. B. Ihre Anfrage vom …')}</div>`:''}
-  ${b.kopf||edit?`<div class="txt">${ed('h:kopf',b.kopf,'Kopftext …',true)}</div>`:''}
+  ${dp.briefAnrede&&(t.b==='V'||b.typ==='BE')?`<div class="txt">${ed('h:anrede',anrBeleg(b),'Briefanrede')}</div>`:''}${b.kopf||edit?`<div class="txt">${ed('h:kopf',b.kopf,'Kopftext …',true)}</div>`:''}
   <table class="p${sp?' sp':''}"><thead>${th}</thead><tbody>${tr(haupt)}</tbody></table>
   ${zs}${ohneP||!dp.summen?'':(eu=>`<table class="tot"><tr><td>${esc(dp.lblNetto||'Nettobetrag')}</td>${eu(fmt(s.netto))}</tr>${lsA&&lsf!=='aus'?`<tr><td style="font-size:8.5pt">davon Lohn ${fmt(s.lohn)} € · Sonstiges ${fmt(s.sonst)} €${Math.abs(s.netto-s.lohn-s.sonst)>0.005?` · ohne Aufteilung (Gruppenpreise) ${fmt(s.netto-s.lohn-s.sonst)} €`:''}</td><td></td>${dp.euroSp?'<td></td>':''}</tr>`:''}
   ${s.steuern.map(x=>`<tr><td>${x.satz?`${esc(dp.lblUSt||'zzgl. Umsatzsteuer')} ${fmtQ(x.satz)} %${mehrSt?' auf '+fmt(x.basis):''}`:esc(x.bez)+' '+fmt(x.basis)}</td>${eu(fmt(x.betrag))}</tr>`).join('')}
@@ -4395,6 +4419,9 @@ const DRUCKOPT=[
   {k:'fussZusatz',std:'',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Zusatzzeile der Fußzeile',typ:'txt',max:90,ph:'z. B. Gerichtsstand Wiener Neustadt · Es gelten unsere AGB',info:'dritte Zeile unter den Pflichtangaben auf jeder Seite (höchstens 90 Zeichen, sonst reicht sie an die Seitenzahl); die Pflichtangaben bleiben unverändert. AGB-Hinweise gehören auf Angebot und Auftragsbestätigung.',
     warn:o=>o.fussZusatz&&fzBreite(o.fussZusatz)>2*(552.76-296.38-fzBreite('Seite 10 von 10')-4)?'Die Zusatzzeile der Fußzeile ist zu breit (z. B. viele Großbuchstaben) und reicht bis an die Seitenzahl – bitte kürzen.':''},
   {k:'fussNurB2B',std:true,p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Zusatzzeile nur bei Unternehmern',typ:'chk',info:'nicht bei Kundenart „Privat“ – eine Gerichtsstandsklausel ist gegenüber Verbrauchern unwirksam (§ 14 KSchG)'},
+  // Anrede (P6): wirkt nur bei Kontakten mit eingetragener Anrede bzw. Briefanrede
+  {k:'adrAnrede',std:false,p:'Anrede (P6)',l:'Anrede im Adressblock',typ:'chk',info:'Privatkunden: „Herr“, „Frau“ bzw. „Familie“ über dem Namen (mit Titel, Vor- und Nachname, wenn eingetragen); Unternehmen: „z. H. Herrn Ing. Max Mustermann“ unter dem Firmennamen, wenn kein Zusatz eingetragen ist; Anrede „Firma“: „Firma“ über dem Namen. Kontakte ohne Anrede bleiben unverändert.'},
+  {k:'briefAnrede',std:false,p:'Anrede (P6)',l:'Briefanrede vor dem Kopftext',typ:'chk',nur:Object.keys(T).filter(t=>T[t].b==='V'||t==='BE'),info:'Österreichische Form aus Anrede, Titel und Nachname des Kontakts: „Sehr geehrter Herr Ing. Mustermann,“ bzw. „Sehr geehrte Frau …“, ohne Nachname „Sehr geehrte Damen und Herren,“. Im Kontakt frei überschreibbar (Feld „Briefanrede“), im Beleg über das Feld „Briefanrede“ bzw. direkt in der Vorschau. Auch als Anrede der E-Mail.'},
 ];
 const NRL={AN:'Angebots-Nr.',AB:'Auftrags-Nr.',PR:'Proforma-Nr.',LS:'Lieferschein-Nr.',AR:'Rechnungs-Nr.',TR:'Rechnungs-Nr.',RE:'Rechnungs-Nr.',SR:'Rechnungs-Nr.',GS:'Gutschrift-Nr.',BE:'Bestell-Nr.',WE:'Wareneingangs-Nr.',ER:'Beleg-Nr.'}; // Beleg-Nr. im Infoblock (P5)
 const fzBreite=s=>{const c=fzBreite.c||(fzBreite.c=document.createElement('canvas').getContext('2d'));c.font='10px Arial';return c.measureText(String(s)).width*0.75}; // Breite einer Fußzeile in pt (7,5 pt Arial wie pdfAusBeleg)
@@ -4595,7 +4622,7 @@ async function mailToken(){
 }
 const b64aus=async bl=>{const u=new Uint8Array(await bl.arrayBuffer());let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)};
 function mailVorlage(b){const f=S().firma,t=T[b.typ],k=kontakt(b.kontaktId),offenB=t.re?offen(b):0;
-  const anr=t.b==='E'?'Sehr geehrte Damen und Herren':'Sehr geehrte Damen und Herren';
+  const anr=dOpt(b).briefAnrede&&(t.b==='V'||b.typ==='BE')?anrBeleg(b).replace(/,\s*$/,''):'Sehr geehrte Damen und Herren'; // persönliche Briefanrede (P6, druck.briefAnrede)
   const satz={AN:'anbei erhalten Sie unser Angebot',AB:'anbei erhalten Sie unsere Auftragsbestätigung',LS:'anbei erhalten Sie den Lieferschein',PR:'anbei erhalten Sie die Proformarechnung',BE:'anbei erhalten Sie unsere Bestellung',GS:'anbei erhalten Sie die Gutschrift'}[b.typ]||`anbei erhalten Sie die ${t.bez}`;
   return{betreff:`${t.bez} ${bNr(b)}${b.betreff?' – '+b.betreff:''} – ${f.name}`,
     text:`${anr},\n\n${satz} ${bNr(b)}${b.betreff?' („'+b.betreff+'“)':''}.${t.re&&b.typ!=='GS'&&offenB>0?`\nZahlbar bis ${dAT(faellig(b))}: ${fmt(offenB)} €.`:''}\n\nFür Rückfragen stehen wir gerne zur Verfügung.\n\nMit freundlichen Grüßen\n${f.zeichner||S().bearbeiter||''}\n${f.name}${f.tel?'\nTel. '+f.tel:''}${f.mail?'\n'+f.mail:''}`,an:k?.email||''}}
@@ -4725,7 +4752,8 @@ const ACT={
   pkdel:el=>{const e=DB.papierkorb.find(x=>x.id===el.dataset.id);if(!e||!confirm(`„${e.info}“ endgültig löschen? Das kann nicht rückgängig gemacht werden.`))return;DB.papierkorb=DB.papierkorb.filter(x=>x!==e);log(PK[e.c].n+' endgültig gelöscht',e.info);commit();render()},
   pkleer:()=>{const n=DB.papierkorb.length;if(!n||!confirm(`Papierkorb mit ${n} Einträgen endgültig leeren? Das kann nicht rückgängig gemacht werden.`))return;for(const e of DB.papierkorb)log(PK[e.c].n+' endgültig gelöscht',e.info);DB.papierkorb=[];commit();render()},
   spalten:el=>spaltenDialog(el.dataset.id),
-  kedit:async()=>{const b=curBeleg(),k=kontakt(b.kontaktId);if(!k)return;const r=await kontaktPopup(k.typ==='L'||(k.typ==='KL'&&T[b.typ].b==='E')?'L':'K',{},k);if(r){konditionenUebernehmen(b,r,true);persist()}render()},
+  kedit:async()=>{const b=curBeleg(),k=kontakt(b.kontaktId);if(!k)return;const va=briefAnrede(k),r=await kontaktPopup(k.typ==='L'||(k.typ==='KL'&&T[b.typ].b==='E')?'L':'K',{},k);if(r){konditionenUebernehmen(b,r,true);anrNeu(b,va,r);persist()}render()},
+  anrk:()=>{const b=curBeleg();if(!b||b.fest||b.anrede==null)return;delete b.anrede;persist();render()}, // Briefanrede wieder aus dem Kontakt (P6)
   aopen:async el=>{const u=artikel(el.dataset.id).unterlagen[+el.dataset.i];try{await STORE.openFile(u)}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
   aldel:el=>{artikel(el.dataset.id).lieferanten.splice(+el.dataset.i,1);persist();render()},
   lgbook:()=>{const a=$('#lg-a').value,m=$('#lg-m').value,q=num($('#lg-q').value),p=$('#lg-p').value,t=$('#lg-t').value;if(!a){alert('Artikel wählen.');return}
@@ -4807,7 +4835,7 @@ document.addEventListener('change',e=>{
     case'k':{const k=kontakt(d.id);
       if(d.f==='nr'){const n=String(nv).trim();if(!n||DB.kontakte.some(x=>x!==k&&x.nr===n)){alert(n?`Nummer ${n} ist bereits vergeben.`:'Nummer darf nicht leer sein.');render();return}
         log('Kontakt-Nr. geändert',`${k.nr} → ${n} ${k.name}`);k.nr=n;const t=k.typ==='L'?'L':'K';if(/^\d+$/.test(n)&&+n>(S().knr[t]||0)&&+n<(S().knr[t]||0)+100000)S().knr[t]=+n;persist();render();return}
-      k[d.f]=nv;break}
+      k[d.f]=nv;if(PERSF.includes(d.f))kbaAkt(k);break}
     case'a':{const a=artikel(d.id);
       if(d.f==='lagerplatz'&&v==='__lp'){render();baumDialog(LP);return}
       if(d.f==='gruppe'&&(v==='__neu'||v==='__sub')){gruppeNeu(v==='__sub'?a.gruppe:'').then(g=>{if(g){a.gruppe=g;persist()}render()});return}if(d.f==='einheitenStr'){a.einheiten=String(v).split(/[;,]/).map(x=>x.split('=')).filter(x=>x.length===2&&x[0].trim()&&num(x[1])>0).map(([e,f])=>({e:e.trim(),f:num(f)}));for(const x of a.einheiten)if(!S().einheiten.includes(x.e))S().einheiten.push(x.e)}else a[d.f]=nv;if(['ek','hk','vk','vkAufschlag'].includes(d.f)){const e=$('#avkv');if(e)e.innerHTML=vkVorschlagHTML(a)}if(['nr','bez','aktiv'].includes(d.f))artDatalist();if(['lager','einheitenStr'].includes(d.f)){persist();render();return}break}
@@ -4826,6 +4854,8 @@ document.addEventListener('change',e=>{
 });
 function onHead(b,f,v){
   const alt=b[f];b[f]=v;
+  if(f==='anrede'){if(!pT(v)||pT(v)===anrAuto(b))delete b.anrede;else b.anrede=pT(v);updateCalc(b);return} // Briefanrede (P6): leer bzw. wie automatisch = nicht speichern
+  if(f==='kontaktId')anrNeu(b,briefAnrede(kontakt(alt)),kontakt(v));
   if(f==='ltDruck'){render();return}
   if(f==='optRabatt'&&!v){const P=b.pos.filter(p=>+p.rabatt);if(P.length){if(confirm(`${P.length} Position(en) haben einen Rabatt (${[...new Set(P.map(p=>fmtQ(p.rabatt)+' %'))].join(', ')}).\nRabatt bei allen Positionen entfernen und Spalte ausblenden?`))for(const p of P)p.rabatt=0;else b.optRabatt=true}}
   if(f==='optRabatt'||f==='optLS'){if(f==='optLS'&&v)for(const p of b.pos)if(!isInfo(p)&&p.epL==null&&p.epS==null){p.epL=p.art==='L'?+p.ep||0:0;p.epS=p.art==='L'?0:+p.ep||0}render();return}

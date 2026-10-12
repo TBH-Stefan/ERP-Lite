@@ -259,7 +259,7 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 }
 #print{display:none}
 .pgw,.pgw>*>tr>td{border:0;padding:0;width:100%;border-collapse:collapse}.pgw .pgf{height:16mm}
-@media print{#app,#start,.pop{display:none!important}#print{display:block}body{background:#fff}@page{size:A4;margin:10mm 14mm 17.3mm 20mm;@bottom-right{content:'Seite ' counter(page) ' von ' counter(pages);white-space:nowrap;font:7.5pt Arial,sans-serif;vertical-align:top;text-align:right;padding-top:10.5mm;width:30mm;margin-right:1mm}}#print.mb .ft{display:none}#print.mb .pgf{height:0}
+@media print{#app,#start,.pop{display:none!important}#print{display:block}body{background:#fff}@page{size:A4;margin:10mm 14mm 17.3mm 20mm;@top-left{content:'\00a0'}@top-center{content:'\00a0'}@top-right{content:'\00a0'}@bottom-right{content:'Seite ' counter(page) ' von ' counter(pages);white-space:nowrap;font:7.5pt Arial,sans-serif;vertical-align:top;text-align:right;padding-top:10.5mm;width:30mm;margin-right:1mm}}#print.mb .ft{display:none}#print.mb .pgf{height:0}
   .doc table.p tr,.doc .tot,.doc .sig{break-inside:avoid}.doc table.p tr.grpz,.doc h3{break-after:avoid}.doc table.p thead{display:table-header-group}}
 /* Seitenansicht der Vorschau: Seitenränder mit Fußzeile und Seitenzahl, grauer Spalt zwischen den Seiten */
 .blatt.seiten{padding-bottom:0}.blatt.seiten .doc .ft{display:none}
@@ -4866,6 +4866,7 @@ window.addEventListener('afterprint',()=>{if(DRUCK&&!DRUCK.an&&DRUCK.t!=null){do
 
 /* ---------- PDF-Erzeugung ohne Fremdbibliothek: Layout aus der Belegvorschau (Arial ≙ Helvetica) ---------- */
 const WINANSI={0x20AC:128,0x201A:130,0x201E:132,0x2026:133,0x2018:145,0x2019:146,0x201C:147,0x201D:148,0x2022:149,0x2013:150,0x2014:151,0x2122:153,0x160:138,0x161:154,0x17D:142,0x17E:158,0x2212:45,0xA0:32,0x202F:32,0x2009:32,0x2007:32};
+const pdfDatum=(d=new Date())=>{const z=x=>String(x).padStart(2,'0'),o=-d.getTimezoneOffset();return`D:${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}${o>=0?'+':'-'}${z(Math.floor(Math.abs(o)/60))}'${z(Math.abs(o)%60)}'`}; // Zeitpunkt für die Datei-Info (statt Zeitstempel im Ausdruck)
 const pdfStr=t=>{let o='';for(const ch of t){const c=ch.codePointAt(0),w=c<128||(c>=160&&c<256&&!WINANSI[c])?c:WINANSI[c]??63;o+=w===40||w===41||w===92?'\\'+String.fromCharCode(w):w<32||w>126?'\\'+w.toString(8).padStart(3,'0'):String.fromCharCode(w)}return o};
 async function deflate(u8){const cs=new CompressionStream('deflate');const r=new Response(new Blob([u8]).stream().pipeThrough(cs));return new Uint8Array(await r.arrayBuffer())}
 async function pdfAusBeleg(b,o={}){
@@ -4937,7 +4938,7 @@ async function pdfAusBeleg(b,o={}){
     obj(pg0+i*2,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources ${res} /Contents ${pg0+i*2+1} 0 R >>`);
     obj(pg0+i*2+1,`<< /Filter /FlateDecode /Length ${z.length} >>`,z)}
   const n0=pg0+np*2,xr=len;add(`xref\n0 ${n0}\n0000000000 65535 f \n`);for(let i=1;i<n0;i++)add(String(off[i]||0).padStart(10,'0')+' 00000 n \n');
-  add(`trailer\n<< /Size ${n0} /Root 1 0 R /Info << /Producer (ERP-Lite) /Title (${pdfStr(T[b.typ].bez+' '+bNr(b))}) >> >>\nstartxref\n${xr}\n%%EOF\n`);
+  add(`trailer\n<< /Size ${n0} /Root 1 0 R /Info << /Producer (ERP-Lite) /Title (${pdfStr(T[b.typ].bez+' '+bNr(b)+(o.dup?' DUPLIKAT':'')+' '+kName(b.kontaktId))}) /Author (${pdfStr(S().firma.name||'')}) /Subject (${pdfStr(T[b.typ].bez+' '+bNr(b))}) /CreationDate (${pdfDatum()}) /ModDate (${pdfDatum()}) >> >>\nstartxref\n${xr}\n%%EOF\n`);
   return new Blob(teile,{type:'application/pdf'});
 }
 const pdfName=b=>`${T[b.typ].bez}-${bNr(b)}-${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_')+'.pdf';

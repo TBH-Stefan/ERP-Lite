@@ -198,6 +198,12 @@ body.kompakt .modal .gl .glz{min-height:40px;align-items:center}body.kompakt .mo
 table.pos td{padding:3px 3px;border-bottom:1px solid #eef0f3}
 table.pos input,table.pos select,table.pos textarea{padding:3px 5px;font-size:13px}
 table.pos textarea{min-height:26px;height:26px;margin-top:2px}
+/* Globale Suche (P20): Pop-up mit festem Eingabefeld, Treffer gruppiert; Knöpfe in Seitenleiste und Kopfzeile */
+.suaus .su{display:none!important}nav button.su{display:flex;align-items:center;gap:6px;width:100%;text-align:left;background:none;border:0;border-radius:0;color:#cfd6e4;padding:6px 18px;font:inherit}nav button.su:hover{background:#2c3446;color:#fff}nav button.su kbd{margin-left:auto;font:11px/1.6 inherit;color:#8b95a8;border:1px solid #3a4459;border-radius:4px;padding:0 5px}
+.modal.such .mbox.sum{max-width:700px;padding:0;display:flex;flex-direction:column;overflow:hidden;max-height:min(84vh,760px)}.sukopf{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);flex:none}.sukopf input{flex:1;font-size:16px;min-width:0}
+.suerg{overflow-y:auto;flex:1 1 auto;min-height:0;padding:6px 8px 10px}.sufuss{flex:none;font-size:12px;padding:6px 14px;border-top:1px solid var(--line)}.sug{display:flex;align-items:baseline;gap:8px;margin:10px 6px 2px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px}.sug b{color:var(--ink)}.sug .sp{flex:1}.sug a{text-transform:none;letter-spacing:0;color:var(--acc);cursor:pointer}
+.sut{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;color:inherit;text-decoration:none;min-width:0}.sut:hover,.sut.suak{background:#eef2f8}.sut .suic{width:22px;text-align:center;flex:none}.sut .sutx{flex:1;min-width:0}.sut .sutx>div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sut .suu{font-size:12px;color:var(--mut)}.sut .sur{flex:none;text-align:right;font-size:13px;white-space:nowrap}.sut mark{background:#fff1a8;color:inherit;padding:0}
+.suerg details.akk>summary{min-height:36px;padding:4px 8px;font-size:13px}@media(max-width:760px){body.kompakt .modal.such{align-items:flex-start}body.kompakt .modal.such .mbox.sum{max-height:100vh!important;max-height:100dvh!important;height:100dvh;border-radius:0}body.kompakt .sut{min-height:48px}.sukopf{padding-top:calc(10px + env(safe-area-inset-top))}.sufuss{display:none}.topbar #sync2{min-width:0;overflow:hidden}.topbar button.su{padding:0 4px}}
 table.pos tr.t td{background:#fbfbf6}
 .pop{position:absolute;z-index:30;background:#fff;border:1px solid var(--line);box-shadow:0 8px 28px rgba(0,0,0,.18);border-radius:8px;padding:10px;width:620px;max-width:95vw}
 dl.kv{display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:0}
@@ -570,6 +576,7 @@ const ERW=[
   {k:'pe',std:true,p:'Preiseinheit (P14)',l:'Preiseinheit (Preis je 10, 100 oder 1000 Einheiten)',info:'Artikel und Positionen können einen Preis je 10, 100 oder 1000 Einheiten haben, z. B. Kabel 45,37 € je 100 m: Feld „Preiseinheit“ im Artikel, in „Neuer Artikel“, im Artikel-Pop-up (✎) und im Positions-Pop-up, im Beleg auch in der Auswahl „Einheit“ (Preis je …). Im Beleg werden Einzelpreis, Lohn / Sonstiges und EK dann je Preiseinheit eingegeben und angezeigt („je 100 m“), gerechnet wird Gesamtpreis = Menge × Einzelpreis ÷ 100. Eine neue Position übernimmt die Preiseinheit des Artikels, eingelesene Belege und E-Rechnungen die der Zeile. Wie gedruckt wird, legt das Druckprofil fest (Preiseinheit). Ohne eingetragene Preiseinheit ändert sich nichts. Aus: Felder ausgeblendet, Preise je Einheit; gespeicherte Preiseinheiten rechnen weiter (Gesamtpreise und festgeschriebene Belege bleiben gleich).'},
   {k:'duplikat',std:true,p:'Duplikat (P0 n)',l:'Vermerk „DUPLIKAT“ bei erneuter Ausgabe von Rechnungen',info:'Druck, PDF und E-Mail-Versand festgeschriebener Rechnungen (auch Anzahlungs-, Teil-, Schlussrechnungen und Gutschriften) werden gezählt. Ab der zweiten Ausgabe fragt das Programm „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja), der Vermerk steht dann über dem Belegtitel; beim Druck über das Browsermenü wird ohne Rückfrage gekennzeichnet. Das erste Original bleibt unverändert. Gezählt wird nur bei eingeschaltetem Schalter (bei älteren Rechnungen zählen bereits per E-Mail versendete mit). Eine zweite gleichlautende Rechnung ohne Vermerk kann eine zusätzliche Steuerschuld auslösen (§ 11 Abs. 12 und 14 UStG).'},
   {k:'zuletzt',std:true,p:'Navigation (P19)',l:'„Zuletzt geöffnet“ in Seitenleiste und Kopfzeile',info:'Merkt sich auf diesem Gerät die 12 zuletzt geöffneten Belege, Kontakte, Artikel, Aufträge, LVs und K-Blätter (im Browser nur interne Kennungen, keine Namen; nicht in den Daten, Öffnen ist keine Änderung). „🕘 Zuletzt“ in der Seitenleiste bzw. 🕘 in der Kopfzeile am Handy zeigt sie mit Belegart, Nummer, Kunde und Status; Gelöschtes wird übersprungen, „Liste leeren“ löscht die Liste. Reine Bedienhilfe, daher Standard ein. Aus: Knopf ausgeblendet, es wird nichts gemerkt.'},
+  {k:'suche',std:true,p:'Suche (P20)',l:'Globale Suche (Strg+K)',info:'„🔍 Suchen …“ in der Seitenleiste, 🔍 in der Kopfzeile am Handy, Tastenkürzel Strg+K bzw. F3: ein Pop-up mit Eingabefeld oben durchsucht Belege (Nummer, Fremd-Nr., Betreff, Bezug, Kunde bzw. Lieferant, Positionstexte und Artikelnummern; Beträge wie „1.234,56“ finden Netto-, Brutto- bzw. Zahlbetrag), Kunden und Lieferanten (auch E-Mail, Telefon, UID, Person), Artikel (auch EAN und Lieferanten-Art.-Nr.), Aufträge, Leistungsverzeichnisse, K-Blätter, laufende Kosten und Textbausteine. Alle Suchwörter müssen vorkommen; Treffer nach Bereich gruppiert (je Bereich höchstens 15, „alle in Liste“ öffnet die Liste mit dieser Suche), ↑ ↓ wählen, Enter öffnet. Ohne Eingabe stehen die zuletzt geöffneten Einträge da. Nur Suche, keine Datenänderung. Aus: Knöpfe und Tastenkürzel ausgeblendet.'},
   {k:'druckprofil',std:true,p:'Druckprofil (P1)',l:'Druckprofil je Belegart',info:'Darstellungsoptionen für Vorschau, Druck, PDF und E-Mail je Belegart (unten unter „Druck & Belegdarstellung“) und je Beleg über „Druckoptionen …“ (dort nur Abweichungen). Beim Festschreiben wird die Darstellung im Beleg eingefroren, ein Nachdruck sieht wie das Original aus; „Bearbeiten“ hebt das wieder auf. Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG). Aus: Entwürfe im Standard-Aussehen, festgeschriebene Belege weiter mit ihrem eingefrorenen Stand; alle Einstellungen bleiben gespeichert. Die Vorgaben entsprechen dem bisherigen Aussehen.'},
   {k:'statuszeile',std:true,p:'Navigation (P19)',l:'Statuszeile unter dem Belegtitel',info:'Zeigt unter dem Titel eines Belegs den Pfad „Verkauf › Angebote“ (anklickbar, führt zur gefilterten Liste), das Belegdatum, den Kunden bzw. Lieferanten, den Nettobetrag (läuft bei Änderungen mit) und wann der Beleg angelegt bzw. festgeschrieben wurde (mit Uhrzeit). Reine Anzeige, daher Standard ein.'},
   {k:'kopfFix',std:false,p:'Navigation (P19)',l:'Statuszeile beim Scrollen oben festhalten',info:'Die Statuszeile bleibt mit Nummer und Status beim Scrollen am oberen Rand stehen (am Handy unter der Kopfzeile). Standard aus, weil sie am Handy eine Zeile Platz kostet. Wirkt nur mit eingeschalteter Statuszeile.'},
@@ -1345,6 +1352,7 @@ function artikelInPos(b,p,a){
 const V={};
 function render(){
   if(!DB)return;
+  document.body.classList.toggle('suaus',!erw('suche')); // Globale Suche (P20)
   const h=location.hash.replace(/^#\/?/,'')||'dash',[view,arg]=h.split('/');
   const nz=view==='beleg'?(beleg(arg)?'belege/'+T[beleg(arg).typ].b:''):{kontakt:'kontakte',auftrag:'auftraege'}[view]||''; // Seitenleiste: Bereich des geöffneten Datensatzes markieren (P19 d)
   document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('on',a.dataset.n===h||a.dataset.n===view||(!!nz&&a.dataset.n===nz)));
@@ -1397,6 +1405,61 @@ function zuletztPop(btn){
   document.body.appendChild(d);
 }
 function renderFocus(sel){render();const e=$(sel);if(e){e.focus();e.select?.()}}
+/* Globale Suche (P20, erw.suche): Strg+K bzw. F3 (nicht, wenn ein anderes Pop-up offen ist), 🔍 in Kopfzeile (Handy) und Seitenleiste. suPop() = Pop-up mit festem Eingabefeld;
+   suIndex() baut je Öffnen die Einträge {g:Bereich,r:Route,t,u,b,s,ic,h:Suchtext,betr:Beträge}; alle Suchwörter müssen im Suchtext stehen, ein Betrag (zahlDE) findet Belege mit diesem Netto-,
+   Brutto- bzw. Zahlbetrag und Kosten (±0,005). Treffer je Bereich höchstens SU_MAX, „alle in Liste“ (suListe) setzt die Suche der Liste (UI.vQ, eQ, kQ, aQ, bQ); ↑ ↓ wählen, Enter öffnet
+   (suOeffnen → nav). Ohne Eingabe: zuletzt geöffnet (zlListe/zlInfo, P19 a). Nur Lesen */
+const SU_MAX=15,SU_G=[['beleg','Belege'],['kontakt','Kunden & Lieferanten'],['artikel','Artikel & Leistungen'],['auftrag','Aufträge'],['lv','Leistungsverzeichnisse'],['kb','K-Blätter'],['kosten','Laufende Kosten'],['bib','Textbausteine']];
+const suTxt=h=>String(h??'').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ');
+function suIndex(){const E=[],add=(g,o,...h)=>E.push({g,...o,h:h.flat().filter(x=>x!=null&&x!=='').join(' ').toLowerCase()});
+  for(const b of DB.belege){const s=OHNE_PREIS.includes(b.typ)?null:summen(b);
+    add('beleg',{r:'beleg/'+b.id,ic:BICON[b.typ]||'📄',t:`${T[b.typ].bez} ${bNr(b)}`,u:[b.adresse?.name||kName(b.kontaktId),b.betreff,dAT(b.datum)].filter(x=>x&&x!=='–').join(' · '),b:s?fmt(s.brutto)+' €':'',s:statusTag(b),betr:s?[s.netto,s.brutto,s.zahlbar]:[],d:b.datum,bv:T[b.typ].b},
+      T[b.typ].bez,bNr(b),b.nr,b.fremdNr,b.betreff,b.bezug,b.projekt,b.revGrund,kName(b.kontaktId),b.adresse?.name,dAT(b.datum),b.pos.map(p=>[p.nr,p.lnr,p.bez,suTxt(p.text)]))}
+  for(const k of DB.kontakte)add('kontakt',{r:'kontakt/'+k.id,ic:'👤',t:`${k.nr} ${k.name}`,u:[{K:'Kunde',L:'Lieferant',KL:'Kunde + Lieferant'}[k.typ],[k.plz,k.ort].filter(Boolean).join(' '),k.email].filter(Boolean).join(' · ')},k.nr,k.name,k.zusatz,k.strasse,k.plz,k.ort,k.email,k.tel,k.uid,k.kdNrLief,persName(k));
+  for(const a of DB.artikel)add('artikel',{r:'artikel/'+a.id,ic:'📦',t:`${a.nr} ${a.bez}`,u:[ART[a.art],a.aktiv===false?'deaktiviert':'',(a.lieferanten||[]).map(l=>l.artNr).filter(Boolean).join(', ')].filter(Boolean).join(' · '),b:+a.vk?fmtP(a.vk)+' €':''},a.nr,a.bez,a.ean,suTxt(a.text),(a.lieferanten||[]).map(l=>[l.artNr,kName(l.kontaktId)]));
+  for(const a of auftragsListe())if(!a.docs.every(d=>d.storno))add('auftrag',{r:'auftrag/'+a.id,ic:'📊',t:'Auftrag '+auftragLabel(a.id),u:`${a.docs.length} Beleg${a.docs.length>1?'e':''}`},auftragLabel(a.id),a.docs.map(d=>bNr(d)));
+  for(const lv of DB.lv)add('lv',{r:'lvs/'+lv.id,ic:'📋',t:`${lv.nr||''} ${lv.titel||''}`.trim()||'LV',u:kName(lv.kontaktId)},lv.nr,lv.titel,kName(lv.kontaktId),(lv.items||[]).map(i=>[i.oz,i.titel,i.kurz,suTxt(i.lang)]));
+  for(const x of DB.kalk)add('kb',{r:'kbs/'+x.id,ic:'🧮',t:x.name||'K-Blatt',u:'K-Blatt'},x.name,x.nr);
+  for(const k of DB.kosten||[])add('kosten',{r:'kosten',k:k.id,ic:'💳',t:k.bez||'Kostenposition',u:[k.partner,k.vertragNr,KKAT[k.kat]?.[0]].filter(Boolean).join(' · '),b:fmt(k.betrag)+' €',betr:[+k.betrag]},k.bez,k.partner,k.vertragNr,k.notiz,KKAT[k.kat]?.[0]);
+  for(const x of DB.lvbib||[])add('bib',{r:'lvbib',k:x.id,ic:'🧩',t:x.kurz||'Textbaustein',u:x.gruppe||''},x.kurz,x.gruppe,suTxt(x.lang));
+  return E}
+function suTreffer(E,q){const w=q.toLowerCase().split(/\s+/).filter(Boolean),z=/^[-\d.,\s€]+$/.test(q)&&/\d/.test(q)?zahlDE(q.replace(/\s/g,'')):null,G={};
+  for(const e of E){const tx=w.every(t=>e.h.includes(t)),bt=z!=null&&(e.betr||[]).some(v=>Math.abs(v-z)<0.005);if(tx||bt)(G[e.g]=G[e.g]||[]).push(bt&&!tx?{...e,u:'Betrag '+fmt(z)+' € · '+e.u}:e)}
+  if(G.beleg)G.beleg.sort((a,c)=>String(c.d).localeCompare(String(a.d)));return{G,w}}
+function suHTML(E,q){const hl=(s,w)=>{s=String(s??'');if(!w.length)return esc(s);const re=new RegExp('('+w.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')','ig');return s.split(re).map((x,i)=>i%2?`<mark>${esc(x)}</mark>`:esc(x)).join('')};
+  const zl=(e,w)=>`<a class="sut" href="#/${esc(e.r)}" data-act="suopen" data-r="${esc(e.r)}"${e.k?` data-k="${esc(e.k)}"`:''}><span class="suic">${e.ic||''}</span><span class="sutx"><div>${hl(e.t,w)}</div>${e.u?`<div class="suu">${hl(e.u,w)}</div>`:''}</span><span class="sur">${e.s||''}${e.b?`<div>${esc(e.b)}</div>`:''}</span></a>`;
+  if(!q.trim()){const L=zlListe().map(h=>[h,zlInfo(h)]).filter(x=>x[1]).slice(0,8);return L.length?`<div class="sug"><b>Zuletzt geöffnet</b></div>${L.map(([h,x])=>zl({r:h,ic:x.ic,t:x.t,u:x.u,s:x.s},[])).join('')}`:'<p class="mut" style="margin:10px 6px">Beleg-Nr., Kunde, Artikel, Betrag (z. B. 1.234,56), Projekt …</p>'}
+  const {G,w}=suTreffer(E,q.trim()),LI={beleg:1,kontakt:'k',artikel:'a',bib:'b'};let o='';
+  for(const[g,l]of SU_G){const L=G[g];if(!L)continue;const mehr=L.length>SU_MAX,lk=g==='beleg'?['V','E'].filter(v=>L.some(e=>e.bv===v)).map(v=>`<a href="javascript:void 0" data-act="sulist" data-l="${v}">${v==='V'?'Verkauf':'Einkauf'} ›</a>`).join(' '):LI[g]?`<a href="javascript:void 0" data-act="sulist" data-l="${LI[g]}">alle in Liste ›</a>`:'';
+    const inn=L.slice(0,SU_MAX).map(e=>zl(e,w)).join('')+(mehr?`<p class="mut" style="margin:2px 8px;font-size:12px">… ${L.length-SU_MAX} weitere${lk?' – „alle in Liste“':''}</p>`:'');
+    o+=kmp()?akk('su-'+g,l,inn,{offen:true,zusatz:`${L.length}${mehr?' (15 gezeigt)':''}`,kopf:lk?`<span class="sp"></span><span class="sug" style="margin:0">${lk}</span>`:''}):`<div class="sug"><b>${l}</b> ${L.length}<span class="sp"></span>${lk}</div>${inn}`}
+  return o||`<p class="mut" style="margin:10px 6px">Keine Treffer für „${esc(q)}“.</p>`}
+let SUQ='';
+function suPop(){if(!DB||!erw('suche'))return;const alt=document.querySelector('.modal.such');if(alt){alt.querySelector('#su-q')?.focus();return}closePop();
+  const E=suIndex(),d=document.createElement('div');d.className='modal such';
+  d.innerHTML=`<div class="mbox sum" role="dialog" aria-label="Suchen"><div class="sukopf"><span aria-hidden="true">🔍</span><input id="su-q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="Suchen: Beleg-Nr., Kunde, Artikel, Betrag, Projekt …" value="${esc(SUQ)}"><button class="s" id="su-x" title="Schließen (Esc)" aria-label="Schließen">✕</button></div><div class="suerg" id="su-erg"></div><div class="mut sufuss">↑ ↓ wählen · Enter öffnen · Esc schließen · Strg+K</div></div>`;
+  document.body.appendChild(d);const q=d.querySelector('#su-q'),erg=d.querySelector('#su-erg');let ak=-1,t=null;
+  const L=()=>[...erg.querySelectorAll('a.sut')],mark=i=>{const l=L();ak=l.length?Math.max(0,Math.min(i,l.length-1)):-1;l.forEach((a,j)=>a.classList.toggle('suak',j===ak));if(ak>=0){const a=l[ak];a.closest('details')?.setAttribute('open','');a.scrollIntoView({block:'nearest'})}};
+  const zeich=()=>{SUQ=q.value;erg.innerHTML=suHTML(E,q.value);ak=-1;if(q.value.trim())mark(0)};
+  const zu=()=>{d.remove();document.removeEventListener('keydown',kd,true)};d._weg=zu;
+  const kd=e=>{if(!d.isConnected)return;if(e.key==='Escape'){e.preventDefault();e.stopPropagation();zu()}
+    else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();mark(ak+(e.key==='ArrowDown'?1:-1))}
+    else if(e.key==='Enter'&&document.activeElement===q){e.preventDefault();const a=L()[ak>=0?ak:0];if(a)a.click()}};
+  document.addEventListener('keydown',kd,true);
+  q.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(zeich,E.length>3000?200:60)});
+  d.addEventListener('click',e=>{if(e.target===d||e.target.closest('#su-x'))zu()});
+  zeich();q.focus();q.select()}
+function suOeffnen(r,k){document.querySelector('.modal.such')?._weg?.();if(!r)return;
+  if(r==='kosten'&&k){const x=(DB.kosten||[]).find(y=>y.id===k);nav('kosten');setTimeout(()=>{if(x&&location.hash==='#/kosten')kostenDialog(x)},120);return}
+  if(r==='lvbib'&&k){const x=(DB.lvbib||[]).find(y=>y.id===k);UI.bQ=x?.kurz||'';if(location.hash==='#/lvbib')render();else nav('lvbib');return}
+  if(location.hash==='#/'+r)render();else nav(r)}
+function suListe(l){const q=SUQ.trim();document.querySelector('.modal.such')?._weg?.();
+  const z={V:['vQ','belege/V',()=>{UI.vTyp='';UI.vSt=''}],E:['eQ','belege/E',()=>{UI.eTyp='';UI.eSt=''}],k:['kQ','kontakte',()=>{UI.kTyp=''}],a:['aQ','artikel',()=>{UI.aGr=''}],b:['bQ','lvbib',()=>{}]}[l];if(!z)return;
+  UI[z[0]]=q;z[2]();if(location.hash==='#/'+z[1])render();else nav(z[1])}
+document.addEventListener('keydown',e=>{if(!DB||!erw('suche'))return;const k=(e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='k',f3=e.key==='F3'&&!e.ctrlKey&&!e.altKey;if(!k&&!f3)return;
+  if(document.querySelector('.modal:not(.such)'))return;e.preventDefault();suPop()}); // Strg+K bzw. F3, nicht in einem anderen Pop-up
+document.querySelector('.topbar .zl')?.insertAdjacentHTML('beforebegin','<button class="su" data-act="suche" title="Suchen (Strg+K)" aria-label="Suchen">🔍</button>');
+document.querySelector('nav button.zl')?.insertAdjacentHTML('afterend','<button class="su" data-act="suche" title="Belege, Kontakte, Artikel, Aufträge, LVs, Kosten … durchsuchen (Strg+K bzw. F3)"><span>🔍 Suchen …</span><kbd>Strg+K</kbd></button>');
 
 /* ---------- Kompakte Ansicht (P30, erw.kompakt): Grundbausteine ----------
    kmp() = Schalter ein, kmpH() = zusätzlich Handy (bis 760 px, dieselbe Grenze wie im CSS); ohne Schalter liefern alle Ansichten dasselbe HTML wie bisher.
@@ -5240,6 +5303,7 @@ const ACT={
   stdel:el=>{const x=S().steuer[+el.dataset.i];if(DB.belege.some(b=>b.pos.some(p=>p.steuer===x.code))){alert('Steuersatz wird in Belegen verwendet.');return}S().steuer.splice(+el.dataset.i,1);persist();render()},
   tfadd:()=>{S().tarife.push({kz:'NEU',bez:'',kosten:0,vk:0});persist();render()},
   tfdel:el=>{S().tarife.splice(+el.dataset.i,1);persist();render()},
+  suche:()=>suPop(),suopen:(el,e)=>{e?.preventDefault?.();suOeffnen(el.dataset.r,el.dataset.k)},sulist:(el,e)=>{e?.preventDefault?.();suListe(el.dataset.l)}, // Globale Suche (P20)
   logodel:()=>{S().firma.logo='';persist();render()},
   erwstd:()=>{S().erw={};log('Erweiterungen','alle Schalter auf Standard');persist();render()},
   erwpk:el=>{const e=S().erw||{};for(const x of ERW)if(x.p===el.dataset.p)delete e[x.k];log('Erweiterungen',`${el.dataset.p}: Standard wiederhergestellt`);persist();render()},

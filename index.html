@@ -1218,6 +1218,7 @@ function folge(src,typ,extra={}){
   const o={ltDruck:src.ltDruck!==false,optRabatt:!!src.optRabatt,optLS:!!src.optLS,auftragId:src.auftragId||'',vorgaengerId:src.id,betreff:src.betreff,bezug:`${T[src.typ].bez} ${src.nr} vom ${dAT(src.datum)}`,
     kontaktId:typ==='BE'?'':src.kontaktId,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,...(src.druck&&typ!=='BE'?{druck:{...src.druck}}:{}),...(src.anrede&&typ!=='BE'?{anrede:src.anrede}:{}),...extra}; // Druckabweichungen (P1) nicht auf die Bestellung an den Lieferanten
   if(typ==='BE'){o.zahlungsziel=S().zahlungsziel;o.skonto=0;o.skontoTage=0;o.betreff=src.betreff?'Projekt: '+src.betreff:''}
+  if(src.kbId!=null&&T[typ].b==='V')o.kbId=src.kbId; // K-Blatt des Verkaufsbelegs (P34)
   if(typ==='AR'){
     const p=prompt('Anzahlung in % der Summe netto:','30');if(p===null)return null;
     const f=num(p)/100,s=summen(src);if(!(f>0)){alert('Ungültiger Prozentsatz.');return null}
@@ -1325,6 +1326,7 @@ function stornieren(b){
 function duplizieren(b){ // Darstellung (Langtext, Rabatt-, Lohn/Sonstiges-Spalten) wie in folge() mitnehmen
   const n=neuBeleg(b.typ,{kontaktId:b.kontaktId,betreff:b.betreff,kopf:b.kopf,fuss:b.fuss,zahlungsziel:b.zahlungsziel,skonto:b.skonto,skontoTage:b.skontoTage,auftragId:T[b.typ].b==='E'?b.auftragId:'',
     ltDruck:b.ltDruck!==false,optRabatt:!!b.optRabatt,optLS:!!b.optLS,...(b.druck?{druck:{...b.druck}}:{}),...(b.anrede?{anrede:b.anrede}:{})});
+  if(b.kbId!=null&&T[b.typ].b==='V')n.kbId=b.kbId; // K-Blatt (P34)
   n.pos=b.pos.map(p=>({...p,id:uid(),herkunftPosId:''}));persist();go('beleg/'+n.id);
 }
 
@@ -1357,10 +1359,63 @@ function artikelInPos(b,p,a){
   if(erw('pe')&&peW(a.pe)>1)p.pe=peW(a.pe);else delete p.pe; // Preiseinheit des Artikels (P14)
   const h=preisHistorie(b,p).filter(x=>x.einheit===p.einheit);
   // Verkauf: Preis/Rabatt nur aus früheren Belegen DIESES Kunden, sonst VK des Artikels und Kundenrabatt (Preise anderer Kunden nur über die Preishistorie wählbar)
-  if(T[b.typ].b==='V'){const g=h.find(x=>x.gleich);p.ek=+(a.hk||a.ek)||0;p.ep=g?g.ep:(+a.vk||0);p.rabatt=g?g.rabatt:(+kontakt(b.kontaktId)?.rabatt||0);lsAufteilen(b,p,g)}
+  if(T[b.typ].b==='V'){const g=h.find(x=>x.gleich);p.ek=+(a.hk||a.ek)||0;p.ep=g?g.ep:(+a.vk||0);p.rabatt=g?g.rabatt:(+kontakt(b.kontaktId)?.rabatt||0);lsAufteilen(b,p,g);kbNeuPos(b,p)}
   // Einkauf: Lieferanten-Art.-Nr. in p.lnr (Druck einmal als „Ihre Art.-Nr.“ hinter der Bezeichnung), nicht mehr zusätzlich im Langtext
   else{p.ep=h.length?h[0].ep:(+a.ek||0);p.ek=p.ep;lsAufteilen(b,p,h[0]);const l=(a.lieferanten||[]).find(x=>x.kontaktId===b.kontaktId);if(l?.artNr)p.lnr=l.artNr;else if(p.lnr&&p.lnr===lAlt)p.lnr=''}
 }
+
+/* --- K-Blätter im Verkauf (P34 Teil 5, erw.kbBeleg): Verkaufsbeleg mit K-Blatt b.kbId (fehlt = automatisch das einzige K-Blatt des Auftrags bzw. Projekts, '' = keines; folge(), duplizieren(),
+   angebotRevision(), folgeAngebot() übernehmen es). Stundentarife: K3-Blätter als Tarif (Kürzel K3-ML, K3-RL2 …, Verkauf = U bzw. W, Kostensatz = M). kbPreis(b,p): Stunden (Art L, Einheit h/min)
+   = Mittellohnpreis des K3-Blatts (Kürzel, sonst Standardblatt), Material = Kosten (K4-EK des Artikels, sonst EK/HK der Position) × (1 + Zuschlag Material bzw. Fremdleistung), Fremdleistung × (1 + Zuschlag
+   Fremdleistung), Gerät (Bezeichnung wie im K6) = Gerätepreis, Leistung ohne Stunden × (1 + Zuschlag Lohn); Rundung des K-Blatts, Preiseinheit wie P14. „Preise nach K-Blatt anwenden …“ = Vorschau je
+   Position mit Auswahl, ein persist(), Rücknahme über b.kalkAlt wie P10 (gkRueck); neue Positionen aus der Artikelwahl gleich so kalkuliert (kbNeuPos). Nur Entwürfe. --- */
+erwPlus({k:'kbBeleg',std:true,p:'K-Blätter (P34)',l:'Verkaufsbelege nach K-Blatt kalkulieren (Zuschläge, Mittellohn)',info:'Angebote, Auftragsbestätigungen, Rechnungen und die anderen Verkaufsbelege mit Preisen bekommen in den Kopfdaten die Auswahl „K-Blatt“ (vorbelegt, wenn genau ein K-Blatt dem Auftrag bzw. Projekt zugeordnet ist; Folgebeleg, Duplizieren und Revision übernehmen sie). Dann stehen unter „+ Stundentarif …“ die K3-Blätter als Tarif (Verkauf = Mittellohnpreis U bzw. W, Kostensatz = Mittellohnkosten M), neue Positionen aus der Artikelwahl werden gleich nach dem K-Blatt kalkuliert (Material: EK × (1 + Gesamtzuschlag Material bzw. Fremdleistung), Stunden: Mittellohnpreis), und „Preise nach K-Blatt anwenden …“ (Kopfdaten, Kalkulation DB II, ⋯-Menü) zeigt für alle Positionen den Preis nach K-Blatt zur Auswahl; Übernehmen ist ein Schritt (Strg+Z) und lässt sich wie die Gesamtkalkulation später zurücknehmen. Nur Entwürfe; festgeschriebene Belege bleiben unverändert, Rechnungen behalten Summenblock und Steuer (§ 11 UStG). Aus = wie bisher, eingetragene K-Blätter bleiben gespeichert.'});
+const kbDarf=b=>!!b&&erw('kbBeleg')&&T[b.typ].b==='V'&&!OHNE_PREIS.includes(b.typ)&&b.typ!=='GS';
+const kbKand=b=>{const p=beleg(b.auftragId)?.projekt;return DB.kalk.filter(kb=>kb.art!=='bieter'&&(kb.auftragId&&kb.auftragId===b.auftragId||p&&kb.projekt===p))};
+const kbVon=b=>{if(!kbDarf(b))return null;if(b.kbId!=null)return b.kbId?ROOT.kb(b.kbId)||null:null;const K=kbKand(b);return K.length===1?K[0]:null};
+const kbK3Kz=(kb,c)=>{const B=c.blatt||'ML',L=kb.k3.filter(x=>(x.blatt||'ML')===B);return'K3-'+B+(L.length>1?L.indexOf(c)+1:'')};
+const kbTarife=b=>{const kb=b&&kbVon(b);return kb?kb.k3.map(c=>{const x=k3calc(kb,c);return{kz:kbK3Kz(kb,c),bez:c.name||K3B[c.blatt||'ML'],vk:kbRund(kb)(x.mlp),kosten:r2(x.lk),k3:c.id}}):[]};
+const tfListe=b=>[...(b&&erw('tarifPos')?kbTarife(b):[]),...S().tarife];
+const kbZus=b=>{const kb=kbVon(b);return kb?[`K-Blatt ${esc(kb.name)}${b.kbId==null?' (automatisch)':''}`]:[]};
+function kbBelegFeld(b,dis){if(!kbDarf(b))return'';const L=DB.kalk.filter(kb=>kb.art!=='bieter'),kb=kbVon(b);if(!L.length&&!b.kbId)return'';
+  return`<div class="row"><label class="w2">K-Blatt (Zuschläge und Mittellohn)${b.kbId==null&&kb?' <span class="mut" style="font-size:12px">automatisch über Auftrag/Projekt</span>':''}<select data-o="kbbel" ${dis}>${opt('','– keines –',kb?.id||'')}${L.map(x=>opt(x.id,x.name+(x.projekt?' · '+x.projekt:''),kb?.id||'')).join('')}</select></label>
+    ${kb&&!b.fest?`<button class="s" data-act="kbpreise" style="align-self:flex-end;margin-bottom:6px" title="Zuschläge und Mittellohn des K-Blatts auf die Preise anwenden – mit Vorschau">Preise nach K-Blatt anwenden …</button>`:''}</div>`}
+function kbKalk(b){const kb=kbVon(b);if(!kb)return'';
+  return`<p class="mut" style="margin:6px 0 0;font-size:13px">K-Blatt: <a href="#/kbs/${kb.id}">${esc(kb.name)}</a>${b.fest?'':` · <a href="javascript:void 0" data-act="kbpreise">Preise nach K-Blatt anwenden …</a>`}${!b.fest&&!gkDarf(b)&&b.kalkAlt?` · <a href="javascript:void 0" data-act="gkrueck">letzte Preisanpassung zurücknehmen …</a>`:''}</p>`}
+const kbK4Pos=(kb,p)=>{const t=String(p.bez||'').trim().toLowerCase();return kb.k4.find(m=>m.artId&&m.artId===p.artikelId)||(t?kb.k4.find(m=>String(m.bez||'').trim().toLowerCase()===t):null)||null};
+const kbK6Pos=(kb,p)=>{const t=String(p.bez||'').trim().toLowerCase();return t?kb.k6.find(g=>String(g.bez||'').trim().toLowerCase()===t)||null:null};
+// Preis einer Position nach K-Blatt: {ep, ek (nur wenn das K-Blatt die Kosten liefert), info} oder null (keine Kosten)
+function kbPreis(b,p,kb=kbVon(b)){if(!kb||isInfo(p)||p.art==='G')return null;const z=k2sp(kb),rd=kbRund(kb),pe=peW(p.pe),R=x=>pe>1?rp(rd(x*pe)/pe,pe):rd(x),Z=k=>({m:'Material',f:'Fremdleistung',g:'Gerät',l:'Lohn'})[k]+' '+fmt(z[k])+' %';
+  if(p.art==='L'&&stdJe(p)>0){const kz=p.tarif||p.nr,c=kb.k3.find(x=>kbK3Kz(kb,x)===kz)||k3std(kb);if(!c)return null;const x=k3calc(kb,c),f=stdJe(p);return{ep:R(x.mlp*f),ek:r2(x.lk*f),info:`${kbK3Kz(kb,c)} ${c.name||''} ${fmt(x.mlp)} €/h`}}
+  const m=p.art!=='L'&&kbK4Pos(kb,p);if(m){const k=k4kosten(m,kb),s=m.zs==='f'?'f':'m';return k>0?{ep:R(k*(1+z[s]/100)),ek:r2(k),info:'K4 · '+Z(s)}:null}
+  const g=kbK6Pos(kb,p);if(g){const t=k6teile(g);return t.L+t.S>0?{ep:R(t.L*(1+z.l/100)+t.S*(1+z.g/100)),ek:r2(t.L+t.S),info:'K6 · Gerätepreis'}:null}
+  const k=+p.ek||0,s=p.art==='F'?'f':p.art==='L'?'l':'m';return k>0?{ep:R(k*(1+z[s]/100)),info:Z(s)}:null}
+function kbSetzen(b,p,n){if(b.optLS&&(p.epL!=null||p.epS!=null)){if(p.art==='L'&&!(+p.epS)){p.epL=n.ep;p.epS=0}else{p.epL=0;p.epS=n.ep}}p.ep=n.ep;if(n.ek!=null)p.ek=n.ek} // Lohn / Sonstiges: Stunden als Lohn, sonst Sonstiges
+function kbNeuPos(b,p){const n=kbPreis(b,p);if(n){p.ep=n.ep;if(n.ek!=null)p.ek=n.ek;lsAufteilen(b,p)}} // neue Position aus der Artikelwahl
+function kbPreisDialog(b){if(!b)return;const kb=kbVon(b);if(!kb){alert('Kein K-Blatt gewählt (Kopfdaten → K-Blatt).');return}if(b.fest){alert('Nur im Entwurf – festgeschriebene Belege bleiben unverändert.');return}
+  const gi=gruppenInfo(b),pnr=posNummern(b),Z=[],ohne=[];
+  for(const p of b.pos){if(isInfo(p)||p.art==='G')continue;const g=gi.grp[p.id];if(g&&+g.pauschal>0&&!p.kz){ohne.push([p,'in Pauschalgruppe']);continue}
+    const n=kbPreis(b,p,kb);if(!n){ohne.push([p,'ohne Kosten']);continue}if(b.optLS&&(p.art==='L'?(+p.epL||0)&&(+p.epS||0):+p.epL||0)){ohne.push([p,'mit Lohnanteil']);continue} // Lohn / Sonstiges: nur reine Lohn- bzw. Sonstiges-Positionen
+    Z.push({p,n,ep:n.ep})}
+  const d=document.createElement('div');d.className='modal';
+  d.innerHTML=`<div class="mbox" style="max-width:820px"><h2>Preise nach K-Blatt – ${esc(kb.name)}</h2><p class="mut" style="margin:0 0 6px">Gesamtzuschlag Material ${fmt(k2sp(kb).m)} % · Fremdleistung ${fmt(k2sp(kb).f)} % · Lohn ${fmt(k2sp(kb).l)} %${k3std(kb)?` · Mittellohnpreis ${fmt(k3calc(kb,k3std(kb)).mlp)} €/h`:''}. Angehakte Positionen erhalten den Preis nach K-Blatt (Rabatt bleibt).</p>
+    <div class="bar gkra"><label class="chk"><input type="checkbox" id="kbp-alle"> alle</label></div>
+    <div class="gkw"><table class="gkr"><thead><tr><th></th><th>Pos</th><th>Bezeichnung</th><th class="n">Kosten</th><th class="n">EP bisher</th><th class="n">EP neu</th></tr></thead><tbody>
+    ${Z.map(({p,n,ep},i)=>{const gl=Math.abs(ep-(+p.ep||0))<=0.004;return`<tr><td><input type="checkbox" data-i="${i}"${gl?' disabled':' checked'}></td><td class="mut">${pnr[p.id]||''}</td><td>${esc(p.bez||p.nr||'–')}<div class="mut" style="font-size:12px">${esc(n.info)}</div></td><td class="n">${fmtP(n.ek!=null?n.ek:+p.ek||0)}</td><td class="n">${fmtP(+p.ep||0)}</td><td class="n"><b>${fmtP(ep)}</b>${gl?' <span class="mut">=</span>':''}</td></tr>`}).join('')||'<tr><td colspan="6" class="mut">Keine Position mit Kosten (EK) – Preise unverändert.</td></tr>'}</tbody></table></div>
+    ${ohne.length?`<p class="mut" style="font-size:12px;margin:6px 0 0">Unverändert: ${ohne.map(([p,g])=>`${esc(pnr[p.id]||'')} ${esc(p.bez||p.nr||'–')} (${g})`).join(' · ')}</p>`:''}
+    <p id="kbp-erg" style="margin:8px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Übernehmen</button></div></div>`;
+  document.body.appendChild(d);
+  const wahl=()=>[...d.querySelectorAll('input[data-i]:checked')].map(x=>Z[+x.dataset.i]),neu=W=>{const c={...b,pos:b.pos.map(p=>{const z=W.find(x=>x.p===p);if(!z)return p;const q={...p};kbSetzen(b,q,{...z.n,ep:z.n.ep});return q})};return summen(c).netto};
+  const sync=()=>{const W=wahl(),B=[...d.querySelectorAll('input[data-i]:not(:disabled)')];const a=d.querySelector('#kbp-alle');a.checked=B.length&&B.every(x=>x.checked);a.indeterminate=!a.checked&&B.some(x=>x.checked);
+    d.querySelector('#kbp-erg').innerHTML=`${W.length} ${W.length===1?'Preis':'Preise'} gewählt · netto ${fmt(summen(b).netto)} → <b>${fmt(neu(W))} €</b>`;d.querySelector('#m-ok').disabled=!W.length};
+  d.addEventListener('change',e=>{if(e.target.id==='kbp-alle')d.querySelectorAll('input[data-i]:not(:disabled)').forEach(x=>x.checked=e.target.checked);sync()});
+  const fin=()=>{d.remove();document.removeEventListener('keydown',kd,true)},kd=e=>{if(e.key==='Escape'&&[...document.querySelectorAll('.modal')].pop()===d){e.stopPropagation();fin()}};document.addEventListener('keydown',kd,true);
+  d.querySelector('#m-no').onclick=fin;
+  d.querySelector('#m-ok').onclick=()=>{if(curBeleg()!==b||b.fest){fin();return}const W=wahl();if(!W.length)return;const u0=summen(b).netto,alt={},nw={};
+    for(const{p,n}of W){alt[p.id]={ep:+p.ep||0,...(p.epL!=null?{epL:p.epL}:{}),...(p.epS!=null?{epS:p.epS}:{}),...(n.ek!=null?{ek:+p.ek||0}:{})};kbSetzen(b,p,n);nw[p.id]=p.ep}
+    const u1=summen(b).netto,txt=`Preise nach K-Blatt „${kb.name}“`;if(erw('gkMerken'))b.kalkAlt={ts:new Date().toISOString(),text:`${txt}, netto ${fmt(u0)} → ${fmt(u1)}`,pos:alt,neu:nw};else delete b.kalkAlt;
+    log('Preisanpassung',`${T[b.typ].bez} ${bNr(b)}: ${txt}, ${W.length} ${W.length>1?'Preise':'Preis'}, netto ${fmt(u0)} → ${fmt(u1)}`);persist();fin();render();gkMeldung(`Preise nach K-Blatt: netto ${fmt(u0)} → ${fmt(u1)} €`)};
+  sync()}
 
 /* ---------- Router & Render ---------- */
 const V={};
@@ -1760,7 +1815,7 @@ function kopfFelder(b,teil=''){
       <label>Bezug<input data-h="bezug" value="${esc(b.bezug)}" ${dis} placeholder="z. B. Ihre Anfrage vom …"></label>
       ${(t.re&&V_)||b.typ==='LS'?`<label>Liefer-/Leistungsdatum<input data-h="leistung" value="${esc(b.leistung)}" ${dis} placeholder="TT.MM.JJJJ oder Zeitraum"></label>`:''}
     </div>
-    ${!V_?`<div class="row"><label>Auftrag (für Nachkalkulation)<select data-h="auftragId" ${dis}>${auftragOpts()}</select></label></div>`:''}
+    ${!V_?`<div class="row"><label>Auftrag (für Nachkalkulation)<select data-h="auftragId" ${dis}>${auftragOpts()}</select></label></div>`:kbBelegFeld(b,dis)}
     ${b.typ==='WE'?`<div class="row"><label class="chk"><input type="checkbox" data-h="lagerBuchen" ${b.lagerBuchen!==false?'checked':''} ${dis}> Ins Lager einbuchen (abwählen bei Direktlieferung auf die Baustelle)</label><label class="chk"><input type="checkbox" data-h="verrechnen" ${b.verrechnen!==false?'checked':''}> An Kunden weiterverrechnen (Auftrag oder Direktlieferung)</label></div>`:''}`,Z=!ohneP?`<div class="row">
       <label class="w05">Zahlungsziel Tage<input type="number" data-h="zahlungsziel" value="${b.zahlungsziel}" ${dis}></label>
       <label class="w05">Skonto %<input type="number" step="any" data-h="skonto" value="${b.skonto}" ${dis}></label>
@@ -1777,7 +1832,7 @@ const anrFeld=b=>dOpt(b).briefAnrede&&(T[b.typ].b==='V'||b.typ==='BE')?`<div cla
 function kopfZus(b){const t=T[b.typ],V_=t.b==='V',k=kontakt(b.kontaktId),a=b.fest&&b.adresse?.name?b.adresse:k,f=b.fest?[]:kontaktFehlt(k);
   const z2=[(b.typ==='ER'?'Rechnung vom ':'vom ')+dAT(b.datum),b.typ==='AN'&&b.gueltigBis?esc(dOpt(b).lblGueltig||'Gültig bis')+' '+dAT(b.gueltigBis):'',['AB','BE'].includes(b.typ)&&b.liefertermin?'Liefertermin '+dAT(b.liefertermin):'',
     ((t.re&&V_)||b.typ==='LS')&&b.leistung?'Leistung '+esc(b.leistung):'',['ER','BE','WE'].includes(b.typ)&&b.fremdNr?{ER:'Re-Nr. Lief. ',BE:'Angebot Lief. ',WE:'LS-Nr. Lief. '}[b.typ]+esc(b.fremdNr):''].filter(Boolean);
-  const z3=[b.betreff,b.bezug].filter(Boolean).map(esc),z4=V_?[]:[b.auftragId?'Auftrag '+esc(auftragKurz(b.auftragId)):'kein Auftrag',b.typ==='ER'&&b.konto?'Konto '+esc(b.konto):'',b.typ==='WE'?(b.lagerBuchen!==false?'ins Lager':'nicht ins Lager')+' · '+(b.verrechnen!==false?'weiterverrechnen':'nicht weiterverrechnen'):''].filter(Boolean);
+  const z3=[b.betreff,b.bezug].filter(Boolean).map(esc),z4=V_?kbZus(b):[b.auftragId?'Auftrag '+esc(auftragKurz(b.auftragId)):'kein Auftrag',b.typ==='ER'&&b.konto?'Konto '+esc(b.konto):'',b.typ==='WE'?(b.lagerBuchen!==false?'ins Lager':'nicht ins Lager')+' · '+(b.verrechnen!==false?'weiterverrechnen':'nicht weiterverrechnen'):''].filter(Boolean);
   return`<div class="card kzus"${b.fest?'':' data-act="kopfd" role="button" title="Kopfdaten bearbeiten"'}><div class="kz1"><b>${a?esc(a.name):`<span class="err">kein ${V_?'Kunde':'Lieferant'}</span>`}</b>${a?.ort?`<span class="mut">· ${esc(a.ort)}</span>`:''}${(a?.kundenart)==='privat'?tag('Privat'):''}${b.fest?'':'<span class="kzed" aria-hidden="true">✎</span>'}</div>
     ${f.length&&k?`<div class="err" style="font-size:13px">fehlt: ${f.join(', ')}</div>`:''}<div>${z2.join(' · ')}</div>${z3.length?`<div class="mut">${z3.join(' · ')}</div>`:''}${z4.length?`<div class="mut">${z4.join(' · ')}</div>`:''}</div>`}
 function kopfK(b){const V_=T[b.typ].b==='V',ohneP=OHNE_PREIS.includes(b.typ),z=[`${fmtQ(+b.zahlungsziel||0)} Tage`,+b.skonto?`${fmtQ(b.skonto)} % Skonto ${fmtQ(+b.skontoTage||0)} Tage`:''].filter(Boolean).join(' · ');
@@ -1850,7 +1905,7 @@ V.beleg=id=>{
       <label class="chk" style="margin:0;font-size:13px" title="Langtexte der Positionen in Vorschau, Druck und PDF"><input type="checkbox" data-h="ltDruck" ${b.ltDruck!==false?'checked':''} ${dis}> Langtext drucken</label>${dKnopf(b,'Druckoptionen …')}</div>`}
     <table class="pos${zl?' pz':''}"><thead>${zl?`<tr><th>Pos</th><th>Art.-Nr.</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonst.</th>':'<th>EP netto</th>'}${zRab?`<th${rabT()}>${rabL(1)}</th>`:''}<th class="n">GP netto</th>`}<th></th></tr>`:`<tr><th></th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th>${ohneP?'':`${zLS?'<th>Lohn</th><th>Sonstiges</th>':''}<th>${zLS?'PP':'EP netto'}</th>${zRab?`<th${rabT()}>${rabL(1)}</th>`:''}<th class="n">${zLS?'GP':'GP netto'}</th><th>USt</th><th title="Einstandspreis je Einheit">EK</th>`}<th>Kz</th><th></th></tr>`}</thead>
     <tbody>${rows||`<tr><td colspan="14" class="mut">Noch keine Positionen.</td></tr>`}</tbody></table>
-    ${b.fest?'':`<div class="bar" style="margin:8px 0 0"><button data-act="padd" data-art="G">+ Gruppe</button><button data-act="padd" data-art="W">+ Ware</button><button data-act="padd" data-art="L">+ Leistung</button><button data-act="padd" data-art="F">+ Fremdleistung</button><button data-act="padd" data-art="T">+ Text</button>${V_&&erw('tarifPos')&&S().tarife.length?`<select data-act="ptarif" title="Leistung zum Stundensatz des Tarifs einfügen" style="width:auto">${opt('','+ Stundentarif …','')}${S().tarife.map(t=>opt(t.kz,`${t.kz} · ${t.bez||t.kz} (${fmt(t.vk)} €/h)`,'')).join('')}</select>`:''}${V_?`<button data-act="pzeit">+ Stunden aus Zeiterfassung</button>`:''}</div>`}
+    ${b.fest?'':`<div class="bar" style="margin:8px 0 0"><button data-act="padd" data-art="G">+ Gruppe</button><button data-act="padd" data-art="W">+ Ware</button><button data-act="padd" data-art="L">+ Leistung</button><button data-act="padd" data-art="F">+ Fremdleistung</button><button data-act="padd" data-art="T">+ Text</button>${V_&&erw('tarifPos')&&tfListe(b).length?`<select data-act="ptarif" title="Leistung zum Stundensatz des Tarifs einfügen" style="width:auto">${opt('','+ Stundentarif …','')}${tfListe(b).map(t=>opt(t.kz,`${t.kz} · ${t.bez||t.kz} (${fmt(t.vk)} €/h)`,'')).join('')}</select>`:''}${V_?`<button data-act="pzeit">+ Stunden aus Zeiterfassung</button>`:''}</div>`}
   </div>`}`;
   const extra=`${t.re&&b.fest&&!b.storno&&!(b.typ==='GS'&&beleg(b.vorgaengerId))&&!kmpB()?zahlBox(b):''}
   ${kmpB()&&ans!=='beides'?'':anhKarte(b)}`;
@@ -1919,6 +1974,7 @@ MENUE.beleg=()=>{const b=curBeleg();if(!b)return[];const t=T[b.typ],H=HANDY.matc
     H&&zuRE(b)&&h.act!=='folgere'&&{l:'→ Rechnung',ic:BICON.RE,act:'folgere',titel:vf},fo&&{l:'Folgebeleg',ic:'➜',sub:t.folge.map(f=>({l:T[f].bez,ic:BICON[f],act:'folge',value:f,titel:vf}))},
     b.typ==='LS'&&!b.storno&&{l:'Sammelrechnung …',ic:'🧾',act:'sammelre'},{trenn:1},
     glZeigen(b)&&{l:'Gliederung …',ic:'≡',act:'glpop',titel:'Gruppen und Positionen im Überblick – Sprung zur Stelle'},
+    !b.fest&&kbDarf(b)&&kbVon(b)&&{l:'Preise nach K-Blatt …',ic:'🧮',act:'kbpreise',titel:'Zuschläge und Mittellohn des K-Blatts auf die Preise anwenden'},
     !b.fest&&{l:'Spalten & Druck …',ic:'☰',act:'lpop',d:{lp:'spalten'},titel:'Rabatt, Lohn / Sonstiges, Langtext drucken, Druckoptionen'},{l:'Duplizieren',ic:'⧉',act:'dup'},
     anF&&{l:'Neue Revision bearbeiten',ic:'✎',act:'anrev',titel:'Erstellt eine neue Revision zum Bearbeiten – dieser Stand bleibt unverändert gespeichert'},anF&&{l:'Folgeangebot',ic:BICON.AN,act:'anfolge'},
     anF&&{l:b.status==='abgelehnt'?'wieder offen':'abgelehnt',ic:b.status==='abgelehnt'?'↺':'✗',act:'anst',d:{v:b.status==='abgelehnt'?'':'abgelehnt'}},
@@ -2174,7 +2230,7 @@ function angebotRevision(src){
   if(grund===null)return;
   const b=neuBeleg('AN',{kontaktId:src.kontaktId,betreff:src.betreff,bezug:src.bezug,kopf:src.kopf,fuss:src.fuss,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,
     auftragId:src.auftragId,vorgaengerId:src.id,basisNr:basis,rev,revGrund:grund.trim(),optRabatt:src.optRabatt,optLS:src.optLS,ltDruck:src.ltDruck,leistung:src.leistung,...(src.druck?{druck:{...src.druck}}:{}),...(src.anrede?{anrede:src.anrede}:{})});
-  b.pos=src.pos.map(p=>({...p,id:uid(),herkunftPosId:'',revPosId:p.id}));
+  b.pos=src.pos.map(p=>({...p,id:uid(),herkunftPosId:'',revPosId:p.id}));if(src.kbId!=null)b.kbId=src.kbId; // K-Blatt (P34)
   log('Revision angelegt',`${basis}-R${rev}${grund.trim()?': '+grund.trim():''}`);persist();go('beleg/'+b.id);
 }
 // Alle Revisionen eines Angebots (Grundangebot + R1, R2 …), älteste zuerst
@@ -2202,7 +2258,7 @@ function revHistorie(b){
 function folgeAngebot(src){
   const mitPos=confirm(`Positionen aus ${src.nr} übernehmen?\n\nOK = übernehmen · Abbrechen = leeres Folgeangebot`);
   const b=neuBeleg('AN',{kontaktId:src.kontaktId,betreff:src.betreff,bezug:`Folgeangebot zu Angebot ${src.nr} vom ${dAT(src.datum)}`,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,auftragId:src.auftragId,vorgaengerId:src.id});
-  if(mitPos)b.pos=src.pos.map(p=>({...p,id:uid(),herkunftPosId:''}));
+  if(mitPos)b.pos=src.pos.map(p=>({...p,id:uid(),herkunftPosId:''}));if(src.kbId!=null)b.kbId=src.kbId; // K-Blatt (P34)
   log('Folgeangebot angelegt',`zu ${src.nr}`);persist();go('beleg/'+b.id);
 }
 function sumBox(b){
@@ -2216,7 +2272,7 @@ function sumBox(b){
   ${T[b.typ].re&&b.fest?`<dt>Offen</dt><dd><b>${fmt(offen(b))}</b></dd>`:''}</dl>`;
 }
 function kalkBox(b){
-  const v=vorkalk(b);return kalkKv(b,v)+gkKalk(b,v)} // Gesamtkalkulation (P10): Schaltflächen unter den Kennzahlen
+  const v=vorkalk(b);return kalkKv(b,v)+gkKalk(b,v)+kbKalk(b)} // Gesamtkalkulation (P10): Schaltflächen unter den Kennzahlen; K-Blatt (P34)
 function kalkKv(b,v){ // Kennzahlen der Vorkalkulation
   return`<dl class="kv"><dt>Umsatz netto</dt><dd>${fmt(v.u)}</dd>
   ${+b.skonto?`<dt>nach ${fmtQ(b.skonto)} % Skonto</dt><dd>${fmt(v.uS)}</dd>`:''}
@@ -2526,7 +2582,7 @@ function posKartenK(b){const ohneP=OHNE_PREIS.includes(b.typ),c={gi:gruppenInfo(
   b.pos.forEach((p,i)=>{if(p.art==='G'){zu();g={p,i};return}inn+=posKarte(b,p,i,c)});zu();
   return`<div class="card pkl" style="padding:0"><h2 class="pkh">Positionen <span class="mut" style="font-weight:400">(${b.pos.filter(p=>!isInfo(p)).length})</span></h2>${o||'<p class="mut" style="padding:0 12px">Noch keine Positionen.</p>'}
   ${c.ed?'<div class="bar pkn"><button class="p" data-act="menue" data-m="pneu">+ Position ▾</button></div>':''}</div>`}
-MENUE.pneu=()=>{const b=curBeleg();if(!b||b.fest)return[];return[...[['W','📦'],['L','🛠'],['F','🤝'],['G','🗂'],['T','📝']].map(([a,ic])=>({l:ART[a],ic,act:'pneu',d:{art:a}})),T[b.typ].b==='V'&&erw('tarifPos')&&S().tarife.length&&{l:'Stundentarif',ic:'🕑',sub:S().tarife.map(t=>({l:`${t.kz} · ${t.bez||t.kz} (${fmt(t.vk)} €/h)`,act:'ptarif',d:{kz:t.kz}}))},T[b.typ].b==='V'&&{l:'Stunden aus Zeiterfassung',ic:'⏱',act:'pzeit'}].filter(Boolean)};
+MENUE.pneu=()=>{const b=curBeleg();if(!b||b.fest)return[];return[...[['W','📦'],['L','🛠'],['F','🤝'],['G','🗂'],['T','📝']].map(([a,ic])=>({l:ART[a],ic,act:'pneu',d:{art:a}})),T[b.typ].b==='V'&&erw('tarifPos')&&tfListe(b).length&&{l:'Stundentarif',ic:'🕑',sub:tfListe(b).map(t=>({l:`${t.kz} · ${t.bez||t.kz} (${fmt(t.vk)} €/h)`,act:'ptarif',d:{kz:t.kz}}))},T[b.typ].b==='V'&&{l:'Stunden aus Zeiterfassung',ic:'⏱',act:'pzeit'}].filter(Boolean)};
 MENUE.pos=el=>{const b=curBeleg(),i=+el.dataset.i,p=b?.pos[i];if(!p||b.fest)return[];const V_=T[b.typ].b==='V',d={i};
   return[{l:'Bearbeiten …',ic:'✎',act:'pbear',d},{l:'Nach oben',ic:'↑',act:'pup',d,dis:i===0},{l:'Nach unten',ic:'↓',act:'pdown',d,dis:i===b.pos.length-1},
     !isInfo(p)&&{l:'Preisverlauf …',ic:'€',act:'hist',d},!isInfo(p)&&(V_?{l:'Artikel bearbeiten …',ic:'✎',act:'partik',d,titel:'Texte, Preise, Einkauf, Herstellkosten; im Artikelstamm speichern'}:!p.artikelId&&{l:'Als Artikel speichern …',ic:'+',act:'mkart',d}),
@@ -5600,8 +5656,9 @@ const ACT={
   mkart:async el=>{const b=curBeleg(),p=b.pos[+el.dataset.i];const f=+p.faktor||1,V_=T[b.typ].b==='V';
     const a=await artikelPopup({bez:p.bez,text:p.text,art:isInfo(p)?'W':p.art,einheit:p.einheit,ek:rp((V_?+p.ek:+p.ep)/f,peW(p.pe)),vk:V_?rp(+p.ep/f,peW(p.pe)):0,pe:p.pe,steuer:p.steuer,artNr:p.lnr||''},V_?'':b.kontaktId);if(!a)return;
     p.artikelId=a.id;p.nr=a.nr;if(!p.bez)p.bez=a.bez;persist();render()},
-  ptarif:el=>{const kz=el.dataset.kz||el.value;if(el.tagName==='SELECT')el.value='';const b=curBeleg(),t=S().tarife.find(x=>x.kz===kz);if(!b||b.fest||!t)return; // Stundentarif als Position (P12)
+  ptarif:el=>{const kz=el.dataset.kz||el.value;if(el.tagName==='SELECT')el.value='';const b=curBeleg(),t=tfListe(b).find(x=>x.kz===kz);if(!b||b.fest||!t)return; // Stundentarif als Position (P12)
     b.pos.push(neuPos({art:'L',nr:t.kz,tarif:t.kz,bez:t.bez||t.kz,menge:1,einheit:'h',ep:r2(+t.vk||0),ek:r2(+t.kosten||0),rabatt:+kontakt(b.kontaktId)?.rabatt||0}));lsAufteilen(b,b.pos[b.pos.length-1]);persist();render();if(kmpB())posPopup(b,b.pos.length-1)},
+  kbpreise:()=>kbPreisDialog(curBeleg()), // Preise nach K-Blatt (P34)
   pzeit:()=>{const b=curBeleg();const zt=DB.zeiten.filter(z=>z.auftragId===b.auftragId&&!z.belegId);if(!zt.length){alert('Keine offenen Stunden für diesen Auftrag.');return}zeitenInPos(b,zt);persist();render()},
   zadd:()=>{const b=curBeleg(),bet=num($('#z-bet').value),sk=num($('#z-sk').value);if(!bet&&!sk)return;if(FB().sperre&&($('#z-dat').value||isoD())<=FB().sperre){alert('Periode bis '+dAT(FB().sperre)+' ist gesperrt.');return}
     if(sk>0&&($('#z-dat').value||isoD())>skontoBis(b)&&!confirm(`Skontofrist ${+b.skonto?'('+fmtQ(b.skonto)+' % bis '+dAT(skontoBis(b))+') ':''}ist zum Zahlungsdatum abgelaufen bzw. kein Skonto vereinbart.\nSkonto ${fmt(sk)} € trotzdem buchen?`))return;
@@ -5752,6 +5809,7 @@ document.addEventListener('change',e=>{
     case's':if(d.f.startsWith('druckprofil.')){dpSetzen(d.f,v);return}if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()]??={};o[pth[0]]=d.t==='b'?v===true||v==='true':nv;if(d.f.startsWith('erw.')){persist();render();return}}break;
     case'st':{const x=S().steuer[+d.i];if(stGesperrt().has(x.code)){alert(`Steuersatz „${x.bez||x.code}“ wird in festgeschriebenen Belegen verwendet und kann nicht geändert werden (§ 11 UStG, § 131 BAO).\nFür einen neuen Satz bitte einen neuen Code anlegen.`);render();return}if(d.f==='code'){const alt=x.code;if(S().steuer.some((y,j)=>j!==+d.i&&y.code===v)){alert('Code existiert bereits.');render();return}if(DB.belege.some(b=>b.pos.some(p=>p.steuer===alt))){alert('Code wird verwendet und kann nicht geändert werden.');render();return}}x[d.f]=nv;break}
     case'tf':S().tarife[+d.i][d.f]=nv;break;
+    case'kbbel':{const b=curBeleg();if(!b||b.fest)return;b.kbId=v;log('K-Blatt im Beleg',`${bNr(b)}: ${ROOT.kb(v)?.name||'keines'}`);persist();render();return} // K-Blatt des Verkaufsbelegs (P34, '' = bewusst keines)
     case'fbk':FB().konten[+d.i][d.f]=v;break;
     case'fbmap':{if(d.f==='!sperre'){FB().sperre=v;log('Periodensperre',v)}else setP(FB().map,d.f,v);break}
     case'nk':{const j=String(new Date().getFullYear()),nk=S().nk[d.t];if(d.f==='prefix')nk.prefix=v.trim()||d.t;else{const used=DB.belege.filter(b=>b.typ===d.t&&b.nr&&b.nr.includes('-'+j+'-')).length;if(used&&num(v)<(nk.zaehler[j]||0)&&!confirm('Achtung: Zähler kleiner als bereits vergebene Nummern – Doppelvergabe möglich. Trotzdem setzen?')){render();return}nk.zaehler[j]=Math.max(0,Math.floor(num(v)))}log('Nummernkreis',`${d.t}: ${d.f}=${v}`);break}

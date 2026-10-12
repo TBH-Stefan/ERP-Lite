@@ -2633,6 +2633,7 @@ V.auftrag=aid=>{
   ${zt.map(z=>`<tr><td>${dAT(z.datum)}</td><td>${esc(z.tarif)}</td><td>${esc(z.text)}</td><td class="n">${fmtQ(z.stunden)}</td><td class="n">${fmt(z.stunden*z.kosten)}</td><td>${z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn')}</td></tr>`).join('')||'<tr><td colspan="6" class="mut">keine – Erfassung unter <a href="#/zeiten">Zeiterfassung</a></td></tr>'}
   </tbody></table></div>`}
   </div><div>
+  ${kbAuftragKarte(aid)}
   <div class="card"><h2>Vor- / Nachkalkulation</h2><table><thead><tr><th></th><th class="n">Vorkalk.</th><th class="n">Ist</th></tr></thead><tbody>
   ${row('Umsatz nach Skonto',v?fmt(v.uS):'–',fmt(n.uN))}
   ${row('Material / Ware',v?fmt(v.mat):'–',fmt(n.material+n.fremd))}
@@ -2646,6 +2647,36 @@ V.auftrag=aid=>{
   ${(t=>kmp()?`<div style="margin-top:6px">${hilfe(t)}</div>`:`<p class="mut" style="font-size:12px;margin:8px 0 0">${t}</p>`)('Ist: Rechnungen netto (abzgl. Gutschriften, gezogenes Skonto) − Lagerabgänge zu Ø-EK − Eingangsrechnungen dieses Auftrags − Stunden × Kostensatz.')}</div>
   </div></div>`;
 };
+/* --- K-Blätter (P34 Teil 4, erw.kbProjekt): Projektzuordnung – kb.auftragId (Auftrag = Belegkette, auftragsListe()) und/oder Projektname kb.projekt (wie b.projekt am Ausgangsbeleg),
+   „+ neues Projekt …“; Liste der K-Blätter nach Projekt filter- und gruppierbar (UI.kbPrj), im Auftrag Karte „K-Blätter“ mit „+ K-Blatt für diesen Auftrag“ --- */
+erwPlus({k:'kbProjekt',std:true,p:'K-Blätter (P34)',l:'K-Blätter einem Projekt bzw. Auftrag zuordnen',info:'Im K-Blatt wählt „Projekt / Auftrag“ einen Auftrag (Belegkette ab dem Angebot, mit Projektname) oder einen Projektnamen; „+ neues Projekt …“ legt einen neuen Projektnamen an. Die Liste der K-Blätter ist nach Projekt geordnet (Überschrift je Projekt) und lässt sich nach Projekt filtern. Im Auftrag (Aufträge & DB II) stehen seine K-Blätter mit „+ K-Blatt für diesen Auftrag“. Die Zuordnung ist reine Ordnungsangabe, Rechnung und Druck bleiben gleich (Bau im Formblatt: Bau, sonst Projekt). Aus = Liste und Kopf wie bisher, gespeicherte Zuordnungen bleiben.'});
+const kbAid=kb=>kb?.auftragId&&DB.belege.some(b=>b.auftragId===kb.auftragId)?kb.auftragId:''; // Auftrag des K-Blatts (nur wenn noch vorhanden)
+const kbPrjName=kb=>{const a=kbAid(kb);return(a&&beleg(a)?.projekt)||kb.projekt||(a?auftragKurz(a):'')};
+const kbZuAuftrag=aid=>{const p=beleg(aid)?.projekt;return DB.kalk.filter(kb=>kbAid(kb)===aid||!kbAid(kb)&&p&&kb.projekt===p)};
+function kbPrjFeld(kb,R){if(!erw('kbProjekt'))return'';const A=auftragsListe().filter(a=>!a.docs.every(d=>d.storno)),aid=kbAid(kb),pa=new Set(A.map(a=>beleg(a.id)?.projekt).filter(Boolean));
+  const P=[...new Set([...DB.belege.map(b=>b.projekt),...DB.kalk.map(x=>x.projekt)].filter(n=>n&&!pa.has(n)))].sort((a,c)=>a.localeCompare(c,'de')),v=aid?'a:'+aid:kb.projekt&&P.includes(kb.projekt)?'p:'+kb.projekt:'';
+  return`<label>Projekt / Auftrag${aid?` <a href="#/auftrag/${aid}" title="Auftrag öffnen">↗</a>`:''}<select data-o="kbprj" data-r="${R}">${opt('','– keine Zuordnung –',v)}${A.length?`<optgroup label="Aufträge (Belegketten)">${A.map(a=>{const r=beleg(a.id);return opt('a:'+a.id,(r?.projekt?r.projekt+' · ':'')+auftragLabel(a.id),v)}).join('')}</optgroup>`:''}${P.length?`<optgroup label="Projektnamen">${P.map(n=>opt('p:'+n,n,v)).join('')}</optgroup>`:''}${opt('§neu','+ neues Projekt …',v)}</select></label>`}
+function kbPrjSet(d,v){const kb=ROOT.kb(d.r.split('|')[1]);if(!kb)return;
+  if(v==='§neu'){const n=prompt('Name des neuen Projekts:','');if(n&&n.trim()){delete kb.auftragId;kb.projekt=n.trim();persist()}render();return}
+  if(v.startsWith('a:')){kb.auftragId=v.slice(2);const p=beleg(kb.auftragId)?.projekt;if(p)kb.projekt=p}else{delete kb.auftragId;if(v.startsWith('p:'))kb.projekt=v.slice(2)}
+  persist();render()}
+function kbListeV(){const P=UI.kbPrj||'',N=kb=>kbPrjName(kb)||'',namen=[...new Set(DB.kalk.map(N).filter(Boolean))].sort((a,c)=>a.localeCompare(c,'de'));
+  const L=DB.kalk.filter(kb=>!P||(P==='-'?!N(kb):N(kb)===P)).map((kb,i)=>[kb,i]).sort((a,c)=>(!N(a[0]))-(!N(c[0]))||N(a[0]).localeCompare(N(c[0]),'de')||a[1]-c[1]).map(x=>x[0]);
+  const erst=new Set();let vor=null;for(const kb of L){if(N(kb)!==vor){erst.add(kb.id);vor=N(kb)}}
+  const mlp=kb=>{const c=k3std(kb);return c?fmt(k3calc(kb,c).mlp):''},art=kb=>kb.art==='bieter'?tag('Prüfung Bieter','warn'):tag('eigen','acc');
+  return`<div class="bar"><h1 style="margin:0">K-Blätter (ÖNORM B 2061)${kmp()?' '+hilfe(KB_INFO):''}</h1><span class="sp"></span>${kmp()?'<button class="p" data-act="menue" data-m="kbneu">+ Neu ▾</button>':'<button class="p" data-act="kbneu" data-a="eigen">+ Eigene Kalkulation</button><button data-act="kbneu" data-a="bieter">+ K-Blätter eines Bieters (Prüfung)</button>'}</div>
+  ${kmp()?'':`<p class="mut">${KB_INFO}</p>`}
+  <div class="bar"><label style="display:flex;align-items:center;gap:6px;flex:1;max-width:420px">Projekt <select data-o="ui" data-f="kbPrj" style="flex:1">${opt('','alle Projekte',P)}${namen.map(n=>opt(n,n,P)).join('')}${opt('-','ohne Projekt',P)}</select></label><span class="mut">${L.length} von ${DB.kalk.length}</span></div>
+  ${tabelle('kbs',[{k:'name',l:'Bezeichnung',f:kb=>esc(kb.name)},{k:'art',l:'Art',f:art},{k:'prj',l:'Projekt / Auftrag',f:kb=>{const a=kbAid(kb);return`${esc(N(kb))}${a?` <a href="#/auftrag/${a}" onclick="event.stopPropagation()" title="${esc(auftragLabel(a))}">📊</a>`:''}`}},{k:'bp',l:'Bieter / Projekt',f:kb=>`${esc(kb.bieter)} ${esc(kb.projekt)}`,std:false},
+    {k:'gzl',l:'GZ Lohn',n:1,f:kb=>fmt(k2gz(kb).l)+' %'},{k:'gzs',l:'GZ Sonst.',n:1,f:kb=>fmt(k2gz(kb).s)+' %'},{k:'mlp',l:'Mittellohnpreis',n:1,f:mlp},
+    {k:'k4',l:'K4-Zeilen',n:1,f:kb=>kb.k4.length,std:false}],L,{zeile:kb=>`class="click" onclick="nav('kbs/${kb.id}')"`,leer:P?'Keine K-Blätter in diesem Projekt.':'Noch keine K-Blätter.',
+    zwischen:(kb,n)=>erst.has(kb.id)&&!P?`<tr class="prjz"><td colspan="${n}"><b>${esc(N(kb)||'ohne Projekt')}</b></td></tr>`:'',
+    mf:kb=>karte({t:esc(kb.name),s:art(kb),u:esc([kb.bieter,kbAid(kb)?auftragKurz(kbAid(kb)):''].filter(Boolean).join(' · ')),z:`GZ Lohn ${fmt(k2gz(kb).l)} % · Sonst. ${fmt(k2gz(kb).s)} %`,b:mlp(kb)?mlp(kb)+' €/h':''})})}`}
+MENUE.kbneu=()=>[{l:'Eigene Kalkulation',ic:'🧮',act:'kbneu',d:{a:'eigen'}},{l:'K-Blätter eines Bieters (Prüfung)',ic:'🔍',act:'kbneu',d:{a:'bieter'}}];
+function kbAuftragKarte(aid){if(!erw('kbProjekt'))return'';const L=kbZuAuftrag(aid);
+  const inh=`<div class="card">${kmp()?'':'<h2>K-Blätter</h2>'}${L.length?`<table><tbody>${L.map(kb=>{const c=k3std(kb);return`<tr class="click" onclick="nav('kbs/${kb.id}')"><td>${esc(kb.name)}${kb.angebotNr?` <span class="mut">· Angebot ${esc(kb.angebotNr)}</span>`:''}</td><td class="n">${c?fmt(k3calc(kb,c).mlp)+' €/h':''}</td></tr>`}).join('')}</tbody></table>`:'<p class="mut" style="margin:0">Noch kein K-Blatt zu diesem Auftrag.</p>'}
+    <div class="bar" style="margin:8px 0 0"><button class="s" data-act="kbneuA" data-id="${aid}">+ K-Blatt für diesen Auftrag</button></div></div>`;
+  return kmp()?akk('a-kb','K-Blätter',inh,{offen:!!L.length,zusatz:L.length?L.map(kb=>esc(kb.name)).join(', '):'keine'}):inh}
 function zeitenAbrechnen(aid){
   const zt=DB.zeiten.filter(z=>z.auftragId===aid&&!z.belegId);if(!zt.length)return;
   const root=beleg(aid)||DB.belege.find(b=>b.auftragId===aid);
@@ -3170,7 +3201,7 @@ const POSART={'':'Normal',E:'Eventual',W:'Wahl'};
 
 /* --- K-Blätter: Liste & Editor --- */
 V.kbs=id=>{
-  if(id)return kbEdit(id);
+  if(id)return kbEdit(id);if(erw('kbProjekt'))return kbListeV(); // Liste nach Projekt (P34 Teil 4)
   return`<div class="bar"><h1 style="margin:0">K-Blätter (ÖNORM B 2061)</h1><span class="sp"></span><button class="p" data-act="kbneu" data-a="eigen">+ Eigene Kalkulation</button><button data-act="kbneu" data-a="bieter">+ K-Blätter eines Bieters (Prüfung)</button></div>
   ${kmp()?`<p style="margin:-6px 0 8px">${hilfe(KB_INFO)}</p>`:`<p class="mut">${KB_INFO}</p>`}
   ${tabelle('kbs',[{k:'name',l:'Bezeichnung',f:kb=>esc(kb.name)},{k:'art',l:'Art',f:kb=>kb.art==='bieter'?tag('Prüfung Bieter','warn'):tag('eigen','acc')},{k:'bp',l:'Bieter / Projekt',f:kb=>`${esc(kb.bieter)} ${esc(kb.projekt)}`},
@@ -3249,7 +3280,7 @@ function kbEdit(id){
   if(VL&&kmp())return kbEditK(kb,R,tab,tabs,body); // kompakte Ansicht (P34 Teil 2)
   return`<div class="bar"><h1 style="margin:0">${esc(kb.name)}</h1>${kb.art==='bieter'?tag('Prüfung Bieter','warn'):''}<span class="sp"></span>
     <button data-act="kbdruck" data-id="${kb.id}">PDF / Drucken</button><button data-act="kbdup" data-id="${kb.id}">Kopie (neues Jahr)</button><button class="d" data-act="kbdel" data-id="${kb.id}">Löschen</button></div>
-  <div class="card"><div class="row"><label class="w2">Bezeichnung${fi(R,'name',kb.name)}</label>${kb.art==='bieter'?`<label>Bieter${fi(R,'bieter',kb.bieter)}</label>`:''}<label>Projekt / Gültigkeit${fi(R,'projekt',kb.projekt)}</label></div>${VL?kbKopfV(kb,R):''}
+  <div class="card"><div class="row"><label class="w2">Bezeichnung${fi(R,'name',kb.name)}</label>${kb.art==='bieter'?`<label>Bieter${fi(R,'bieter',kb.bieter)}</label>`:''}<label>Projekt / Gültigkeit${fi(R,'projekt',kb.projekt)}</label>${kbPrjFeld(kb,R)}</div>${VL?kbKopfV(kb,R):''}
   <div class="row"><label>Notiz / Prüfvermerk${ft(R,'notiz',kb.notiz)}</label></div></div>
   <div class="bar"><span class="seg">${tabs.map(([k,l])=>`<button class="${tab===k?'on':''}" data-act="kbtab" data-t="${k}">${l}</button>`).join('')}</span></div>
   <div class="card" style="overflow-x:auto">${body}</div>
@@ -3395,7 +3426,7 @@ const k3KvAkt=(R,c,ci)=>{const K=kvVon(c.kvId);return K&&(c.arbeiter||[]).some(y
 // Kompakte Ansicht: Kopf zum Aufklappen, Aktionen im ⋯-Menü, am Handy Reiter als Auswahl
 function kbEditK(kb,R,tab,tabs,body){const H=kmpH();
   return`<div class="bar"><h1 style="margin:0">${esc(kb.name)}</h1>${kb.art==='bieter'?tag('Prüfung Bieter','warn'):''}<span class="sp"></span><button data-act="kbdruck" data-id="${kb.id}">PDF / Drucken</button><button class="mehr" data-act="menue" data-m="kb" data-id="${kb.id}" title="Kopie, Löschen">⋯</button></div>
-  ${akk('kbkopf','Kopfdaten',`<div class="card"><div class="row"><label class="w2">Bezeichnung${fi(R,'name',kb.name)}</label>${kb.art==='bieter'?`<label>Bieter${fi(R,'bieter',kb.bieter)}</label>`:''}<label>Projekt / Gültigkeit${fi(R,'projekt',kb.projekt)}</label></div>${kbKopfV(kb,R)}
+  ${akk('kbkopf','Kopfdaten',`<div class="card"><div class="row"><label class="w2">Bezeichnung${fi(R,'name',kb.name)}</label>${kb.art==='bieter'?`<label>Bieter${fi(R,'bieter',kb.bieter)}</label>`:''}<label>Projekt / Gültigkeit${fi(R,'projekt',kb.projekt)}</label>${kbPrjFeld(kb,R)}</div>${kbKopfV(kb,R)}
     <div class="row"><label>Notiz / Prüfvermerk${ft(R,'notiz',kb.notiz)}</label></div></div>`,{offen:!H,zusatz:esc([kb.bau||kb.projekt,kb.angebotNr&&'Angebot '+kb.angebotNr].filter(Boolean).join(' · '))})}
   <div class="bar">${H?`<select data-o="ui" data-f="kbTab" style="flex:1">${tabs.map(([k,l])=>opt(k,l,tab)).join('')}</select>`:`<span class="seg">${tabs.map(([k,l])=>`<button class="${tab===k?'on':''}" data-act="kbtab" data-t="${k}">${l}</button>`).join('')}</span>`}</div>
   <div class="card" style="overflow-x:auto">${body}</div>
@@ -3727,6 +3758,7 @@ const ACT_LV=({
   k4art:el=>{const kb=ROOT[el.dataset.r.split('|')[0]](el.dataset.r.split('|')[1]);const nr=prompt('Artikel-Nr. (mehrere mit Komma) oder * für alle Waren:','*');if(!nr)return;
     const L=nr.trim()==='*'?DB.artikel.filter(a=>a.art!=='L'&&a.aktiv!==false):nr.split(',').map(x=>DB.artikel.find(a=>a.nr===x.trim())).filter(Boolean);
     for(const a of L)if(!kb.k4.some(m=>m.bez===a.bez)){const lf=(a.lieferanten||[]).find(l=>+l.lp>0);kb.k4.push({...TPL.k4(),bez:a.bez,einheit:a.einheit,lp:lf?+lf.lp:+a.ek||0,rab:lf?+lf.rabatt||0:0})}persist();render()},
+  kbneuA:el=>{const aid=el.dataset.id,r=beleg(aid);const kb=neueKB({auftragId:aid,projekt:r?.projekt||'',name:'Kalkulation '+(r?.projekt||(r?bNr(r):''))});DB.kalk.push(kb);log('K-Blatt angelegt',`${kb.name} (Auftrag ${r?bNr(r):''})`);persist();go('kbs/'+kb.id)}, // K-Blatt zum Auftrag (P34 Teil 4)
   arradd:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id);let arr=getP(o,el.dataset.f);if(!arr){setP(o,el.dataset.f,[]);arr=getP(o,el.dataset.f)}arr.push(TPL[el.dataset.tpl]());persist();render()},
   arrdel:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id),arr=getP(o,el.dataset.f);arr.splice(+el.dataset.i,1);persist();render()},
   bibneu:()=>{DB.lvbib.unshift({id:uid(),gruppe:'',kurz:'',lang:'',einheit:'Stk',k7:null});persist();render()},
@@ -5724,6 +5756,7 @@ document.addEventListener('change',e=>{
     case'fbmap':{if(d.f==='!sperre'){FB().sperre=v;log('Periodensperre',v)}else setP(FB().map,d.f,v);break}
     case'nk':{const j=String(new Date().getFullYear()),nk=S().nk[d.t];if(d.f==='prefix')nk.prefix=v.trim()||d.t;else{const used=DB.belege.filter(b=>b.typ===d.t&&b.nr&&b.nr.includes('-'+j+'-')).length;if(used&&num(v)<(nk.zaehler[j]||0)&&!confirm('Achtung: Zähler kleiner als bereits vergebene Nummern – Doppelvergabe möglich. Trotzdem setzen?')){render();return}nk.zaehler[j]=Math.max(0,Math.floor(num(v)))}log('Nummernkreis',`${d.t}: ${d.f}=${v}`);break}
     case'tx':S().texte[d.t][d.f]=v;break;
+    case'kbprj':kbPrjSet(d,v);return; // Projekt / Auftrag des K-Blatts (P34 Teil 4)
     default:return;
   }
   if(d.o==='s'&&/^firma\.(fn|gericht|uid)$/.test(d.f)){const e=$('#pflicht');if(e)e.outerHTML=pflichtHinweis()} // Pflichtangaben-Hinweis sofort aktualisieren

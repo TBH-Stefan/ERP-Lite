@@ -303,6 +303,7 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 @media print{.doc table.p tr.mlt{break-after:avoid}}
 .doc table.p.sp tbody td:first-child{text-align:left;white-space:normal}.doc table.p.sp tbody td.c,.doc table.p.sp tbody td.pn{text-align:center}.doc table.p.sp tbody td.pn{white-space:nowrap}.doc table.p.sp tbody td.n,.doc table.p.sp tbody tr.gsum td{text-align:right}.doc table.p td.an{font-size:8.5pt}
 .doc .lt{font-size:8.5pt;color:#333;white-space:pre-wrap}
+.doc .pe{font-size:7pt;line-height:1.2;color:#444;white-space:nowrap}.pez{font-size:11px;line-height:1.2;color:var(--mut);white-space:nowrap;text-align:right;margin-top:1px} /* Preiseinheit (P14): „je 100 m“ */
 .doc .tot{margin-left:auto;width:95mm;border-collapse:collapse}
 .doc .tot td{border:0;padding:3px 4px;text-align:right}
 .doc .tot td:first-child{padding-right:8mm}
@@ -517,6 +518,16 @@ const num=v=>{const n=parseFloat(String(v??'').replace(',','.'));return isNaN(n)
 const fmt=n=>(+n||0).toLocaleString('de-AT',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtQ=n=>(+n||0).toLocaleString('de-AT',{maximumFractionDigits:3});
 const fmtP=n=>(+n||0).toLocaleString('de-AT',{minimumFractionDigits:2,maximumFractionDigits:5}); // Preis je Einheit bei Preiseinheit > 1 (z. B. 0,4537)
+/* Preiseinheit (P14, erw.pe): Feld pe (10 | 100 | 1000) an Artikel und Position, fehlt = 1 (alte Daten unverändert). Gespeichert wird weiter der Preis je Einheit (ep, epL, epS, ek;
+   Artikel vk, ek, hk), bei PE > 1 mit 3–5 Nachkommastellen (rp). Gesamtpreis = Menge × EP je PE ÷ PE (posGP über peGP, EP je PE auf Cent wie gedruckt, dezimal genau gerundet).
+   Im Beleg werden EP, Lohn/Sonstiges und EK je PE eingegeben und angezeigt (peE = Faktor am Bildschirm, nur mit Schalter), gedruckt nach druck.peDruck (peD); gerechnet wird immer mit p.pe */
+const PE_N=[1,10,100,1000],peW=x=>PE_N.includes(+x)?+x:1,peE=p=>erw('pe')?peW(p?.pe):1,peD=(p,dp)=>dp.peDruck==='einheit'?1:peW(p?.pe);
+const peZ=(x,pe)=>pe>1&&x!==''&&x!=null?r2((+x||0)*pe):x,peL=(pe,eh)=>pe>1?`je ${pe} ${eh||'Einheiten'}`:'',peTxt=(x,p)=>peE(p)>1?fmt(peZ(+x||0,peE(p))):fmtP(+x||0); // Wert je PE, „je 100 m“, Anzeige
+const peGP=p=>{const pe=peW(p.pe);return Math.round(+((+p.menge||0)*r2((+p.ep||0)*pe)*(1-(+p.rabatt||0)/100)/pe*100).toFixed(6))/100}; // Menge × EP je PE ÷ PE, ohne Gleitkomma-Fehler (113,425 → 113,43)
+const peM=p=>{const pe=peE(p);return pe>1?`<div class="pez" title="Preise dieser Position je ${pe} ${esc(p.einheit||'Einheiten')}: Gesamtpreis = Menge × Preis ÷ ${pe}">${esc(peL(pe,p.einheit))}</div>`:''}; // Vermerk am Preisfeld im Beleg
+const peOpts=(p,ohne)=>!erw('pe')||ohne||isInfo(p)?'':`<optgroup label="Preiseinheit">${PE_N.map(n=>`<option value="§pe:${n}">${n===peW(p.pe)?'✓ ':''}Preis je ${n>1?n+' ':''}${esc(p.einheit||'Einheit')}</option>`).join('')}</optgroup>`; // in der Auswahl „Einheit“ des Belegs
+const peSel=(at,pe,eh)=>`<select ${at}>${PE_N.map(n=>opt(n,`je ${n>1?n+' ':''}${eh||'Einheit'}`,peW(pe))).join('')}</select>`;
+const peHinweis=a=>{const pe=peW(a?.pe);return pe>1?`je ${pe} ${esc(a.einheit||'')}: EK ${fmt(peZ(+a.ek||0,pe))} €${+a.hk?' · HK '+fmt(peZ(+a.hk,pe))+' €':''} · VK ${fmt(peZ(+a.vk||0,pe))} €`:''}; // Artikel: Preise je PE
 const pct=n=>isFinite(n)?(n*100).toLocaleString('de-AT',{minimumFractionDigits:1,maximumFractionDigits:1})+' %':'–';
 const isoD=(d=new Date())=>new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 const addDays=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+(+n||0));return isoD(d)};
@@ -546,6 +557,7 @@ const ERW=[
   {k:'tarifPos',std:true,p:'Lohnstunden (P12)',l:'Stundentarif als Position wählen (Verkauf)',info:'In Angeboten, Auftragsbestätigungen, Rechnungen und den anderen Verkaufsbelegen fügt „+ Stundentarif …“ (am Bildschirm neben „+ Leistung“, im kompakten Beleg unter „+ Position ▾“) eine Leistung mit Kürzel, Bezeichnung, Einheit h, Verkaufspreis und Kostensatz des Tarifs ein (Kundenrabatt wie bei „+ Leistung“). Die Tarife stehen unter Einstellungen → Stundentarife.'},
   {k:'snapshot',std:true,p:'Nachdruck (P0 c)',l:'Nachdruck wie das Original',info:'Beim Festschreiben werden Fußzeile, Ansprechperson, E-Mail, Telefon, Unterzeichner und die verwendeten Steuersätze im Beleg eingefroren. Nachdruck, PDF, Summen, FiBu und UVA festgeschriebener Belege verwenden diese Werte statt der aktuellen Einstellungen; Bestellungen drucken die Lieferanten-Art.-Nr. aus der Position bzw. aus dem Artikelstamm beim Festschreiben. Das Logo wird nicht eingefroren. Ältere Belege ohne eingefrorene Werte bleiben unverändert. Aus: wie bisher die aktuellen Einstellungen (eingefrorene Werte bleiben gespeichert). Fehlerbehebung, daher Standard ein.'},
   {k:'scanPE',std:true,p:'Einlesen (P14)',l:'Preiseinheit beim Einlesen prüfen',info:'Beim Einlesen von PDF-Text und Scans wird je Zeile Menge × Einzelpreis gegen den Gesamtpreis geprüft. Ergibt sich genau ein Faktor 10, 100 oder 1000 (±2 %), galt der Einzelpreis je 10/100/1000 Einheiten (z. B. Kabel „Preis/100“): er wird auf je Einheit umgerechnet; ohne Gesamtpreis gilt eine Spalte „PE“ bzw. der Spaltenkopf („Preis/100“). Im Abgleich ist die Umrechnung je Zeile markiert und abwählbar, der EK-Vorschlag für den Artikelstamm hat dann mehr Nachkommastellen (z. B. 0,4537 €/m). Zeilen, bei denen Menge × Einzelpreis nicht zum Gesamtpreis passt, werden markiert. E-Rechnungen sind nicht betroffen. Aus: wie bisher. Fehlerbehebung (sonst 100-fach zu hoher EK im Artikelstamm), daher Standard ein.'},
+  {k:'pe',std:true,p:'Preiseinheit (P14)',l:'Preiseinheit (Preis je 10, 100 oder 1000 Einheiten)',info:'Artikel und Positionen können einen Preis je 10, 100 oder 1000 Einheiten haben, z. B. Kabel 45,37 € je 100 m: Feld „Preiseinheit“ im Artikel, in „Neuer Artikel“, im Artikel-Pop-up (✎) und im Positions-Pop-up, im Beleg auch in der Auswahl „Einheit“ (Preis je …). Im Beleg werden Einzelpreis, Lohn / Sonstiges und EK dann je Preiseinheit eingegeben und angezeigt („je 100 m“), gerechnet wird Gesamtpreis = Menge × Einzelpreis ÷ 100. Eine neue Position übernimmt die Preiseinheit des Artikels, eingelesene Belege und E-Rechnungen die der Zeile. Wie gedruckt wird, legt das Druckprofil fest (Preiseinheit). Ohne eingetragene Preiseinheit ändert sich nichts. Aus: Felder ausgeblendet, Preise je Einheit; gespeicherte Preiseinheiten rechnen weiter (Gesamtpreise und festgeschriebene Belege bleiben gleich).'},
   {k:'duplikat',std:true,p:'Duplikat (P0 n)',l:'Vermerk „DUPLIKAT“ bei erneuter Ausgabe von Rechnungen',info:'Druck, PDF und E-Mail-Versand festgeschriebener Rechnungen (auch Anzahlungs-, Teil-, Schlussrechnungen und Gutschriften) werden gezählt. Ab der zweiten Ausgabe fragt das Programm „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja), der Vermerk steht dann über dem Belegtitel; beim Druck über das Browsermenü wird ohne Rückfrage gekennzeichnet. Das erste Original bleibt unverändert. Gezählt wird nur bei eingeschaltetem Schalter (bei älteren Rechnungen zählen bereits per E-Mail versendete mit). Eine zweite gleichlautende Rechnung ohne Vermerk kann eine zusätzliche Steuerschuld auslösen (§ 11 Abs. 12 und 14 UStG).'},
   {k:'zuletzt',std:true,p:'Navigation (P19)',l:'„Zuletzt geöffnet“ in Seitenleiste und Kopfzeile',info:'Merkt sich auf diesem Gerät die 12 zuletzt geöffneten Belege, Kontakte, Artikel, Aufträge, LVs und K-Blätter (im Browser nur interne Kennungen, keine Namen; nicht in den Daten, Öffnen ist keine Änderung). „🕘 Zuletzt“ in der Seitenleiste bzw. 🕘 in der Kopfzeile am Handy zeigt sie mit Belegart, Nummer, Kunde und Status; Gelöschtes wird übersprungen, „Liste leeren“ löscht die Liste. Reine Bedienhilfe, daher Standard ein. Aus: Knopf ausgeblendet, es wird nichts gemerkt.'},
   {k:'druckprofil',std:true,p:'Druckprofil (P1)',l:'Druckprofil je Belegart',info:'Darstellungsoptionen für Vorschau, Druck, PDF und E-Mail je Belegart (unten unter „Druck & Belegdarstellung“) und je Beleg über „Druckoptionen …“ (dort nur Abweichungen). Beim Festschreiben wird die Darstellung im Beleg eingefroren, ein Nachdruck sieht wie das Original aus; „Bearbeiten“ hebt das wieder auf. Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG). Aus: Entwürfe im Standard-Aussehen, festgeschriebene Belege weiter mit ihrem eingefrorenen Stand; alle Einstellungen bleiben gespeichert. Die Vorgaben entsprechen dem bisherigen Aussehen.'},
@@ -1035,7 +1047,7 @@ async function anhaengeHochladen(b,files,original=false,benennen=false){ // orig
 function artDatalist(){$('#dl-art').innerHTML=DB.artikel.filter(a=>a.aktiv!==false).map(a=>`<option value="${esc(a.nr+' – '+a.bez)}">`).join('')}
 
 /* ---------- Rechenlogik ---------- */
-const posGP=p=>isInfo(p)?0:r2((+p.menge||0)*(+p.ep||0)*(1-(+p.rabatt||0)/100));
+const posGP=p=>isInfo(p)?0:peW(p.pe)>1?peGP(p):r2((+p.menge||0)*(+p.ep||0)*(1-(+p.rabatt||0)/100)); // Preiseinheit (P14): Menge × EP je PE ÷ PE
 const sgn=b=>b.typ==='GS'?-1:1;
 function abzuegeLive(b){
   return DB.belege.filter(x=>x.auftragId&&x.auftragId===b.auftragId&&x.id!==b.id&&['AR','TR'].includes(x.typ)&&x.fest&&!x.storno)
@@ -1304,12 +1316,13 @@ function preisHistorie(b,p){
 // Lohn/Sonstiges (b.optLS): ep = epL + epS – Aufteilung aus dem Preisverlauf (q mit epL/epS), sonst wie beim Einschalten der Spalten (Art L → Lohn, sonst Sonstiges)
 function lsAufteilen(b,p,q){
   if(!b.optLS||isInfo(p))return;const ep=+p.ep||0;
-  if(q&&q.epL!=null){p.epL=r2(+q.epL||0);if(ep>=0&&p.epL>ep)p.epL=ep}else p.epL=p.art==='L'?ep:0; // Lohn höchstens EP, Rest auf Sonstiges
-  p.epS=r2(ep-p.epL);
+  if(q&&q.epL!=null){p.epL=rp(+q.epL||0,peW(p.pe));if(ep>=0&&p.epL>ep)p.epL=ep}else p.epL=p.art==='L'?ep:0; // Lohn höchstens EP, Rest auf Sonstiges
+  p.epS=rp(ep-p.epL,peW(p.pe));
 }
 function artikelInPos(b,p,a){
   const lAlt=lnrStamm(b,p); // Lieferanten-Art.-Nr. des bisherigen Artikels (wird beim Artikelwechsel entfernt)
   Object.assign(p,{artikelId:a.id,nr:a.nr,bez:a.bez,text:a.text||'',einheit:a.einheit,faktor:1,steuer:a.steuer||S().stdSteuer,art:a.art||'W'});
+  if(erw('pe')&&peW(a.pe)>1)p.pe=peW(a.pe);else delete p.pe; // Preiseinheit des Artikels (P14)
   const h=preisHistorie(b,p).filter(x=>x.einheit===p.einheit);
   // Verkauf: Preis/Rabatt nur aus früheren Belegen DIESES Kunden, sonst VK des Artikels und Kundenrabatt (Preise anderer Kunden nur über die Preishistorie wählbar)
   if(T[b.typ].b==='V'){const g=h.find(x=>x.gleich);p.ek=+(a.hk||a.ek)||0;p.ep=g?g.ep:(+a.vk||0);p.rabatt=g?g.rabatt:(+kontakt(b.kontaktId)?.rabatt||0);lsAufteilen(b,p,g)}
@@ -1690,7 +1703,7 @@ V.beleg=id=>{
   const b=beleg(id);if(!b)return'<p>Beleg nicht gefunden.</p>';
   const t=T[b.typ],dis=b.fest?'disabled':'',V_=t.b==='V',ohneP=OHNE_PREIS.includes(b.typ);
   const steuerOpts=c=>S().steuer.map(s=>opt(s.code,s.bez,c)).join('');
-  const einhOpts=p=>{const a=artikel(p.artikelId);const l=a?[a.einheit,...(a.einheiten||[]).map(x=>x.e)]:S().einheiten;if(!l.includes(p.einheit))l.unshift(p.einheit);return l.map(e=>opt(e,e,p.einheit)).join('')};
+  const einhOpts=p=>{const a=artikel(p.artikelId);const l=a?[a.einheit,...(a.einheiten||[]).map(x=>x.e)]:S().einheiten;if(!l.includes(p.einheit))l.unshift(p.einheit);return l.map(e=>opt(e,e,p.einheit)).join('')+peOpts(p,ohneP||b.fest)}; // Preiseinheit (P14), nicht in festgeschriebenen Belegen
   const zRab=showRab(b),zLS=!!b.optLS&&!ohneP,gi=gruppenInfo(b),pnr=posNummern(b),wg=ndSet(b);
   const zl=kmpB()&&!posK(b),zc=zl?{gi,pnr,zRab,zLS,ohneP,V_,wg,einhOpts:p=>einhOpts(p),n:4+(ohneP?0:(zLS?2:1)+(zRab?1:0)+1)}:null; // einzeilige Positionszeile am Bildschirm (kompakt, P30)
   const nSp=4+(ohneP?0:4+(zRab?1:0)+(zLS?2:0))+1; // Spalten zwischen „Art“ und Aktionen (inkl. Kz)
@@ -1707,6 +1720,7 @@ V.beleg=id=>{
       <td class="n gp" data-l="Summe Gruppe" id="gs${i}"><b>${fmt(gruppePreis(p,gi))}</b></td><td data-l="USt">${+p.pauschal?`<select data-p="${i}" data-f="steuer" ${dis}>${steuerOpts(p.steuer||S().stdSteuer)}</select>`:''}</td>`}
       <td data-l="Kz">${kzSel(i,p)}</td>${akt}</tr>`;
     const g=gi.grp[p.id],pausch=g&&+g.pauschal>0;
+    const pe=peE(p); // Preiseinheit (P14): Preise je PE
     return`<tr class="${g?'ing':''}${ndCls(wg,p)}"${ndAttr(wg,i)}>
       <td class="mut" data-l="Pos">${pnr[p.id]}</td>${artSel}
       <td class="c2" data-l="Artikel" style="width:110px"><input list="dl-art" data-p="${i}" data-f="artikel" value="${esc(p.nr)}" ${dis} placeholder="Art.-Nr.">${!V_&&p.lnr?`<div class="mut" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px" title="Art.-Nr. des Lieferanten (Druck: „Ihre Art.-Nr.“): ${esc(p.lnr)}">Lief.: ${esc(p.lnr)}</div>`:''}</td>
@@ -1714,12 +1728,12 @@ V.beleg=id=>{
       <td data-l="Menge" style="width:78px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="menge" value="${p.menge}" ${dis}></td>
       <td data-l="Einheit" style="width:72px"><select data-p="${i}" data-f="einheit" ${dis}>${einhOpts(p)}</select></td>
       ${ohneP?'':`
-      ${zLS?`<td data-l="Lohn" style="width:86px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="epL" value="${p.epL??''}" ${dis}></td><td data-l="Sonstiges" style="width:86px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="epS" value="${p.epS??''}" ${dis}></td>`:''}
-      <td data-l="${zLS?'PP':'EP netto'}" style="width:92px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="ep" value="${p.ep}" ${dis||zLS?'disabled':''}></td>
+      ${zLS?`<td data-l="Lohn" style="width:86px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="epL" value="${peZ(p.epL??'',pe)}" ${dis}></td><td data-l="Sonstiges" style="width:86px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="epS" value="${peZ(p.epS??'',pe)}" ${dis}></td>`:''}
+      <td data-l="${zLS?'PP':'EP netto'}" style="width:92px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="ep" value="${peZ(p.ep,pe)}" ${dis||zLS?'disabled':''}>${peM(p)}</td>
       ${zRab?`<td data-l="${rabL()}" style="width:58px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="rabatt" value="${p.rabatt||''}" ${dis} placeholder="%"${rabT()}></td>`:''}
       <td class="n gp" data-l="${zLS?'GP':'GP netto'}" id="gp${i}" style="width:90px;padding-top:7px">${pausch?`<span class="mut" title="im Gruppenpreis enthalten">(${fmt(posGP(p))})</span>`:fmt(posGP(p))}</td>
       <td data-l="USt" style="width:96px"><select data-p="${i}" data-f="steuer" ${dis}>${steuerOpts(p.steuer)}</select></td>
-      <td data-l="EK" style="width:84px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="ek" value="${p.ek}" ${dis} title="Einstandspreis je Einheit"></td>`}
+      <td data-l="EK" style="width:84px"><input type="number" step="any" inputmode="decimal" data-p="${i}" data-f="ek" value="${peZ(p.ek,pe)}" ${dis} title="Einstandspreis je ${pe>1?pe+' ':''}Einheit"></td>`}
       <td data-l="Kz" style="width:74px">${kzSel(i,p)}</td>${akt}
     </tr>`}).join('');
   const kette=DB.belege.filter(x=>b.auftragId?x.auftragId===b.auftragId:(x.id===b.id||x.vorgaengerId===b.id||x.id===b.vorgaengerId)).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
@@ -1789,7 +1803,7 @@ function posZeileK(b,p,i,c){const ed=!b.fest,dis=b.fest?' disabled':'',a=f=>`dat
     <td class="pzr"><input list="dl-art" ${a('artikel')} value="${esc(p.nr)}"${dis} placeholder="Art.-Nr.">${!c.V_&&p.lnr?`<div class="mut pzl" title="Art.-Nr. des Lieferanten (Druck: „Ihre Art.-Nr.“): ${esc(p.lnr)}">Lief.: ${esc(p.lnr)}</div>`:''}</td>
     <td><div class="pzb"><input ${a('bez')} value="${esc(p.bez)}"${dis} placeholder="Bezeichnung">${plt}</div>${lt?rte('Langtext …'):''}${ndTag(c.wg)}${kz||st?`<div class="pzt">${kz?tag(kz==='OPT'?'Option':'Alternative','warn'):''}${st?tag(esc(st)):''}</div>`:''}</td>
     <td class="pzm">${zf('menge',p.menge)}</td><td class="pze"><select ${a('einheit')}${dis}>${c.einhOpts(p)}</select></td>
-    ${c.ohneP?'':`${c.zLS?`<td class="pzp">${zf('epL',p.epL,' title="Lohn"')}</td><td class="pzp">${zf('epS',p.epS,' title="Sonstiges"')}</td>`:`<td class="pzp">${zf('ep',p.ep)}</td>`}${c.zRab?`<td class="pzq">${zf('rabatt',p.rabatt||'',' placeholder="%"'+rabT())}</td>`:''}
+    ${c.ohneP?'':`${c.zLS?`<td class="pzp">${zf('epL',peZ(p.epL,peE(p)),' title="Lohn"')}</td><td class="pzp">${zf('epS',peZ(p.epS,peE(p)),' title="Sonstiges"')}${peM(p)}</td>`:`<td class="pzp">${zf('ep',peZ(p.ep,peE(p)))}${peM(p)}</td>`}${c.zRab?`<td class="pzq">${zf('rabatt',p.rabatt||'',' placeholder="%"'+rabT())}</td>`:''}
     <td class="n pzg" id="gp${i}">${pa?`<span class="mut" title="im Gruppenpreis enthalten">(${fmt(posGP(p))})</span>`:fmt(posGP(p))}</td>`}${akt}</tr>`}
 function vorschlagNr(b){
   if(b.nr)return b.nr;
@@ -1837,11 +1851,11 @@ function edUebernehmen(el,next){
   if(t==='h'){const w=a==='anrede'?(pT(txt)&&pT(txt)!==anrAuto(b)?pT(txt):undefined):txt;if(b[a]===w)return;if(w===undefined)delete b[a];else b[a]=w;val=a==='anrede'?anrBeleg(b):w;const i=document.querySelector(`[data-h="${a}"]`);if(i)i.value=w??''} // Briefanrede (P6): wie automatisch bzw. leer = nicht speichern
   else{
     const p=b.pos[+a];if(!p)return;
-    const v=['menge','ep','rabatt','epL','epS'].includes(f)?deNum(txt):txt;
-    if(p[f]===v)return;if(['menge','ep','rabatt','epL','epS'].includes(f)&&v===({menge:r3,rabatt:r3}[f]||r2)(+p[f]||0))return; // Zahl wie angezeigt (gerundet): nichts ändern – sonst kürzte schon ein Klick ins Feld z. B. einen eingelesenen EP 0,4537 auf 0,45
-    p[f]=val=v;
-    if(f==='epL'||f==='epS'){p.ep=r2((+p.epL||0)+(+p.epS||0));const e=document.querySelector(`[data-p="${a}"][data-f="ep"]`);if(e)e.value=p.ep}
-    const i=document.querySelector(`[data-p="${a}"][data-f="${f}"]`);if(i)i.value=v;
+    const v=['menge','ep','rabatt','epL','epS'].includes(f)?deNum(txt):txt,pd=['ep','epL','epS'].includes(f)?peD(p,dOpt(b)):1; // Preiseinheit (P14): das Blatt zeigt den Preis je PE
+    if(p[f]===v&&pd===1)return;if(['menge','ep','rabatt','epL','epS'].includes(f)&&v===({menge:r3,rabatt:r3}[f]||r2)((+p[f]||0)*pd))return; // Zahl wie angezeigt (gerundet): nichts ändern – sonst kürzte schon ein Klick ins Feld z. B. einen eingelesenen EP 0,4537 auf 0,45
+    p[f]=pd>1?rp(v/pd,pd):v;val=v;
+    if(f==='epL'||f==='epS'){p.ep=rp((+p.epL||0)+(+p.epS||0),peW(p.pe));const e=document.querySelector(`[data-p="${a}"][data-f="ep"]`);if(e)e.value=peZ(p.ep,peE(p))}
+    const i=document.querySelector(`[data-p="${a}"][data-f="${f}"]`);if(i)i.value=['ep','epL','epS'].includes(f)?peZ(p[f],peE(p)):v;
   }
   document.querySelectorAll(`[data-ed="${el.dataset.ed}"]`).forEach(o=>{if(o!==el)o.innerHTML=rich?rt(val):esc(val)});
   persist();
@@ -1981,7 +1995,7 @@ async function artikelPopup(v={},lid=''){
     {k:'nr',l:'Artikel-Nr. (eigene)',wert:v.nr||nrV,cls:'w05',pflicht:true},{k:'bez',l:'Bezeichnung',wert:v.bez,cls:'w2',pflicht:true},
     {k:'art',l:'Art',wert:v.art||'W',opts:['W','L','F'].map(x=>[x,ART[x]]),cls:'w05'},
     {k:'gruppe',l:'Artikelgruppe',typ:'kette',baum:'gr',wert:v.gruppe||(UI.aGr&&UI.aGr!=='__ohne'?UI.aGr:''),neu:1,cls:'w2'},
-    {k:'einheit',l:'Einheit',wert:v.einheit||'Stk',opts:s.einheiten.map(e=>[e,e]),neu:1,cls:'w05'},{k:'ek',l:'EK netto',typ:'number',wert:v.ek||0,cls:'w05'},{k:'vk',l:'VK netto',typ:'number',wert:v.vk||0,cls:'w05'},
+    {k:'einheit',l:'Einheit',wert:v.einheit||'Stk',opts:s.einheiten.map(e=>[e,e]),neu:1,cls:'w05'},{k:'ek',l:'EK netto',typ:'number',wert:v.ek||0,cls:'w05'},{k:'vk',l:'VK netto',typ:'number',wert:v.vk||0,cls:'w05'},...(erw('pe')?[{k:'pe',l:'Preiseinheit',wert:String(peW(v.pe)),opts:PE_N.map(n=>[String(n),n>1?`Preis je ${n} Einheiten`:'Preis je Einheit']),cls:'w05',info:'z. B. Kabel je 100 m: Belege zeigen und drucken den Einzelpreis je 100 Einheiten; EK und VK hier je Einheit'}]:[]),
     {k:'lager',l:'Lagerartikel',typ:'checkbox',wert:!!v.lager,cls:'w05'},{k:'lagerplatz',l:'Lagerplatz',typ:'kette',baum:'lp',wert:v.lagerplatz||'',neu:1,cls:'w2'},
     {k:'lid',l:'Lieferant',wert:lid,opts:[['','–'],...lief.map(k=>[k.id,k.name]),...(erw('lfNeu')?[[LF_NEU,'+ Neuer Lieferant …']]:[])],neu:1},{k:'artNr',l:'Art.-Nr. beim Lieferanten',wert:v.artNr},
     {k:'lp',l:'Listenpreis',typ:'number',wert:v.lp||'',cls:'w05'},{k:'rabatt',l:'Rabatt %',typ:'number',wert:v.rabatt||'',cls:'w05'},...(erw('artBild')?[{k:'bild',l:'Bild (optional)',typ:'datei',acc:'image/*',neu:1,cls:'w2'}]:[])],
@@ -1989,8 +2003,8 @@ async function artikelPopup(v={},lid=''){
     ein:d=>erw('ekRechnen')?ekFelder(d,{lp:'lp',rab:'rabatt',ek:'ek'}):null});
   if(!o)return null;
   if(o.nr===nrV)s.anr++;
-  const a={id:uid(),nr:o.nr,bez:o.bez,gruppe:o.gruppe||'',lagerplatz:o.lagerplatz||'',text:v.text||'',art:o.art,einheit:o.einheit,einheiten:[],ek:r2(o.ek),vk:r2(o.vk),steuer:v.steuer||s.stdSteuer,lager:o.lager,minBestand:0,
-    lieferanten:o.lid?[{kontaktId:o.lid,artNr:o.artNr,lp:o.lp||0,rabatt:o.rabatt||0,ek:r2(o.ek),stand:isoD()}]:[],aktiv:true};
+  const a={id:uid(),nr:o.nr,bez:o.bez,gruppe:o.gruppe||'',lagerplatz:o.lagerplatz||'',text:v.text||'',art:o.art,einheit:o.einheit,einheiten:[],ek:rp(o.ek,peW(o.pe)),vk:rp(o.vk,peW(o.pe)),...(peW(o.pe)>1?{pe:peW(o.pe)}:{}),steuer:v.steuer||s.stdSteuer,lager:o.lager,minBestand:0,
+    lieferanten:o.lid?[{kontaktId:o.lid,artNr:o.artNr,lp:o.lp||0,rabatt:o.rabatt||0,ek:rp(o.ek,peW(o.pe)),stand:isoD()}]:[],aktiv:true};
   DB.artikel.push(a);artDatalist();log('Artikel angelegt',a.nr+' '+a.bez);if(o.bild&&erw('artBild'))await artBildSetzen(a,o.bild);return a;
 }
 
@@ -2002,6 +2016,7 @@ function posArtikelPopup(b,i){
   const lid=e0.lid??lf0.kontaktId??'',lp=e0.lp??lf0.lp??'',rab=e0.rabatt??lf0.rabatt??'',ekv=e0.ek??(a?+a.ek||0:+p.ek||0),hk=+p.ek||(a?+(a.hk||a.ek)||0:0)||ekv;
   const nrV=String(s.anr+1).padStart(5,'0'),inp=(k,v,t='number',x='')=>`<input data-k="${k}" ${t==='number'?'type="number" step="any" inputmode="decimal"':''} value="${esc(v??'')}" ${x}>`;
   const aufsF=erw('gkAufsFeld'); // Aufschlag % auf HK (P11): nur im Pop-up, wird nicht gespeichert und nicht gedruckt
+  const peF=erw('pe'),pe0=peF?peW(p.pe):1,pz=x=>x===''||x==null?x:peZ(+x,pe0),jeT=n=>n>1?`je ${n} ${p.einheit||'Einheiten'}`:'je Einheit'; // Preiseinheit (P14): Preise im Pop-up je PE
   return new Promise(res=>{
     const d=document.createElement('div');d.className='modal';
     d.innerHTML=`<div class="mbox" style="max-width:780px"><h2>Artikel bearbeiten</h2>
@@ -2009,12 +2024,12 @@ function posArtikelPopup(b,i){
       <div class="row"><label class="w2">Bezeichnung *${inp('bez',p.bez,'text')}</label><label class="w05">Art<select data-k="art">${['W','L','F'].map(x=>opt(x,ART[x],p.art)).join('')}</select></label>
         <label class="w05">Einheit<select data-k="einheit">${[...new Set([p.einheit,...s.einheiten])].map(x=>opt(x,x,p.einheit)).join('')}</select></label></div>
       <div class="row"><label class="w2" style="flex:1">Langtext<textarea data-k="text" style="height:70px">${esc(p.text||'')}</textarea></label></div>
-      <h3 style="margin:10px 0 4px;font-size:14px">Einkauf / Kosten (je Einheit, netto)</h3>
+      <h3 style="margin:10px 0 4px;font-size:14px">Einkauf / Kosten (<span class="pa-je">${esc(jeT(pe0))}</span>, netto)</h3>
       <div class="row"><label class="w2">Lieferant<select data-k="lid">${opt('','–',lid)}${lief.map(k=>opt(k.id,k.name,lid)).join('')}${lfNeuOpt()}</select></label><label>Art.-Nr. Lieferant${inp('artNr',e0.artNr??lf0.artNr??'','text')}</label></div>
-      <div class="row"><label class="w05">Listenpreis${inp('lp',lp)}</label><label class="w05">Rabatt Einkauf %${inp('rab',rab)}</label><label class="w05">EK netto${inp('ek',ekv)}</label>
-        <label class="w05" title="Kostenwert für Kalkulation und DB II (z. B. EK + Bezugs-/Bearbeitungskosten)">Herstellkosten${inp('hk',hk)}</label></div>
+      <div class="row"><label class="w05">Listenpreis${inp('lp',pz(lp))}</label><label class="w05">Rabatt Einkauf %${inp('rab',rab)}</label><label class="w05">EK netto${inp('ek',pz(ekv))}</label>
+        <label class="w05" title="Kostenwert für Kalkulation und DB II (z. B. EK + Bezugs-/Bearbeitungskosten)">Herstellkosten${inp('hk',pz(hk))}</label></div>
       <h3 style="margin:10px 0 4px;font-size:14px">Verkauf (diese Position)</h3>
-      <div class="row"><label class="w05">VK / EP netto${inp('ep',+p.ep||0)}</label><label class="w05">Rabatt Kunde %${inp('vrab',+p.rabatt||'')}</label>${aufsF?`<label class="w05" title="Interner Aufschlag des VK (nach Kundenrabatt) auf die Herstellkosten – Eingabe berechnet den EP; wird nicht gespeichert und nicht gedruckt">Aufschlag %${inp('aufs','')}</label>`:''}<label class="w2"><span>Ergebnis je Einheit</span><div id="pa-db" style="padding:8px 0"></div></label></div>${lnwAkt(b)?`<label class="chk"><input type="checkbox" id="pa-lnw" ${p.ohneLohnNw?'checked':''}> nicht im Lohnkostennachweis (z. B. Fahrtkosten)</label>`:''}
+      <div class="row"><label class="w05">VK / EP netto${inp('ep',pz(+p.ep||0))}</label>${peF?`<label class="w05">Preiseinheit${peSel('data-k="pe"',pe0,p.einheit)}</label>`:''}<label class="w05">Rabatt Kunde %${inp('vrab',+p.rabatt||'')}</label>${aufsF?`<label class="w05" title="Interner Aufschlag des VK (nach Kundenrabatt) auf die Herstellkosten – Eingabe berechnet den EP; wird nicht gespeichert und nicht gedruckt">Aufschlag %${inp('aufs','')}</label>`:''}<label class="w2"><span>Ergebnis <span class="pa-je">${esc(jeT(pe0))}</span></span><div id="pa-db" style="padding:8px 0"></div></label></div>${lnwAkt(b)?`<label class="chk"><input type="checkbox" id="pa-lnw" ${p.ohneLohnNw?'checked':''}> nicht im Lohnkostennachweis (z. B. Fahrtkosten)</label>`:''}
       <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:6px">
         <label class="chk"><input type="checkbox" id="pa-st"> ${a?`Änderungen im Artikelstamm speichern (Artikel ${esc(a.nr)})`:'Als neuen Artikel im Artikelstamm speichern'}</label>
         <div class="row" id="pa-stx" style="display:none;margin-left:26px">${a?'':`<label class="w05">Artikel-Nr.${inp('nr',nrV,'text')}</label><label class="w2">Artikelgruppe<div data-k="gruppe" data-wert="">${ketteHTML('gr','','data-fk="1"')}</div></label>`}
@@ -2030,25 +2045,28 @@ function posArtikelPopup(b,i){
       if(ekH)ekH(k);else{if((k==='lp'||k==='rab')&&n('lp')>0)q('ek').value=r2(n('lp')*(1-n('rab')/100));
       if(k==='ek'&&n('lp')>0)q('rab').value=r2((1-n('ek')/n('lp'))*100)}
       if(k==='hk')hkFrei=true;if(['lp','rab','ek'].includes(k)&&!hkFrei)q('hk').value=q('ek').value;aufsSync(k);db()});
+    let peA=pe0;if(peF)q('pe').addEventListener('change',()=>{const nn=+q('pe').value;for(const k of['lp','ek','hk','ep'])if(q(k).value.trim()!==''){const u=n(k)/peA;q(k).value=nn>1?r2(u*nn):rp(u,peA)}peA=nn;d.querySelectorAll('.pa-je').forEach(x=>x.textContent=jeT(nn));aufsAus();db()}); // Preiseinheit (P14): Preise auf die neue PE umrechnen
     d.querySelector('#pa-st').onchange=e=>{d.querySelector('#pa-stx').style.display=e.target.checked?'flex':'none'};
     d.addEventListener('click',async e=>{const t=e.target.closest('[data-bw]');if(!t)return;e.preventDefault();const box=t.closest('[data-k]'),v=await baumWahl('gr',box.dataset.wert);if(v!==null){box.dataset.wert=v;box.innerHTML=ketteHTML('gr',v,'data-fk="1"')}});
     const fin=v=>{d.remove();document.removeEventListener('keydown',kd,true);res(v)};
     const kd=e=>{if(e.key==='Escape'&&!document.querySelector('#bw-l')&&mOben(d)){e.stopPropagation();fin(false)}};document.addEventListener('keydown',kd,true);lfNeuAn(d);
     d.querySelector('#m-no').onclick=()=>fin(false);
     d.querySelector('#m-ok').onclick=()=>{const bez=q('bez').value.trim();if(!bez){pflichtWarnung(d,['Bezeichnung'],[q('bez')]);return}
-      const stamm=d.querySelector('#pa-st').checked,vkSt=d.querySelector('#pa-vk').checked,ein={lid:q('lid').value,artNr:q('artNr').value.trim(),lp:n('lp'),rabatt:n('rab'),ek:r2(n('ek'))};
+      const pe=peF?peW(q('pe').value):pe0,pr=peF?pe:peW(p.pe),u=k=>pr>1?rp(n(k)/pe,pr):r2(n(k)); // Preiseinheit (P14): Felder je PE → je Einheit
+      const stamm=d.querySelector('#pa-st').checked,vkSt=d.querySelector('#pa-vk').checked,ein={lid:q('lid').value,artNr:q('artNr').value.trim(),lp:pe>1?u('lp'):n('lp'),rabatt:n('rab'),ek:u('ek')};
       let A=a;
       if(stamm&&!A){const nr=q('nr').value.trim();if(!nr){pflichtWarnung(d,['Artikel-Nr.'],[q('nr')]);return}
         if(DB.artikel.some(x=>x.nr===nr)){d.querySelector('#m-err').textContent='Artikel-Nr. '+nr+' existiert bereits.';return}
         if(erw('dublette')&&!dubFrage(artDubletten({bez,lid:ein.lid,artNr:ein.artNr}),'Der Artikel'))return; // Dublette (P31)
         if(nr===nrV)s.anr++;A={id:uid(),nr,bez,gruppe:q('gruppe').dataset.wert||'',lagerplatz:'',text:'',art:q('art').value,einheit:q('einheit').value,einheiten:[],ek:0,vk:0,steuer:p.steuer||s.stdSteuer,lager:false,minBestand:0,lieferanten:[],aktiv:true};
         DB.artikel.push(A);log('Artikel angelegt',`${nr} ${bez} (aus ${bNr(b)})`)}
-      Object.assign(p,{bez,text:q('text').value,art:q('art').value,einheit:q('einheit').value,ep:r2(n('ep')),rabatt:n('vrab'),ek:r2(n('hk')),einkauf:ein});
+      Object.assign(p,{bez,text:q('text').value,art:q('art').value,einheit:q('einheit').value,ep:u('ep'),rabatt:n('vrab'),ek:u('hk'),einkauf:ein});
+      if(peF){if(pe>1)p.pe=pe;else delete p.pe}
       if(b.optLS&&!isInfo(p)){if(p.epL==null&&p.epS==null)p.epL=p.art==='L'?p.ep:0; // Lohn/Sonstiges: EP = Lohn + Sonstiges, Änderung geht auf Sonstiges (Lohn höchstens EP)
-        if(p.ep>=0&&+p.epL>p.ep)p.epL=p.ep;p.epS=r2(p.ep-(+p.epL||0))}
+        if(p.ep>=0&&+p.epL>p.ep)p.epL=p.ep;p.epS=rp(p.ep-(+p.epL||0),pr)}
       if(+p.rabatt)b.optRabatt=true;
       {const lw=d.querySelector('#pa-lnw');if(lw){if(lw.checked)p.ohneLohnNw=true;else delete p.ohneLohnNw}} // Lohnkostennachweis (P9)
-      if(stamm){Object.assign(A,{bez,text:p.text,art:p.art,einheit:p.einheit,ek:ein.ek});if(Math.abs(n('hk')-ein.ek)>0.005)A.hk=r2(n('hk'));else delete A.hk;if(vkSt)A.vk=p.ep;
+      if(stamm){Object.assign(A,{bez,text:p.text,art:p.art,einheit:p.einheit,ek:ein.ek});if(peF){if(pe>1)A.pe=pe;else delete A.pe}if(Math.abs((pr>1?u('hk'):n('hk'))-ein.ek)>0.005/pr)A.hk=u('hk');else delete A.hk;if(vkSt)A.vk=p.ep;
         if(ein.lid){A.lieferanten=A.lieferanten||[];let l=A.lieferanten.find(x=>x.kontaktId===ein.lid);if(!l)A.lieferanten.push(l={kontaktId:ein.lid});Object.assign(l,{artNr:ein.artNr,lp:ein.lp,rabatt:ein.rabatt,ek:ein.ek,stand:isoD()})}
         p.artikelId=A.id;p.nr=A.nr;artDatalist();if(a)log('Artikel geändert',`${A.nr} ${A.bez} (aus ${bNr(b)})`)}
       fin(true)};
@@ -2080,7 +2098,7 @@ function revDiff(a,b){
     if(!q){out.push(['+',p.bez||p.nr,fm(p)]);continue}rest.delete(q);
     const d=[];if((q.bez||'')!==(p.bez||''))d.push(`Text: „${q.bez}“ → „${p.bez}“`);if(+q.menge!==+p.menge||q.einheit!==p.einheit)d.push(`Menge ${fmtQ(q.menge)} → ${fmtQ(p.menge)} ${p.einheit||''}`);
     if(+q.ep!==+p.ep)d.push(`EP ${fmt(+q.ep||0)} → ${fmt(+p.ep||0)}`);if(+(q.rabatt||0)!==+(p.rabatt||0))d.push(`Rabatt ${fmtQ(q.rabatt||0)} → ${fmtQ(p.rabatt||0)} %`);
-    if((q.text||'')!==(p.text||''))d.push('Langtext geändert');if(d.length)out.push(['~',p.bez||p.nr,d.join(', ')])}
+    if(peW(q.pe)!==peW(p.pe))d.push(`Preiseinheit je ${peW(q.pe)} → je ${peW(p.pe)}`);if((q.text||'')!==(p.text||''))d.push('Langtext geändert');if(d.length)out.push(['~',p.bez||p.nr,d.join(', ')])}
   for(const q of rest)out.push(['−',q.bez||q.nr,fm(q)]);
   for(const[f,l]of[['betreff','Betreff'],['anrede','Anrede'],['kopf','Kopftext'],['fuss','Fußtext'],['zahlungsziel','Zahlungsziel'],['kontaktId','Kunde']])if((a[f]??'')!==(b[f]??''))out.push(['~',l,'geändert']);
   return out}
@@ -2149,18 +2167,18 @@ function gkAuf(b,vk,W,gesamt=null){const gi=gruppenInfo(b),A=gkVkPos(b,gi),E={M:
   const fa={};for(const[k]of GKZ){const x=E[k]?(V[k]+vk[k]-W[k].vk-F[k])/E[k]:null;fa[k]=x>0?x:null}return{fa,E}}
 // Probeberechnung (ändert nichts): neue Werte je Position {ep,epL,epS} bzw. Pauschalgruppe {pauschal}; st = {modus,vk:{M,F,L} Ziele,mitOpt,rund}; unveränderte Kostenarten bleiben unberührt
 function gkNeu(b,st){const W=gkWerte(b),gi=gruppenInfo(b),A=gkVkPos(b,gi,true),neu={},m={ohneEK:0,neg:0,rab:0,pausch:0},auf=st.modus==='aufschlag',ch={},f={};
-  const rd=x=>st.rund>0.01?r2(Math.round(x/st.rund)*st.rund):r2(x);
+  const rd=x=>st.rund>0.01?r2(Math.round(x/st.rund)*st.rund):r2(x),rdP=(x,p)=>{const pe=peW(p.pe);return pe>1?rp(rd(x*pe)/pe,pe):rd(x)}; // Preiseinheit (P14): gerundet wird der Preis je PE
   for(const[k]of GKZ){ch[k]=Math.abs(st.vk[k]-W[k].vk)>0.004;f[k]=W[k].vk?st.vk[k]/W[k].vk:1}
   const tf=gkTfAkt(st);if(tf)ch.L=false; // Lohnkalkulation je Tarif (P12): neue Stundensätze statt Verteilung des Lohns
   const fa=!auf?{}:st.faG!=null?{M:st.faG,F:st.faG,L:st.faG}:gkAuf(b,st.vk,W).fa; // Ziel Gesamt: ein gemeinsamer Aufschlag
   for(const p of b.pos){if(isInfo(p)||(effKz(p,gi)&&!st.mitOpt))continue;const r=gkZ(p),sp=p.epL!=null||p.epS!=null,ls=b.optLS&&sp,g=gi.grp[p.id];
     if(tf&&p.art==='L'&&gkTfPos(b,p,g,tf,neu,auf?{}:ch,f,rd))continue;
-    if(!auf){if(ls){const rS=r==='L'?'M':r;if(!ch.L&&!ch[rS])continue;const L=ch.L?rd((+p.epL||0)*f.L):+p.epL||0,S_=ch[rS]?rd((+p.epS||0)*f[rS]):+p.epS||0;neu[p.id]={ep:r2(L+S_),epL:L,epS:S_}}
-      else if(ch[r]){const x={ep:rd((+p.ep||0)*f[r])};if(sp){x.epL=r2((+p.epL||0)*f[r]);x.epS=r2((+p.epS||0)*f[r])}neu[p.id]=x}continue}
+    if(!auf){if(ls){const rS=r==='L'?'M':r;if(!ch.L&&!ch[rS])continue;const L=ch.L?rdP((+p.epL||0)*f.L,p):+p.epL||0,S_=ch[rS]?rdP((+p.epS||0)*f[rS],p):+p.epS||0;neu[p.id]={ep:rp(L+S_,peW(p.pe)),epL:L,epS:S_}}
+      else if(ch[r]){const x={ep:rdP((+p.ep||0)*f[r],p)};if(sp){x.epL=rp((+p.epL||0)*f[r],peW(p.pe));x.epS=rp((+p.epS||0)*f[r],peW(p.pe))}neu[p.id]=x}continue}
     if(!ch[r]||fa[r]==null||(g&&+g.pauschal>0&&!p.kz&&!gkGanz(b,g,gi)))continue;
     if(!gkPosOk(p)){m[!(+p.ek>0)?'ohneEK':(+p.rabatt||0)>=100?'rab':'neg']++;continue}
-    const ep=rd(+p.ek*fa[r]/(1-(+p.rabatt||0)/100)),q=+p.ep?ep/(+p.ep):null,x={ep};
-    if(ls){x.epL=q!=null?rd((+p.epL||0)*q):(r==='L'?ep:0);x.epS=r2(ep-x.epL)}else if(sp&&q!=null){x.epL=r2((+p.epL||0)*q);x.epS=r2((+p.epS||0)*q)}
+    const ep=rdP(+p.ek*fa[r]/(1-(+p.rabatt||0)/100),p),q=+p.ep?ep/(+p.ep):null,x={ep};
+    if(ls){x.epL=q!=null?rdP((+p.epL||0)*q,p):(r==='L'?ep:0);x.epS=rp(ep-x.epL,peW(p.pe))}else if(sp&&q!=null){x.epL=rp((+p.epL||0)*q,peW(p.pe));x.epS=rp((+p.epS||0)*q,peW(p.pe))}
     neu[p.id]=x}
   for(const g of b.pos){if(g.art!=='G'||!(+g.pauschal>0)||(g.kz&&!st.mitOpt))continue;const L=b.pos.filter(p=>gi.grp[p.id]===g&&!isInfo(p)&&!p.kz),va=p=>GKZ.reduce((s,[k])=>s+(A[p.id]?.[k]||0),0);let t;
     if(!auf)t=L.length?L.reduce((s,p)=>s+GKZ.reduce((s2,[k])=>s2+(A[p.id]?.[k]||0)*(ch[k]?f[k]:1),0),0):+g.pauschal*(ch.M?f.M:1);
@@ -2353,7 +2371,7 @@ function posLeseK(b){const ohneP=OHNE_PREIS.includes(b.typ),gi=gruppenInfo(b),pn
     if(p.art==='G')return`<tr class="grp"><td class="mut">${pnr[p.id]||''}</td><td colspan="${n-(ohneP?0:2)}"><b>${esc(p.bez)}</b>${+p.pauschal>0?' '+tag('Pauschal'):''}${p.ohneEP?' '+tag('Einzelpreise ausgeblendet'):''}${kzT(p.kz)}${lt(p)}</td>${ohneP?'':`<td class="n"><b>${fmt(gruppePreis(p,gi))}</b></td><td>${+p.pauschal>0?esc(stDef(b,p.steuer||S().stdSteuer).bez):''}</td>`}</tr>`;
     const g=gi.grp[p.id],pa=g&&+g.pauschal>0,gp=fmt(posGP(p));
     return`<tr class="${g?'ing':''}"><td class="mut">${pnr[p.id]||''}</td><td>${p.nr?`<span class="mut">${esc(p.nr)}</span> `:''}${esc(p.bez)}${kzT(effKz(p,gi))}${!V_&&p.lnr?' '+tag('Lief.: '+esc(p.lnr)):''}${lt(p)}</td><td class="n">${fmtQ(p.menge)}</td><td>${esc(p.einheit||'')}</td>
-      ${ohneP?'':`${ls?`<td class="n">${fmtP(+p.epL||0)}</td><td class="n">${fmtP(+p.epS||0)}</td>`:''}<td class="n">${fmtP(p.ep)}</td>${rab?`<td class="n">${+p.rabatt?fmtQ(p.rabatt)+' %':''}</td>`:''}<td class="n">${pa?`<span class="mut" title="im Gruppenpreis enthalten">(${gp})</span>`:gp}</td><td>${esc(stDef(b,p.steuer).bez)}</td>`}</tr>`}).join('');
+      ${ohneP?'':`${ls?`<td class="n">${peTxt(p.epL,p)}</td><td class="n">${peTxt(p.epS,p)}</td>`:''}<td class="n">${peTxt(p.ep,p)}${peM(p)}</td>${rab?`<td class="n">${+p.rabatt?fmtQ(p.rabatt)+' %':''}</td>`:''}<td class="n">${pa?`<span class="mut" title="im Gruppenpreis enthalten">(${gp})</span>`:gp}</td><td>${esc(stDef(b,p.steuer).bez)}</td>`}</tr>`}).join('');
   return`<div class="card" style="padding:8px"><table class="pos pl"><thead><tr><th>Pos</th><th>Bezeichnung</th><th class="n">Menge</th><th>Einh.</th>${ohneP?'':`${ls?'<th class="n">Lohn</th><th class="n">Sonst.</th>':''}<th class="n">EP</th>${rab?`<th class="n"${rabT()}>${zuE()?'Rab./Zu.':'Rab.'}</th>`:''}<th class="n">GP netto</th><th>USt</th>`}</tr></thead>
     <tbody>${rows||`<tr><td colspan="${n+1}" class="mut">Keine Positionen.</td></tr>`}</tbody></table></div>`}
 function updateCalc(b){
@@ -2392,7 +2410,7 @@ function showHist(b,i,btn){
   const r=btn.getBoundingClientRect();d.style.top=(r.bottom+window.scrollY+4)+'px';d.style.left=Math.max(8,r.right+window.scrollX-620)+'px';
   d.innerHTML=`<div class="bar" style="margin-bottom:6px"><b>Preisverlauf: ${esc(p.bez||p.nr||'–')}</b><span class="sp"></span><button class="s" data-act="hclose">✕</button></div>
   ${h.length?`<table><thead><tr><th>Datum</th><th>Beleg</th><th>${V_?'Kunde':'Lieferant'}</th><th class="n">Menge</th><th class="n">EP</th><th class="n">Rab.</th><th class="n">EK</th></tr></thead><tbody>
-  ${h.map((x,j)=>`<tr class="click" data-act="hset" data-j="${j}" style="${x.gleich?'font-weight:600':''}"><td>${dAT(x.datum)}</td><td>${esc(x.nr)}</td><td>${esc(kName(x.kontaktId))}</td><td class="n">${fmtQ(x.menge)} ${esc(x.einheit)}</td><td class="n">${fmt(x.ep)}</td><td class="n">${x.rabatt?fmtQ(x.rabatt)+' %':''}</td><td class="n">${fmt(x.ek)}</td></tr>`).join('')}</tbody></table>
+  ${h.map((x,j)=>`<tr class="click" data-act="hset" data-j="${j}" style="${x.gleich?'font-weight:600':''}"><td>${dAT(x.datum)}</td><td>${esc(x.nr)}</td><td>${esc(kName(x.kontaktId))}</td><td class="n">${fmtQ(x.menge)} ${esc(x.einheit)}</td><td class="n">${fmtP(x.ep)}</td><td class="n">${x.rabatt?fmtQ(x.rabatt)+' %':''}</td><td class="n">${fmtP(x.ek)}</td></tr>`).join('')}</tbody></table>
   <p class="mut" style="margin:6px 0 0;font-size:12px">Fett = dieser ${V_?'Kunde':'Lieferant'}. Zeile anklicken übernimmt EP${V_?', Rabatt und EK':''}.</p>`:'<p class="mut">Noch keine Preise zu diesem Artikel / dieser Bezeichnung.</p>'}`;
   document.body.appendChild(d);popLage(d,btn);
 }
@@ -2406,7 +2424,7 @@ const posMehr=i=>`<button class="mehr" data-act="menue" data-m="pos" data-i="${i
 function posKarte(b,p,i,c){const at=c.ed?` data-act="pbear" data-i="${i}" role="button" title="Position bearbeiten"`:'',mehr=c.ed?posMehr(i):'';
   if(p.art==='T')return`<div class="kkf pkf${ndCls(c.wg,p)}"${ndAttr(c.wg,i)}><div class="kk pk pkt"${at}><div class="kku">${esc(rtText(p.text))||'<i class="mut">leerer Text</i>'}${ndTag(c.wg)}</div></div>${mehr}</div>`;
   const g=c.gi.grp[p.id],pa=g&&+g.pauschal>0,kz=effKz(p,c.gi),gp=fmt(posGP(p)),lt=rtText(p.text),st=p.steuer&&p.steuer!==c.std?stDef(b,p.steuer).bez:'';
-  const z2=[esc(p.nr||''),`${fmtQ(p.menge)} ${esc(p.einheit||'')}${c.ohneP?'':` × ${fmtP(p.ep)}`}${+p.rabatt?(zuE()&&+p.rabatt<0?` + ${fmtQ(-p.rabatt)} % Zuschlag`:` − ${fmtQ(p.rabatt)} %`):''}`,c.zLS?`L ${fmtP(+p.epL||0)} + S ${fmtP(+p.epS||0)}`:''].filter(Boolean).join(' · ');
+  const z2=[esc(p.nr||''),`${fmtQ(p.menge)} ${esc(p.einheit||'')}${c.ohneP?'':` × ${peTxt(p.ep,p)}${peE(p)>1?' '+esc(peL(peE(p),p.einheit)):''}`}${+p.rabatt?(zuE()&&+p.rabatt<0?` + ${fmtQ(-p.rabatt)} % Zuschlag`:` − ${fmtQ(p.rabatt)} %`):''}`,c.zLS?`L ${peTxt(p.epL,p)} + S ${peTxt(p.epS,p)}`:''].filter(Boolean).join(' · ');
   const tags=[kz==='OPT'?tag('Option','warn'):kz==='ALT'?tag('Alternative','warn'):'',p.art==='L'?tag('Leistung'):p.art==='F'?tag('Fremdleistung'):'',st?tag(esc(st)):'',!c.V_&&p.lnr?tag('Lief.: '+esc(p.lnr)):''].join('');
   return`<div class="kkf pkf${kz?' pko':''}${ndCls(c.wg,p)}"${ndAttr(c.wg,i)}><div class="kk pk"${at}><div class="kk1"><span class="kkt"><span class="pnr">${c.pnr[p.id]||''}</span> ${esc(p.bez)||'<i class="mut">ohne Bezeichnung</i>'}</span>${c.ohneP?'':`<span class="kkb" id="gp${i}">${pa?`(${gp})`:gp}</span>`}</div>
     <div class="kku">${z2}${tags?' '+tags:''}${ndTag(c.wg)}</div>${lt?`<div class="kkz">${esc(lt)}</div>`:''}</div>${mehr}</div>`}
@@ -2436,9 +2454,9 @@ function posFelder(b,i){const p=b.pos[i],V_=T[b.typ].b==='V',ohneP=OHNE_PREIS.in
     <div class="row">${kz}</div>${kn}`;
   return`<div class="row">${art}<label class="w05">Artikel<input list="dl-art" ${a('artikel')} value="${esc(p.nr)}" placeholder="Art.-Nr."></label>${!V_&&p.lnr?`<span class="mut" style="align-self:center" title="Art.-Nr. des Lieferanten (Druck: „Ihre Art.-Nr.“)">Lief.: ${esc(p.lnr)}</span>`:''}</div>
   <div class="row"><label class="w2">Bezeichnung<input ${a('bez')} value="${esc(p.bez)}" placeholder="Bezeichnung"></label></div><div class="row"><label class="w2">Langtext${rte('Langtext …')}</label></div>
-  <div class="row">${zf('menge','Menge',p.menge)}<label class="w05">Einheit<select ${a('einheit')}>${el.map(e=>opt(e,e,p.einheit)).join('')}</select></label></div>
-  ${ohneP?'':`<div class="row">${zLS?zf('epL','Lohn',p.epL)+zf('epS','Sonstiges',p.epS)+`<label class="w05">EP (Lohn + Sonstiges)<input value="${p.ep}" disabled></label>`:zf('ep','EP netto',p.ep)}${showRab(b)?zf('rabatt',rabL()+(zuE()?' '+hilfe('negativ = Zuschlag, z. B. −10 = 10 % Zuschlag'):''),p.rabatt||'',' placeholder="%"'+rabT()):''}</div>
-  <div class="row"><label class="w05">USt<select ${a('steuer')}>${stO(p.steuer)}</select></label>${zf('ek','EK je Einheit',p.ek,' title="Einstandspreis je Einheit"')}</div>`}
+  <div class="row">${zf('menge','Menge',p.menge)}<label class="w05">Einheit<select ${a('einheit')}>${el.map(e=>opt(e,e,p.einheit)).join('')}</select></label>${erw('pe')&&!ohneP?`<label class="w05">Preiseinheit${peSel(a('pe'),p.pe,p.einheit)}</label>`:''}</div>
+  ${ohneP?'':`<div class="row">${(pe=>zLS?zf('epL','Lohn'+(pe>1?' '+esc(peL(pe,p.einheit)):''),peZ(p.epL,pe))+zf('epS','Sonstiges',peZ(p.epS,pe))+`<label class="w05">EP (Lohn + Sonstiges)<input value="${peZ(p.ep,pe)}" disabled></label>`:zf('ep','EP netto'+(pe>1?' '+esc(peL(pe,p.einheit)):''),peZ(p.ep,pe)))(peE(p))}${showRab(b)?zf('rabatt',rabL()+(zuE()?' '+hilfe('negativ = Zuschlag, z. B. −10 = 10 % Zuschlag'):''),p.rabatt||'',' placeholder="%"'+rabT()):''}</div>
+  <div class="row"><label class="w05">USt<select ${a('steuer')}>${stO(p.steuer)}</select></label>${zf('ek',peE(p)>1?'EK '+esc(peL(peE(p),p.einheit)):'EK je Einheit',peZ(p.ek,peE(p)),' title="Einstandspreis je Einheit"')}</div>`}
   <div class="row">${kz}${ohneP?'':`<label class="w05">GP netto<b class="pgsum">${pa?`(${fmt(posGP(p))}) im Gruppenpreis`:fmt(posGP(p))}</b></label>`}</div>${lnwAkt(b)?`<label class="chk"><input type="checkbox" ${a('ohneLohnNw')} ${p.ohneLohnNw?'checked':''}> nicht im Lohnkostennachweis (z. B. Fahrtkosten)</label>`:''}${kn}`}
 function posPopup(b,i){const p=b.pos[i];if(!p||b.fest)return null;let d=null;
   d=livePop(p.art==='G'?'Gruppe bearbeiten':p.art==='T'?'Textposition bearbeiten':'Position bearbeiten',()=>{const j=b.pos.indexOf(p);if(j<0){setTimeout(()=>d?.querySelector('#m-ok')?.click(),0);return'<p class="mut">Position gelöscht.</p>'}return posFelder(b,j)},{verwerfen:p,breit:true});anBeleg(d,b);
@@ -2755,7 +2773,7 @@ V.artikel=id=>{
      leer:'Keine Artikel. Positionen können auch frei erfasst und mit „+A“ als Artikel gespeichert werden.'})}`;
 };
 // VK-Vorschlag aus dem Aufschlag je Artikel (P11, erw.vkVorschlag): VK = (Herstellkosten bzw. EK) × (1 + Aufschlag/100); null = kein Aufschlag eingetragen
-const vkVorschlag=(a,ek)=>erw('vkVorschlag')&&+a?.vkAufschlag>0?r2((+a.hk||+(ek??a.ek)||0)*(1+a.vkAufschlag/100)):null;
+const vkVorschlag=(a,ek)=>erw('vkVorschlag')&&+a?.vkAufschlag>0?rp((+a.hk||+(ek??a.ek)||0)*(1+a.vkAufschlag/100),peW(a.pe)):null;
 const vkVorschlagHTML=a=>{const v=vkVorschlag(a);return v!=null&&Math.abs(v-(+a.vk||0))>0.005?`<button class="s" data-act="avkv" data-id="${a.id}" title="VK = ${+a.hk?'Herstellkosten':'EK'} ${fmt(+a.hk||+a.ek)} € + ${fmtQ(a.vkAufschlag)} %">VK-Vorschlag ${fmt(v)} € übernehmen</button>`:''};
 function artikelEdit(id){
   const a=artikel(id);if(!a)return'<p>Nicht gefunden.</p>';
@@ -2768,7 +2786,7 @@ function artikelEdit(id){
   <div class="row"><label>Langtext<textarea data-o="a" data-id="${a.id}" data-f="text">${esc(a.text)}</textarea></label></div>
   <div class="row"><label class="w05">Basiseinheit<select data-o="a" data-id="${a.id}" data-f="einheit">${S().einheiten.map(e=>opt(e,e,a.einheit)).join('')}</select></label>
     <label>Weitere Einheiten (z. B. Krt=10; Rolle=100)<input data-o="a" data-id="${a.id}" data-f="einheitenStr" value="${esc((a.einheiten||[]).map(x=>x.e+'='+x.f).join('; '))}"></label>
-    ${f('ek','EK je Basiseinheit','w05','number')}${f('hk','Herstellkosten (0 = EK)','w05','number')}${f('vk','VK je Basiseinheit','w05','number')}${erw('vkVorschlag')?f('vkAufschlag','VK-Aufschlag % auf HK','w05','number')+`<span id="avkv" style="align-self:flex-end;padding-bottom:6px">${vkVorschlagHTML(a)}</span>`:''}
+    ${f('ek','EK je Basiseinheit','w05','number')}${f('hk','Herstellkosten (0 = EK)','w05','number')}${f('vk','VK je Basiseinheit','w05','number')}${erw('pe')?`<label class="w05">Preiseinheit${peSel(`data-o="a" data-id="${a.id}" data-f="pe"`,a.pe,a.einheit)}</label><span id="ape" class="mut" style="align-self:flex-end;padding-bottom:8px;font-size:12px">${peHinweis(a)}</span>`:''}${erw('vkVorschlag')?f('vkAufschlag','VK-Aufschlag % auf HK','w05','number')+`<span id="avkv" style="align-self:flex-end;padding-bottom:6px">${vkVorschlagHTML(a)}</span>`:''}
     <label class="w05">USt<select data-o="a" data-id="${a.id}" data-f="steuer">${S().steuer.map(s=>opt(s.code,s.bez,a.steuer)).join('')}</select></label></div>
   <div class="row"><label class="w05">Lagerartikel<br><input type="checkbox" data-o="a" data-id="${a.id}" data-f="lager" ${a.lager?'checked':''}></label><label class="w2">Lagerplatz${ketteHTML('lp',a.lagerplatz,`data-act="bwahl" data-aid="${a.id}"`)}</label>${a.lager?f('minBestand','Mindestbestand','w05','number')+`<label class="w05">Bestand<input disabled value="${fmtQ(bs.menge)} ${esc(a.einheit)}"></label><label class="w05">Ø-EK<input disabled value="${fmt(avgEK(a.id))}"></label><label class="w05">Lagerwert<input disabled value="${fmt(bs.wert)}"></label>`:'<span style="flex:4"></span>'}</div>
   </div>`}
@@ -2787,12 +2805,12 @@ function artikelEditK(a,f,bs){const id=a.id,sel=(fl,o)=>`<select data-o="a" data
     <div class="row"><label class="w2">Artikelgruppe${ketteHTML('gr',a.gruppe,`data-act="bwahl" data-aid="${id}"`)}</label></div>
     <div class="row"><label>Langtext<textarea data-o="a" data-id="${id}" data-f="text">${esc(a.text)}</textarea></label></div>
     <div class="row"><label class="w05">Basiseinheit${sel('einheit',S().einheiten.map(e=>opt(e,e,a.einheit)).join(''))}</label><label class="w2">Weitere Einheiten (z. B. Krt=10; Rolle=100)<input data-o="a" data-id="${id}" data-f="einheitenStr" value="${esc((a.einheiten||[]).map(x=>x.e+'='+x.f).join('; '))}"></label></div>`;
-  const pr=`<div class="row">${f('ek','EK je Basiseinheit','w05','number')}${f('hk','Herstellkosten (0 = EK)','w05','number')}${f('vk','VK je Basiseinheit','w05','number')}${vkv?f('vkAufschlag','VK-Aufschlag % auf HK','w05','number'):''}<label class="w05">USt${sel('steuer',S().steuer.map(s=>opt(s.code,s.bez,a.steuer)).join(''))}</label></div>${vkv?`<span id="avkv">${vkVorschlagHTML(a)}</span>`:''}`;
+  const pr=`<div class="row">${f('ek','EK je Basiseinheit','w05','number')}${f('hk','Herstellkosten (0 = EK)','w05','number')}${f('vk','VK je Basiseinheit','w05','number')}${erw('pe')?`<label class="w05">Preiseinheit${peSel(`data-o="a" data-id="${id}" data-f="pe"`,a.pe,a.einheit)}</label>`:''}${vkv?f('vkAufschlag','VK-Aufschlag % auf HK','w05','number'):''}<label class="w05">USt${sel('steuer',S().steuer.map(s=>opt(s.code,s.bez,a.steuer)).join(''))}</label></div>${erw('pe')?`<p id="ape" class="mut" style="margin:2px 0 0;font-size:12px">${peHinweis(a)}</p>`:''}${vkv?`<span id="avkv">${vkVorschlagHTML(a)}</span>`:''}`;
   const lg=`<div class="row"><label class="chk w05"><input type="checkbox" data-o="a" data-id="${id}" data-f="lager" ${a.lager?'checked':''}> Lagerartikel</label><label class="w2">Lagerplatz${ketteHTML('lp',a.lagerplatz,`data-act="bwahl" data-aid="${id}"`)}</label>${a.lager?f('minBestand','Mindestbestand','w05','number'):''}</div>
     ${a.lager?`<p style="margin:4px 0 0">Bestand <b>${fmtQ(bs.menge)} ${esc(a.einheit)}</b> · Ø-EK ${fmt(avgEK(id))} € · Lagerwert ${fmt(bs.wert)} €</p>`:''}`;
   return`<div class="bar"><h1 style="margin:0">${esc(a.nr)} ${esc(a.bez)}</h1>${a.aktiv===false?tag('deaktiviert'):''}<span class="sp"></span><button class="mehr" data-act="menue" data-m="artikeld" data-id="${id}" title="Löschen …">⋯</button></div>
   ${akk('art-st','Stammdaten',st,{offen:true,zusatz:esc([ART[a.art],grG(a.gruppe)?.bez].filter(Boolean).join(' · '))})}
-  ${akk('art-pr','Preise',pr,{zusatz:`EK ${fmt(a.ek)} · VK ${fmt(a.vk)}${+a.hk?' · HK '+fmt(a.hk):''}`})}
+  ${akk('art-pr','Preise',pr,{zusatz:`EK ${fmtP(a.ek)} · VK ${fmtP(a.vk)}${+a.hk?' · HK '+fmtP(a.hk):''}`})}
   ${akk('art-lg','Lager',lg,{zusatz:a.lager?`Bestand ${fmtQ(bs.menge)} ${esc(a.einheit)}${LP.pfad(a.lagerplatz)?' · '+esc(LP.pfad(a.lagerplatz)):''}`:'kein Lagerartikel'})}`}
 const lieferantenK=a=>`<div class="card kkl" style="padding:0"><h2>Lieferanten</h2>${(a.lieferanten||[]).map((l,i)=>karte({t:esc(kName(l.kontaktId)),u:l.artNr?'Art.-Nr. '+esc(l.artNr):'',z:[+l.lp?'Liste '+fmt(l.lp):'',+l.rabatt?'− '+fmtQ(l.rabatt)+' %':'',l.stand?'Stand '+dAT(l.stand):''].filter(Boolean).join(' · '),b:+l.ek?fmt(l.ek)+' €':'',
   a:`onclick="ACT.lpop(this)" data-lp="al" data-id="${a.id}" data-i="${i}"`})).join('')}<div style="padding:8px 12px"><button data-act="lpop" data-lp="alneu" data-id="${a.id}">+ Lieferant</button></div></div>`;
@@ -4138,6 +4156,7 @@ function scanPE(menge,ep,gp,rab,sp,spQ){
   return[10,100,1000].includes(sp)?[sp,spQ]:[1,''];
 }
 const zPE=z=>z&&!z.peAus&&+z.pe>1?+z.pe:1; // wirksame Preiseinheit einer Scan-Zeile (1 = Preis je Einheit wie gelesen)
+const xmlPE=(bq,roh)=>erw('pe')&&peW(bq)>1?{pe:peW(bq),peQ:'E-Rechnung',peFix:1,epRoh:roh}:{}; // E-Rechnung: Preis je BaseQuantity 10/100/1000 = Preiseinheit (P14), nicht abwählbar
 /* Zahlen im deutschen Format: 1.234,56 · 4.750,- · 12,5 */
 const zahlDE=s=>{s=String(s||'').replace(/[€\s]/g,'').replace(/,-+$/,'');if(!/^-?[\d.,]+-?$/.test(s)||!/\d/.test(s))return null;const neg=/^-|-$/.test(s);s=s.replace(/-/g,'');
   if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');const n=parseFloat(s);return isNaN(n)?null:neg?-n:n};
@@ -4256,7 +4275,7 @@ function xmlBeleg(txt){
       brutto:n(tx(r,'TotalGrossAmount')),faellig:tx(r,'PaymentConditions/DueDate'),
       positionen:[...r.getElementsByTagNameNS('*','ListLineItem')].map(li=>{const qe=q(li,'Quantity'),m=n(qe?.textContent),gp=n(tx(li,'LineItemAmount')),up=q(li,'UnitPrice');
         const rd=q(li,'ReductionAndSurchargeListLineItemDetails/ReductionListLineItem'),rp=rd?n(tx(rd,'Percentage')):0;
-        return{rabatt:rp,lp:rp&&up?n(up.textContent)/(n(up.getAttribute('BaseQuantity'))||1):0,artNr:kids(li,'ArticleNumber').map(a=>a.textContent.trim())[0]||'',ean:'',bez:kids(li,'Description').map(a=>a.textContent.trim()).join(' '),menge:m,einheit:UNIT[qe?.getAttribute('Unit')]||qe?.getAttribute('Unit')||'',ep:ep4(gp,m,n(up?.textContent)/(n(up?.getAttribute('BaseQuantity'))||1)),gp,ust:n(tx(li,'TaxItem/TaxPercent')||tx(li,'VATRate'))}})});
+        return{rabatt:rp,lp:rp&&up?n(up.textContent)/(n(up.getAttribute('BaseQuantity'))||1):0,artNr:kids(li,'ArticleNumber').map(a=>a.textContent.trim())[0]||'',ean:'',bez:kids(li,'Description').map(a=>a.textContent.trim()).join(' '),menge:m,einheit:UNIT[qe?.getAttribute('Unit')]||qe?.getAttribute('Unit')||'',ep:ep4(gp,m,n(up?.textContent)/(n(up?.getAttribute('BaseQuantity'))||1)),...xmlPE(n(up?.getAttribute('BaseQuantity')),n(up?.textContent)),gp,ust:n(tx(li,'TaxItem/TaxPercent')||tx(li,'VATRate'))}})});
     d.netto=r2(sum(d.positionen,p=>p.gp));
   }else if(['Invoice','CreditNote','DespatchAdvice'].includes(ln)){
     const sp=q(r,'AccountingSupplierParty/Party')||q(r,'DespatchSupplierParty/Party'),lm=q(r,'LegalMonetaryTotal'),dla=q(r,'Delivery/DeliveryLocation/Address')||q(r,'Shipment/Delivery/DeliveryAddress');
@@ -4268,7 +4287,7 @@ function xmlBeleg(txt){
       steuern:kids(q(r,'TaxTotal'),'TaxSubtotal').map(t=>({satz:n(tx(t,'TaxCategory/Percent')),betrag:n(tx(t,'TaxAmount'))})),
       positionen:[...kids(r,'InvoiceLine'),...kids(r,'CreditNoteLine'),...kids(r,'DespatchLine')].map(li=>{const qe=q(li,'InvoicedQuantity')||q(li,'CreditedQuantity')||q(li,'DeliveredQuantity'),m=n(qe?.textContent),gp=n(tx(li,'LineExtensionAmount'));
         const bq=n(tx(li,'Price/BaseQuantity'))||1,np=n(tx(li,'Price/PriceAmount'))/bq,lp=n(tx(li,'Price/AllowanceCharge/BaseAmount'))/bq,mf=n(tx(li,'Price/AllowanceCharge/MultiplierFactorNumeric'));
-        return{lp,rabatt:mf?(mf<=1?mf*100:mf):(lp&&np<lp?r2((1-np/lp)*100):0),artNr:tx(li,'Item/SellersItemIdentification/ID'),ean:tx(li,'Item/StandardItemIdentification/ID'),bez:tx(li,'Item/Name')||tx(li,'Item/Description'),menge:m,einheit:UNIT[qe?.getAttribute('unitCode')]||qe?.getAttribute('unitCode')||'',ep:ep4(gp,m,n(tx(li,'Price/PriceAmount'))/(n(tx(li,'Price/BaseQuantity'))||1)),gp,ust:n(tx(li,'Item/ClassifiedTaxCategory/Percent'))}})});
+        return{lp,rabatt:mf?(mf<=1?mf*100:mf):(lp&&np<lp?r2((1-np/lp)*100):0),artNr:tx(li,'Item/SellersItemIdentification/ID'),ean:tx(li,'Item/StandardItemIdentification/ID'),bez:tx(li,'Item/Name')||tx(li,'Item/Description'),menge:m,einheit:UNIT[qe?.getAttribute('unitCode')]||qe?.getAttribute('unitCode')||'',ep:ep4(gp,m,n(tx(li,'Price/PriceAmount'))/(n(tx(li,'Price/BaseQuantity'))||1)),...xmlPE(bq,n(tx(li,'Price/PriceAmount'))),gp,ust:n(tx(li,'Item/ClassifiedTaxCategory/Percent'))}})});
     if(ln==='CreditNote')d.gutschrift=true;
   }else return null;
   if(!d.positionen.length&&!d.lieferscheinNr)return null;
@@ -4379,6 +4398,7 @@ function scanDiffs(z,a,lid){
   if(z.bez&&normT(z.bez)!==normT(a.bez))d.push(['bez',`Bezeichnung → „${esc(z.bez)}“`,false]);
   if(k&&!lf)d.push(['lief',`Lieferant ${esc(k.name)} ergänzen${z.artNr?' (Art.-Nr. '+esc(z.artNr)+')':''}`,true]);
   else if(lf&&z.artNr&&normN(lf.artNr)!==normN(z.artNr))d.push(['lartnr',`Lief.-Art.-Nr. ${esc(lf.artNr||'–')} → ${esc(z.artNr)}`,true]);
+  if(erw('pe')&&pe>1&&peW(a.pe)!==pe)d.push(['pe',`Preiseinheit ${peW(a.pe)>1?'je '+peW(a.pe):'–'} → je ${pe} ${esc(a.einheit)}`,true]); // Preiseinheit (P14)
   return d;
 }
 function scanKopf(b){
@@ -4440,7 +4460,8 @@ function scanBox(b){
 // Prüfung beim Einlesen (P14): umgerechnete Preiseinheit (abwählbar) und Hinweis, wenn Menge × EP nicht zum Gesamtpreis der Zeile passt
 function scanPruefung(z,i){
   let h='';
-  if(+z.pe>1)h+=`<label class="chk" style="margin:3px 0 0;font-size:12px;justify-content:flex-end;white-space:nowrap" title="Gelesen: ${esc(fmtP(z.epRoh))} € je ${z.pe} ${esc(z.einheit||'Einheiten')} – erkannt über ${esc(z.peQ||'')}"><input type="checkbox" data-sc="${i}" data-k="pe" ${z.peAus?'':'checked'}> <span class="tag warn">÷ ${z.pe}</span> je ${z.pe}: ${fmtP(z.epRoh)}</label>`;
+  if(+z.pe>1&&z.peFix)h+=`<div class="mut" style="font-size:12px;white-space:nowrap" title="Preis je ${z.pe} ${esc(z.einheit||'Einheiten')} laut E-Rechnung (BaseQuantity)"><span class="tag">je ${z.pe}</span> ${fmtP(z.epRoh)}</div>`; // Preiseinheit aus der E-Rechnung (P14)
+  else if(+z.pe>1)h+=`<label class="chk" style="margin:3px 0 0;font-size:12px;justify-content:flex-end;white-space:nowrap" title="Gelesen: ${esc(fmtP(z.epRoh))} € je ${z.pe} ${esc(z.einheit||'Einheiten')} – erkannt über ${esc(z.peQ||'')}"><input type="checkbox" data-sc="${i}" data-k="pe" ${z.peAus?'':'checked'}> <span class="tag warn">÷ ${z.pe}</span> je ${z.pe}: ${fmtP(z.epRoh)}</label>`;
   if(erw('scanPE')&&+z.gp>0&&+z.ep>0&&+z.menge>0){const r=+z.rabatt||0,a=z.menge*z.ep,t=Math.max(0.02,Math.abs(z.gp)*0.01);
     if(Math.abs(a-z.gp)>t&&!(r>0&&r<100&&Math.abs(a*(1-r/100)-z.gp)<=t))h+=`<div class="err" style="font-size:12px;white-space:nowrap" title="Menge × Einzelpreis${r?' (mit bzw. ohne Rabatt)':''} ergibt nicht den Gesamtpreis der Zeile – Menge, Preis und Preiseinheit prüfen">Menge × EP ${fmt(a)} ≠ GP ${fmt(z.gp)}</div>`}
   return h;
@@ -4475,7 +4496,7 @@ async function scanUebernehmen(b,nurStamm=false){ // nurStamm: Angebot nur in de
   for(const x of plan){
     let {z,w,a}=x;const fak=scanFak(z,a),pe=zPE(z);
     for(const [k] of x.df){
-      if(k==='ek')a.ek=rp(z.ep/fak,pe);
+      if(k==='ek')a.ek=rp(z.ep/fak,pe);if(k==='pe')a.pe=pe; // Preiseinheit (P14)
       if(k==='einheit'){a.einheit=z.einheit;if(!S().einheiten.includes(z.einheit))S().einheiten.push(z.einheit)}
       if(k==='bez')a.bez=z.bez;
       if(k==='vk'){const v=vkVorschlag(a,rp(z.ep/fak,pe));if(v!=null)a.vk=v} // VK-Vorschlag (P11): wie im Abgleich angezeigt (neuer EK bzw. Herstellkosten), auch wenn der EK selbst abgewählt ist
@@ -4488,14 +4509,14 @@ async function scanUebernehmen(b,nurStamm=false){ // nurStamm: Angebot nur in de
       if(z.artNr&&String(z.bez).startsWith(z.artNr+' '))z.bez=z.bez.slice(z.artNr.length+1);
       if(String(z.bez).length>80){const cut=z.bez.lastIndexOf(' ',80)>40?z.bez.lastIndexOf(' ',80):80;z.text=(z.bez.slice(cut).trim()+(z.text?'\n'+z.text:'')).trim();z.bez=z.bez.slice(0,cut).trim()} // Bezeichnung kurz, Rest Langtext
       const nr=String(++S().anr).padStart(5,'0'),eh=z.einheit||'Stk';
-      a={id:uid(),nr,bez:z.bez,text:z.text||'',art:'W',einheit:eh,einheiten:[],ek:rp(+z.ep||0,pe),vk:0,steuer:S().stdSteuer,lager:!!w.lager,minBestand:0,lieferanten:lid?[{kontaktId:lid,artNr:z.artNr||'',lp:+z.lp||0,rabatt:+z.rabatt||0,ek:rp(+z.ep||0,pe),stand:d.datum||isoD()}]:[],aktiv:true,ean:z.ean||''};
+      a={id:uid(),nr,bez:z.bez,text:z.text||'',art:'W',einheit:eh,einheiten:[],ek:rp(+z.ep||0,pe),vk:0,steuer:S().stdSteuer,lager:!!w.lager,minBestand:0,lieferanten:lid?[{kontaktId:lid,artNr:z.artNr||'',lp:+z.lp||0,rabatt:+z.rabatt||0,ek:rp(+z.ep||0,pe),stand:d.datum||isoD()}]:[],aktiv:true,ean:z.ean||'',...(pe>1&&erw('pe')?{pe}:{})};
       DB.artikel.push(a);if(!S().einheiten.includes(eh))S().einheiten.push(eh);
     }
     if(nurStamm){if(a){const qu=`${{BE:'Angebot',ER:'Rechnung',WE:'Lieferschein'}[b.typ]} ${d.lieferscheinNr||''} ${kName(lid)} ${dAT(d.datum||b.datum)}`.replace(/\s+/g,' ').trim();
       a.unterlagen=a.unterlagen||[];for(const an of b.anhaenge||[])if(!a.unterlagen.some(u=>u.path===an.path))a.unterlagen.push({...an,herkunft:qu})}continue}
-    const ep=+z.ep||r2((+a?.ek||0)*fak),stc=+z.ust?S().steuer.find(x=>+x.satz===+z.ust&&!x.hinweis)?.code:'';
+    const pp=erw('pe')?(pe>1?pe:peW(a?.pe)):1,ep=pp>1?rp(+z.ep||(+a?.ek||0)*fak,pp):+z.ep||r2((+a?.ek||0)*fak),stc=+z.ust?S().steuer.find(x=>+x.satz===+z.ust&&!x.hinweis)?.code:'';
     const vp=a&&we?we.pos.find(q=>q.artikelId===a.id&&!genutzt.has(q.id)):null;if(vp)genutzt.add(vp.id);
-    b.pos.push(neuPos({art:'W',artikelId:a?.id||'',nr:a?.nr||z.artNr||'',lnr:z.artNr||'',bez:a?.bez||z.bez,text:a?'':(z.text||''),menge:+w.menge||0,einheit:z.einheit||a?.einheit||'Stk',faktor:fak,ep,ek:ep,steuer:stc||(a?.steuer)||S().stdSteuer,herkunftPosId:vp?.id||''}));
+    b.pos.push(neuPos({art:'W',artikelId:a?.id||'',nr:a?.nr||z.artNr||'',lnr:z.artNr||'',bez:a?.bez||z.bez,text:a?'':(z.text||''),menge:+w.menge||0,einheit:z.einheit||a?.einheit||'Stk',faktor:fak,ep,ek:ep,...(pp>1?{pe:pp}:{}),steuer:stc||(a?.steuer)||S().stdSteuer,herkunftPosId:vp?.id||''}));
   }
   if(nurStamm){ // Entwurf ohne Nummer wieder entfernen; Original bleibt bei den Artikeln
     log('Angebot in Artikelstamm',`${d.lieferscheinNr||''} ${kName(lid)}: ${neu.length} neue Artikel, ${aend.length} Änderungen`);
@@ -4585,7 +4606,7 @@ function wvRechnung(aid){
   const a=beleg(aid)||DB.belege.find(x=>x.auftragId===aid&&T[x.typ].b==='V'),k=kontakt(a?.kontaktId);
   const re=neuBeleg('RE',{auftragId:aid,kontaktId:a?.kontaktId||'',betreff:a?.betreff||'',zahlungsziel:k&&k.zahlungsziel!==''?+k.zahlungsziel:S().zahlungsziel});
   for(const {p,offen} of xs){const art=artikel(p.artikelId),ek=+p.ep||+p.ek||0;
-    re.pos.push(neuPos({art:'W',artikelId:p.artikelId,nr:p.nr,bez:p.bez,text:p.text,menge:offen,einheit:p.einheit,faktor:+p.faktor||1,ep:art?.vk?r2(art.vk*(+p.faktor||1)):ek,ek,steuer:art?.steuer||S().stdSteuer,herkunftPosId:p.id}))}
+    re.pos.push(neuPos({art:'W',artikelId:p.artikelId,nr:p.nr,bez:p.bez,text:p.text,menge:offen,einheit:p.einheit,faktor:+p.faktor||1,ep:art?.vk?rp(art.vk*(+p.faktor||1),peW(p.pe)):ek,ek,...(peW(p.pe)>1?{pe:peW(p.pe)}:{}),steuer:art?.steuer||S().stdSteuer,herkunftPosId:p.id}))}
   log('Weiterverrechnung',`${xs.length} Pos. aus Wareneingängen → Rechnungsentwurf`);persist();go('beleg/'+re.id);
 }
 
@@ -4626,9 +4647,10 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
     if(p.art==='G'){const zeigP=!ohneP&&(+p.pauschal>0||oEP(p)||gsA);
       return`<tr class="grpz">${spP?`<td${sp?' class="pn"':''}><b>${pnr[p.id]}</b></td>`:''}<td colspan="${ncol-(zeigP?1:0)-(spP?1:0)}"><b>${p.kz==='OPT'?'OPTION: ':p.kz==='ALT'?'ALTERNATIV: ':''}${ed(`p:${i}:bez`,p.bez,'Gruppe')}</b>${p.text||edit?`<div class="lt">${ed(`p:${i}:text`,p.text,'Gruppentext …',true)}</div>`:''}</td>${zeigP?`<td class="n"><b>${fmt(gruppePreis(p,gi))}</b></td>`:''}</tr>`}
     const g=gi.grp[p.id],ohne=ohneP||(g&&(+g.pauschal>0||oEP(g))),na=nm==='ep'&&!ohneP&&!(+p.menge); // Einheitspreis: Menge „n. A.“, ohne Gesamtpreis (P3)
-    const r=+p.rabatt||0,rn=rf==='netto'&&r>0,rz=r>0&&rf!=='spalte'||r<0&&zf==='text'?'':r<0&&zf==='plus'?'+'+fmtQ(-r)+' %':edit&&rf==='spalte'&&zf==='spalte'?ed(`p:${i}:rabatt`,r?fmtQ(r):'','%'):(r?fmtQ(r)+' %':''),bt=r2((+p.menge||0)*(+p.ep||0)); // Rabatt bzw. Zuschlag (negativer Rabatt) je Position (P4)
-    const kz=ohne?'':[lsf==='zeile'?`Lohn ${fmt(p.epL)} € · Sonstiges ${fmt(p.epS)} € je ${esc(p.einheit||'ME')}`:'',r>0&&rf==='text'?esc(dp.rabTxt||DRUCK_STD.rabTxt).replace(/\{Rabatt\}/g,()=>fmtQ(r)).replace(/\{Betrag\}/g,()=>fmt(bt-posGP(p))):'',r<0&&zf==='text'?esc(dp.zusTxt||DRUCK_STD.zusTxt).replace(/\{Zuschlag\}/g,()=>fmtQ(-r)).replace(/\{Betrag\}/g,()=>fmt(posGP(p)-bt)):''].filter(Boolean).map(z=>`<div class="kzl">${z}</div>`).join(''); // Kleinzeilen (P4)
-    const pr=ohneP?'':ohne?(str?`${ls?'<td class="n">–</td><td class="n">–</td>':''}<td class="n">–</td>${rab?'<td></td>':''}${mehrSt?'<td></td>':''}<td class="n">–</td>`:`<td colspan="${ncol-nfix}"></td>`):`${ls?`<td class="n">${edit?ed(`p:${i}:epL`,fmt(p.epL)):fmt(p.epL)}</td><td class="n">${edit?ed(`p:${i}:epS`,fmt(p.epS)):fmt(p.epS)}</td>`:''}<td class="n">${rn?fmt(r2(p.ep*(1-r/100))):edit&&!lsA?ed(`p:${i}:ep`,fmt(p.ep)):fmt(p.ep)}</td>${rab?`<td class="n">${rz}</td>`:''}${mehrSt?`<td class="n">${esc(stDef(b,p.steuer).satz)} %</td>`:''}<td class="n">${na?str:fmt(posGP(p))}</td>`;
+    const pe=peW(p.pe),pd=peD(p,dp),epF=x=>pd>1?fmt(peZ(x,pd)):pe>1?fmtP(x):fmt(x),pz=pd>1?`<div class="pe">${esc(peL(pd,p.einheit))}</div>`:''; // Preiseinheit (P14): Preis je PE bzw. je Einheit
+    const r=+p.rabatt||0,rn=rf==='netto'&&r>0,rz=r>0&&rf!=='spalte'||r<0&&zf==='text'?'':r<0&&zf==='plus'?'+'+fmtQ(-r)+' %':edit&&rf==='spalte'&&zf==='spalte'?ed(`p:${i}:rabatt`,r?fmtQ(r):'','%'):(r?fmtQ(r)+' %':''),bt=posGP({...p,rabatt:0}); // Rabatt bzw. Zuschlag (negativer Rabatt) je Position (P4)
+    const kz=ohne?'':[lsf==='zeile'?`Lohn ${fmt(peZ(p.epL,pd))} € · Sonstiges ${fmt(peZ(p.epS,pd))} € je ${pd>1?pd+' ':''}${esc(p.einheit||'ME')}`:'',r>0&&rf==='text'?esc(dp.rabTxt||DRUCK_STD.rabTxt).replace(/\{Rabatt\}/g,()=>fmtQ(r)).replace(/\{Betrag\}/g,()=>fmt(bt-posGP(p))):'',r<0&&zf==='text'?esc(dp.zusTxt||DRUCK_STD.zusTxt).replace(/\{Zuschlag\}/g,()=>fmtQ(-r)).replace(/\{Betrag\}/g,()=>fmt(posGP(p)-bt)):''].filter(Boolean).map(z=>`<div class="kzl">${z}</div>`).join(''); // Kleinzeilen (P4)
+    const pr=ohneP?'':ohne?(str?`${ls?'<td class="n">–</td><td class="n">–</td>':''}<td class="n">–</td>${rab?'<td></td>':''}${mehrSt?'<td></td>':''}<td class="n">–</td>`:`<td colspan="${ncol-nfix}"></td>`):`${ls?`<td class="n">${edit?ed(`p:${i}:epL`,epF(p.epL)):epF(p.epL)}</td><td class="n">${edit?ed(`p:${i}:epS`,epF(p.epS)):epF(p.epS)}</td>`:''}<td class="n">${rn?epF(pd>1?p.ep*(1-r/100):rp(p.ep*(1-r/100),pe)):edit&&!lsA?ed(`p:${i}:ep`,epF(p.ep)):epF(p.ep)}${pz}</td>${rab?`<td class="n">${rz}</td>`:''}${mehrSt?`<td class="n">${esc(stDef(b,p.steuer).satz)} %</td>`:''}<td class="n">${na?str:fmt(posGP(p))}</td>`;
     const ln=t.b==='E'?(fx?p.lnr||fx.lnr?.[p.id]||lnrEk(b,p):p.lnr||lnrStamm(b,p)||(!b.fest&&erw('snapshot')?lnrEk(b,p):'')):'',ak=dp.artNr==='spalte'||dp.artNr==='aus'; // Art.-Nr. (Einkauf: des Lieferanten); eigene Spalte bzw. nicht drucken (P4)
     const kl=ak?(dp.artNr==='aus'&&ln?` <span style="color:#555">(Ihre Art.-Nr. ${esc(ln)})</span>`:''):ln?` <span style="color:#555">(Ihre Art.-Nr. ${esc(ln)})</span>`:p.nr?` <span style="color:#555">(${esc(p.nr)})</span>`:'',lx=ak&&t.b==='E'&&!edit?ohneIAN(p.text):p.text;
     const mz=spM?`<td class="${mr?'n':'c'}">${edit?ed(`p:${i}:menge`,na?'':fmtQ(p.menge),na?'n. A.':''):na?'n. A.':fmtQ(p.menge)}${spE||!p.einheit?'':' '+esc(p.einheit)}</td>${spE?`<td${mr?'':' class="c"'}>${esc(p.einheit)}</td>`:''}`:'',az=an?`<td class="an">${esc(ln||p.nr||'')}</td>`:''; // Menge/Einheit, Art.-Nr. (P4)
@@ -4755,6 +4777,8 @@ const DRUCKOPT=[
   {k:'lohnNw',std:'ls',p:'Lohnkostennachweis (P9)',l:'Lohnkostennachweis',opts:[['ls','kein Satz (wie bisher)'],['text','Satz zu den Arbeitskosten'],['privat','Satz nur bei Privatkunden'],['aus','kein Lohnausweis (auch ohne „davon Lohn …“)']],nur:Object.keys(T).filter(t=>T[t].b==='V'),preis:true,info:'Satz nach dem Summenblock, z. B. „Im Gesamtbetrag enthaltene Arbeitskosten: 1.240,00 € netto zzgl. 248,00 € USt (1.488,00 € brutto).“ – etwa für den Handwerkerbonus (gefördert wurden nur die Arbeitskosten ohne USt, nicht Material und Fahrtkosten). Bei Lohn 0 wird nichts gedruckt. „kein Satz“: bei Lohn / Sonstiges steht wie bisher „davon Lohn … · Sonstiges …“ im Summenblock. Je Beleg über das Häkchen „Lohnkostennachweis“ bei den Spalten. § 11 UStG verlangt den Ausweis nicht, er ist aber zulässig.'},
   {k:'lohnQuelle',std:'ls',p:'Lohnkostennachweis (P9)',l:'Arbeitskosten aus',opts:[['ls','Lohn / Sonstiges, sonst Leistungen'],['art','Positionen der Art „Leistung“']],nur:Object.keys(T).filter(t=>T[t].b==='V'),preis:true,info:'„Lohn / Sonstiges“: Lohnanteil der Positionen bei Belegen mit Lohn / Sonstiges, sonst die Positionen der Art „Leistung“. Nicht gezählt werden Optionen und Alternativen, Positionen in Pauschalgruppen, Positionen mit „nicht im Lohnkostennachweis“ (✎ an der Position) und Stunden von Tarifen ohne Lohnnachweis (Einstellungen → Stundentarife; Fahrtzeit standardmäßig nicht).'},
   {k:'lohnTxt',std:'',p:'Lohnkostennachweis (P9)',l:'Text des Lohnkostennachweises',typ:'ta',max:250,nur:Object.keys(T).filter(t=>T[t].b==='V'),preis:true,ph:'Im Gesamtbetrag enthaltene Arbeitskosten: {Lohn} € netto zzgl. {LohnUSt} € USt ({LohnBrutto} € brutto).',info:'{Lohn} = Arbeitskosten netto, {LohnUSt} = USt darauf, {LohnBrutto} = brutto, {Material} = Nettobetrag ohne Arbeitskosten; weitere Platzhalter wie in den Belegtexten. Leer = Standardtext.'},
+  // Preiseinheit (P14): wirkt nur bei Positionen mit Preiseinheit 10/100/1000
+  {k:'peDruck',std:'pe',p:'Preiseinheit (P14)',l:'Einzelpreis bei Preiseinheit',opts:[['pe','je Preiseinheit (z. B. 45,37 mit „je 100 m“)'],['einheit','je Einheit (z. B. 0,4537, bis 5 Nachkommastellen)']],preis:true,info:'Nur Positionen mit Preiseinheit 10, 100 oder 1000 (z. B. Kabel). „je Preiseinheit“: Einzelpreis (auch Lohn / Sonstiges) je 100 m mit dem Vermerk „je 100 m“ darunter; Gesamtpreis = Menge × Einzelpreis ÷ 100 – ohne Rundungsdifferenz zum gedruckten Preis. „je Einheit“: Einzelpreis je m mit bis zu 5 Nachkommastellen.'},
 ];
 const NRL={AN:'Angebots-Nr.',AB:'Auftrags-Nr.',PR:'Proforma-Nr.',LS:'Lieferschein-Nr.',AR:'Rechnungs-Nr.',TR:'Rechnungs-Nr.',RE:'Rechnungs-Nr.',SR:'Rechnungs-Nr.',GS:'Gutschrift-Nr.',BE:'Bestell-Nr.',WE:'Wareneingangs-Nr.',ER:'Beleg-Nr.'}; // Beleg-Nr. im Infoblock (P5)
 const fzBreite=s=>{const c=fzBreite.c||(fzBreite.c=document.createElement('canvas').getContext('2d'));c.font='10px Arial';return c.measureText(String(s)).width*0.75}; // Breite einer Fußzeile in pt (7,5 pt Arial wie pdfAusBeleg)
@@ -5101,7 +5125,7 @@ const ACT={
   hset:el=>{const{b,i,h}=HIST,x=h[+el.dataset.j],p=b.pos[i];p.ep=x.ep;if(T[b.typ].b==='V'){p.rabatt=x.rabatt;if(x.ek)p.ek=x.ek}else p.ek=x.ep;if(x.einheit&&x.einheit!==p.einheit&&!p.artikelId)p.einheit=x.einheit;lsAufteilen(b,p,x);persist();render()},
   partik:async el=>{const b=curBeleg();if(!b||b.fest)return;if(await posArtikelPopup(b,+el.dataset.i)){persist();render()}},
   mkart:async el=>{const b=curBeleg(),p=b.pos[+el.dataset.i];const f=+p.faktor||1,V_=T[b.typ].b==='V';
-    const a=await artikelPopup({bez:p.bez,text:p.text,art:isInfo(p)?'W':p.art,einheit:p.einheit,ek:r2((V_?+p.ek:+p.ep)/f),vk:V_?r2(+p.ep/f):0,steuer:p.steuer,artNr:p.lnr||''},V_?'':b.kontaktId);if(!a)return;
+    const a=await artikelPopup({bez:p.bez,text:p.text,art:isInfo(p)?'W':p.art,einheit:p.einheit,ek:rp((V_?+p.ek:+p.ep)/f,peW(p.pe)),vk:V_?rp(+p.ep/f,peW(p.pe)):0,pe:p.pe,steuer:p.steuer,artNr:p.lnr||''},V_?'':b.kontaktId);if(!a)return;
     p.artikelId=a.id;p.nr=a.nr;if(!p.bez)p.bez=a.bez;persist();render()},
   ptarif:el=>{const kz=el.dataset.kz||el.value;if(el.tagName==='SELECT')el.value='';const b=curBeleg(),t=S().tarife.find(x=>x.kz===kz);if(!b||b.fest||!t)return; // Stundentarif als Position (P12)
     b.pos.push(neuPos({art:'L',nr:t.kz,tarif:t.kz,bez:t.bez||t.kz,menge:1,einheit:'h',ep:r2(+t.vk||0),ek:r2(+t.kosten||0),rabatt:+kontakt(b.kontaktId)?.rabatt||0}));lsAufteilen(b,b.pos[b.pos.length-1]);persist();render();if(kmpB())posPopup(b,b.pos.length-1)},
@@ -5232,6 +5256,7 @@ document.addEventListener('change',e=>{
   if(d.p!==undefined){const b=curBeleg();if(!b||b.fest)return;onPos(b,+d.p,d.f,v);persist();return}
   if(d.h==='kontaktId'&&v==='__neu'){const b=curBeleg();kontaktPopup(T[b.typ].b==='V'?'K':'L').then(k=>{if(k){onHead(b,'kontaktId',k.id);persist()}render()});return}
   if(d.h){const b=curBeleg();if(!b||b.fest)return;onHead(b,d.h,el.type==='number'?num(v):v);persist();return}
+  if(d.o==='a'&&(d.f==='pe'||['ek','hk','vk','einheit'].includes(d.f))){const a=artikel(d.id);if(!a)return;if(d.f==='pe'){const n=peW(v);if(n>1){a.pe=n;for(const k of['ek','hk','vk'])if(+a[k])a[k]=rp(a[k],n)}else delete a.pe;log('Artikel Preiseinheit',`${a.nr}: je ${n} ${a.einheit}`);persist();render();return}setTimeout(()=>{const e=$('#ape');if(e)e.innerHTML=peHinweis(a)},0)} // Preiseinheit des Artikels (P14), Hinweis „je 100 m“ läuft mit
   switch(d.o){
     case'ui':UI[d.f]=v;render();return;
     case'lbsel':{const s=UI.lbSel||(UI.lbSel=[]),i=s.indexOf(d.k);if(el.checked&&i<0)s.push(d.k);if(!el.checked&&i>=0)s.splice(i,1);const z=document.querySelector('.lbsel b');if(z)z.textContent=s.length;const bt=document.querySelector('[data-act=lbins]');if(bt)bt.disabled=!(s.length&&UI.lbZiel);return}
@@ -5286,14 +5311,16 @@ function onPos(b,i,f,v){
     if(a){artikelInPos(b,p,a);renderFocus(`[data-p="${i}"][data-f="menge"]`)}else{p.artikelId='';p.nr=s}
     return;
   }
+  if(f==='pe'||String(v).startsWith('§pe:')){const n=peW(String(v).replace('§pe:',''));if(n>1){p.pe=n;for(const k of['ep','epL','epS','ek'])if(p[k]!=null&&p[k]!=='')p[k]=rp(p[k],n)}else delete p.pe;render();return} // Preiseinheit (P14): Positions-Pop-up bzw. Auswahl „Einheit“ → „Preis je …“
   if(f==='einheit'){
-    const a=artikel(p.artikelId),alt=a?.einheiten?.find(x=>x.e===v),nf=alt?+alt.f:1;
-    if(a){const r=nf/(+p.faktor||1);p.ep=r2(p.ep*r);p.ek=r2(p.ek*r);
-      if(p.epL!=null||p.epS!=null){p.epL=r2((+p.epL||0)*r);p.epS=b.optLS?r2(p.ep-p.epL):r2((+p.epS||0)*r)}} // Lohn/Sonstiges mit umrechnen; bei optLS bleibt ep = epL + epS (Rundungsrest auf Sonstiges)
+    const a=artikel(p.artikelId),alt=a?.einheiten?.find(x=>x.e===v),nf=alt?+alt.f:1,pe=peW(p.pe);
+    if(a){const r=nf/(+p.faktor||1);p.ep=rp(p.ep*r,pe);p.ek=rp(p.ek*r,pe);
+      if(p.epL!=null||p.epS!=null){p.epL=rp((+p.epL||0)*r,pe);p.epS=b.optLS?rp(p.ep-p.epL,pe):rp((+p.epS||0)*r,pe)}} // Lohn/Sonstiges mit umrechnen; bei optLS bleibt ep = epL + epS (Rundungsrest auf Sonstiges)
     p.einheit=v;p.faktor=nf;render();return;
   }
   p[f]=['menge','ep','rabatt','ek','pauschal','epL','epS'].includes(f)?num(v):v;
-  if(f==='epL'||f==='epS'){p.ep=r2((+p.epL||0)+(+p.epS||0));const e=document.querySelector(`[data-p="${i}"][data-f="ep"]`);if(e)e.value=p.ep}
+  if(['ep','epL','epS','ek'].includes(f)&&peE(p)>1)p[f]=rp(num(v)/peE(p),peE(p)); // Preiseinheit (P14): Eingabe je PE
+  if(f==='epL'||f==='epS'){p.ep=rp((+p.epL||0)+(+p.epS||0),peW(p.pe));const e=document.querySelector(`[data-p="${i}"][data-f="ep"]`);if(e)e.value=peZ(p.ep,peE(p))}
   if(['art','pauschal','ohneEP','kz'].includes(f)&&(f!=='kz'||p.art==='G'))render();else updateCalc(b);
 }
 /* Formatierungsleiste für Texte (fett, kursiv, unterstrichen, Listen) */

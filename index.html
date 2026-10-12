@@ -99,7 +99,8 @@ table.k tr.kh td{background:#f6f7f9;padding-top:8px}table.k tr.ks td{color:var(-
 table.kbv{width:100%}table.kbv td.kz{width:22px;font-weight:700;text-align:center;color:var(--mut)}table.kbv tr.kt td.kz{color:inherit}.kbb{font-size:11px}table.kbv td.n input{width:76px}table.kbv tr.kgz td{font-size:12px;color:var(--mut)}
 .kbk{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:flex-end;margin:0 0 8px}.kbk>label{font-size:12px;display:flex;flex-direction:column}table.kbg{width:auto}table.kbg td,table.kbg th{white-space:nowrap}table.kbg input{width:76px}
 table.k4v td,table.k4v th,table.k6v td,table.k6v th{white-space:nowrap}table.k4v input,table.k6v input{width:64px}table.k6v td.an{color:var(--mut);font-size:12px}table.k6v tr.ks6 td{border-bottom:2px solid var(--line)}
-.kbk .kbm{display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap}@media(max-width:760px){table.kbg input,table.kbv input,.kbk .kbm input{width:58px!important;padding-left:5px!important;padding-right:5px!important}table.kbg td:first-child input{width:76px!important}table.kbg td,table.kbg th,table.kbv td{padding-left:3px;padding-right:3px}table.kbv td{font-size:13px;hyphens:auto;overflow-wrap:anywhere}}
+.kbk .kbm{display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap}.kvb{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}.kwl .chk{display:flex;padding:4px 0;border-bottom:1px solid var(--line)}.kwl .chk:last-child{border-bottom:0}table.kvg{width:100%;max-width:520px}table.kvg td:first-child input{width:100%}table.kvg td:nth-child(2) input{width:96px} /* Auswahlfelder (P34 Teil 2) */
+@media(max-width:760px){table.kbg td:first-child select{width:118px!important;padding-left:6px!important;padding-right:4px!important}}@media(max-width:760px){table.kbg input,table.kbv input,.kbk .kbm input{width:58px!important;padding-left:5px!important;padding-right:5px!important}table.kbg td:first-child input{width:76px!important}table.kbg td,table.kbg th,table.kbv td{padding-left:3px;padding-right:3px}table.kbv td{font-size:13px;hyphens:auto;overflow-wrap:anywhere}}
 table.ps td{white-space:nowrap}
 .lv-LG{background:#eef2f8;border:1px solid #d5deea;border-radius:8px;padding:8px 10px;margin:12px 0 6px}
 .lv-ULG{background:#f6f8fb;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:8px 0 6px 12px}
@@ -681,7 +682,7 @@ function neueDB(){
       einheiten:['Stk','m','m²','m³','h','PA','kg','l','Krt','Rolle','Set','km','Tag','Wo','Mon'],
       tarife:[{kz:'SV',bez:'Sachverständigenleistung',kosten:0,vk:0},{kz:'MONT',bez:'Montage',kosten:0,vk:0},{kz:'FAHRT',bez:'Fahrtzeit',kosten:0,vk:0}],
       nk,texte,knr:{K:10000,L:70000},anr:0,
-      spalten:{},artgruppen:[],lagerplaetze:[],zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,papier:'A4',lvnr:0,erw:{},druckprofil:{}
+      spalten:{},artgruppen:[],lagerplaetze:[],zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,papier:'A4',lvnr:0,erw:{},druckprofil:{},kvListe:[],geraete:[]
     },
     kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],kosten:[],fibu:fibuNeu(),log:[],papierkorb:[]
   };
@@ -3087,7 +3088,7 @@ const imHundert=p=>p/(100+p)*100;
    1–6 Umlage auf Preisanteil (uml[] {bez,l,s}) → X, im K7 auf Lohn- bzw. Sonstiges-Preis. K4 Manipulation h/EH (manH, zu Lohnkosten M des K3), Zuschlagsspalte zs ('m'|'f').
    K6 Lohn-/Sonstiges-Anteil je Spalte (avL/av, repL/rep, andL/betrieb), Gerätegemeinkosten % auf AV (ggkAv) bzw. Reparatur (ggkRep). Teile: Anteil L/S (anteil), Spalte (sp), K3-Blatt je Lohnzeile (k3Id). */
 function erwPlus(...L){for(const x of L){ERW.push(x);ERW_STD[x.k]=x.std}} // Schalter von P34 (hier statt in ERW, damit jeder Commit einzeln rücknehmbar bleibt; die Karte „Erweiterungen“ ordnet nach Paketnummer)
-erwPlus({k:'kbVorlage',std:true,p:'K-Blätter (P34)',l:'K-Blätter im Aufbau der Formblätter K2–K7 (wie die Vorlagen)',info:'Der Editor der K-Blätter folgt den Formblättern nach ÖNORM B 2061: K2 mit den Spalten Lohn, Material, Gerät und Fremdleistung; K3 mit Blattart (Mittellohn-, Regielohn-, Gehaltspreis), „für Montage/Vorfertigung/Fremdleistungen“, Kollektivvertrag, KV-Gruppen mit Lohn und Anteil %, Aufzahlung für Mehrarbeit (Vorschlag für E) und den Zeilen A–M, T, U, V, W, 1–6, X; K4 mit Preis ab Lieferer, Antransport, frei Bau, Manipulation, Verlust, EK/EH, Zuschlag Material bzw. Fremdleistung und VK/EH; K5 mit Anteil Lohn/Sonstiges je Zeile; K6 mit Lohn/Sonstiges/Summe und Gerätegemeinkosten; K7 als Übersicht der LV-Positionen. Dazu Kopfangaben (Erstellt am, Bau, Angebot Nr., Preisbasis) und Rundung der Preise. Fehlende Angaben rechnen wie bisher. Aus = bisheriger Editor (eingetragene Werte bleiben erhalten und zählen weiter).'});
+erwPlus({k:'kbVorlage',std:true,p:'K-Blätter (P34)',l:'K-Blätter im Aufbau der Formblätter K2–K7 (wie die Vorlagen)',info:'Der Editor der K-Blätter folgt den Formblättern nach ÖNORM B 2061: K2 mit den Spalten Lohn, Material, Gerät und Fremdleistung; K3 mit Blattart (Mittellohn-, Regielohn-, Gehaltspreis), „für Montage/Vorfertigung/Fremdleistungen“, Kollektivvertrag, KV-Gruppen mit Lohn und Anteil %, Aufzahlung für Mehrarbeit (Vorschlag für E) und den Zeilen A–M, T, U, V, W, 1–6, X; K4 mit Preis ab Lieferer, Antransport, frei Bau, Manipulation, Verlust, EK/EH, Zuschlag Material bzw. Fremdleistung und VK/EH; K5 mit Anteil Lohn/Sonstiges je Zeile; K6 mit Lohn/Sonstiges/Summe und Gerätegemeinkosten; K7 als Übersicht der LV-Positionen. Dazu Kopfangaben (Erstellt am, Bau, Angebot Nr., Preisbasis) und Rundung der Preise. Eingabe über Auswahlfelder: Kollektivvertrag und Beschäftigungsgruppe mit KV-Lohn aus der Liste unter Einstellungen → Kollektivverträge, Material aus dem Artikelstamm, Geräte aus der Geräteliste (Einstellungen), Personalpreis je Komponente; in der kompakten Ansicht Kopf und K3-Blätter zum Aufklappen, am Handy Karten mit Pop-up. Fehlende Angaben rechnen wie bisher. Aus = bisheriger Editor (eingetragene Werte bleiben erhalten und zählen weiter).'});
 const K2SP=[['l','Lohn/Gehalt'],['m','Material'],['g','Gerät'],['f','Fremdleistung']];
 const k2w=(z,c)=>c==='l'?+z.l||0:c==='m'||z[c]===''||z[c]==null?+z.s||0:+z[c]||0; // Zuschlag einer K2-Zeile je Spalte (Gerät/Fremdleistung leer = wie Material)
 function k2sp(kb){const z=kb?.k2?.zeilen||[],o={};for(const[c]of K2SP)o[c]=z.reduce((a,x)=>a+k2w(x,c),0);return o} // Gesamtzuschlag je Spalte; o.m = k2gz().s
@@ -3121,7 +3122,7 @@ function teileCalc(kb,teile,tiefe=0){
   for(const t of teile||[]){
     const m=+t.menge||0;
     if(t.typ==='L'){std+=m;add(h,t.k3Id||'',m);continue}
-    if(t.typ==='K5'){const k5=kb?.k5.find(x=>x.id===t.ref);if(k5&&tiefe<4){const r=teileCalc(kb,k5.teile,tiefe+1);std+=m*r.std;sk+=m*r.sk;for(const x in r.h)add(h,x,m*r.h[x]);for(const x in r.k)add(kk,x,m*r.k[x])}continue}
+    if(t.typ==='K5'){const k5=kb?.k5.find(x=>x.id===t.ref);if(k5&&tiefe<4){const r=teileCalc(kb,k5.teile,tiefe+1);std+=m*r.std;sk+=m*r.sk;for(const x in r.h)add(h,x||k5.k3Id||'',m*r.h[x]);for(const x in r.k)add(kk,x,m*r.k[x])}continue}
     let k=+t.kosten||0,sp=t.typ==='G'?'g':t.typ==='F'?'f':'m';
     if(t.typ==='M'&&t.ref){const x=kb?.k4.find(y=>y.id===t.ref);if(x){k=k4kosten(x,kb);if(x.zs==='f')sp='f'}}
     if(t.typ==='G'&&t.ref){const x=kb?.k6.find(y=>y.id===t.ref);if(x){const q=k6teile(x);sk+=m*(q.L+q.S);if(q.L)add(kk,'L|l',m*q.L);add(kk,'S|'+(t.sp||'g'),m*q.S);continue}} // Gerät: Lohnanteil zum Lohn
@@ -3177,7 +3178,7 @@ function kbEdit(id){
   const del=(f,i)=>`<button class="s d" data-act="arrdel" data-r="${R}" data-f="${f}" data-i="${i}">✕</button>`;
   let body='';
   const VL=erw('kbVorlage'); // Formblätter nach Vorlage (P34)
-  if(VL&&tab==='K2')body=kbK2V(kb,R);else if(VL&&tab==='K3')body=kb.k3.map((c,ci)=>kbK3V(kb,R,c,ci)).join('')+`<button data-act="arradd" data-r="${R}" data-f="k3" data-tpl="k3v">+ weiteres K3-Blatt (z. B. Regielohnpreis, Gehaltspreis, Fremdleistungen)</button>`;
+  if(VL&&tab==='K2')body=kbK2V(kb,R);else if(VL&&tab==='K3')body=kb.k3.map((c,ci)=>akk('kb3-'+c.id,`${esc(K3B[c.blatt||'ML'])} · ${esc(c.name||'')}`,kbK3V(kb,R,c,ci),{offen:!ci,zusatz:fmt(k3calc(kb,c).mlp)+' €/h'})).join('')+`<button data-act="arradd" data-r="${R}" data-f="k3" data-tpl="k3v">+ weiteres K3-Blatt (z. B. Regielohnpreis, Gehaltspreis, Fremdleistungen)</button>`;
   else if(VL&&tab==='K4')body=kbK4V(kb,R);else if(VL&&tab==='K5')body=kbK5V(kb,R);else if(VL&&tab==='K6')body=kbK6V(kb,R);else if(VL&&tab==='K7')body=kbK7V(kb);
   else if(tab==='K2'){
     body=`<table class="k"><thead><tr><th>Zuschlagsbestandteil</th><th class="n">auf Lohn %</th><th class="n">auf Sonstiges %</th><th></th></tr></thead><tbody>
@@ -3238,6 +3239,7 @@ function kbEdit(id){
     }
   }
   const tabs=[['K2','K2 Gesamtzuschlag'],['K3','K3 Personalpreis'],['K4','K4 Material'],['K5','K5 Komponenten'],['K6','K6 Geräte'],...(VL?[['K7','K7 Positionen']]:[]),['VGL','Vergleich / Prüfung']];
+  if(VL&&kmp())return kbEditK(kb,R,tab,tabs,body); // kompakte Ansicht (P34 Teil 2)
   return`<div class="bar"><h1 style="margin:0">${esc(kb.name)}</h1>${kb.art==='bieter'?tag('Prüfung Bieter','warn'):''}<span class="sp"></span>
     <button data-act="kbdruck" data-id="${kb.id}">PDF / Drucken</button><button data-act="kbdup" data-id="${kb.id}">Kopie (neues Jahr)</button><button class="d" data-act="kbdel" data-id="${kb.id}">Löschen</button></div>
   <div class="card"><div class="row"><label class="w2">Bezeichnung${fi(R,'name',kb.name)}</label>${kb.art==='bieter'?`<label>Bieter${fi(R,'bieter',kb.bieter)}</label>`:''}<label>Projekt / Gültigkeit${fi(R,'projekt',kb.projekt)}</label></div>${VL?kbKopfV(kb,R):''}
@@ -3249,15 +3251,16 @@ function kbEdit(id){
 function teileTab(kb,R,f,teile,mitK5,k3d=k3von(kb)){
   const k4=kb?.k4||[],k6=kb?.k6||[],k5=kb?.k5||[],gzS=k2gz(kb).s,VL=erw('kbVorlage'),z=k2sp(kb),rd=kbRund(kb); // VL: Anteil, Zuschlagsspalte bzw. K3-Blatt und Preis je Zeile (P34)
   const typen=[['L','Lohn (h)'],['M','Material (K4)'],['G','Gerät (K6)'],['F','Fremdleistung'],...(mitK5?[]:[['K5','Komponente (K5)']])];
+  if(VL&&kmpH())return`<div class="kkl">${(teile||[]).map((t,i)=>teilKarte(kb,R,f,t,i,k3d)).join('')||'<p class="mut" style="margin:6px 0">Noch keine Zeilen.</p>'}</div><button class="s" style="margin-top:6px" data-act="arradd" data-r="${R}" data-f="${f}" data-tpl="teil">+ Zeile</button>`; // Handy: Karten mit Pop-up (P34 Teil 2)
   const vz=(t,P)=>{if(!VL)return'';const q=teilePreis(kb,teileCalc(kb,[t]),k3d),pr=`<td class="n">${fmt(rd(q.pL+q.pS))}</td>`;
     if(t.typ==='L')return`<td class="mut">Lohn</td><td>${fsel(R,P+'.k3Id',t.k3Id||'',[['',`wie Position (${k3d?.name||'K3'})`],...(kb?.k3||[]).map(c=>[c.id,`${c.name} · ${fmt(k3calc(kb,c).mlp)} €/h`])],'190px')}</td>${pr}`;
     if(t.typ==='K5'||t.typ==='G'&&k6.some(y=>y.id===t.ref))return`<td class="mut">${t.typ==='K5'?'aus K5':'Lohn + Sonst.'}</td><td class="mut">${t.typ==='K5'?'aus K5':'Gerät ('+fmt(z.g)+' %)'}</td>${pr}`;
     const st=t.typ==='G'?'g':t.typ==='F'?'f':k4.find(y=>y.id===t.ref)?.zs==='f'?'f':'m';
-    return`<td>${fsel(R,P+'.anteil',t.anteil==='L'?'L':'',[['','Sonstiges'],['L','Lohn']],'110px')}</td><td>${fsel(R,P+'.sp',t.sp||'',[['',`Standard: ${K2SP.find(x=>x[0]===st)[1]} ${fmt(z[st])} %`],...K2SP.map(([c,l])=>[c,`${l} ${fmt(z[c])} %`])],'190px')}</td>${pr}`};
+    return`<td>${fsel(R,P+'.anteil',t.anteil==='L'?'L':'',[['','Sonstiges'],['L','Lohn']],'110px')}</td><td>${fsel(R,P+'.sp',t.sp||'',teilSpOpts(kb,t,st),'190px')}</td>${pr}`};
   return`<table class="k"><thead><tr><th>Art</th><th>Bezug / Bezeichnung</th><th class="n">Menge</th><th class="n">Kosten/Einh.</th><th class="n">Kosten</th>${VL?'<th>Anteil</th><th>Zuschlag / Personalpreis</th><th class="n">Preis</th>':''}<th></th></tr></thead><tbody>
   ${(teile||[]).map((t,i)=>{const P=`${f}.${i}`;let refSel='',k=+t.kosten||0,eig=true;
-    if(t.typ==='M'){refSel=fsel(R,P+'.ref',t.ref,[['','– frei –'],...k4.map(x=>[x.id,x.bez])]);const x=k4.find(y=>y.id===t.ref);if(x){k=k4kosten(x,kb);eig=false}}
-    if(t.typ==='G'){refSel=fsel(R,P+'.ref',t.ref,[['','– frei –'],...k6.map(x=>[x.id,x.bez])]);const x=k6.find(y=>y.id===t.ref);if(x){k=k6kosten(x);eig=false}}
+    if(t.typ==='M'){refSel=(VL?kbRefSel:fsel)(R,P+'.ref',t.ref,[['','– frei –'],...k4.map(x=>[x.id,x.bez]),...(VL?[['§art','+ aus Artikelstamm …']]:[])]);const x=k4.find(y=>y.id===t.ref);if(x){k=k4kosten(x,kb);eig=false}}
+    if(t.typ==='G'){refSel=(VL?kbRefSel:fsel)(R,P+'.ref',t.ref,[['','– frei –'],...k6.map(x=>[x.id,x.bez]),...(VL&&gerL().length?[['§ger','+ aus Geräteliste …']]:[])]);const x=k6.find(y=>y.id===t.ref);if(x){k=k6kosten(x);eig=false}}
     if(t.typ==='K5'){refSel=fsel(R,P+'.ref',t.ref,[['','– wählen –'],...k5.map(x=>[x.id,x.bez])]);eig=false}
     const r=t.typ==='L'||t.typ==='K5'?null:k*(+t.menge||0);
     return`<tr><td>${fsel(R,P+'.typ',t.typ,typen,'140px')}</td><td>${refSel}${eig||t.typ==='L'?fi(R,P+'.bez',t.bez,{ph:'Bezeichnung'}):''}</td><td>${fi(R,P+'.menge',t.menge,{n:1,w:'85px'})}</td>
@@ -3286,10 +3289,10 @@ function kbK3V(kb,R,c,ci){
   const arb=c.arbeiter||[],ant=arb.some(y=>y.anteil!==''&&y.anteil!=null);
   return`<div class="card"><div class="kbk"><label>Blattart${fsel(R,P+'.blatt',c.blatt||'ML',Object.entries(K3B),'170px')}</label><label>Kalkuliert${fsel(R,P+'.fuer',c.fuer||'M',Object.entries(K3F),'190px')}</label><label style="flex:1;min-width:180px">Bezeichnung${fi(R,P+'.name',c.name)}</label>
     ${bt?`<label>Vom Bieter angegebener Preis €/h${fi(R,P+'.mlpAngabe',c.mlpAngabe,{n:1,w:'90px'})}</label>`:''}${kbDel(R,'k3',ci,'Blatt löschen').replace('<button','<button'+(kb.k3.length<2?' disabled':''))}</div>
-  <div class="kbk"><label style="flex:1;min-width:220px">Beschäftigungsgruppe laut KV (Kollektivvertrag, Stand)${fi(R,P+'.kv',c.kv,{ph:'z. B. Elektro- und Elektronikgewerbe 01.01.2026'})}</label><label>Kalk. WoA. (h/Woche)${fnl(R,P+'.wo',c.wo,'76px')}</label></div>
+  ${k3KvKopf(R,c,ci)}
   <div style="overflow-x:auto"><table class="k kbg"><thead><tr><th>KV-Gruppe</th><th class="n">KV-Lohn €/h</th><th class="n">Beschäftigte</th><th class="n">Anteil %</th><th></th></tr></thead><tbody>
-  ${arb.map((y,i)=>{const Q=`${P}.arbeiter.${i}`;return`<tr><td>${fi(R,Q+'.bez',y.bez,{ph:'Gruppe / Funktion',w:'170px'})}</td><td>${fi(R,Q+'.lohn',y.lohn,{n:1})}</td><td>${fi(R,Q+'.anz',y.anz,{n:1,w:'64px'})}</td><td>${fnl(R,Q+'.anteil',y.anteil,'76px',ant?'0':x.n?fmtQ(r2((+y.anz||0)/x.n*100)):'')}</td><td>${kbDel(R,P+'.arbeiter',i)}</td></tr>`}).join('')}
-  </tbody><tfoot><tr><td class="mut">Kalk. Be. ${fmtQ(x.n)}</td><td></td><td></td><td class="n">= ${fmt(x.anteil)} %</td><td></td></tr></tfoot></table></div>${kbBtn(R,P+'.arbeiter','arb','+ KV-Gruppe')}
+  ${arb.map((y,i)=>{const Q=`${P}.arbeiter.${i}`;return`<tr><td>${k3GrFeld(R,c,ci,i,y,Q)}</td><td>${fi(R,Q+'.lohn',y.lohn,{n:1})}</td><td>${fi(R,Q+'.anz',y.anz,{n:1,w:'64px'})}</td><td>${fnl(R,Q+'.anteil',y.anteil,'76px',ant?'0':x.n?fmtQ(r2((+y.anz||0)/x.n*100)):'')}</td><td>${kbDel(R,P+'.arbeiter',i)}</td></tr>`}).join('')}
+  </tbody><tfoot><tr><td class="mut">Kalk. Be. ${fmtQ(x.n)}</td><td></td><td></td><td class="n">= ${fmt(x.anteil)} %</td><td></td></tr></tfoot></table></div>${kbBtn(R,P+'.arbeiter','arb','+ KV-Gruppe')}${k3KvAkt(R,c,ci)}
   <div class="kbk" style="margin-top:8px"><span class="mut" style="font-size:12px">Aufzahlung für Mehrarbeit:</span>${[0,1,2].map(i=>`<span class="kbm">${fnl(R,`${P}.mehr.${i}.pct`,c.mehr?.[i]?.pct,'60px')} % für ${fnl(R,`${P}.mehr.${i}.h`,c.mehr?.[i]?.h,'60px')} h</span>`).join('')}
     ${eV!=null?`<button class="s" data-act="k3ev" data-r="${R}" data-ci="${ci}" data-v="${eV}" title="Σ (% × Mehrstunden) ÷ (Wochenarbeitszeit − Mehrstunden)">E = ${fmt(eV)} % übernehmen</button>`:''}</div>
   <div style="overflow-x:auto"><table class="k kbv"><thead><tr><th></th><th></th><th class="n">%</th><th class="n">Betrag</th></tr></thead><tbody>
@@ -3307,31 +3310,32 @@ function kbK3V(kb,R,c,ci){
   ${zl('V','Umgelegt sind','€/h','',fnl(R,P+'.umlV',c.umlV,'76px'))}${zl('W','<b>MLP – RLP – GP mit Umlage der Gemeinkosten</b>','(% = W × 100 / A; Betrag = U + V)',x.V?pz(x.W):'',x.V?fmt(x.W):'','kt')}
   ${+c.mlpAngabe>0?zl('','angegeben vom Bieter · Abweichung','',pct(x.mlpR?(c.mlpAngabe-x.mlpR)/x.mlpR:NaN),fmt(c.mlpAngabe)):''}
   </tbody></table></div>
-  <div style="overflow-x:auto"><table class="k kbv"><thead><tr><th></th><th>In Sonderfällen: Umlage auf Preisanteil in %</th><th class="n">Lohn</th><th class="n">Sonstiges</th></tr></thead><tbody>
+  ${akk('kb3x-'+c.id,'In Sonderfällen: Umlage auf Preisanteil (1–6, X)',`<div style="overflow-x:auto"><table class="k kbv"><thead><tr><th></th><th>In Sonderfällen: Umlage auf Preisanteil in %</th><th class="n">Lohn</th><th class="n">Sonstiges</th></tr></thead><tbody>
   ${[0,1,2,3,4,5].map(i=>{const u=c.uml?.[i]||{},Q=`${P}.uml.${i}`;return`<tr><td class="kz">${i+1}</td><td>${fi(R,Q+'.bez',u.bez,{w:'220px'})}</td><td class="n">${fnl(R,Q+'.l',u.l)}</td><td class="n">${fnl(R,Q+'.s',u.s)}</td></tr>`}).join('')}
-  ${zl('X','<b>Umlageprozentsatz</b>','Summe 1 bis 6',fmt(x.xl),fmt(x.xs),'kt')}</tbody></table></div>
+  ${zl('X','<b>Umlageprozentsatz</b>','Summe 1 bis 6',fmt(x.xl),fmt(x.xs),'kt')}</tbody></table></div>`,{zusatz:x.xl||x.xs?`X: Lohn ${fmt(x.xl)} % · Sonst. ${fmt(x.xs)} %`:'keine'})}
   <p class="mut" style="font-size:12px;margin:4px 0 0">Preis je Stunde für K5/K7 und Stundentarif: ${fmt(x.mlp)} €/h${x.V?' (W)':' (U)'} · Kosten je Stunde (M) ${fmt(x.lk)} €/h · Faktor Preis / KV-Lohn ${isFinite(x.faktor)?fmtQ(x.faktor):'–'}${x.xl||x.xs?` · X wirkt im K7 auf Lohn ${fmt(x.xl)} % und Sonstiges ${fmt(x.xs)} %`:''}</p>${k3TfKnopf(kb,ci)}</div>`}
-function kbK4V(kb,R){const z=k2sp(kb),rd=kbRund(kb),s3=k3std(kb),lk=s3?k3calc(kb,s3).lk:0;
+function kbK4V(kb,R){const z=k2sp(kb),rd=kbRund(kb),s3=k3std(kb),lk=s3?k3calc(kb,s3).lk:0;if(kmpH())return k4KartenK(kb,R);
   return`<p class="mut" style="margin:0 0 6px">Gesamtzuschlag auf Material <b>${fmt(z.m)} %</b> · auf Fremdleistungen (Subleistungen) <b>${fmt(z.f)} %</b> (K2)${lk?` · Manipulation zu Lohnkosten ${fmt(lk)} €/h (K3 ${esc(s3.name||'')})`:''}</p>
   <table class="k k4v"><thead><tr><th>Pos. / Nr.</th><th>Material</th><th class="n">ME</th><th>EH</th><th class="n">Listenpreis</th><th class="n">Rabatt %</th><th class="n">Preis ab Lieferer</th><th class="n">Antransport %</th><th class="n">frei Bau</th><th class="n">Manip. h/EH</th><th class="n">Verlust %</th><th class="n">EK / EH</th><th>Zuschlag</th><th class="n">VK / EH</th><th></th></tr></thead><tbody>
   ${kb.k4.map((m,i)=>{const P=`k4.${i}`,al=(+m.lp||0)*(1-(+m.rab||0)/100),fb=al*(1+(+m.bezug||0)/100),ek=k4kosten(m,kb),zs=m.zs==='f'?'f':'m';
     return`<tr><td>${fi(R,P+'.nr',m.nr,{w:'80px'})}</td><td>${fi(R,P+'.bez',m.bez,{w:'210px'})}</td><td>${fnl(R,P+'.menge',m.menge,'64px')}</td><td>${fsel(R,P+'.einheit',m.einheit,S().einheiten.map(e=>[e,e]),'70px')}</td><td>${fi(R,P+'.lp',m.lp,{n:1,w:'84px'})}</td><td>${fi(R,P+'.rab',m.rab,{n:1})}</td>
     <td class="n">${fmt(al)}</td><td>${fi(R,P+'.bezug',m.bezug,{n:1,ph:'frei Bau'})}</td><td class="n">${fmt(fb)}</td><td>${fi(R,P+'.manH',m.manH,{n:1})}</td><td>${fi(R,P+'.verlust',m.verlust,{n:1})}</td><td class="n"><b>${fmt(ek)}</b></td>
     <td>${fsel(R,P+'.zs',zs,[['m',`Material ${fmt(z.m)} %`],['f',`Fremdl. ${fmt(z.f)} %`]],'140px')}</td><td class="n"><b>${fmt(rd(ek*(1+z[zs]/100)))}</b></td><td>${kbDel(R,'k4',i)}</td></tr>`}).join('')||'<tr><td colspan="15" class="mut">Noch kein Material.</td></tr>'}</tbody></table>
-  ${kbBtn(R,'k4','k4','+ Material')} <button class="s" data-act="k4art" data-r="${R}">Artikel übernehmen …</button>`}
+  ${kbBtn(R,'k4','k4','+ Material')} <button class="s" data-act="k4stamm" data-r="${R}">+ Material aus Artikelstamm …</button>`}
 function kbK5V(kb,R){const k3=k3von(kb),rd=kbRund(kb);
-  return kb.k5.map((c,ci)=>{const P=`k5.${ci}`,r=teileCalc(kb,c.teile),q=teilePreis(kb,r,k3);
+  return kb.k5.map((c,ci)=>{const P=`k5.${ci}`,r=teileCalc(kb,c.teile),k3c=k3von(kb,c.k3Id)||k3,q=teilePreis(kb,r,k3c);
     return`<div class="card"><div class="row"><label class="w05">Nummer${fi(R,P+'.nr',c.nr)}</label><label class="w2">Kosten-/Preisermittlung für${fi(R,P+'.bez',c.bez)}</label><label class="w05">Einheit${fsel(R,P+'.einheit',c.einheit,S().einheiten.map(e=>[e,e]))}</label>${kbDel(R,'k5',ci,'Löschen')}</div>
-    <div style="overflow-x:auto">${teileTab(kb,R,P+'.teile',c.teile,true,k3)}</div>
+    <div class="row"><label class="w2">Personalpreis (K3) für die Lohnstunden${fsel(R,P+'.k3Id',c.k3Id||'',[['','wie die Position im LV (K7)'],...kb.k3.map(y=>[y.id,`${y.name} · ${fmt(k3calc(kb,y).mlp)} €/h`])])}</label></div>
+    <div style="overflow-x:auto">${teileTab(kb,R,P+'.teile',c.teile,true,k3c)}</div>
     <p style="margin:6px 0 0"><b>Je ${esc(c.einheit)}:</b> Summe Lohn <b>${fmt(rd(q.pL))} €</b>${r.std?` (${fmtQ(r.std)} h)`:''} · Summe Sonstiges <b>${fmt(rd(q.pS))} €</b> · Preis <b>${fmt(rd(q.pL)+rd(q.pS))} €</b> <span class="mut">(Kosten ${fmt(q.kost)} €)</span></p></div>`}).join('')+kbBtn(R,'k5','k5','+ Komponente')}
-function kbK6V(kb,R){const z=k2sp(kb),rd=kbRund(kb);
+function kbK6V(kb,R){const z=k2sp(kb),rd=kbRund(kb);if(kmpH())return k6KartenK(kb,R);
   return`<table class="k k6v"><thead><tr><th>Nr.</th><th>Gerätebezeichnung, Preisquelle (ÖBGL-Nr.)</th><th>EH</th><th>Anteil</th><th class="n">AV €/EH</th><th class="n">GGK % auf AV</th><th class="n">Rep. €/EH</th><th class="n">GGK % auf Rep.</th><th class="n">Andere €/EH</th><th class="n">Gerätekosten</th><th class="n">Zuschlag %</th><th class="n">Gerätepreis</th><th></th></tr></thead><tbody>
   ${kb.k6.map((g,i)=>{const P=`k6.${i}`,t=k6teile(g),nL=t.L*(1+z.l/100),nS=t.S*(1+z.g/100);
     return`<tr><td rowspan="3">${i+1}</td><td rowspan="3">${fi(R,P+'.bez',g.bez,{w:'200px',ph:'Gerät'})}<br>${fi(R,P+'.quelle',g.quelle,{w:'200px',ph:'Preisquelle / ÖBGL-Nr.'})}</td><td rowspan="3">${fsel(R,P+'.einheit',g.einheit,['h','Tag','Woche','Monat','Stk','PA'].map(e=>[e,e]),'76px')}</td>
-      <td class="an">Lohn</td><td>${fi(R,P+'.avL',g.avL,{n:1})}</td><td rowspan="2">${fi(R,P+'.ggkAv',g.ggkAv,{n:1})}</td><td>${fi(R,P+'.repL',g.repL,{n:1})}</td><td rowspan="2">${fi(R,P+'.ggkRep',g.ggkRep,{n:1})}</td><td>${fi(R,P+'.andL',g.andL,{n:1})}</td><td class="n">${fmt(t.L)}</td><td class="n">${fmt(z.l)}</td><td class="n">${fmt(rd(nL))}</td><td rowspan="3">${kbDel(R,'k6',i)}</td></tr>
+      <td class="an">Lohn</td><td>${fi(R,P+'.avL',g.avL,{n:1})}</td><td rowspan="2">${fi(R,P+'.ggkAv',g.ggkAv,{n:1})}</td><td>${fi(R,P+'.repL',g.repL,{n:1})}</td><td rowspan="2">${fi(R,P+'.ggkRep',g.ggkRep,{n:1})}</td><td>${fi(R,P+'.andL',g.andL,{n:1})}</td><td class="n">${fmt(t.L)}</td><td class="n">${fmt(z.l)}</td><td class="n">${fmt(rd(nL))}</td><td rowspan="3">${kbDel(R,'k6',i)} <button class="s" data-act="gerauf" data-r="${R}" data-i="${i}" title="in die Geräteliste (Einstellungen) übernehmen">⇪</button></td></tr>
     <tr><td class="an">Sonstiges</td><td>${fi(R,P+'.av',g.av,{n:1})}</td><td>${fi(R,P+'.rep',g.rep,{n:1})}</td><td>${fi(R,P+'.betrieb',g.betrieb,{n:1})}</td><td class="n">${fmt(t.S)}</td><td class="n">${fmt(z.g)}</td><td class="n">${fmt(rd(nS))}</td></tr>
     <tr class="ks6"><td class="an"><b>Summe</b></td><td colspan="5"></td><td class="n"><b>${fmt(t.L+t.S)}</b></td><td></td><td class="n"><b>${fmt(rd(nL)+rd(nS))}</b></td></tr>`}).join('')||'<tr><td colspan="13" class="mut">Noch keine Geräte.</td></tr>'}</tbody></table>
-  ${kbBtn(R,'k6','k6','+ Gerät')}<p class="mut" style="font-size:12px;margin:6px 0 0">Gerätekosten = AV + GGK auf AV + Reparatur + GGK auf Reparatur + Andere Kosten, je Anteil Lohn und Sonstiges; Gerätepreis = Kosten × (1 + Zuschlag Lohn bzw. Gerät aus K2).</p>`}
+  ${kbBtn(R,'k6','k6','+ Gerät')} <button class="s" data-act="k6liste" data-r="${R}">+ Gerät aus Geräteliste …</button><p class="mut" style="font-size:12px;margin:6px 0 0">Gerätekosten = AV + GGK auf AV + Reparatur + GGK auf Reparatur + Andere Kosten, je Anteil Lohn und Sonstiges; Gerätepreis = Kosten × (1 + Zuschlag Lohn bzw. Gerät aus K2).</p>`}
 // K7: Übersicht der LV-Positionen, die nach diesem K-Blatt kalkuliert sind (h/EH, LO-VK, EK, Aufschlag, SO, EHP, PP wie Formblatt K7)
 function kbK7V(kb){const L=DB.lv.filter(l=>l.kbId===kb.id);
   if(!L.length)return'<p class="mut">K7 entsteht je Position im Leistungsverzeichnis: LV öffnen, dort „Kalkulationsbasis“ = dieses K-Blatt wählen und die Positionen „nach K7“ kalkulieren.</p>';
@@ -3339,6 +3343,127 @@ function kbK7V(kb){const L=DB.lv.filter(l=>l.kbId===kb.id);
     return`<h3 style="margin:4px 0 6px"><a href="#/lvs/${lv.id}">LV ${esc(lv.nr)} ${esc(lv.titel)}</a></h3><div style="overflow-x:auto"><table class="k k4v"><thead><tr><th>Pos.-Nr.</th><th>Positionsstichwort</th><th class="n">Menge</th><th>EH</th><th class="n">h/EH</th><th class="n">LO-VK</th><th class="n">EK</th><th class="n">Aufschlag</th><th class="n">SO</th><th class="n">EHP</th><th class="n">PP</th></tr></thead><tbody>
     ${P.map(p=>{const pr=posPreis(lv,p),k=pr.k7,g=r2((+p.menge||0)*pr.ep);if(!p.art)pp+=g;return`<tr><td>${oz[p.id]}${p.art?' '+p.art:''}</td><td>${esc(p.kurz)}</td><td class="n">${fmtQ(p.menge)}</td><td>${esc(p.einheit)}</td><td class="n">${k?fmt3(k.std):''}</td><td class="n">${fmt(pr.l)}</td><td class="n">${k?fmt(k.kS):''}</td><td class="n">${k?fmt(pr.s-k.kS):''}</td><td class="n">${fmt(pr.s)}</td><td class="n"><b>${fmt(pr.ep)}</b></td><td class="n">${p.art?'n. i. S.':fmt(g)}</td></tr>`}).join('')}
     </tbody><tfoot><tr><td colspan="10">Summe</td><td class="n"><b>${fmt(pp)}</b></td></tr></tfoot></table></div>`}).join('')}
+/* --- K-Blätter (P34 Teil 2, erw.kbVorlage): Auswahlfelder statt Freitext – Kollektivverträge mit Beschäftigungsgruppen und KV-Lohn sowie Geräteliste in den Einstellungen
+   (S().kvListe [{id,bez,stand,wo,gruppen:[{bez,lohn}]}], S().geraete [{id, Felder wie K6}]), im K3 Auswahl von KV (c.kvId) und Gruppe (übernimmt den Lohn), Material aus dem Artikelstamm
+   (K4-Zeile artId), Geräte aus der Geräteliste (K6-Zeile gerId), auch direkt in der Zeile von K5/K7 (data-o="kbref"); kompakt: Kopf und K3-Blätter zum Aufklappen, am Handy
+   Reiter als Auswahl und K4/K6/Zeilen als Karten mit Pop-up (LIVE.k4, LIVE.k6, LIVE.kbteil) --- */
+const kvL=()=>S().kvListe||[],gerL=()=>S().geraete||[],kvVon=id=>id?kvL().find(v=>v.id===id)||null:null;
+const kvName=v=>`${v.bez||'Kollektivvertrag'}${v.stand?' '+dAT(v.stand):''}`;
+const K6EH=['h','Tag','Woche','Monat','Stk','PA'],K6F=['bez','quelle','einheit','av','avL','ggkAv','rep','repL','ggkRep','betrieb','andL']; // Felder eines Geräts (K6-Zeile und Geräteliste)
+const kbRefSel=(R,f,v,opts)=>`<select data-o="kbref" data-r="${R}" data-f="${f}">${opts.map(([a,b])=>opt(a,b,v||'')).join('')}</select>`;
+const teilSpOpts=(kb,t,st)=>{const z=k2sp(kb);return[['',`Standard: ${K2SP.find(x=>x[0]===st)[1]} ${fmt(z[st])} %`],...K2SP.map(([c,l])=>[c,`${l} ${fmt(z[c])} %`])]};
+// Mehrfachauswahl mit Suche (Artikelstamm, Geräteliste) → Liste der gewählten IDs bzw. null
+function kbWahl(titel,L,leer='Keine Einträge.'){return new Promise(res=>{const d=document.createElement('div');d.className='modal';
+  d.innerHTML=`<div class="mbox" style="max-width:640px"><h2>${titel}</h2><input type="search" id="kw-q" placeholder="Suchen (alle Wörter) …" autocomplete="off"><div class="kwl" style="max-height:52vh;overflow:auto;margin-top:8px">${L.map(x=>`<label class="chk" data-s="${esc(String(x.s||x.t).toLowerCase())}"><input type="checkbox" value="${esc(x.id)}"> <span>${x.t}${x.u?`<br><span class="mut" style="font-size:12px">${x.u}</span>`:''}</span></label>`).join('')||`<p class="mut">${leer}</p>`}</div>
+    <div class="bar" style="margin:12px 0 0"><span class="mut" id="kw-n">0 gewählt</span><span class="sp"></span><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Übernehmen</button></div></div>`;
+  document.body.appendChild(d);const q=d.querySelector('#kw-q');setTimeout(()=>q.focus(),0);
+  q.oninput=()=>{const w=q.value.toLowerCase().split(/\s+/).filter(Boolean);d.querySelectorAll('.kwl .chk').forEach(e=>e.style.display=w.every(x=>e.dataset.s.includes(x))?'':'none')};
+  d.addEventListener('change',()=>{d.querySelector('#kw-n').textContent=d.querySelectorAll('.kwl input:checked').length+' gewählt'});
+  const fin=v=>{d.remove();document.removeEventListener('keydown',kd);res(v)},kd=e=>{if(!mOben(d))return;if(e.key==='Escape')fin(null)};document.addEventListener('keydown',kd);
+  d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#m-ok').onclick=()=>fin([...d.querySelectorAll('.kwl input:checked')].map(e=>e.value))})}
+async function k4AusStamm(kb){ // Material aus dem Artikelstamm in K4 (Listenpreis und Rabatt des ersten Lieferanten mit Listenpreis, sonst EK)
+  const A=DB.artikel.filter(a=>a.art!=='L'&&a.aktiv!==false);
+  const ids=await kbWahl('Material aus dem Artikelstamm',A.map(a=>({id:a.id,t:`${esc(a.nr)} · ${esc(a.bez)}`,u:`${esc(a.einheit||'')} · EK ${fmt(+a.ek||0)} €`,s:`${a.nr} ${a.bez} ${a.ean||''} ${(a.lieferanten||[]).map(l=>l.artNr||'').join(' ')}`})),'Keine Waren im Artikelstamm.');
+  if(!ids)return null;const n=[];
+  for(const id of ids){const a=artikel(id);if(!a)continue;let m=kb.k4.find(x=>x.artId===a.id);
+    if(!m){const lf=(a.lieferanten||[]).find(l=>+l.lp>0);m={...TPL.k4(),artId:a.id,nr:a.nr,bez:a.bez,einheit:a.einheit||'Stk',lp:lf?+lf.lp:+a.ek||0,rab:lf?+lf.rabatt||0:0};kb.k4.push(m)}n.push(m.id)}
+  return n}
+async function k6AusListe(kb){
+  if(!gerL().length){alert('Die Geräteliste ist leer. Geräte unter Einstellungen → Geräteliste anlegen oder im K6 mit ⇪ in die Liste übernehmen.');return null}
+  const ids=await kbWahl('Geräte aus der Geräteliste',gerL().map(g=>({id:g.id,t:esc(g.bez||'Gerät'),u:`${esc([g.quelle,g.einheit].filter(Boolean).join(' · '))} · Kosten ${fmt(k6kosten(g))} €`,s:`${g.bez||''} ${g.quelle||''}`})));
+  if(!ids)return null;const n=[];
+  for(const id of ids){const g=gerL().find(x=>x.id===id);if(!g)continue;let m=kb.k6.find(x=>x.gerId===id);if(!m){m={...TPL.k6(),gerId:id};for(const f of K6F)if(g[f]!=null&&g[f]!=='')m[f]=g[f];kb.k6.push(m)}n.push(m.id)}
+  return n}
+function kbWahlSet(d,v){const[c,id]=d.r.split('|'),o=ROOT[c]?.(id);if(!o)return; // change-Handler der Auswahlfelder
+  if(d.o==='kbref'){const kb=c==='kb'?o:lvKB(o);if(v==='§art'||v==='§ger'){if(!kb)return;(v==='§art'?k4AusStamm(kb):k6AusListe(kb)).then(n=>{if(n?.length){setP(o,d.f,n[0]);persist()}render()});return}setP(o,d.f,v);persist();renderErhalten();return}
+  const k3=o.k3?.[+d.ci];if(!k3)return;
+  if(d.o==='k3kv'){const K=kvVon(v);if(K){k3.kvId=K.id;k3.kv=kvName(K);if(!(+k3.wo)&&+K.wo)k3.wo=+K.wo}else delete k3.kvId;persist();renderErhalten();return}
+  const y=k3.arbeiter?.[+d.i],g=kvVon(k3.kvId)?.gruppen?.find(x=>x.bez===v);if(!y)return;y.bez=v;if(g)y.lohn=+g.lohn||0;persist();renderErhalten()}
+function k3KvKopf(R,c,ci){const P=`k3.${ci}`,K=kvVon(c.kvId),L=kvL();
+  return`<div class="kbk">${L.length?`<label style="flex:1;min-width:220px">Beschäftigungsgruppe laut KV (Kollektivvertrag)<select data-o="k3kv" data-r="${R}" data-ci="${ci}">${opt('','– frei eingeben –',c.kvId||'')}${L.map(v=>opt(v.id,kvName(v),c.kvId||'')).join('')}</select></label>`:''}
+    ${K?'':`<label style="flex:1;min-width:220px">${L.length?'Kollektivvertrag, Stand':'Beschäftigungsgruppe laut KV (Kollektivvertrag, Stand)'}${fi(R,P+'.kv',c.kv,{ph:'z. B. Elektro- und Elektronikgewerbe 01.01.2026'})}</label>`}<label>Kalk. WoA. (h/Woche)${fnl(R,P+'.wo',c.wo,'76px')}</label></div>${L.length?'':'<p class="mut" style="font-size:12px;margin:-4px 0 8px">Tipp: Kollektivverträge mit Beschäftigungsgruppen und KV-Lohn unter Einstellungen → Kollektivverträge pflegen, dann hier auswählen.</p>'}`}
+const k3GrFeld=(R,c,ci,i,y,Q)=>{const K=kvVon(c.kvId);if(!K)return fi(R,Q+'.bez',y.bez,{ph:'Gruppe / Funktion',w:'170px'});const G=K.gruppen||[],g=G.find(x=>x.bez===y.bez);
+  return`<select data-o="k3gr" data-r="${R}" data-ci="${ci}" data-i="${i}" style="width:170px">${opt('','– Gruppe wählen –',y.bez||'')}${y.bez&&!g?opt(y.bez,y.bez+' (nicht in der Liste)',y.bez):''}${G.map(x=>opt(x.bez,`${x.bez} · ${fmt(x.lohn)} €`,y.bez||'')).join('')}</select>${g&&Math.abs((+g.lohn||0)-(+y.lohn||0))>0.004?` <span class="warnc" title="KV-Lohn laut Liste ${fmt(g.lohn)} €/h">≠ Liste</span>`:''}`};
+const k3KvAkt=(R,c,ci)=>{const K=kvVon(c.kvId);return K&&(c.arbeiter||[]).some(y=>{const g=(K.gruppen||[]).find(x=>x.bez===y.bez);return g&&Math.abs((+g.lohn||0)-(+y.lohn||0))>0.004})?` <button class="s" data-act="k3kvl" data-r="${R}" data-ci="${ci}">Löhne laut KV-Liste übernehmen</button>`:''};
+// Kompakte Ansicht: Kopf zum Aufklappen, Aktionen im ⋯-Menü, am Handy Reiter als Auswahl
+function kbEditK(kb,R,tab,tabs,body){const H=kmpH();
+  return`<div class="bar"><h1 style="margin:0">${esc(kb.name)}</h1>${kb.art==='bieter'?tag('Prüfung Bieter','warn'):''}<span class="sp"></span><button data-act="kbdruck" data-id="${kb.id}">PDF / Drucken</button><button class="mehr" data-act="menue" data-m="kb" data-id="${kb.id}" title="Kopie, Löschen">⋯</button></div>
+  ${akk('kbkopf','Kopfdaten',`<div class="card"><div class="row"><label class="w2">Bezeichnung${fi(R,'name',kb.name)}</label>${kb.art==='bieter'?`<label>Bieter${fi(R,'bieter',kb.bieter)}</label>`:''}<label>Projekt / Gültigkeit${fi(R,'projekt',kb.projekt)}</label></div>${kbKopfV(kb,R)}
+    <div class="row"><label>Notiz / Prüfvermerk${ft(R,'notiz',kb.notiz)}</label></div></div>`,{offen:!H,zusatz:esc([kb.bau||kb.projekt,kb.angebotNr&&'Angebot '+kb.angebotNr].filter(Boolean).join(' · '))})}
+  <div class="bar">${H?`<select data-o="ui" data-f="kbTab" style="flex:1">${tabs.map(([k,l])=>opt(k,l,tab)).join('')}</select>`:`<span class="seg">${tabs.map(([k,l])=>`<button class="${tab===k?'on':''}" data-act="kbtab" data-t="${k}">${l}</button>`).join('')}</span>`}</div>
+  <div class="card" style="overflow-x:auto">${body}</div>
+  <p class="mut" style="font-size:12px">Aufbau nach dem Grundschema der ÖNORM B 2061. ${H?hilfe('Zeilen und Bezeichnungen bitte mit der gültigen Normfassung und dem aktuellen Kollektivvertrag abgleichen.'):'Zeilen und Bezeichnungen bitte mit der gültigen Normfassung und dem aktuellen Kollektivvertrag abgleichen.'}</p>`}
+MENUE.kb=el=>[{l:'Kopie (neues Jahr)',ic:'⧉',act:'kbdup',d:{id:el.dataset.id}},{l:'Löschen …',ic:'🗑',act:'kbdel',d:{id:el.dataset.id},gefahr:1}];
+const kbLp=(titel,id,f,i,inhalt)=>{const kb=ROOT.kb(id),x=getP(kb,f)?.[i];if(!x)return;const d=livePop(titel,()=>getP(ROOT.kb(id),f)?.[i]!==x?'<p class="mut">Nicht mehr vorhanden.</p>':inhalt(ROOT.kb(id)),{verwerfen:x,breit:true});d._gilt=()=>ROOT.kb(id)===kb};
+function kbWeg(b,act,liste){const m=b.closest('.modal'),n=liste().length;ACT[act](b);if(liste().length<n)m?.querySelector('#m-ok')?.click()} // Löschen im Pop-up, danach schließen (Pop-up vorher merken: render() zeichnet den Inhalt neu)
+const kbLoesch=(R,f,i,l)=>{const[c,id]=R.split('|');return`<div class="bar" style="margin:10px 0 0"><button class="d" data-r="${R}" data-f="${f}" data-i="${i}" onclick="kbWeg(this,'arrdel',()=>getP(ROOT['${c}']('${id}'),'${f}')||[])">${l}</button></div>`};
+function k4KartenK(kb,R){const z=k2sp(kb),rd=kbRund(kb);
+  return`<p class="mut" style="margin:0 0 6px;font-size:13px">Zuschlag Material ${fmt(z.m)} % · Fremdleistungen ${fmt(z.f)} % (K2)</p><div class="kkl">${kb.k4.map((m,i)=>{const ek=k4kosten(m,kb),zs=m.zs==='f'?'f':'m';
+    return karte({t:esc(m.bez||'Material'),s:esc(m.nr||''),u:`${+m.menge?fmtQ(m.menge)+' ':''}${esc(m.einheit||'')} · LP ${fmt(+m.lp||0)}${+m.rab?` − ${fmtQ(m.rab)} %`:''}${zs==='f'?' · Fremdleistung':''}`,z:`EK ${fmt(ek)}`,b:'VK '+fmt(rd(ek*(1+z[zs]/100))),a:`onclick="ACT.lpop(this)" data-lp="k4" data-id="${kb.id}" data-i="${i}"`})}).join('')||'<p class="mut" style="margin:6px 0">Noch kein Material.</p>'}</div>
+  <div class="bar" style="margin:8px 0 0">${kbBtn(R,'k4','k4','+ Material')}<button class="s" data-act="k4stamm" data-r="${R}">+ aus Artikelstamm …</button></div>`}
+LIVE.k4=el=>kbLp('Material (K4)',el.dataset.id,'k4',+el.dataset.i,kb=>{const i=+el.dataset.i,R='kb|'+kb.id,m=kb.k4[i],P=`k4.${i}`,z=k2sp(kb),rd=kbRund(kb),al=(+m.lp||0)*(1-(+m.rab||0)/100),fb=al*(1+(+m.bezug||0)/100),ek=k4kosten(m,kb),zs=m.zs==='f'?'f':'m';
+  return`<div class="row"><label class="w05">Pos. / Nr.${fi(R,P+'.nr',m.nr)}</label><label class="w2">Material${fi(R,P+'.bez',m.bez)}</label></div>
+  <div class="row"><label class="w05">Menge (ME)${fnl(R,P+'.menge',m.menge,'100%')}</label><label class="w05">EH${fsel(R,P+'.einheit',m.einheit,S().einheiten.map(e=>[e,e]))}</label><label class="w05">Listenpreis${fi(R,P+'.lp',m.lp,{n:1})}</label><label class="w05">Rabatt %${fi(R,P+'.rab',m.rab,{n:1})}</label></div>
+  <div class="row"><label class="w05">Antransport %${fi(R,P+'.bezug',m.bezug,{n:1,ph:'frei Bau'})}</label><label class="w05">Manipulation h/EH${fi(R,P+'.manH',m.manH,{n:1})}</label><label class="w05">Verlust %${fi(R,P+'.verlust',m.verlust,{n:1})}</label><label class="w05">Zuschlag${fsel(R,P+'.zs',zs,[['m',`Material ${fmt(z.m)} %`],['f',`Fremdl. ${fmt(z.f)} %`]])}</label></div>
+  <table class="k"><tbody><tr><td>Preis ab Lieferer</td><td class="n">${fmt(al)}</td></tr><tr><td>Materialkosten frei Bau</td><td class="n">${fmt(fb)}</td></tr><tr class="kt"><td>EK / EH</td><td class="n">${fmt(ek)}</td></tr><tr class="kt"><td>VK / EH (+ ${fmt(z[zs])} %)</td><td class="n">${fmt(rd(ek*(1+z[zs]/100)))}</td></tr></tbody></table>${kbLoesch(R,'k4',i,'Material löschen')}`});
+function k6KartenK(kb,R){const z=k2sp(kb),rd=kbRund(kb);
+  return`<div class="kkl">${kb.k6.map((g,i)=>{const t=k6teile(g);return karte({t:esc(g.bez||'Gerät'),s:esc(g.einheit||''),u:esc(g.quelle||''),z:`Kosten ${fmt(t.L+t.S)}`,b:'Preis '+fmt(rd(t.L*(1+z.l/100))+rd(t.S*(1+z.g/100))),a:`onclick="ACT.lpop(this)" data-lp="k6" data-id="${kb.id}" data-i="${i}"`})}).join('')||'<p class="mut" style="margin:6px 0">Noch keine Geräte.</p>'}</div>
+  <div class="bar" style="margin:8px 0 0">${kbBtn(R,'k6','k6','+ Gerät')}<button class="s" data-act="k6liste" data-r="${R}">+ aus Geräteliste …</button></div>`}
+LIVE.k6=el=>kbLp('Gerät (K6)',el.dataset.id,'k6',+el.dataset.i,kb=>{const i=+el.dataset.i,R='kb|'+kb.id,g=kb.k6[i],P=`k6.${i}`,z=k2sp(kb),rd=kbRund(kb),t=k6teile(g),n=f=>fi(R,P+'.'+f,g[f],{n:1});
+  return`<div class="row"><label class="w2">Gerätebezeichnung${fi(R,P+'.bez',g.bez)}</label><label class="w05">EH${fsel(R,P+'.einheit',g.einheit,K6EH.map(e=>[e,e]))}</label></div><div class="row"><label class="w2">Preisquelle (ÖBGL-Nr.)${fi(R,P+'.quelle',g.quelle)}</label></div>
+  <p class="mut" style="margin:6px 0 2px"><b>Sonstiges</b> €/EH</p><div class="row"><label class="w05">AV${n('av')}</label><label class="w05">Reparatur${n('rep')}</label><label class="w05">Andere${n('betrieb')}</label></div>
+  <p class="mut" style="margin:6px 0 2px"><b>Lohn</b> €/EH</p><div class="row"><label class="w05">AV${n('avL')}</label><label class="w05">Reparatur${n('repL')}</label><label class="w05">Andere${n('andL')}</label></div>
+  <div class="row"><label class="w05">GGK % auf AV${n('ggkAv')}</label><label class="w05">GGK % auf Rep.${n('ggkRep')}</label></div>
+  <table class="k"><tbody><tr><td>Gerätekosten Lohn / Sonstiges</td><td class="n">${fmt(t.L)} / ${fmt(t.S)}</td></tr><tr class="kt"><td>Gerätepreis (+ ${fmt(z.l)} % / ${fmt(z.g)} %)</td><td class="n">${fmt(rd(t.L*(1+z.l/100))+rd(t.S*(1+z.g/100)))}</td></tr></tbody></table>
+  <div class="bar" style="margin:10px 0 0"><button class="s" data-act="gerauf" data-r="${R}" data-i="${i}">⇪ in die Geräteliste</button></div>${kbLoesch(R,'k6',i,'Gerät löschen')}`});
+// Zeilen von K5/K7 am Handy: Karte → Pop-up mit denselben Feldern wie die Tabelle
+const TEILN={L:'Lohn',M:'Material',G:'Gerät',F:'Fremdleistung',K5:'Komponente'};
+function teilKarte(kb,R,f,t,i,k3d){const nm=t.typ==='M'?kb?.k4.find(x=>x.id===t.ref)?.bez:t.typ==='G'?kb?.k6.find(x=>x.id===t.ref)?.bez:t.typ==='K5'?kb?.k5.find(x=>x.id===t.ref)?.bez:'',q=teilePreis(kb,teileCalc(kb,[t]),k3d);
+  return karte({t:esc(nm||t.bez||TEILN[t.typ]||''),s:TEILN[t.typ]||'',u:`${fmtQ(t.menge)} ${t.typ==='L'?'h':'×'}${t.anteil==='L'&&t.typ!=='L'?' · Anteil Lohn':''}`,z:`Kosten ${fmt(q.kost)} €`,b:fmt(kbRund(kb)(q.pL+q.pS))+' €',a:`onclick="ACT.lpop(this)" data-lp="kbteil" data-r="${R}" data-f="${f}" data-i="${i}"`})}
+LIVE.kbteil=el=>{const R=el.dataset.r,f=el.dataset.f,i=+el.dataset.i,[c,id]=R.split('|'),o0=ROOT[c]?.(id),t0=o0&&getP(o0,f)?.[i];if(!t0)return;
+  const d=livePop('Zeile bearbeiten',()=>{const o=ROOT[c](id),t=o&&getP(o,f)?.[i];if(t!==t0)return'<p class="mut">Nicht mehr vorhanden.</p>';
+    const kb=c==='kb'?o:lvKB(o),k3d=k3von(kb,getP(o,f.replace(/\.teile$/,''))?.k3Id),P=`${f}.${i}`,k4=kb?.k4||[],k6=kb?.k6||[],k5=kb?.k5||[],rd=kbRund(kb);
+    let ref='',k=+t.kosten||0,eig=true;
+    if(t.typ==='M'){ref=kbRefSel(R,P+'.ref',t.ref,[['','– frei –'],...k4.map(x=>[x.id,x.bez]),['§art','+ aus Artikelstamm …']]);const x=k4.find(y=>y.id===t.ref);if(x){k=k4kosten(x,kb);eig=false}}
+    if(t.typ==='G'){ref=kbRefSel(R,P+'.ref',t.ref,[['','– frei –'],...k6.map(x=>[x.id,x.bez]),...(gerL().length?[['§ger','+ aus Geräteliste …']]:[])]);const x=k6.find(y=>y.id===t.ref);if(x){k=k6kosten(x);eig=false}}
+    if(t.typ==='K5'){ref=fsel(R,P+'.ref',t.ref,[['','– wählen –'],...k5.map(x=>[x.id,x.bez])]);eig=false}
+    const q=teilePreis(kb,teileCalc(kb,[t]),k3d),st=t.typ==='G'?'g':t.typ==='F'?'f':k4.find(y=>y.id===t.ref)?.zs==='f'?'f':'m',gR=t.typ==='G'&&k6.some(y=>y.id===t.ref);
+    return`<div class="row"><label class="w05">Art${fsel(R,P+'.typ',t.typ,[['L','Lohn (h)'],['M','Material (K4)'],['G','Gerät (K6)'],['F','Fremdleistung'],...(/^k5\./.test(f)?[]:[['K5','Komponente (K5)']])])}</label>${ref?`<label class="w2">Bezug${ref}</label>`:''}</div>
+    <div class="row">${eig||t.typ==='L'?`<label class="w2">Bezeichnung${fi(R,P+'.bez',t.bez)}</label>`:''}<label class="w05">Menge${t.typ==='L'?' (h)':''}${fi(R,P+'.menge',t.menge,{n:1})}</label>${t.typ==='L'||t.typ==='K5'?'':`<label class="w05">Kosten/Einh.${eig?fi(R,P+'.kosten',t.kosten,{n:1}):`<input value="${fmt(k)}" disabled>`}</label>`}</div>
+    ${t.typ==='L'?`<div class="row"><label class="w2">Personalpreis (K3)${fsel(R,P+'.k3Id',t.k3Id||'',[['',`wie Position (${k3d?.name||'K3'})`],...(kb?.k3||[]).map(y=>[y.id,`${y.name} · ${fmt(k3calc(kb,y).mlp)} €/h`])])}</label></div>`
+      :t.typ==='K5'||gR?'':`<div class="row"><label class="w05">Anteil${fsel(R,P+'.anteil',t.anteil==='L'?'L':'',[['','Sonstiges'],['L','Lohn']])}</label><label class="w2">Zuschlag (K2)${fsel(R,P+'.sp',t.sp||'',teilSpOpts(kb,t,st))}</label></div>`}
+    <table class="k"><tbody><tr><td>Kosten</td><td class="n">${fmt(q.kost)} €</td></tr><tr class="kt"><td>Preis (Lohn ${fmt(rd(q.pL))} · Sonstiges ${fmt(rd(q.pS))})</td><td class="n">${fmt(rd(q.pL+q.pS))} €</td></tr></tbody></table>${kbLoesch(R,f,i,'Zeile löschen')}`},{verwerfen:t0,breit:true});d._gilt=()=>ROOT[c](id)===o0};
+// Einstellungen: Kollektivverträge und Geräteliste (am Handy Karten mit Pop-up)
+function kvForm(v,i,pop){const a=f=>`data-o="s" data-f="kvListe.${i}.${f}"`;
+  return`<div class="${pop?'':'kvb'}"><div class="row"><label class="w2">Kollektivvertrag<input ${a('bez')} value="${esc(v.bez||'')}" placeholder="z. B. Elektro- und Elektronikgewerbe"></label><label class="w05">gültig ab<input type="date" ${a('stand')} value="${esc(v.stand||'')}"></label><label class="w05">Kalk. WoA. (h/Woche)<input type="number" step="any" inputmode="decimal" ${a('wo')} value="${esc(v.wo??'')}"></label></div>
+  <table class="k kvg"><thead><tr><th>Beschäftigungsgruppe</th><th class="n">KV-Lohn €/h</th><th></th></tr></thead><tbody>${(v.gruppen||[]).map((g,j)=>`<tr><td><input ${a(`gruppen.${j}.bez`)} value="${esc(g.bez||'')}" placeholder="z. B. Gruppe D"></td><td><input type="number" step="any" inputmode="decimal" ${a(`gruppen.${j}.lohn`)} value="${esc(g.lohn??'')}"></td><td><button class="s d" data-act="kvgweg" data-i="${i}" data-j="${j}">✕</button></td></tr>`).join('')}</tbody></table>
+  <div class="bar" style="margin:6px 0 0"><button class="s" data-act="kvgneu" data-i="${i}">+ Gruppe</button><span class="sp"></span><button class="s d" data-i="${i}" ${pop?`onclick="kbWeg(this,'kvweg',kvL)"`:'data-act="kvweg"'}>Kollektivvertrag löschen</button></div></div>`}
+function gerForm(g,i){const a=f=>`data-o="s" data-f="geraete.${i}.${f}"`,n=(f,l)=>`<label class="w05">${l}<input type="number" step="any" inputmode="decimal" ${a(f)} value="${esc(g[f]??'')}"></label>`;
+  return`<div class="row"><label class="w2">Gerät${`<input ${a('bez')} value="${esc(g.bez||'')}">`}</label><label class="w05">EH<select ${a('einheit')}>${K6EH.map(e=>opt(e,e,g.einheit||'h')).join('')}</select></label></div><div class="row"><label class="w2">Preisquelle (ÖBGL-Nr.)<input ${a('quelle')} value="${esc(g.quelle||'')}"></label></div>
+  <div class="row">${n('av','AV €/EH')}${n('rep','Reparatur €/EH')}${n('betrieb','Andere €/EH')}${n('andL','Lohn (Bedienung) €/EH')}</div>
+  <div class="bar" style="margin:10px 0 0"><button class="d" data-i="${i}" onclick="kbWeg(this,'gerweg',gerL)">Gerät löschen</button></div>`}
+LIVE.kv=el=>{const i=+el.dataset.i,x=kvL()[i];if(x)livePop('Kollektivvertrag',()=>kvL()[i]!==x?'<p class="mut">Nicht mehr vorhanden.</p>':kvForm(x,i,1),{verwerfen:x,breit:true})};
+LIVE.ger=el=>{const i=+el.dataset.i,x=gerL()[i];if(x)livePop('Gerät',()=>gerL()[i]!==x?'<p class="mut">Nicht mehr vorhanden.</p>':gerForm(x,i),{verwerfen:x,breit:true})};
+function kbEinst(){if(!erw('kbVorlage'))return'';const L=kvL(),G=gerL(),H=kmpH(),a=(i,f)=>`data-o="s" data-f="geraete.${i}.${f}"`,ni=(i,g,f)=>`<input type="number" step="any" ${a(i,f)} value="${esc(g[f]??'')}" style="width:80px">`;
+  const kv=H?`<div class="kkl">${L.map((v,i)=>{const lo=(v.gruppen||[]).map(g=>+g.lohn||0);return karte({t:esc(kvName(v)),z:`${lo.length} Beschäftigungsgruppe(n)${+v.wo?` · ${fmtQ(v.wo)} h/Woche`:''}`,b:lo.length?`${fmt(Math.min(...lo))}–${fmt(Math.max(...lo))} €/h`:'',a:`onclick="ACT.lpop(this)" data-lp="kv" data-i="${i}"`})}).join('')}</div><button style="margin-top:8px" data-act="kvneu">+ Kollektivvertrag</button>`
+    :`<div class="card"><h2>Kollektivverträge (K3)</h2><p class="mut" style="margin-top:0">Beschäftigungsgruppen mit KV-Lohn je Stunde. Im K3-Blatt werden Kollektivvertrag und Gruppe ausgewählt, der Lohn wird übernommen; neue Löhne hier eintragen und im K3-Blatt „Löhne laut KV-Liste übernehmen“.</p>${L.map((v,i)=>kvForm(v,i)).join('')}<button style="margin-top:8px" data-act="kvneu">+ Kollektivvertrag</button></div>`;
+  const ger=H?`<div class="kkl">${G.map((g,i)=>karte({t:esc(g.bez||'Gerät'),s:esc(g.einheit||''),u:esc(g.quelle||''),b:'Kosten '+fmt(k6kosten(g)),a:`onclick="ACT.lpop(this)" data-lp="ger" data-i="${i}"`})).join('')}</div><button style="margin-top:8px" data-act="gerneu">+ Gerät</button>`
+    :`<div class="card"><h2>Geräteliste (K6)</h2><p class="mut" style="margin-top:0">Geräte mit Kosten je Einheit (z. B. nach ÖBGL) zur Auswahl im K6-Blatt und in den Zeilen von K5/K7; aus einem K6-Blatt mit ⇪ übernehmen.</p><div style="overflow-x:auto"><table class="k kbg"><thead><tr><th>Gerät</th><th>Preisquelle (ÖBGL-Nr.)</th><th>EH</th><th class="n">AV €/EH</th><th class="n">Rep. €/EH</th><th class="n">Andere €/EH</th><th class="n">Lohn €/EH</th><th class="n">Kosten</th><th></th></tr></thead><tbody>
+    ${G.map((g,i)=>`<tr><td><input ${a(i,'bez')} value="${esc(g.bez||'')}" style="width:200px"></td><td><input ${a(i,'quelle')} value="${esc(g.quelle||'')}" style="width:140px"></td><td><select ${a(i,'einheit')}>${K6EH.map(e=>opt(e,e,g.einheit||'h')).join('')}</select></td><td>${ni(i,g,'av')}</td><td>${ni(i,g,'rep')}</td><td>${ni(i,g,'betrieb')}</td><td>${ni(i,g,'andL')}</td><td class="n">${fmt(k6kosten(g))}</td><td><button class="s d" data-act="gerweg" data-i="${i}">✕</button></td></tr>`).join('')||'<tr><td colspan="9" class="mut">Noch keine Geräte.</td></tr>'}</tbody></table></div><button style="margin-top:8px" data-act="gerneu">+ Gerät</button></div>`;
+  return akk('e-kv','Kollektivverträge (K-Blätter)',kv,{zusatz:L.length?esc(L.map(v=>v.bez).join(', ')):'keine'})+akk('e-ger','Geräteliste (K-Blätter)',ger,{zusatz:G.length+' Gerät(e)'})}
+const ACT_KBW={
+  k4stamm:el=>{const kb=ROOT.kb(el.dataset.r.split('|')[1]);if(kb)k4AusStamm(kb).then(n=>{if(n?.length)persist();render()})},
+  k6liste:el=>{const kb=ROOT.kb(el.dataset.r.split('|')[1]);if(kb)k6AusListe(kb).then(n=>{if(n?.length)persist();render()})},
+  gerauf:el=>{const kb=ROOT.kb(el.dataset.r.split('|')[1]),g=kb?.k6?.[+el.dataset.i];if(!g)return;const L=(S().geraete??=[]),x=L.find(y=>y.id===g.gerId);
+    if(x&&!confirm(`„${x.bez||'Gerät'}“ in der Geräteliste mit den Werten dieser Zeile überschreiben?`))return;const n=x||{id:uid()};for(const f of K6F)if(g[f]!=null&&g[f]!=='')n[f]=g[f];if(!x)L.push(n);g.gerId=n.id;log('Geräteliste',n.bez||'Gerät');persist();render()},
+  k3kvl:el=>{const kb=ROOT.kb(el.dataset.r.split('|')[1]),c=kb?.k3?.[+el.dataset.ci],K=kvVon(c?.kvId);if(!K)return;for(const y of c.arbeiter||[]){const g=(K.gruppen||[]).find(x=>x.bez===y.bez);if(g)y.lohn=+g.lohn||0}persist();render()},
+  kvneu:()=>{(S().kvListe??=[]).push({id:uid(),bez:'',stand:isoD().slice(0,4)+'-01-01',gruppen:[{bez:'',lohn:0}]});persist();render();if(kmpH())LIVE.kv({dataset:{i:kvL().length-1}})},
+  kvweg:el=>{if(!confirm('Kollektivvertrag aus der Liste löschen? K3-Blätter behalten ihre Werte.'))return;kvL().splice(+el.dataset.i,1);persist();render()},
+  kvgneu:el=>{const v=kvL()[+el.dataset.i];if(!v)return;(v.gruppen??=[]).push({bez:'',lohn:0});persist();render()},
+  kvgweg:el=>{kvL()[+el.dataset.i]?.gruppen?.splice(+el.dataset.j,1);persist();render()},
+  gerneu:()=>{(S().geraete??=[]).push({id:uid(),bez:'',quelle:'',einheit:'h',av:0,rep:0,betrieb:0});persist();render();if(kmpH())LIVE.ger({dataset:{i:gerL().length-1}})},
+  gerweg:el=>{if(!confirm('Gerät aus der Liste löschen? K6-Blätter behalten ihre Werte.'))return;gerL().splice(+el.dataset.i,1);persist();render()},
+};
 
 /* --- Textbausteine --- */
 V.lvbib=()=>{
@@ -3512,8 +3637,9 @@ const ACT_LV=({
   kbneu:el=>{const kb=neueKB(el.dataset.a==='bieter'?{art:'bieter',name:'Prüfung Bieter',bieter:''}:{});DB.kalk.push(kb);persist();go('kbs/'+kb.id)},
   kbtab:el=>{UI.kbTab=el.dataset.t;render()},
   k3ev:el=>{const kb=ROOT.kb(el.dataset.r.split('|')[1]),c=kb?.k3?.[+el.dataset.ci];if(!c)return;k3zSet(c,'E',+el.dataset.v);persist();render()}, // K3: Vorschlag „Aufzahlung für Mehrarbeit“ (P34)
+  ...ACT_KBW,
   kbdel:el=>{if(DB.lv.some(l=>l.kbId===el.dataset.id)){alert('Basis wird in einem LV verwendet.');return}if(!confirm('K-Blätter löschen?'))return;DB.kalk=DB.kalk.filter(x=>x.id!==el.dataset.id);persist();go('kbs')},
-  kbdup:el=>{const s=ROOT.kb(el.dataset.id),c=JSON.parse(JSON.stringify(s));c.id=uid();c.name=s.name+' (Kopie)';for(const x of c.k3)x.id=uid();DB.kalk.push(c);persist();go('kbs/'+c.id)},
+  kbdup:el=>{const s=ROOT.kb(el.dataset.id),c=JSON.parse(JSON.stringify(s)),m={};c.id=uid();c.name=s.name+' (Kopie)';for(const x of c.k3)x.id=m[x.id]=uid();const um=o=>{if(o&&typeof o==='object')for(const k in o)if(k==='k3Id'&&m[o[k]])o[k]=m[o[k]];else um(o[k])};um(c.k5);DB.kalk.push(c);persist();go('kbs/'+c.id)}, // K3-Verweise in K5 auf die Kopie (P34)
   kbdruck:el=>{const kb=ROOT.kb(el.dataset.id);druckHTML(kbDocHTML(kb),'K-Blaetter '+kb.name)},
   k4art:el=>{const kb=ROOT[el.dataset.r.split('|')[0]](el.dataset.r.split('|')[1]);const nr=prompt('Artikel-Nr. (mehrere mit Komma) oder * für alle Waren:','*');if(!nr)return;
     const L=nr.trim()==='*'?DB.artikel.filter(a=>a.art!=='L'&&a.aktiv!==false):nr.split(',').map(x=>DB.artikel.find(a=>a.nr===x.trim())).filter(Boolean);
@@ -4144,6 +4270,7 @@ V.einstellungen=()=>{
   ${akk('e-tf','Stundentarife',kmpH()?tfKarten():`<div class="card"><h2>Stundentarife</h2><table><thead><tr><th>Kürzel</th><th>Bezeichnung</th><th>Kostensatz €/h (intern)</th><th>Verkauf €/h</th>${erw('dbStd')?'<th class="n" title="Verkauf ÷ Kostensatz − 1">Aufschlag</th><th class="n" title="Verkauf − Kostensatz">DB/Std</th>':''}<th title="Stunden dieses Tarifs zählen im Lohnkostennachweis (Fahrtzeit standardmäßig nicht)">Lohnnachweis</th><th></th></tr></thead><tbody>
   ${s.tarife.map((x,i)=>`<tr${erw('dbStd')?' oninput="tfDbZeile(this)"':''}><td style="width:100px"><input data-o="tf" data-i="${i}" data-f="kz" value="${esc(x.kz)}"></td><td><input data-o="tf" data-i="${i}" data-f="bez" value="${esc(x.bez)}"></td><td><input type="number" step="any" data-o="tf" data-i="${i}" data-f="kosten" value="${x.kosten}"></td><td><input type="number" step="any" data-o="tf" data-i="${i}" data-f="vk" value="${x.vk}"></td>${erw('dbStd')?tfDb(x):''}<td style="width:90px;text-align:center"><input type="checkbox" data-o="tf" data-i="${i}" data-f="lohnNw" ${tfLnw(x)?'checked':''}></td><td><button class="s d" data-act="tfdel" data-i="${i}">✕</button></td></tr>`).join('')}
   </tbody></table><button style="margin-top:8px" data-act="tfadd">+ Tarif</button></div>`,{zusatz:esc(s.tarife.map(x=>x.kz).join(', '))})}
+  ${kbEinst()}
   ${akk('e-nk','Nummernkreise &amp; Texte',kmp()?nkK():`<div class="card"><h2>Nummernkreise ${j}</h2><p class="mut" style="margin-top:0">Format PRÄFIX-JAHR-0001. „Letzte Nummer“ nur bei Umstieg setzen (z. B. letzte Rechnungsnummer aus Excel).</p><div class="bar" style="margin:0 0 6px">${phKnopf()}<span class="mut" style="font-size:13px">in Kopf- und Fußtext, z. B. {Anrede}, {Kunde}, {Nr} – ersetzt bei der Ausgabe</span></div><table><thead><tr><th>Beleg</th><th>Präfix</th><th>Letzte Nummer ${j}</th><th>Kopftext</th><th>Fußtext</th></tr></thead><tbody>
   ${Object.keys(T).map(t=>`<tr><td>${T[t].bez}</td><td style="width:80px"><input data-o="nk" data-t="${t}" data-f="prefix" value="${esc(s.nk[t].prefix)}"></td><td style="width:90px"><input type="number" data-o="nk" data-t="${t}" data-f="z" value="${s.nk[t].zaehler[j]||0}"></td><td><textarea data-o="tx" data-t="${t}" data-f="kopf">${esc(s.texte[t].kopf)}</textarea></td><td><textarea data-o="tx" data-t="${t}" data-f="fuss">${esc(s.texte[t].fuss)}</textarea></td></tr>`).join('')}
   </tbody></table></div>`,{zusatz:`Format PRÄFIX-${j}-0001`})}
@@ -5495,6 +5622,7 @@ document.addEventListener('change',e=>{
     case'lbsel':{const s=UI.lbSel||(UI.lbSel=[]),i=s.indexOf(d.k);if(el.checked&&i<0)s.push(d.k);if(!el.checked&&i>=0)s.splice(i,1);const z=document.querySelector('.lbsel b');if(z)z.textContent=s.length;const bt=document.querySelector('[data-act=lbins]');if(bt)bt.disabled=!(s.length&&UI.lbZiel);return}
     case'path':{const[c,id]=d.r.split('|'),o=ROOT[c](id);if(!o)return;if(c==='lv')lvBieterPreisInit(o,d.f);setP(o,d.f,d.t==='n'?num(v):d.t==='nl'?(String(v).trim()===''?'':num(v)):el.type==='checkbox'?el.checked:v);persist();renderErhalten();return} // nl = Zahl, leer erlaubt (leer = Vorgabe, P34)
     case'k3z':{const kb=ROOT.kb(d.r.split('|')[1]),c=kb?.k3?.[+d.ci];if(!c)return;k3zSet(c,d.z,num(v));persist();renderErhalten();return} // K3-Zeile B–G bzw. I–L nach Kennbuchstabe (P34)
+    case'k3kv':case'k3gr':case'kbref':kbWahlSet(d,v);return; // Auswahlfelder der K-Blätter (P34 Teil 2)
     case'k':{const k=kontakt(d.id);
       if(d.f==='nr'){const n=String(nv).trim();if(!n||DB.kontakte.some(x=>x!==k&&x.nr===n)){alert(n?`Nummer ${n} ist bereits vergeben.`:'Nummer darf nicht leer sein.');render();return}
         log('Kontakt-Nr. geändert',`${k.nr} → ${n} ${k.name}`);k.nr=n;const t=k.typ==='L'?'L':'K';if(/^\d+$/.test(n)&&+n>(S().knr[t]||0)&&+n<(S().knr[t]||0)+100000)S().knr[t]=+n;persist();render();return}

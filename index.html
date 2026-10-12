@@ -185,6 +185,16 @@ body.kompakt td .nw{white-space:nowrap}
 .sp{flex:1}
 .cols{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
 @media(max-width:1100px){.cols{grid-template-columns:1fr}}
+/* Gliederung (P18): Karte, Spalte links neben dem Blatt, Pop-up; Sprungziel leuchtet kurz auf */
+.gl{font-size:13px;line-height:1.35}.gl .glk{font-size:12px;margin:0 0 4px}.gl details>summary{list-style:none;display:flex;align-items:center;gap:2px;cursor:pointer;font-size:inherit;margin:0}.gl .tag{font-size:10px;padding:0 4px;flex:none}.glsp .gl .glb{display:none}.gl details>summary::-webkit-details-marker{display:none}
+.gl details>summary::before{content:'▸';color:var(--mut);width:14px;flex:none}.gl details[open]>summary::before{content:'▾'}.gl details>.glz{margin-left:14px}
+.gl .glz{display:flex;align-items:baseline;gap:6px;padding:3px 4px;border-radius:5px;color:inherit;text-decoration:none;min-width:0;flex:1}.gl a.glz:hover{background:#eef2f8}.gl .glh{font-weight:600}
+.gl .gln{color:var(--mut);min-width:30px;font-variant-numeric:tabular-nums;font-weight:400}.gl .glt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gl .gls{white-space:nowrap;font-variant-numeric:tabular-nums}
+.gl .glb{display:flex;gap:2px;flex:none}.gl .glb button{padding:1px 6px;min-height:0}.glc .gl{max-height:45vh;overflow:auto}
+.glw{display:grid;grid-template-columns:210px minmax(0,1fr);gap:12px;align-items:start}.glsp{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto;padding:10px}.glsp h2{font-size:15px;margin:0 0 6px}
+@media(max-width:1299px){.glw{grid-template-columns:minmax(0,1fr)}.glsp{position:static;max-height:32vh}}
+.blink,.blink>td{animation:glblink 1.8s ease-out}@keyframes glblink{0%,45%{background:#fff1a8}100%{background:transparent}}
+body.kompakt .modal .gl .glz{min-height:40px;align-items:center}body.kompakt .modal .gl .glb button{min-width:40px;min-height:40px}.aktl .glbt{min-width:44px;min-height:40px;font-size:20px;padding:0 8px}
 table.pos td{padding:3px 3px;border-bottom:1px solid #eef0f3}
 table.pos input,table.pos select,table.pos textarea{padding:3px 5px;font-size:13px}
 table.pos textarea{min-height:26px;height:26px;margin-top:2px}
@@ -563,6 +573,7 @@ const ERW=[
   {k:'druckprofil',std:true,p:'Druckprofil (P1)',l:'Druckprofil je Belegart',info:'Darstellungsoptionen für Vorschau, Druck, PDF und E-Mail je Belegart (unten unter „Druck & Belegdarstellung“) und je Beleg über „Druckoptionen …“ (dort nur Abweichungen). Beim Festschreiben wird die Darstellung im Beleg eingefroren, ein Nachdruck sieht wie das Original aus; „Bearbeiten“ hebt das wieder auf. Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG). Aus: Entwürfe im Standard-Aussehen, festgeschriebene Belege weiter mit ihrem eingefrorenen Stand; alle Einstellungen bleiben gespeichert. Die Vorgaben entsprechen dem bisherigen Aussehen.'},
   {k:'statuszeile',std:true,p:'Navigation (P19)',l:'Statuszeile unter dem Belegtitel',info:'Zeigt unter dem Titel eines Belegs den Pfad „Verkauf › Angebote“ (anklickbar, führt zur gefilterten Liste), das Belegdatum, den Kunden bzw. Lieferanten, den Nettobetrag (läuft bei Änderungen mit) und wann der Beleg angelegt bzw. festgeschrieben wurde (mit Uhrzeit). Reine Anzeige, daher Standard ein.'},
   {k:'kopfFix',std:false,p:'Navigation (P19)',l:'Statuszeile beim Scrollen oben festhalten',info:'Die Statuszeile bleibt mit Nummer und Status beim Scrollen am oberen Rand stehen (am Handy unter der Kopfzeile). Standard aus, weil sie am Handy eine Zeile Platz kostet. Wirkt nur mit eingeschalteter Statuszeile.'},
+  {k:'gliederung',std:true,p:'Gliederung (P18)',l:'Gliederung (Dokumentenübersicht) im Beleg',info:'Bei Belegen mit Gruppen oder mehr als 15 Positionen: Übersicht der Gruppen mit Nummer, Bezeichnung, Summe und Option/Alternative, darunter die Positionen mit Gesamtpreis; ein Klick springt zur Zeile in der Eingabe bzw. im Blatt der Vorschau und lässt sie kurz aufleuchten. Am Bildschirm als Karte rechts (Eingabe, Beides) bzw. als schmale Spalte links neben dem Blatt (Vorschau), am Handy über ≡ in der Leiste unten bzw. „Gliederung …“ im ⋯-Menü als Pop-up. Im Entwurf lässt sich eine ganze Gruppe mit ↑ ↓ verschieben, „+“ legt eine Position am Ende der Gruppe an. Gruppen sind auf- und zuklappbar (ab 30 Positionen anfangs zu; das Gerät merkt sich den Zustand). Reine Bedienhilfe, Belege und Ausdruck bleiben gleich (PDF-Lesezeichen wahlweise im Druckprofil). Aus: keine Übersicht.'},
   {k:'kompakt',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht (Handy und Bildschirm)',info:'Weniger Bedienelemente auf einmal: Seltenes liegt in Menüs (⋯, „+ Neu ▾“) und Pop-ups, Listen erscheinen am Handy als Karten, Filter in einem Pop-up, lange Abschnitte (z. B. Einstellungen) zum Auf- und Zuklappen, Erklärtexte hinter ⓘ. Dialoge öffnen am Handy als Blatt von unten, Titel und Knöpfe bleiben beim Scrollen sichtbar; Knöpfe und Felder sind am Handy und auf Tablets mindestens 40 px hoch. Welche Abschnitte offen sind, merkt sich das Gerät. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Entscheidung des Anwenders (09.10.2026), daher Standard ein. Aus: bisherige Darstellung.'},
   {k:'zuschlag',std:false,p:'Zuschlag je Position (P4)',l:'Rabattspalte im Editor als „Rabatt/Zuschlag“',info:'Ein für den Kunden sichtbarer Zuschlag je Position (z. B. Erschwernis, Kleinmenge, Nachtarbeit) wird als negativer Rabatt erfasst: −10 = 10 % Zuschlag. Summen, Folgebelege und Auswertungen rechnen damit unverändert. Mit diesem Schalter heißt die Spalte im Beleg-Editor „Rabatt/Zuschlag %“ mit diesem Hinweis, die Positionskarte zeigt „+ 10 % Zuschlag“. Wie Zuschläge gedruckt werden (negativ in der Rabattspalte, als „+10 %“ oder als Textzeile), legt das Druckprofil fest (Positionsdarstellung). Aus: Bezeichnung „Rabatt“ wie bisher.'},
   {k:'kompaktBeleg',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht im Beleg-Editor',info:'Wirkt nur mit eingeschalteter kompakter Ansicht. Im Beleg stehen oben nur Eingabe | Vorschau, die Hauptaktion (z. B. Festschreiben, Zahlung erfassen, → Rechnung) und ⋯ mit allen weiteren Belegaktionen (PDF, Senden, Folgebeleg, Duplizieren, Revision, Löschen bzw. Stornieren …); Kopfdaten, Positionen und Zahlungen werden in Pop-ups bearbeitet, am Handy erscheinen die Positionen als Karten und Summe und Hauptaktion in einer Leiste am unteren Rand. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Aus: Beleg-Editor wie bisher (übrige kompakte Ansicht bleibt).'},
@@ -1752,7 +1763,7 @@ V.beleg=id=>{
     ${b.storno?'':`<button class="d" data-act="storno">${b.fest?'Stornieren':'Löschen'}</button>`}
   </div>${belegStatus(b)}${b.status==='ersetzt'?`<div class="hint">Dieses Angebot wurde durch eine Revision ersetzt.</div>`:''}`;
   const dk=b.fest||kmpBH()?'':dKnopf(b,'Druckformat …');
-  const blatt=`${dk?`<div class="bar" style="margin:0 0 6px;justify-content:flex-end">${dk}</div>`:''}<div class="blatt" id="vorschau">${docHTML(b,vEdit())}</div>${b.fest||!vEdit()?'':'<p class="mut" style="font-size:12px;margin:-6px 0 14px">Gestrichelte Felder direkt im Blatt bearbeiten – Änderungen werden in die Eingabefelder übernommen.</p>'}`;
+  const blatt=`${dk?`<div class="bar" style="margin:0 0 6px;justify-content:flex-end">${dk}</div>`:''}<div class="blatt" id="vorschau">${docHTML(b,vEdit(),glO(b))}</div>${b.fest||!vEdit()?'':'<p class="mut" style="font-size:12px;margin:-6px 0 14px">Gestrichelte Felder direkt im Blatt bearbeiten – Änderungen werden in die Eingabefelder übernommen.</p>'}`;
   const formHTML=`
   ${kmpB()?(b.fest?kopfLese(b):kopfK(b)):kopfFelder(b)}
   ${kmpB()&&b.fest&&!HANDY.matches?posLeseK(b):posK(b)?posKartenK(b):`<div class="card" style="padding:8px;overflow-x:auto">
@@ -1766,7 +1777,7 @@ V.beleg=id=>{
   </div>`}`;
   const extra=`${t.re&&b.fest&&!b.storno&&!(b.typ==='GS'&&beleg(b.vorgaengerId))&&!kmpB()?zahlBox(b):''}
   ${kmpB()&&ans!=='beides'?'':anhKarte(b)}`;
-  const side=`${ohneP||kmpBH()?'':`<div class="card"><h2>Summen</h2><div id="sumbox">${sumBox(b)}</div></div>`}
+  const side=`${glKarte(b,ans)}${ohneP||kmpBH()?'':`<div class="card"><h2>Summen</h2><div id="sumbox">${sumBox(b)}</div></div>`}
     ${V_&&!ohneP&&b.typ!=='GS'&&!kmpBH()?`<div class="card"><h2>Kalkulation DB II</h2><div id="kalkbox">${kalkBox(b)}</div></div>`:''}
     ${b.typ==='AN'?revHistorie(b):''}
     <div class="card"><h2>Belegkette${b.auftragId&&V_?` · <a href="#/auftrag/${b.auftragId}">Auftrag</a>`:''}</h2><div class="chain">${kette.map(x=>`<a href="#/beleg/${x.id}" class="${x.id===b.id?'cur':''}">${T[x.typ].bez} ${esc(bNr(x))} · ${dAT(x.datum)} ${x.storno?'(storniert)':x.status==='ersetzt'?'(ersetzt)':''}</a>`).join('')}</div></div>
@@ -1774,7 +1785,7 @@ V.beleg=id=>{
     ${k?`<div class="card"><h2>${V_?'Kunde':'Lieferant'}</h2><div>${esc(k.nr)} · <a href="#/kontakt/${k.id}">${esc(k.name)}</a><br>${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.uid?'<br>UID '+esc(k.uid):''}${!V_&&k.kdNrLief?'<br>Unsere Kunden-Nr. '+esc(k.kdNrLief):''}</div></div>`:''}`;
   if(ans==='beides')return`${kopfbar}${scan}<div class="split"><div>${formHTML}${side}${extra}</div><div class="sticky">${blatt}</div></div>`;
   const sideK=kmpB()?belegSeiteK(b,side,kette):side,bc=kmpB()?' bcol':''; // kompakt (P30): Beleg-Info am Handy als Akkordeon, Anhänge am Bildschirm rechts (in „Beides“ links wie bisher)
-  if(ans==='vorschau')return`${kopfbar}${scan}<div class="cols${bc}"><div>${blatt}${extra}</div><div>${sideK}</div></div>`;
+  if(ans==='vorschau')return`${kopfbar}${scan}<div class="cols${bc}"><div>${glVorschau(b,blatt)}${extra}</div><div>${sideK}</div></div>`;
   return`${kopfbar}${scan}<div class="cols${bc}"><div>${formHTML}${extra}</div><div>${sideK}</div></div>`;
 };
 /* Statuszeile im Beleg (P19 c, erw.statuszeile): Bereich › Belegart (Klick → Liste), Belegdatum, Kontakt, Netto (#kopfsum), angelegt bzw. festgeschrieben mit Uhrzeit;
@@ -1830,6 +1841,7 @@ MENUE.beleg=()=>{const b=curBeleg();if(!b)return[];const t=T[b.typ],H=HANDY.matc
   const L=[H&&h.act!=='druck'&&{l:'PDF / Drucken',ic:'🖨',act:'druck'},{l:'PDF speichern',ic:'⤓',act:'pdfdl',titel:'PDF-Datei speichern'},{l:'Senden …',ic:'✉',act:'senden',titel:'Als PDF per E-Mail versenden'},{trenn:1},
     H&&zuRE(b)&&h.act!=='folgere'&&{l:'→ Rechnung',ic:BICON.RE,act:'folgere',titel:vf},fo&&{l:'Folgebeleg',ic:'➜',sub:t.folge.map(f=>({l:T[f].bez,ic:BICON[f],act:'folge',value:f,titel:vf}))},
     b.typ==='LS'&&!b.storno&&{l:'Sammelrechnung …',ic:'🧾',act:'sammelre'},{trenn:1},
+    glZeigen(b)&&{l:'Gliederung …',ic:'≡',act:'glpop',titel:'Gruppen und Positionen im Überblick – Sprung zur Stelle'},
     !b.fest&&{l:'Spalten & Druck …',ic:'☰',act:'lpop',d:{lp:'spalten'},titel:'Rabatt, Lohn / Sonstiges, Langtext drucken, Druckoptionen'},{l:'Duplizieren',ic:'⧉',act:'dup'},
     anF&&{l:'Neue Revision bearbeiten',ic:'✎',act:'anrev',titel:'Erstellt eine neue Revision zum Bearbeiten – dieser Stand bleibt unverändert gespeichert'},anF&&{l:'Folgeangebot',ic:BICON.AN,act:'anfolge'},
     anF&&{l:b.status==='abgelehnt'?'wieder offen':'abgelehnt',ic:b.status==='abgelehnt'?'↺':'✗',act:'anst',d:{v:b.status==='abgelehnt'?'':'abgelehnt'}},
@@ -2381,7 +2393,7 @@ function updateCalc(b){
   const st=$('.bstat');if(st)st.outerHTML=belegStatus(b); // Statuszeile (P19 c): Datum, Netto
   const nd=document.querySelector('[data-nd]')&&ndSet(b);if(nd)document.querySelectorAll('[data-nd]').forEach(e=>e.classList.toggle('nd',nd.has(b.pos[+e.dataset.nd]?.id))); // Menge 0 wird nicht gedruckt (P3)
   const a=$('#aktsum');if(a)a.textContent=fmt(summen(b).netto)+' €'; // Aktionsleiste (kompakt, P30)
-  const v=$('#vorschau');if(v){v.innerHTML=docHTML(b,vEdit());vorschauSeiten()}
+  const v=$('#vorschau');if(v){v.innerHTML=docHTML(b,vEdit(),glO(b));vorschauSeiten()}
 }
 function curBeleg(){const h=location.hash.replace(/^#\/?/,'').split('/');return h[0]==='beleg'?beleg(h[1]):null}
 /* Kompakt (P30 U8): Aktionsleiste am Handy (aktLeiste: links Netto #aktsum → ACT.sumpop = sumBox und kalkBox im Pop-up; rechts „+ Position ▾“, „💶 Zahlung“ bzw. „PDF“), Beleg-Info
@@ -2397,7 +2409,7 @@ function belegSeiteK(b,side,kette){const n=(b.anhaenge||[]).length,v=(b.versand|
   return akk('b-info','Beleg-Info',anhKarte(b)+side,{offen:b.typ==='ER',zusatz:[n?`${n} Anhang${n>1?'e':''}`:'keine Anhänge',kette.length>1?`Belegkette ${kette.length}`:'',v?`${v}× versendet`:''].filter(Boolean).join(' · ')})}
 function aktLeiste(b){if(!kmpBH())return'';const n=b.pos.filter(p=>!isInfo(p)).length;
   return`<div class="aktl">${OHNE_PREIS.includes(b.typ)?`<span class="aks mut">${n} Position${n===1?'':'en'}</span>`:`<button class="aks" data-act="sumpop" title="Summen und Kalkulation"><span class="mut">netto</span> <b id="aktsum">${fmt(summen(b).netto)} €</b> <span class="mut">Σ</span></button>`}<span class="sp"></span>
-    ${!b.fest?'<button class="p" data-act="menue" data-m="pneu">+ Position ▾</button>':zahlOffen(b)?'<button class="p" data-act="zpop">💶 Zahlung</button>':'<button class="p" data-act="druck">PDF</button>'}</div>`}
+    ${glZeigen(b)?'<button class="glbt" data-act="glpop" title="Gliederung: Gruppen und Positionen" aria-label="Gliederung">≡</button>':''}${!b.fest?'<button class="p" data-act="menue" data-m="pneu">+ Position ▾</button>':zahlOffen(b)?'<button class="p" data-act="zpop">💶 Zahlung</button>':'<button class="p" data-act="druck">PDF</button>'}</div>`}
 function sumPop(b){if(!b||OHNE_PREIS.includes(b.typ))return;const V_=T[b.typ].b==='V';
   anBeleg(livePop('Summen',()=>`${sumBox(b)}${V_&&b.typ!=='GS'?`<h3 style="font-size:14px;margin:14px 0 6px">Kalkulation DB II</h3>${kalkBox(b)}`:''}`),b)}
 
@@ -2463,6 +2475,35 @@ function posPopup(b,i){const p=b.pos[i];if(!p||b.fest)return null;let d=null;
   const fi=e=>{if(!d.isConnected){document.removeEventListener('focusin',fi);return}const t=e.target;if(t.closest?.('#main')&&t.dataset?.p!=null){const x=d.querySelector(`[data-p="${t.dataset.p}"][data-f="${t.dataset.f}"]`);if(x){x.focus();x.select?.()}}};
   document.addEventListener('focusin',fi); // renderFocus() nach der Artikelwahl: Fokus ins Pop-up statt in die Zeile dahinter
   return d}
+
+/* Gliederung / Dokumentenübersicht (P18, erw.gliederung): nur bei Belegen mit Gruppen oder mehr als 15 Positionen. gliederung(b) = Gruppen (Nr., Bezeichnung, Kennzeichen, Summe) als
+   <details data-akk="gl-<id>"> (Zustand je Gerät in erp-akk wie akk(), ab 30 Positionen anfangs zu), darunter die Positionen; Positionen vor der ersten Gruppe oben. Klick (ACT.spring) → glSpring(i):
+   Zeile i in der Eingabe (table.pos: eine Zeile je Position; Karten .pkl in der Reihenfolge der Positionen) und im Blatt (#vorschau [data-pi], docHTML o.gl = glO(b)), kurz markiert (.blink).
+   Entwurf: ganze Gruppe ↑ ↓ (glSchieben, Gruppen nur untereinander), „+“ = neue Position am Ende der Gruppe (glNeu). Platz: glKarte() (Eingabe/Beides am Bildschirm), glVorschau() (Spalte links
+   neben dem Blatt), glPop() (Pop-up: Handy über ≡ in der Aktionsleiste, überall über „Gliederung …“ im ⋯-Menü). Nur Bedienhilfe – Belege, Druck und PDF bleiben gleich */
+const glZeigen=b=>!!b&&erw('gliederung')&&(b.pos.some(p=>p.art==='G')||b.pos.filter(p=>!isInfo(p)).length>15);
+const glO=b=>glZeigen(b)?{gl:1}:{};
+function gliederung(b){const gi=gruppenInfo(b),pnr=posNummern(b),ohneP=OHNE_PREIS.includes(b.typ),ed=!b.fest,n=b.pos.filter(p=>!isInfo(p)).length,z=akkZ(),G=b.pos.filter(p=>p.art==='G');
+  const kzT=k=>k==='OPT'?tag('Option','warn'):k==='ALT'?tag('Altern.','warn'):'',gp=p=>{const g=gi.grp[p.id],t=fmt(posGP(p));return g&&+g.pauschal>0?`(${t})`:t};
+  const zl=(p,i,c='')=>`<a class="glz${c}" href="javascript:void 0" data-act="spring" data-i="${i}" title="${esc(p.bez||'')}"><span class="gln">${pnr[p.id]||''}</span><span class="glt">${esc(p.bez)||'<i class="mut">ohne Bezeichnung</i>'}</span>${kzT(p.kz)}${ohneP?'':`<span class="gls">${p.art==='G'?fmt(gruppePreis(p,gi)):gp(p)}</span>`}</a>`;
+  let o='',g=null,gi_=-1,inn='';
+  const zu=()=>{if(!g){o+=inn;inn='';return}const id='gl-'+g.id,std=n<=30,auf=id in z?!!z[id]:std,k=G.indexOf(g);
+    o+=`<details class="glg" data-akk="${esc(id)}" data-std="${std?1:0}" data-auf="${auf?1:0}"${auf?' open':''}><summary>${zl(g,gi_,' glh')}${ed?`<span class="glb"><button class="s" data-act="glhoch" data-i="${gi_}" title="Gruppe samt Positionen nach oben"${k>0?'':' disabled'}>↑</button><button class="s" data-act="glrunter" data-i="${gi_}" title="Gruppe samt Positionen nach unten"${k<G.length-1?'':' disabled'}>↓</button><button class="s" data-act="glneu" data-i="${gi_}" title="Neue Position am Ende dieser Gruppe">+</button></span>`:''}</summary>${inn||'<div class="glz mut">keine Positionen</div>'}</details>`;inn=''};
+  b.pos.forEach((p,i)=>{if(p.art==='G'){zu();g=p;gi_=i;return}if(p.art!=='T')inn+=zl(p,i)});zu();
+  return`<div class="gl"><div class="glk mut">${G.length?`${G.length} Gruppe${G.length>1?'n':''} · `:''}${n} Position${n===1?'':'en'}</div>${o}</div>`}
+const glKarte=(b,ans)=>glZeigen(b)&&!kmpBH()&&ans!=='vorschau'?`<div class="card glc"><h2>Gliederung</h2>${gliederung(b)}</div>`:'';
+const glVorschau=(b,blatt)=>glZeigen(b)&&!HANDY.matches?`<div class="glw"><aside class="card glsp"><h2>Gliederung</h2>${gliederung(b)}</aside><div class="glbl">${blatt}</div></div>`:blatt;
+function glPop(b){if(!glZeigen(b))return;anBeleg(livePop(`Gliederung – ${esc(T[b.typ].bez)} ${esc(bNr(b))}`,()=>gliederung(b)),b)}
+function glSpring(i){const b=curBeleg(),m=$('#main');if(!b||!m)return;document.querySelectorAll('.modal.live').forEach(d=>{if(d.querySelector('.gl'))d._weg?.()}); // Pop-up „Gliederung“ schließt
+  const tb=m.querySelector('table.pos>tbody'),kk=[...m.querySelectorAll('.pkl .kkf,.pkl details.akk')];
+  let t=tb&&!tb.closest('#vorschau')?tb.children[i]:kk.length?kk[i]:null;if(t?.matches('details'))t=t.querySelector('summary');
+  for(const x of [m.querySelector(`#vorschau [data-pi="${i}"]`),t]){if(!x)continue;const d=x.closest('details:not([open])');if(d)d.open=true;x.scrollIntoView({block:'center'});x.classList.remove('blink');void x.offsetWidth;x.classList.add('blink');setTimeout(()=>x.classList.remove('blink'),1800)}}
+function glSchieben(i,d){const b=curBeleg();if(!b||b.fest||b.pos[i]?.art!=='G')return;const vor=[],bl=[];let c=null;
+  for(const p of b.pos){if(p.art==='G'){c=[p];bl.push(c)}else if(c)c.push(p);else vor.push(p)}
+  const k=bl.findIndex(x=>x[0]===b.pos[i]),j=k+d;if(k<0||j<0||j>=bl.length)return;[bl[k],bl[j]]=[bl[j],bl[k]];b.pos=[...vor,...bl.flat()];persist();render()}
+function glNeu(i){const b=curBeleg();if(!b||b.fest||b.pos[i]?.art!=='G')return;let j=i+1;while(j<b.pos.length&&b.pos[j].art!=='G')j++;
+  b.pos.splice(j,0,neuPos({art:'W',einheit:'Stk',menge:1,rabatt:T[b.typ].b==='V'?+kontakt(b.kontaktId)?.rabatt||0:0}));lsAufteilen(b,b.pos[j]);persist();
+  document.querySelectorAll('.modal.live').forEach(d=>{if(d.querySelector('.gl'))d._weg?.()});if(kmpB()){render();posPopup(b,j)}else{renderFocus(`[data-p="${j}"][data-f="artikel"]`);glSpring(j)}}
 
 /* ---------- Aufträge ---------- */
 function auftragsListe(){
@@ -4641,7 +4682,7 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   const spP=dp.spPos!==false,an=dp.artNr==='spalte',spM=dp.spMenge!==false,spE=spM&&dp.spEinheit!==false,mv=dp.spFolge==='mengeVorn',mr=dp.mengeAusr==='rechts',sp=!spP||an||mv,nfix=(spP?1:0)+(an?1:0)+1+(spM?1:0)+(spE?1:0); // Spalten (P4); sp = abweichende Folge (Klassen statt Spaltenposition)
   const kurz=dp.kurz!==false,ltB=!!dp.ltBreit,gfv=/^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(dp.grpFarbe)?dp.grpFarbe:DRUCK_STD.grpFarbe,dc=(['farbe','farbe-u'].includes(dp.grpStil)?' gf':'')+(dp.grpStil==='farbe-u'?' gu':'')+(dp.posFett===false?' nf':''); // Positionsdarstellung (P4)
   const ncol=nfix+(ohneP?0:(ls?2:0)+1+(rab?1:0)+(mehrSt?1:0)+1);
-  const zeile=p=>{
+  const zeile0=p=>{
     const i=pi(p);if(weg.has(p.id))return''; // Menge 0 nicht drucken (P3)
     if(p.art==='T')return`<tr>${spP?'<td></td>':''}<td colspan="${ncol-(spP?1:0)}" class="lt">${ed(`p:${i}:text`,p.text,'Text …',true)}</td></tr>`;
     if(p.art==='G'){const zeigP=!ohneP&&(+p.pauschal>0||oEP(p)||gsA);
@@ -4658,6 +4699,7 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
     return`<tr${lz?' class="mlt"':''}>${spP?`<td${sp?' class="pn"':''}>${pnr[p.id]}</td>`:''}${mv?mz+az:az}<td>${oK&&!pf?'':`<b>${pf}${oK?'':ed(`p:${i}:bez`,p.bez,'Bezeichnung')}</b>`}${kl}${kz}${lz?'':lH}</td>
     ${mv?'':mz}${pr}</tr>${lz?`<tr class="ltz">${spP?'<td></td>':''}<td colspan="${ncol-(spP?1:0)}">${lH}</td></tr>`:''}`;
   };
+  const zeile=p=>{const h=zeile0(p);return o.gl&&h?h.replace(/^<tr/,`<tr data-pi="${pi(p)}"`):h}; // Gliederung (P18): Sprungziel je Zeile nur in der Bildschirm-Vorschau (o.gl), Druck und PDF unverändert
   // Gruppensumme (P2, dp.grpSumme): am Ende (Standard), am Anfang im Gruppenkopf, beides oder keine (Options-/Alternativgruppen dann weiter am Ende); Beschriftung dp.grpSumLbl
   const gs=['anfang','beide','aus'].includes(dp.grpSumme)?dp.grpSumme:'ende',gsA=gs==='anfang'||gs==='beide',gsE=g=>gs==='ende'||gs==='beide'||(gs==='aus'&&!!g.kz);
   const gsLbl=g=>esc(dp.grpSumLbl||DRUCK_STD.grpSumLbl).replace(/\{Nr\}/g,()=>pnr[g.id]).replace(/\{Bez\}/g,()=>esc(g.bez));
@@ -4773,6 +4815,8 @@ const DRUCKOPT=[
   {k:'briefAnrede',std:false,p:'Anrede (P6)',l:'Briefanrede vor dem Kopftext',typ:'chk',nur:Object.keys(T).filter(t=>T[t].b==='V'||t==='BE'),info:'Österreichische Form aus Anrede, Titel und Nachname des Kontakts: „Sehr geehrter Herr Ing. Mustermann,“ bzw. „Sehr geehrte Frau …“, ohne Nachname „Sehr geehrte Damen und Herren,“. Im Kontakt frei überschreibbar (Feld „Briefanrede“), im Beleg über das Feld „Briefanrede“ bzw. direkt in der Vorschau. Auch als Anrede der E-Mail.'},
   // Platzhalter (P8): bestehende Texte enthalten keine {…}, unbekannte Platzhalter bleiben stehen – daher Standard ein
   {k:'platzhalter',std:true,p:'Platzhalter (P8)',l:'Platzhalter in Texten ersetzen',typ:'chk',info:'{Anrede}, {Kunde}, {KundenNr}, {Person}, {Belegart}, {Nr}, {Datum}, {GueltigBis}, {Faellig}, {Betreff}, {Netto}, {Brutto}, {Firma}, {Bearbeiter} in Kopf- und Fußtext, Briefanrede, Grußformel, Kostenvoranschlag, Zusatzzeile der Fußzeile und E-Mail werden bei der Ausgabe durch die Werte des Belegs ersetzt („{…} Platzhalter“ fügt sie ein). Gespeichert bleibt der Text mit Platzhaltern; festgeschriebene Belege verwenden die eingefrorenen Werte. Unbekannte Platzhalter bleiben stehen. Aus: Texte werden wörtlich gedruckt.'},
+  // Gliederung (P18): Lesezeichen je Gruppe im PDF (pdfAusBeleg)
+  {k:'pdfLz',std:false,p:'Gliederung (P18)',l:'PDF mit Lesezeichen je Gruppe',typ:'chk',info:'Das PDF (PDF speichern, E-Mail) bekommt je Gruppe ein Lesezeichen mit Nummer und Bezeichnung (Seitenleiste des PDF-Programms), z. B. für lange Angebote. Ausdruck und Aussehen bleiben gleich; ohne Gruppen keine Lesezeichen.'},
   // Lohnkostennachweis (P9): Entscheidung des Anwenders – nur auf Wunsch je Beleg (Häkchen „Lohnkostennachweis“ bzw. Druckoptionen), Standard wie bisher
   {k:'lohnNw',std:'ls',p:'Lohnkostennachweis (P9)',l:'Lohnkostennachweis',opts:[['ls','kein Satz (wie bisher)'],['text','Satz zu den Arbeitskosten'],['privat','Satz nur bei Privatkunden'],['aus','kein Lohnausweis (auch ohne „davon Lohn …“)']],nur:Object.keys(T).filter(t=>T[t].b==='V'),preis:true,info:'Satz nach dem Summenblock, z. B. „Im Gesamtbetrag enthaltene Arbeitskosten: 1.240,00 € netto zzgl. 248,00 € USt (1.488,00 € brutto).“ – etwa für den Handwerkerbonus (gefördert wurden nur die Arbeitskosten ohne USt, nicht Material und Fahrtkosten). Bei Lohn 0 wird nichts gedruckt. „kein Satz“: bei Lohn / Sonstiges steht wie bisher „davon Lohn … · Sonstiges …“ im Summenblock. Je Beleg über das Häkchen „Lohnkostennachweis“ bei den Spalten. § 11 UStG verlangt den Ausweis nicht, er ist aber zulässig.'},
   {k:'lohnQuelle',std:'ls',p:'Lohnkostennachweis (P9)',l:'Arbeitskosten aus',opts:[['ls','Lohn / Sonstiges, sonst Leistungen'],['art','Positionen der Art „Leistung“']],nur:Object.keys(T).filter(t=>T[t].b==='V'),preis:true,info:'„Lohn / Sonstiges“: Lohnanteil der Positionen bei Belegen mit Lohn / Sonstiges, sonst die Positionen der Art „Leistung“. Nicht gezählt werden Optionen und Alternativen, Positionen in Pauschalgruppen, Positionen mit „nicht im Lohnkostennachweis“ (✎ an der Position) und Stunden von Tarifen ohne Lohnnachweis (Einstellungen → Stundentarife; Fahrtzeit standardmäßig nicht).'},
@@ -4999,13 +5043,14 @@ async function pdfAusBeleg(b,o={}){
     return o};
   const cv=document.createElement('canvas').getContext('2d');cv.font='10px Arial';const breite=t=>cv.measureText(t).width*0.75; // 7,5 pt = 10 px; Arial ≙ Helvetica
   const strs=seiten.map(strom);
+  const lz=dOpt(b).pdfLz?[...box.querySelectorAll('table.p tr.grpz')].map(tr=>{const y=Y(tr.getBoundingClientRect().top),si=seiten.findIndex(s=>y>=s.st-0.5&&y<s.en-0.5);return{t:[...tr.cells].filter(c=>!c.classList.contains('n')).map(c=>c.querySelector('b')?.textContent.trim()||'').filter(Boolean).join(' '),si,y}}).filter(x=>x.si>=0&&x.t):[]; // PDF-Lesezeichen je Gruppe (P18, druck.pdfLz)
   box.remove();
   // PDF-Objekte schreiben
   const enc=new TextEncoder(),teile=[],off=[];let len=0;const add=x=>{const u=typeof x==='string'?enc.encode(x):x;teile.push(u);len+=u.length};
   const obj=(nr,inhalt,stream)=>{off[nr]=len;add(`${nr} 0 obj\n${inhalt}\n`);if(stream){add('stream\n');add(stream);add('\nendstream\n')}add('endobj\n')};
   add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
   const np=seiten.length,fontObj=3,img0=6,pg0=img0+bilder.length*2;
-  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+  obj(1,`<< /Type /Catalog /Pages 2 0 R${lz.length?` /Outlines ${pg0+np*2} 0 R /PageMode /UseOutlines`:''} >>`);
   obj(2,`<< /Type /Pages /Count ${np} /Kids [${seiten.map((_,i)=>`${pg0+i*2} 0 R`).join(' ')}] >>`);
   ['Helvetica','Helvetica-Bold','Helvetica-Oblique'].forEach((fn,i)=>obj(fontObj+i,`<< /Type /Font /Subtype /Type1 /BaseFont /${fn} /Encoding /WinAnsiEncoding >>`));
   for(let i=0;i<bilder.length;i++){const im=bilder[i],w=im.naturalWidth,h=im.naturalHeight,c=document.createElement('canvas');c.width=w;c.height=h;const cx=c.getContext('2d');cx.drawImage(im,0,0);
@@ -5017,7 +5062,9 @@ async function pdfAusBeleg(b,o={}){
   for(let i=0;i<np;i++){const z=await deflate(enc.encode(strs[i].join('\n')));
     obj(pg0+i*2,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources ${res} /Contents ${pg0+i*2+1} 0 R >>`);
     obj(pg0+i*2+1,`<< /Filter /FlateDecode /Length ${z.length} >>`,z)}
-  const n0=pg0+np*2,xr=len;add(`xref\n0 ${n0}\n0000000000 65535 f \n`);for(let i=1;i<n0;i++)add(String(off[i]||0).padStart(10,'0')+' 00000 n \n');
+  if(lz.length){const o0=pg0+np*2,u16=t=>'<FEFF'+[...t].map(c=>{const x=c.codePointAt(0);return x>0xFFFF?[0xD800+((x-0x10000)>>10),0xDC00+((x-0x10000)&0x3FF)].map(v=>v.toString(16).padStart(4,'0')).join(''):x.toString(16).padStart(4,'0')}).join('').toUpperCase()+'>';
+    obj(o0,`<< /Type /Outlines /First ${o0+1} 0 R /Last ${o0+lz.length} 0 R /Count ${lz.length} >>`);lz.forEach((x,j)=>obj(o0+1+j,`<< /Title ${u16(x.t)} /Parent ${o0} 0 R${j?` /Prev ${o0+j} 0 R`:''}${j<lz.length-1?` /Next ${o0+2+j} 0 R`:''} /Dest [${pg0+x.si*2} 0 R /XYZ 0 ${pt(0,x.y,seiten[x.si])[1]} null] >>`))} // Lesezeichen (P18)
+  const n0=pg0+np*2+(lz.length?lz.length+1:0),xr=len;add(`xref\n0 ${n0}\n0000000000 65535 f \n`);for(let i=1;i<n0;i++)add(String(off[i]||0).padStart(10,'0')+' 00000 n \n');
   add(`trailer\n<< /Size ${n0} /Root 1 0 R /Info << /Producer (ERP-Lite) /Title (${pdfStr(T[b.typ].bez+' '+bNr(b)+(o.dup?' DUPLIKAT':'')+' '+kName(b.kontaktId))}) /Author (${pdfStr(S().firma.name||'')}) /Subject (${pdfStr(T[b.typ].bez+' '+bNr(b))}) /CreationDate (${pdfDatum()}) /ModDate (${pdfDatum()}) >> >>\nstartxref\n${xr}\n%%EOF\n`);
   return new Blob(teile,{type:'application/pdf'});
 }
@@ -5209,6 +5256,7 @@ const ACT={
   anfolge:()=>folgeAngebot(curBeleg()),
   sumpop:()=>sumPop(curBeleg()), // Summen und Kalkulation im Pop-up (Aktionsleiste, P30)
   wechseln:()=>{if(pending&&!confirm('Nicht gespeicherte Änderungen gehen verloren. Fortfahren?'))return;lsSet('erp-modus',null);location.hash='';location.reload()},
+  spring:(el,e)=>{e?.preventDefault?.();glSpring(+el.dataset.i)},glpop:()=>glPop(curBeleg()),glhoch:el=>glSchieben(+el.dataset.i,-1),glrunter:el=>glSchieben(+el.dataset.i,1),glneu:el=>glNeu(+el.dataset.i), // Gliederung (P18)
   attopen:async el=>{const a=curBeleg().anhaenge[+el.dataset.i];try{await STORE.openFile(a)}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
   attdel:el=>{const b=curBeleg(),a=b.anhaenge[+el.dataset.i];if(!confirm(`Verknüpfung zu „${a.name}“ entfernen?\n(Die Datei selbst bleibt im Speicherort erhalten.)`))return;b.anhaenge.splice(+el.dataset.i,1);log('Anhang entfernt',`${bNr(b)}: ${a.name}`);persist();render()},
   kpneu:()=>kostenDialog(),kpedit:el=>kostenDialog(DB.kosten.find(k=>k.id===el.dataset.id)),

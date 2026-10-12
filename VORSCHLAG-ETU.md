@@ -607,7 +607,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Nutzen** mittel · **Aufwand** M–L · **Abhängig von:** P12 (Auswertung), P0 g); nützt P9 und P10 · **Recht:** getrennter Ausweis der Arbeitsleistung (z. B. für Förderungen).
 
 ### P14 – Preiseinheit (PE) und Prüfung beim Einlesen
-- **Stand:** ✅ Prüfung beim Einlesen umgesetzt (Commit d926b4e, Schalter `erw.scanPE`, Standard ein): `scanPE()`; mit GP entscheidet nur die Prüfung (auch Faktor mit Rabatt, ±2 %), ohne GP Spalte `pe` bzw. Spaltenkopf „Preis/100“; passt der GP zu keinem Faktor, wird nicht umgerechnet, sondern die Zeile markiert. Scan-Zeile `pe`, `peQ`, `epRoh`, `lpRoh`, Abwahl `peAus`; `rp()` schon jetzt für EK-Vorschlag/Übernahme bei PE > 1, `fmtP()` für die Anzeige. Dazu Korrektur (Commit bec643e): `edUebernehmen()` schreibt Zahlen nur bei echter Änderung gegenüber dem angezeigten (gerundeten) Wert, ein Klick in den EP der Vorschau kürzt 0,4537 nicht mehr auf 0,45. Offen (Stufe 2): Feld `pe` an Artikel und Position, Anzeige/Druck je PE (bis dahin druckt eine Bestellung aus eingelesenen Zeilen den EP auf Cent gerundet, z. B. 0,45 bei GP 113,43), Umstellung der übrigen Rundungsstellen, `xmlBeleg()`.
+- **Stand:** ✅ Prüfung beim Einlesen umgesetzt (Commit d926b4e, Schalter `erw.scanPE`, Standard ein): `scanPE()`; mit GP entscheidet nur die Prüfung (auch Faktor mit Rabatt, ±2 %), ohne GP Spalte `pe` bzw. Spaltenkopf „Preis/100“; passt der GP zu keinem Faktor, wird nicht umgerechnet, sondern die Zeile markiert. Scan-Zeile `pe`, `peQ`, `epRoh`, `lpRoh`, Abwahl `peAus`; `rp()` schon jetzt für EK-Vorschlag/Übernahme bei PE > 1, `fmtP()` für die Anzeige. Dazu Korrektur (Commit bec643e): `edUebernehmen()` schreibt Zahlen nur bei echter Änderung gegenüber dem angezeigten (gerundeten) Wert, ein Klick in den EP der Vorschau kürzt 0,4537 nicht mehr auf 0,45. ✅ Rest umgesetzt (Commit 028e467, Einheit U12, 12.10.2026, Schalter `erw.pe`, Standard ein): Feld `pe` an Artikel und Position (fehlt = 1), Eingabe und Anzeige je PE im Beleg-Editor (Tabelle, Positionszeile, Karte, Positions-Pop-up, Lese-Ansicht, Vorschau mit `edUebernehmen()`), „Preis je …“ in der Auswahl „Einheit“, Feld „Preiseinheit“ in Artikel, „Neuer Artikel“, Artikel-Pop-up (✎), Druckoption `druck.peDruck` (`'pe'` mit Vermerk „je 100 m“, `'einheit'`), Übernahme aus Artikel, `xmlBeleg()` (Basismenge 10/100/1000, nicht abwählbar), Einlesen (Abgleichszeile „Preiseinheit“ für den Stamm), `wvRechnung()`, `ACT.mkart`; Rundung je PE auch in `onPos('einheit')`, Lohn/Sonstiges (`lsAufteilen`, `onPos`), `vkVorschlag()`, Gesamtkalkulation (`gkNeu`: gerundet wird der Preis je PE, auch bei 0,05/0,10), `revDiff()` meldet eine geänderte PE. **Abweichung vom Plan:** `posGP()` rechnet bei PE > 1 Menge × `r2(ep×pe)` ÷ PE mit dezimal genauer Rundung (`peGP`), damit Gesamtpreis und gedruckter EP je PE ohne Gleitkomma-Differenz zusammenpassen (z. B. 250 × 45,37 ÷ 100 = 113,43 statt 113,42); ohne PE bleibt die Rechnung unverändert, und sie hängt nicht am Schalter (festgeschriebene Summen ändern sich beim Ausschalten nicht). Getestet: Regressionsvergleich 30 Belege (docHTML, Vorschau, PDF) gleich, alle Schalter einzeln, 390 und 1400 px.
 - **ETU-Vorbild:** „Einzelpreis pro Preiseinheit drucken“ (z. B. Kabel € je 100 m).
 - **Heute:**
   - `faktor` dient nur zur Umrechnung von Einheiten, eine Preiseinheit gibt es nicht.
@@ -683,6 +683,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Nutzen** mittel · **Aufwand** S · **Abhängig von:** P1 · **Recht:** –
 
 ### P18 – Gliederung / Dokumentenübersicht
+- **Stand:** ✅ umgesetzt (Commit 8cc4e82, Einheit U12, 12.10.2026, Schalter `erw.gliederung` Standard ein, Druckoption `druck.pdfLz` Standard aus): Karte „Gliederung“ in Eingabe/Beides (rechte Spalte), schmale Spalte links neben dem Blatt in der Vorschau (unter 1300 px über dem Blatt), am Handy Pop-up über ≡ in der Aktionsleiste und „Gliederung …“ im ⋯-Menü (überall). Sprung mit Markierung (`.blink`) in Eingabe und Blatt, Gruppe ↑ ↓ und „+“ im Entwurf, Zustand über `erp-akk`, PDF-Lesezeichen je Gruppe. **Abweichungen vom Plan:** Im Editor werden keine neuen Attribute gesetzt (Sprungziel = Zeile i der Positionstabelle bzw. Karte i, alle Ansichten haben eine Zeile je Position); `data-pi` steht nur in der Bildschirm-Vorschau (`docHTML(…,{gl:1})`), Druck und PDF sind byte-gleich. Getestet 390/1400 px, ohne kompakte Ansicht, festgeschrieben.
 - **ETU-Vorbild:** Bild 8, „Dokumentenübersicht“ als Baum neben der Vorschau; ein Klick springt zur Stelle.
 - **Heute:**
   - `posNummern()`, `gruppenInfo()`, `gruppePreis()` und `effKz()` liefern die Daten, aber es gibt keinen Baum und keinen Sprung.
@@ -730,6 +731,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Nutzen** hoch (Zuletzt) bzw. mittel · **Aufwand** S je Teil · **Abhängig von:** – · **Recht:** Im Browser stehen nur interne IDs, keine Namen (DSGVO-schonend).
 
 ### P20 – Globale Suche (Strg+K)
+- **Stand:** ✅ umgesetzt (Commit 4fae2a5, Einheit U12, 12.10.2026, Schalter `erw.suche` Standard ein): Pop-up statt eigener Ansicht `V.suche` (Strg+K und F3 überall, außer in einem anderen Pop-up; 🔍 in der Kopfzeile am Handy, „🔍 Suchen …“ in der Seitenleiste), Eingabefeld fest oben, Treffer gruppiert (in kompakt als `akk()`), je Gruppe höchstens 15, „alle in Liste“ für Belege (Verkauf/Einkauf), Kontakte, Artikel und Textbausteine, Beträge über `zahlDE()`, Markierung der Suchwörter, ↑ ↓/Enter, ohne Eingabe „Zuletzt geöffnet“; zusätzlich laufende Kosten (öffnet die Position). Am Handy oben über die ganze Höhe (Bildschirmtastatur), Tippziele 48 px.
 - **ETU-Vorbild:** Lupe in der Symbolleiste.
 - **Heute:** Es gibt nur Suchfelder je Liste (`UI.vQ`, `eQ`, `kQ`, `aQ`, `lgQ`, `bQ`, `lbQ`). Positionstexte, Beträge, Aufträge und LVs findet man nicht bereichsübergreifend.
 - **Umsetzung:**
@@ -1193,13 +1195,13 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
       - das Summen-Pop-up, dort auch „→ auf Ziel anheben …“ aus `kalkBox`.
     - Bei festgeschriebenen Belegen ist der Eintrag ausgegraut, mit Hinweis auf die Revision.
     - Der Rücknahme-Dialog (`b.kalkAlt`) nutzt `karte()` mit Häkchen.
-  - **P18 (Gliederung):**
+  - **P18 (Gliederung):** ✅ umgesetzt (U12, Commit 8cc4e82)
     - Am Handy übernimmt die Gruppenansicht der Positionskarten die Gliederung (Akkordeon mit Gruppensumme).
     - Zusätzlich gibt es „☰ Gliederung“ im ⋯ bzw. in der Aktionsleiste, als Blatt mit Sprung zur Karte (`ACT.spring`).
     - Die geplanten Attribute `data-pi`/`data-g` gelten auch für Karten und einzeilige Zeilen.
     - Am Bildschirm bleibt es wie geplant (Spalte bzw. erste Karte).
     - Den Auf-/Zuklapp-Zustand merkt sich `akk()` statt eines eigenen `erp-glZu`.
-  - **P20 (globale Suche):**
+  - **P20 (globale Suche):** ✅ umgesetzt (U12, Commit 4fae2a5)
     - Eine Lupe 🔍 steht in der `.topbar` neben 🕘 und in der Seitenleiste.
     - Die Treffer erscheinen gruppiert als Karten (`karte()`), jede Gruppe aufklappbar (`akk()`).
     - Das Eingabefeld steht oben fest; Strg+K und F3 bleiben.
@@ -1340,6 +1342,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - Korrektur iOS-Schalterbreite (Prüfung U9, 10.10.2026; Schalter in „Druckoptionen“, Einstellungen und Pop-ups waren am Handy 20 px breit, der Knopf überdeckte den Text): einzeln rücknehmbar, vor dem iOS-Commit ae69ae6.
   - seit U11 (P10, P12, 12.10.2026): rückwärts Korrektur 4710d17 → P12 (73ee3b1) → P10 (48ff8cf) (die Korrektur ändert die Zeile `const st=…` in `gesamtKalk()`, an die P12 direkt anschließt); einzeln nur P12 (P12 erweitert `gkNeu()`/`gesamtKalk()` aus P10, seine Schalter stehen direkt nach denen von P10). Neu erst nach U11 rücknehmbar: P9 (395368b, Stundentarife: Spalten „Aufschlag“ und „DB/Std“ in dessen Zeilen; vorher P12) und der iOS-Commit ae69ae6 (Schalter `gkalk` in `ERW` direkt angrenzend; vorher P12 und P10) – damit auch alle Commits, die P9 bzw. ae69ae6 schon bisher voraussetzten (z. B. U10-Kette, P3, P4, P11, P0 j, P0 l, P2, U8 samt Korrektur 68e30f6, U7 Commit 2, 5 und 6 und alle, die U7 Commit 2 voraussetzen; sonst bleiben ihre Vorgänger gleich). Alle übrigen Code-Commits seit ETU wie vor U11. Geprüft (Klon, `git apply -R --3way` je Commit an der Spitze vor und nach U11): U11 rückwärts konfliktfrei, danach `index.html` gleich dem Stand vor U11 (dffb7d3); Programm nach der Rücknahme von P12 ohne Konsolenfehler (390 und 1400 px).
   - Ergänzungen vom 12.10.2026: rückwärts f5e28f9 (Stundentarif) → d3cc148 (P33) → 30cbf83 (Bild als Datei) → cf0457e (P32) → fc199bd (Druck) → 6351e48 (Infoblock) → 04bd23c (P31); einzeln jeweils nur der zuletzt verbliebene (die Schalter-Einträge stehen untereinander vor `snapshot`, P33 ergänzt Zeilen von P31/P32/30cbf83).
+  - seit U12 (P14, P18, P20, 12.10.2026): jeder der drei Commits einzeln rücknehmbar (P20 4fae2a5, P18 8cc4e82, P14 028e467; Schalter, CSS, Aktionen und Funktionen stehen an getrennten Stellen), rückwärts P20 → P18 → P14 ergibt genau den Stand vor U12 (bbe14b2). Neu erst nach U12 rücknehmbar (geänderte bzw. direkt angrenzende Zeilen): P0 g (1da5180), P0 h (5c2836b), Korrektur bec643e, Firmenvorgabe/Duplikat c9703e5 und Restfehler P0 o a (2498cb0) – vorher P14 (028e467); Druck/PDF-Datei-Info fc199bd – vorher P18 (8cc4e82). Alle übrigen Code-Commits wie vor U12. Geprüft (Klon, `git apply -R --3way` je Commit an der Basis und an der Spitze): Rücknahme konfliktfrei; Programm ohne je einen der drei Commits ohne Konsolenfehler (alle Ansichten, 390 und 1400 px).
 - Noch offen: Test an echten Geräten (Edge, Firefox, Android, iOS; Druck, Strg+P, Browsermenü), echter Mailversand und Abgleich über OneDrive mit zwei Geräten, Tag `vor-etu` (nicht gesetzt).
 
 **Stufe 2: Kernfunktionen nach ETU (ca. 12–13 Tage)**
@@ -1348,8 +1351,8 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - P8 Platzhalter (M), danach P9 Lohnkostennachweis (M) – ✅ umgesetzt (U10: Commits f385ffd, 395368b)
 - P6 Anrede und Briefanrede, vollständig (M) – ✅ umgesetzt (U10: Commit 570074f)
 - P3 Schalter für Preise und Summen (S), P4 Spalten und Positionsdarstellung (M–L) – ✅ umgesetzt (U9: Commits 06ffa33, 8a9b49b, 1d7338f)
-- P14 Preiseinheit, vollständig (M)
-- P18 Gliederung (M), P20 globale Suche (M)
+- P14 Preiseinheit, vollständig (M) – ✅ umgesetzt (U12: Commit 028e467)
+- P18 Gliederung (M), P20 globale Suche (M) – ✅ umgesetzt (U12: Commits 8cc4e82, 4fae2a5)
 
 **Stufe 3: optional nach Bedarf (ca. 18–21 Tage)**
 - P26 Datanorm: Stufe 1 (M–L, mit ZIP-Leser und Zeichentabelle), sobald eine Musterdatei da ist; Stufe 2 (L)
@@ -1394,6 +1397,7 @@ Jedes Paket wird erst nach Ihrem Test im Browser nach `main` übernommen. Bis da
 - **Briefanrede (P6):** österreichische Form „Sehr geehrter Herr Ing. Mustermann,“, je Kontakt überschreibbar. ✅ umgesetzt (U10).
 - **Pflichtangaben/Duplikat (P0 m/n):** Firmenbuchgericht nicht vorbelegen, nur Hinweis bei leerem Feld; Duplikat-Vermerk Standard aus.
 - **12.10.2026:** P31 (Lieferant direkt anlegen, Dublettenprüfung, Listenpreis/Rabatt/EK), Bild je Artikel (Teil P24), Infoblock „UID Kunde“ mit Gliederung (neuer Standard), Druck ohne Browser-Kopfzeile, P32 (AB nach Ausgabe „abgeschlossen“), P33 (Bedienung), „+ Stundentarif …“ – alle ✅ umgesetzt, Standard ein.
+- **Stufe 2, Rest (U12, 12.10.2026):** P14 Preiseinheit vollständig, P18 Gliederung, P20 globale Suche – ✅ umgesetzt (Schalter `erw.pe`, `erw.gliederung`, `erw.suche`, Standard ein; Druckoptionen „Einzelpreis bei Preiseinheit“ je Preiseinheit, „PDF mit Lesezeichen“ aus); kompakte Darstellung am Handy (Pop-ups) wie gewünscht.
 - Noch offen: Fragen 5, 6, 7, 9, 10, 11.
 
 ## 6. Offene Fragen

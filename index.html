@@ -278,6 +278,9 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .doc .to{width:85mm;font-size:10.5pt;line-height:1.35;padding-top:2mm}
 .doc .info{text-align:right;font:9pt/1.75 Arial,Helvetica,sans-serif;padding-top:9mm}
 .doc .info .nrh{font-size:7.5pt;line-height:1.3;margin:-1mm 0 1mm;color:#333} /* Hinweis unter der Beleg-Nr. (P5) */
+/* Infoblock gegliedert (P5, druck.infoGrp): Belegdaten | Kunde | Kontakt */
+.doc .info .ig+.ig{margin-top:1.6mm}.doc .info.ig-linie .ig+.ig,.doc .info.ig-titel .ig+.ig{padding-top:1.2mm;border-top:.25mm solid #999}.doc .info .igt{font-weight:bold;font-size:7.5pt;line-height:1.6;color:#555}
+.doc table.infot tbody.ig+tbody.ig>tr:first-child>td{padding-top:1.6mm}.doc .info.ig-linie table.infot tbody.ig+tbody.ig>tr:first-child>td,.doc .info.ig-titel table.infot tbody.ig+tbody.ig>tr:first-child>td{border-top:.25mm solid #999}
 .doc table.infot{width:auto;margin-left:auto;border-collapse:collapse}.doc table.infot td{border:0;padding:0 0 0 3mm;background:none;font:inherit;color:#000;text-align:left;vertical-align:top}.doc table.infot td:first-child{padding-left:0}
 .doc h3{font-size:11.5pt;font-weight:700;color:#1d3929;margin:0 0 4mm;letter-spacing:.2px}
 .doc table.p{margin:6mm 0 3mm;border-top:1px solid #888;border-bottom:2px solid #000}
@@ -4599,7 +4602,12 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   const mitLeistung=(t.re&&t.b==='V')||b.typ==='LS';
   const datLbl=b.typ==='AN'?'Angebotsdatum':t.re&&t.b==='V'&&b.typ!=='GS'?'Rechnungsdatum':'Datum';
   const privat=(b.fest&&b.adresse&&'kundenart' in b.adresse?b.adresse.kundenart:kontakt(b.kontaktId)?.kundenart)==='privat'; // Kundenart (P5): Kostenvoranschlag nur privat, Fußzeilen-Zusatz wahlweise nur B2B
-  const info=[[datLbl,dAT(b.datum)],t.b==='E'&&k.kdNrLief?['Unsere Kunden-Nr.',k.kdNrLief]:[t.b==='V'?'Kunden-Nr.':'Lieferanten-Nr.',k.nr],dp.nrInfo?[NRL[b.typ]||'Beleg-Nr.',nrTxt,RE_V.includes(b.typ)?dp.nrHinweisRE:dp.nrHinweis]:null,k.uid?['Ihre UID',k.uid]:null,b.typ==='ER'?['Rechnung Lief.',b.fremdNr]:null,b.fremdNr&&b.typ==='BE'?['Ihr Angebot',b.fremdNr]:null,b.leistung||(edit&&mitLeistung)?['Leistung',{h:ed('h:leistung',b.leistung,'TT.MM.JJJJ')}]:null,b.gueltigBis?[dp.lblGueltig||'Gültig bis',dAT(b.gueltigBis)]:null,b.liefertermin?['Liefertermin',dAT(b.liefertermin)]:null,fv('bearbeiter')?['Ansprechperson',fv('bearbeiter')]:null,fv('mail')?['E-Mail',fv('mail')]:null,fv('tel')?['Telefon',fv('tel')]:null].filter(Boolean);
+  const iKd=[t.b==='E'&&k.kdNrLief?['Unsere Kunden-Nr.',k.kdNrLief]:[t.b==='V'?'Kunden-Nr.':'Lieferanten-Nr.',k.nr],k.uid?[t.b==='V'?dp.lblUid||'UID Kunde':'Ihre UID',k.uid]:null], // Infoblock: Daten des Kunden bzw. Lieferanten …
+    iAp=[fv('bearbeiter')?['Ansprechperson',fv('bearbeiter')]:null,fv('mail')?['E-Mail',fv('mail')]:null,fv('tel')?['Telefon',fv('tel')]:null]; // … und Kontakt der Firma (Gliederung dp.infoGrp)
+  const info=[[datLbl,dAT(b.datum)],iKd[0],dp.nrInfo?[NRL[b.typ]||'Beleg-Nr.',nrTxt,RE_V.includes(b.typ)?dp.nrHinweisRE:dp.nrHinweis]:null,iKd[1],b.typ==='ER'?['Rechnung Lief.',b.fremdNr]:null,b.fremdNr&&b.typ==='BE'?['Ihr Angebot',b.fremdNr]:null,b.leistung||(edit&&mitLeistung)?['Leistung',{h:ed('h:leistung',b.leistung,'TT.MM.JJJJ')}]:null,b.gueltigBis?[dp.lblGueltig||'Gültig bis',dAT(b.gueltigBis)]:null,b.liefertermin?['Liefertermin',dAT(b.liefertermin)]:null,...iAp].filter(Boolean);
+  const iZ=L=>dp.infoTab?L.map(([a,v,h])=>`<tr><td>${esc(a)}:</td><td>${v&&v.h!=null?v.h:esc(v)}${h?`<div class="nrh">${esc(h)}</div>`:''}</td></tr>`).join(''):L.map(([a,v,h])=>`<div>${esc(a)}: ${v&&v.h!=null?v.h:esc(v)}</div>${h?`<div class="nrh">${esc(h)}</div>`:''}`).join('');
+  const iGr=dp.infoGrp?[['',info.filter(x=>!iKd.includes(x)&&!iAp.includes(x))],[t.b==='V'?'Kunde':'Lieferant',iKd.filter(Boolean)],['Ihr Kontakt',iAp.filter(Boolean)]].filter(g=>g[1].length):null,iT=ti=>dp.infoGrp==='titel'&&ti;
+  const iHTML=!iGr?(dp.infoTab?`<table class="infot">${iZ(info)}</table>`:iZ(info)):dp.infoTab?`<table class="infot">${iGr.map(([ti,L])=>`<tbody class="ig">${iT(ti)?`<tr class="igt"><td colspan="2">${ti}</td></tr>`:''}${iZ(L)}</tbody>`).join('')}</table>`:iGr.map(([ti,L])=>`<div class="ig">${iT(ti)?`<div class="igt">${ti}</div>`:''}${iZ(L)}</div>`).join('');
   let zb='';
   if(t.re&&t.b==='V'&&b.typ!=='GS'){zb=`Zahlbar bis ${dAT(faellig(b))} ohne Abzug`+(+b.skonto?`, bei Zahlung bis ${dAT(addDays(b.datum,b.skontoTage))} abzüglich ${fmtQ(b.skonto)} % Skonto`:'')+'.'}
   else if(!ohneP&&['AN','AB','PR'].includes(b.typ)){zb=`Zahlungsbedingungen: ${b.zahlungsziel} Tage netto`+(+b.skonto?`, ${b.skontoTage} Tage ${fmtQ(b.skonto)} % Skonto`:'')+'. Alle Preise in EUR zuzüglich gesetzlicher Umsatzsteuer.'}
@@ -4607,7 +4615,7 @@ function docHTML(b,edit=false,o={}){ // o.dup: Vermerk „DUPLIKAT“ (erneute A
   ${b.fest?'':'<div class="wm">ENTWURF – nicht gültig</div>'}
   ${briefkopf(f)}
   <div class="adr"><div class="to">${adrKopf(k,dp,privat)}${esc(k.strasse)}<br>${esc(k.plz)} ${esc(k.ort)}${k.land&&k.land!=='Österreich'?'<br>'+esc(k.land):''}</div>
-  <div class="info">${dp.infoTab?`<table class="infot">${info.map(([a,v,h])=>`<tr><td>${esc(a)}:</td><td>${v&&v.h!=null?v.h:esc(v)}${h?`<div class="nrh">${esc(h)}</div>`:''}</td></tr>`).join('')}</table>`:info.map(([a,v,h])=>`<div>${esc(a)}: ${v&&v.h!=null?v.h:esc(v)}</div>${h?`<div class="nrh">${esc(h)}</div>`:''}`).join('')}</div></div>
+  <div class="info${iGr?' ig-'+dp.infoGrp:''}">${iHTML}</div></div>
   ${o.dup?'<div class="dupl">DUPLIKAT</div>':''}<h3>${esc(((!RE_V.includes(b.typ)&&dp.titel)||t.bez).toUpperCase())}${dp.nrInfo?'':` NR.: ${esc(nrTxt)}`}</h3>
   ${b.betreff||edit?`<div>Projekt: ${ed('h:betreff',b.betreff,'Betreff / Projekt')}</div>`:''}${b.bezug||edit?`<div>Bezug: ${ed('h:bezug',b.bezug,'z. B. Ihre Anfrage vom …')}</div>`:''}
   ${dp.briefAnrede&&(t.b==='V'||b.typ==='BE')?`<div class="txt">${edP('h:anrede',anrBeleg(b),'Briefanrede')}</div>`:''}${b.kopf||edit?`<div class="txt">${edP('h:kopf',b.kopf,'Kopftext …',true)}</div>`:''}
@@ -4677,6 +4685,8 @@ const DRUCKOPT=[
   {k:'nrHinweisRE',std:'',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Hinweis unter der Rechnungs-Nr.',typ:'txt',nur:RE_V,ph:'z. B. Bitte bei Zahlung als Verwendungszweck angeben',info:'nur mit „Beleg-Nr. im Infoblock“; leer = kein Hinweis'},
   {k:'lblGueltig',std:'Gültig bis',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Beschriftung „Gültig bis“',typ:'txt',nur:['AN'],ph:'z. B. Bindefrist',info:'im Infoblock und im Formular; „Bindefrist“ trifft die Annahmefrist (§ 862 ABGB) genauer; leer = Standard'},
   {k:'infoTab',std:false,p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Infoblock als Tabelle',typ:'chk',info:'zweispaltig: Bezeichnungen links, Werte daneben'},
+  {k:'infoGrp',std:'linie',alt:'',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Infoblock gegliedert',opts:[['','nein (wie bisher)'],['abstand','Belegdaten | Kunde | Kontakt mit Abstand'],['linie','… mit Abstand und Trennlinie'],['titel','… mit Trennlinie und Überschriften „Kunde“ und „Ihr Kontakt“']],info:'Zuerst Datum, Beleg-Nr., Leistung, Gültig bis, Liefertermin; dann die Daten des Kunden (Kunden-Nr., UID); dann Ansprechperson, E-Mail und Telefon der Firma. Belege, die vor dieser Einstellung festgeschrieben wurden, bleiben wie gedruckt.'},
+  {k:'lblUid',std:'UID Kunde',alt:'Ihre UID',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Beschriftung UID-Nr. des Kunden',typ:'txt',nur:Object.keys(T).filter(t=>T[t].b==='V'),ph:'z. B. UID-Nr. Kunde',info:'im Infoblock vor der UID-Nr. des Kunden (bisher „Ihre UID“); leer = „UID Kunde“'},
   {k:'gruss',std:'',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Grußformel',typ:'txt',nur:Object.keys(T).filter(t=>T[t].b==='V'||t==='BE'),ph:'z. B. Mit freundlichen Grüßen',info:'über der Unterschrift; mit Grußformel gibt es den Unterschriftsblock auch bei Bestellungen'},
   {k:'sigFirma',std:false,p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Firmenname unter der Grußformel',typ:'chk',nur:Object.keys(T).filter(t=>T[t].b==='V'||t==='BE')},
   {k:'sigLinks',std:false,p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Unterschriftsblock links',typ:'chk',nur:Object.keys(T).filter(t=>T[t].b==='V'||t==='BE')},
@@ -4698,9 +4708,10 @@ const NRL={AN:'Angebots-Nr.',AB:'Auftrags-Nr.',PR:'Proforma-Nr.',LS:'Lieferschei
 const fzBreite=s=>{const c=fzBreite.c||(fzBreite.c=document.createElement('canvas').getContext('2d'));c.font='10px Arial';return c.measureText(String(s)).width*0.75}; // Breite einer Fußzeile in pt (7,5 pt Arial wie pdfAusBeleg)
 const DRUCK_RE={preise:true,summen:true,spMenge:true}; // Rechnungsarten (RE_V): Gesamtpreise und Summenblock immer (Entgelt, Steuersatz, Steuerbetrag – § 11 Abs. 1 Z 3 lit. e/f UStG), Menge und Einheit (lit. c, P4)
 const DRUCK_STD={...DRUCK_RE,...Object.fromEntries(DRUCKOPT.map(x=>[x.k,x.std]))};
+const DRUCK_ALT=Object.fromEntries(DRUCKOPT.filter(x=>'alt' in x).map(x=>[x.k,x.alt])); // Optionen mit neuem Standard (Entscheidung Anwender): festgeschriebene Belege ohne sie im Schnappschuss wie gedruckt
 const dGilt=(x,typ)=>(!x.nur||x.nur.includes(typ))&&!(x.preis&&OHNE_PREIS.includes(typ)); // Option bei dieser Belegart einstellbar
 const dProfil=typ=>({...DRUCK_STD,...(S().druckprofil?.[typ]||{}),...(RE_V.includes(typ)?DRUCK_RE:{})}); // Rechnungsarten: gesperrte Werte (DRUCK_RE) wie gedruckt
-const dOpt=b=>{const o=b.fest?{...DRUCK_STD,...(b.druckFix||{})}:{...DRUCK_STD,...(erw('druckprofil')?{...(S().druckprofil?.[b.typ]||{}),...(b.druck||{})}:{})};if(RE_V.includes(b.typ))Object.assign(o,DRUCK_RE);return o};
+const dOpt=b=>{const o=b.fest?{...DRUCK_STD,...DRUCK_ALT,...(b.druckFix||{})}:{...DRUCK_STD,...(erw('druckprofil')?{...(S().druckprofil?.[b.typ]||{}),...(b.druck||{})}:{})};if(RE_V.includes(b.typ))Object.assign(o,DRUCK_RE);return o};
 /* Positionen mit Menge 0 nicht drucken (P3, druck.nullMenge 'aus'): Positionen ohne Menge, dazu Gruppen ohne Pauschalpreis, deren Positionen alle Menge 0 haben,
    samt Gruppen- und Textzeilen (die Nummern behalten ihre Lücken). Editor: Markierung „wird nicht gedruckt“ (data-nd, Klasse nd), updateCalc() schaltet sie um */
 function nullWeg(b,nm){const w=new Set();if(nm!=='aus')return w;let g=null,inn=[];

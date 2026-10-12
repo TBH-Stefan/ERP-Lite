@@ -286,6 +286,13 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
   #dirtybar{flex-wrap:wrap;row-gap:6px}#dirtybar>span:first-child{flex-basis:100%}
   .row>label.w05{flex:1 1 calc(50% - 5px);min-width:calc(50% - 5px)}
 }
+/* K-Blätter drucken im Layout der Formblätter (P34 Teil 3, erw.kbDruck): Blatt je Abschnitt, K4/K6/K7 quer (Seitenvorlage kbq), Kopf mit Logo und Firmendaten */
+@page kbq{size:A4 landscape;margin:10mm 12mm 17.3mm 12mm}.kbf{font:8pt/1.25 Arial,Helvetica,sans-serif;color:#000;padding-right:.6mm}.kbf+.kbf{break-before:page}.kbf.quer{page:kbq}
+.kbf table{width:100%;border-collapse:collapse;margin:0}.kbf th,.kbf td{border:.6pt solid #000;padding:.8mm 1.2mm;vertical-align:middle;color:#000;background:none;font-size:8pt;white-space:normal}.kbf th{font-weight:700;text-align:center}
+.kbf table+table{margin-top:-.6pt}.kbf .n{text-align:right;white-space:nowrap}.kbf .c{text-align:center}.kbf .kz{width:6mm;text-align:center;font-weight:700}.kbf tr.kt td{font-weight:700}.kbf .kbb{font-size:6.5pt}
+.kbf td.kbt{font-weight:700;font-size:11pt}.kbf .kbn{font-weight:700;font-size:12pt;text-align:center}.kbf .kbl{max-height:15mm;max-width:40mm;display:block;margin:0 auto}.kbf .kbfi{font-size:6.5pt;text-align:center;margin-top:.5mm}
+.kbf table.kbx td{border:0;padding:.3mm 0;font-weight:700}.kbf table.kbx td.x{width:8mm;text-align:center}.kbf td.lb2{font-size:6.5pt;border-left:0}.kbf .kbs td{font-weight:700;background:#f2f2f2}.kbf .kbft{margin-top:3mm;font-size:6.5pt;text-align:center;border-top:.6pt solid #80704d;padding-top:1mm}
+.kbf thead{display:table-header-group}.kbf tr{break-inside:avoid}.kbf .an td{font-size:7pt}.kbf td.kbsub{color:#1a4f9c;font-size:7pt}
 #print{display:none}
 .pgw,.pgw>*>tr>td{border:0;padding:0;width:100%;border-collapse:collapse}.pgw .pgf{height:16mm}
 @media print{#app,#start,.pop{display:none!important}#print{display:block}body{background:#fff}@page{size:A4;margin:10mm 14mm 17.3mm 20mm;@top-left{content:'\00a0'}@top-center{content:'\00a0'}@top-right{content:'\00a0'}@bottom-right{content:'Seite ' counter(page) ' von ' counter(pages);white-space:nowrap;font:7.5pt Arial,sans-serif;vertical-align:top;text-align:right;padding-top:10.5mm;width:30mm;margin-right:1mm}}#print.mb .ft{display:none}#print.mb .pgf{height:0}
@@ -3620,6 +3627,82 @@ function kbDocHTML(kb){
   ${kb.k6.length?`<h3 style="margin-top:6mm;font-size:12pt">K6 · Gerätepreise</h3><table class="p"><thead><tr><th>Gerät</th><th>Einh.</th><th class="n">Kosten</th><th class="n">Preis</th></tr></thead><tbody>${kb.k6.map(m=>`<tr><td>${esc(m.bez)}</td><td>${esc(m.einheit)}</td><td class="n">${fmt(k6kosten(m))}</td><td class="n">${fmt(k6kosten(m)*(1+g.s/100))}</td></tr>`).join('')}</tbody></table>`:''}
   ${kb.notiz?`<div class="txt"><b>Vermerk:</b> ${esc(kb.notiz)}</div>`:''}</div>`;
 }
+/* --- K-Blätter (P34 Teil 3, erw.kbDruck): Druck/PDF im Layout der Formblätter K2–K7 – Kopf mit Blattart, „FORMBLATT K x“, Erstellt am, Seite (Blatt), Bau/Projekt, Angebot Nr.,
+   Preisbasis und Währung, in der Mitte Logo und Firmendaten der TBH (S().firma, ohne eigenes Logo KOPF_TBH), Firmendaten (fussZeilen) am Blattende; K4, K6, K7 quer; vor dem Druck Auswahl der Blätter --- */
+erwPlus({k:'kbDruck',std:true,p:'K-Blätter (P34)',l:'K-Blätter drucken im Layout der Formblätter',info:'„PDF / Drucken“ im K-Blatt fragt, welche Blätter gedruckt werden (K2, K3 je Blatt, K4, K5, K6, K7 je LV), und druckt sie im Aufbau der Formblätter nach ÖNORM B 2061: Kopf mit Blattart (z. B. Mittellohnpreis X), „FORMBLATT K 3“, Erstellt am, Seite, Bau, Angebot Nr., „für Montage/Vorfertigung“, Preisbasis und Währung, in der Mitte Logo und Firmendaten der TBH, am Blattende die Firmendaten der Fußzeile. K4, K6 und K7 werden quer gedruckt, Tabellenköpfe wiederholen sich auf jeder Seite. Im Druckdialog „Als PDF speichern“ wählen. Aus = bisheriger Ausdruck (eine Übersicht aller Blätter).'});
+const kbXz=(L,akt)=>`<table class="kbx">${L.map(([k,l])=>`<tr><td>${esc(l)}</td><td class="x">${k===akt?'X':''}</td></tr>`).join('')}</table>`;
+function kbKopfF(kb,nr,links,mitte,seite=''){const f=S().firma;
+  return`<table><tr><td class="kbt" style="width:36%">${links}</td><td style="width:34%"><img class="kbl" src="${f.logo||KOPF_TBH}" alt=""><div class="kbfi">${esc([f.name,[f.strasse,(String(f.plz||'')+' '+(f.ort||'')).trim()].filter(Boolean).join(', ')].filter(Boolean).join(' · '))}</div></td>
+    <td style="padding:0"><div class="kbn" style="padding:1mm">FORMBLATT K ${nr}</div><table style="margin:0"><tr><td style="border-left:0;border-bottom:0">Erstellt am:<br><b>${dAT(kb.datum)}</b></td><td style="border-right:0;border-bottom:0;width:30%">Seite:<br><b>${seite}</b></td></tr></table></td></tr></table>
+  <table><tr><td style="width:36%">Bau: <b>${esc(kb.bau||kb.projekt||'')}</b><br>Angebot Nr.: <b>${esc(kb.angebotNr||'')}</b></td><td style="width:34%">${mitte||'Kalkulation: '+esc(kb.name||'')}</td><td>Preisbasis ${esc(kb.preisbasis||'lt. Angebotsunterlagen')}<br>Währung: EUR</td></tr></table>`}
+const kbFuss=()=>`<div class="kbft">${fussZeilen(S().firma).map(esc).join('<br>')}</div>`;
+function kbF2(kb){const z=k2sp(kb);
+  return`<section class="kbf">${kbKopfF(kb,2,'GESAMTZUSCHLAG','Gesamtzuschlag in % auf die Kosten')}<table><thead><tr><th style="text-align:left">Zuschlagsbestandteil</th>${K2SP.map(([,l])=>`<th style="width:15%">${l}<br>%</th>`).join('')}</tr></thead><tbody>
+  ${kb.k2.zeilen.map(x=>`<tr><td>${esc(x.bez)}</td>${K2SP.map(([c])=>`<td class="n">${fmt(k2w(x,c))}</td>`).join('')}</tr>`).join('')}
+  <tr class="kt"><td>Gesamtzuschlag („vom Hundert“ auf die Kosten)</td>${K2SP.map(([c])=>`<td class="n">${fmt(z[c])}</td>`).join('')}</tr><tr><td>entspricht „im Hundert“ (Anteil am Preis)</td>${K2SP.map(([c])=>`<td class="n">${fmt(imHundert(z[c]))}</td>`).join('')}</tr></tbody></table>${kb.notiz?`<p>${esc(kb.notiz)}</p>`:''}${kbFuss()}</section>`}
+function kbF3(kb,c,ci){const x=k3calc(kb,c),A=x.kv,z=k2sp(kb),pz=v=>A?fmt(v/A*100):'',w=k=>{const r=k3Zeile(c,k);return r?+(K3Z[k][0]==='aufz'?r.wert:r.pct)||0:0};
+  const arb=c.arbeiter||[],ant=arb.some(y=>y.anteil!==''&&y.anteil!=null),n=Math.max(6,arb.length),G=[...arb,...Array(n-arb.length).fill(null)],mh=[0,1,2].map(i=>c.mehr?.[i]||{});
+  const zl=(k,l,b,p,be,cls='')=>`<tr${cls?` class="${cls}"`:''}><td class="kz">${k}</td><td>${l}</td><td class="kbb">${b}</td><td class="n" style="width:16mm">${p}</td><td class="n" style="width:18mm">${be}</td></tr>`;
+  const ex=(f,b,amt)=>(c[f]||[]).filter(y=>!y.kb&&!(f==='lnk'&&(k3Zeile(c,'J')===y||k3Zeile(c,'K')===y))).map(y=>zl('+',esc(y.bez),b(y),'',fmt(amt(y)))).join('');
+  return`<section class="kbf">${kbKopfF(kb,3,kbXz(Object.entries(K3B).map(([k,l])=>[k,l.toUpperCase()]),c.blatt||'ML'),kbXz(Object.entries(K3F).map(([k,l])=>[k,l.toUpperCase()]),c.fuer||'M'),ci+1)}
+  <table style="table-layout:fixed"><colgroup><col style="width:24mm">${G.map(()=>'<col>').join('')}<col style="width:12mm"><col style="width:15mm"></colgroup><tr><td colspan="${n+3}">Beschäftigungsgruppe laut KV: &nbsp; <b>${esc(c.kv||'')}</b></td></tr>
+  <tr><td style="width:24mm">KV-Gruppe:</td>${G.map(y=>`<td class="c">${y?esc(y.bez):''}</td>`).join('')}<td class="c" style="width:12mm">${fmtQ(x.n)}</td><td class="lb2" style="width:14mm">Kalk. Be.</td></tr>
+  <tr><td>KV-Lohn:</td>${G.map(y=>`<td class="c">${y?fmt(y.lohn):''}</td>`).join('')}<td class="c">${+c.wo?fmtQ(c.wo):''}</td><td class="lb2">Kalk. WoA.</td></tr>
+  <tr><td>Anteil in %:</td>${G.map(y=>`<td class="c">${y?fmtQ(ant?+y.anteil||0:x.n?r2((+y.anz||0)/x.n*100):0):''}</td>`).join('')}<td></td><td class="lb2">= ${fmt(x.anteil)} %</td></tr>
+  <tr><td colspan="${n+3}" style="text-align:right">Aufzahlung für Mehrarbeit: ${mh.map(m=>`&nbsp; ${m.pct!=null&&m.pct!==''?fmtQ(m.pct):'___'} % &nbsp; ${m.h!=null&&m.h!==''?fmt(m.h):'___'} h &nbsp;`).join('|')}</td></tr></table>
+  <table><tr><td class="kz"></td><td></td><td></td><td class="n" style="width:16mm"><b>%</b></td><td class="n" style="width:18mm"><b>Betrag</b></td></tr>
+  ${zl('A','<b>Kollektivvertraglicher MITTELLOHN – REGIELOHN – GEHALT</b>','',fmt(x.anteil),fmt3(A),'kt')}
+  ${zl('B',K3Z.B[1],K3Z.B[2],fmt(w('B')),fmt3(A*w('B')/100))}${ex('aufz',y=>y.art==='%'?'% von A':'€/h',y=>y.art==='%'?A*(+y.wert||0)/100:+y.wert||0)}
+  ${'CDEFG'.split('').map(k=>zl(k,K3Z[k][1],k==='C'?`% von A + B (A + B = ${fmt(x.ab)})`:K3Z[k][2],fmt(w(k)),fmt3(x.ab*w(k)/100))).join('')}
+  ${zl('H','<b>MITTELLOHN – REGIELOHN – GEHALT</b>','(% = Betrag H × 100 / Betrag A) (Betrag = A bis G)',pz(x.ml),fmt(x.ml),'kt')}
+  ${'IJKL'.split('').map(k=>zl(k,K3Z[k][1],K3Z[k][2],fmt(w(k)),fmt(x.ml*w(k)/100))).join('')}${ex('lnk',()=>'% von H',y=>x.ml*(+y.pct||0)/100)}${ex('sonst',()=>'€/h',y=>+y.eur||0)}${ex('pgk',()=>'% der Kosten',y=>(x.ml+x.lnk+x.so)*(+y.pct||0)/100)}
+  ${zl('M','<b>MITTELLOHN – REGIELOHN – GEHALT – KOSTEN</b>','(% = M × 100 / A)',pz(x.lk),fmt(x.lk),'kt')}
+  <tr><td class="kz"></td><td colspan="2" style="padding:0"><table style="margin:0"><tr><td style="border:0;width:40%">Gesamtzuschlag in % auf:</td>${[['g','Gerät'],['m','Material'],['f','Fremdl.'],['l','Lohn/Gehalt']].map(([k,l])=>`<td class="c" style="border-top:0;border-bottom:0">${l}<br><b>${fmt(z[k])}</b></td>`).join('')}</tr></table></td><td></td><td></td></tr>
+  ${zl('T','<b>Gesamtzuschlag: lt. K2 Blatt</b>',c.fuer==='F'?'(% auf M, Fremdleistung)':'(% auf M)',fmt(x.gz),fmt(x.lk*x.gz/100),'kt')}
+  ${zl('U','<b>MITTELLOHN – REGIELOHN – GEHALT – PREIS</b>','(% = U × 100 / A) (Betrag = M + T)',pz(x.mlpR),fmt(x.mlpR),'kt')}
+  <tr><td class="kz"></td><td colspan="4"><b>In Sonderfällen: Umlage der Baustellengemeinkosten auf Leistungsstunden</b><br>auf <b>MLP – RLP – GP</b> <span class="kbb">(Baustellen-Gemeinkosten / h = Betrag V)</span></td></tr>
+  ${zl('V','Umgelegt sind:','','',x.V?fmt(x.V):'')}${zl('W','<b>MLP – RLP – GP mit Umlage der Gemeinkosten</b>','(% = W × 100 / A) (Betrag = U + V)',x.V?pz(x.W):'',x.V?fmt(x.W):'','kt')}
+  ${+c.mlpAngabe>0?zl('','angegeben vom Bieter','','',fmt(c.mlpAngabe)):''}</table>
+  <table><tr><td class="kz"></td><td><b>in Sonderfällen: Umlage auf Preisanteil in %</b></td><td class="c" style="width:18mm">Lohn</td><td class="c" style="width:18mm">Sonstiges</td><td style="width:34mm;border-bottom:0"></td></tr>
+  ${[0,1,2,3,4,5].map(i=>{const u=c.uml?.[i]||{};return`<tr><td class="kz">${i+1}</td><td>${esc(u.bez||'')}</td><td class="n">${u.l!=null&&u.l!==''?fmt(u.l):''}</td><td class="n">${u.s!=null&&u.s!==''?fmt(u.s):''}</td><td style="border-top:0;border-bottom:0"></td></tr>`}).join('')}
+  <tr class="kt"><td class="kz">X</td><td>UMLAGEPROZENTSATZ <span class="kbb" style="font-weight:400">Summe 1 bis 6</span></td><td class="n">${fmt(x.xl)}</td><td class="n">${fmt(x.xs)}</td><td style="border-top:0"></td></tr></table>${kbFuss()}</section>`}
+function kbF4(kb){const z=k2sp(kb),rd=kbRund(kb),s3=k3std(kb),lk=s3?k3calc(kb,s3).lk:0;
+  return`<section class="kbf quer">${kbKopfF(kb,4,'MATERIALPREIS',`Gesamtzuschlag auf Material: <b>${fmt(z.m)} %</b><br>Gesamtzuschlag auf Subleistungen: <b>${fmt(z.f)} %</b>`)}
+  <table><thead><tr><th rowspan="2">Pos.</th><th rowspan="2" style="text-align:left">Material</th><th rowspan="2">ME</th><th rowspan="2">EH</th><th rowspan="2">Preis ab Lieferer</th><th rowspan="2">Antransport zum Bau</th><th rowspan="2">Materialkosten frei Bau</th><th colspan="2">Ladearbeiten u. Manipulation</th><th colspan="2">Verlust</th><th rowspan="2">Materialkosten EK / EH</th><th rowspan="2">Materialpreis VK / EH</th></tr>
+  <tr><th>h/EH</th><th>Betrag/EH</th><th>%</th><th>Betrag/EH</th></tr></thead><tbody>
+  ${kb.k4.map(m=>{const al=(+m.lp||0)*(1-(+m.rab||0)/100),fb=al*(1+(+m.bezug||0)/100),ver=fb*(+m.verlust||0)/100,man=(+m.manH||0)*lk,ek=k4kosten(m,kb),zs=m.zs==='f'?'f':'m';
+    return`<tr><td>${esc(m.nr||'')}</td><td>${esc(m.bez)}</td><td class="n">${+m.menge?fmtQ(m.menge):''}</td><td>${esc(m.einheit||'')}</td><td class="n">${fmt(al)}</td><td class="c">${+m.bezug?fmtQ(m.bezug)+' %':'frei Baustelle'}</td><td class="n">${fmt(fb)}</td><td class="n">${fmt(+m.manH||0)}</td><td class="n">${fmt(man)}</td><td class="n">${fmt(+m.verlust||0)}</td><td class="n">${fmt(ver)}</td><td class="n">${fmt(ek)}</td><td class="n"><b>${fmt(rd(ek*(1+z[zs]/100)))}</b>${zs==='f'?'<br><span class="kbb">Sub '+fmt(z.f)+' %</span>':''}</td></tr>`}).join('')||'<tr><td colspan="13">kein Material</td></tr>'}</tbody></table>${kbFuss()}</section>`}
+function kbF5(kb){const rd=kbRund(kb),z=k2sp(kb),f4=v=>(+v||0).toLocaleString('de-AT',{minimumFractionDigits:2,maximumFractionDigits:4});
+  const zeile=(t,k3d,an)=>{const r=teileCalc(kb,[t]),q=teilePreis(kb,r,k3d),m=+t.menge||0,nm=esc(t.typ==='M'?kb.k4.find(x=>x.id===t.ref)?.bez||t.bez||'':t.typ==='G'?kb.k6.find(x=>x.id===t.ref)?.bez||t.bez||'':t.bez||(t.typ==='L'?'Lohn':''));
+    if(an==='L'&&!q.pL||an==='S'&&!q.pS)return'';const v=an==='L'?q.pL:q.pS;
+    const fo=t.typ==='L'?`${fmtQ(m)} h × ${fmt(k3calc(kb,k3von(kb,t.k3Id)||k3d).mlp)} =`:t.typ==='G'?`${fmtQ(m)} × ${fmt(an==='L'?k6teile(kb.k6.find(x=>x.id===t.ref)||{}).L:k6teile(kb.k6.find(x=>x.id===t.ref)||{}).S)} × ${f4(1+(an==='L'?z.l:z[t.sp||'g'])/100)} =`
+      :`${fmtQ(m)} × ${fmt(m?(an==='L'?q.kL:q.kS)/m:0)} × ${f4(m&&(an==='L'?q.kL:q.kS)?v/(an==='L'?q.kL:q.kS):1)} =`;
+    return`<tr class="an"><td class="kbsub">${nm}</td><td class="kbsub">${fo}</td><td></td><td class="n">${an==='L'?'€ '+fmt(v):''}</td><td class="n">${an==='S'?'€ '+fmt(v):''}</td></tr>`};
+  return`<section class="kbf">${kbKopfF(kb,5,'KOSTEN-/PREISERMITTLUNG<br>ZUSAMMENGESETZTE PREISKOMPONENTEN','')}
+  <table><thead><tr><th style="text-align:left;width:38%">Nummer<br>Kosten-/Preisermittlung für:</th><th></th><th style="width:12%">EH<br>Menge/EH</th><th style="width:15%">Anteil Lohn</th><th style="width:15%">Anteil Sonst.</th></tr><tr><th colspan="3"></th><th colspan="2">Kosten/Preis je Einheit</th></tr></thead><tbody>
+  ${kb.k5.map(c=>{const k3d=k3von(kb,c.k3Id),q=teilePreis(kb,teileCalc(kb,c.teile),k3d);
+    return`<tr class="kbs"><td colspan="2">${esc(c.nr||'')} &nbsp; ${esc(c.bez)}</td><td class="c">1 ${esc(c.einheit)}</td><td></td><td></td></tr>
+    ${(c.teile||[]).map(t=>zeile(t,k3d,'L')).join('')}<tr class="kt"><td colspan="2">Summe Lohn</td><td class="c">1 ${esc(c.einheit)}</td><td class="n">€ ${fmt(rd(q.pL))}</td><td></td></tr>
+    ${(c.teile||[]).map(t=>zeile(t,k3d,'S')).join('')}<tr class="kt"><td colspan="2">Summe Sonstiges</td><td class="c">1 ${esc(c.einheit)}</td><td></td><td class="n">€ ${fmt(rd(q.pS))}</td></tr>`}).join('')||'<tr><td colspan="5">keine Komponenten</td></tr>'}</tbody></table>${kbFuss()}</section>`}
+function kbF6(kb){const z=k2sp(kb),rd=kbRund(kb);
+  return`<section class="kbf quer">${kbKopfF(kb,6,'GERÄTEPREIS','Gesamtzuschlag auf Geräte: <b>'+fmt(z.g)+' %</b> · auf Lohn: <b>'+fmt(z.l)+' %</b>')}
+  <table><thead><tr><th rowspan="2">Nr.</th><th rowspan="2" style="text-align:left">Gerätebezeichnung,<br>Preisquelle (ev. ÖBGL-Nr)</th><th rowspan="2">Einheit</th><th rowspan="2">Preis-<br>anteil</th><th>Abschreibung und Verzinsung (AV)</th><th colspan="2">Gerätegemein-<br>kosten auf AV</th><th>Reparatur und Instandhaltung (Rep)</th><th colspan="2">Gerätegemein-<br>kosten auf Rep</th><th>Andere Kosten</th><th>Geräte-<br>kosten</th><th>Gesamt-<br>zuschlag gemäß K2-Blatt</th><th>Geräte-<br>preis</th></tr>
+  <tr><th>Betrag/EH</th><th>% auf E</th><th>Betrag<br>E×F/100</th><th>Betrag/EH</th><th>% auf H</th><th>Betrag<br>H×I/100</th><th>Betrag/EH</th><th>Betrag/EH<br>E+G+H+J+K</th><th>%-Satz<br>auf L</th><th>Betrag/EH<br>L+L×M/100</th></tr>
+  <tr>${'ABCDEFGHIJKLMN'.split('').map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>
+  ${kb.k6.map((g,i)=>{const t=k6teile(g),r=(e,f,h,ii,k,s,zz)=>{const G=e*f/100,J=h*ii/100,L=e+G+h+J+k;return`<td class="n">${fmt(e)}</td><td class="n">${fmt(f)}</td><td class="n">${fmt(G)}</td><td class="n">${fmt(h)}</td><td class="n">${fmt(ii)}</td><td class="n">${fmt(J)}</td><td class="n">${fmt(k)}</td><td class="n">${fmt(L)}</td><td class="n">${fmt(zz)}</td><td class="n">${fmt(rd(L*(1+zz/100)))}</td>`};
+    return`<tr><td rowspan="3" class="c"><b>${i+1}</b></td><td rowspan="3">${esc(g.bez||'')}${g.quelle?'<br>'+esc(g.quelle):''}</td><td rowspan="3" class="c">${esc(g.einheit||'')}</td><td>Lohn</td>${r(+g.avL||0,+g.ggkAv||0,+g.repL||0,+g.ggkRep||0,+g.andL||0,0,z.l)}</tr>
+    <tr><td>Sonstiges</td>${r(+g.av||0,+g.ggkAv||0,+g.rep||0,+g.ggkRep||0,+g.betrieb||0,0,z.g)}</tr><tr class="kt"><td>Summe</td><td colspan="7"></td><td class="n">${fmt(t.L+t.S)}</td><td></td><td class="n">${fmt(rd(t.L*(1+z.l/100))+rd(t.S*(1+z.g/100)))}</td></tr>`}).join('')||'<tr><td colspan="14" class="c">keine Geräte</td></tr>'}</tbody></table>${kbFuss()}</section>`}
+function kbF7(kb,lv){const oz=lvOZ(lv),z=k2sp(kb),P=lv.items.filter(i=>i.typ==='POS'),s3=k3von(kb);let pp=0;
+  return`<section class="kbf quer">${kbKopfF(kb,7,`PREISERMITTLUNG<br><span style="font-size:8pt">LV ${esc(lv.nr)} ${esc(lv.titel||'')}</span>`,'')}
+  <table><thead><tr><th>Pos.-Nr.</th><th style="text-align:left">Positionsstichwort</th><th>Menge</th><th>EH</th><th>h/EH<br><span class="kbb">€ ${fmt(s3?k3calc(kb,s3).mlp:0)}</span></th><th>LO-VK</th><th>EK</th><th>Aufschlag<br><span class="kbb">${fmt(z.m)} %</span></th><th>SO</th><th>EHP</th><th>PP</th></tr></thead><tbody>
+  ${P.map(p=>{const pr=posPreis(lv,p),k=pr.k7,g=r2((+p.menge||0)*pr.ep);if(!p.art)pp+=g;return`<tr><td>${oz[p.id]}${p.art?' '+p.art:''}</td><td>${esc(p.kurz)}</td><td class="n">${fmtQ(p.menge)}</td><td>${esc(p.einheit)}</td><td class="n">${k?fmt3(k.std):''}</td><td class="n">${fmt(pr.l)}</td><td class="n">${k?fmt(k.kS):''}</td><td class="n">${k?fmt(pr.s-k.kS):''}</td><td class="n">${fmt(pr.s)}</td><td class="n"><b>${fmt(pr.ep)}</b></td><td class="n">${p.art?'n. i. S.':fmt(g)}</td></tr>`}).join('')}
+  <tr class="kt"><td colspan="10">Summe</td><td class="n">${fmt(pp)}</td></tr></tbody></table>${kbFuss()}</section>`}
+function kbFormDoc(kb,sel){const L=DB.lv.filter(l=>l.kbId===kb.id),o=[];
+  if(sel.includes('K2'))o.push(kbF2(kb));if(sel.includes('K3'))kb.k3.forEach((c,i)=>o.push(kbF3(kb,c,i)));if(sel.includes('K4'))o.push(kbF4(kb));if(sel.includes('K5'))o.push(kbF5(kb));
+  if(sel.includes('K6'))o.push(kbF6(kb));if(sel.includes('K7'))for(const lv of L)o.push(kbF7(kb,lv));return o.join('')}
+async function kbDruckDialog(kb){const nL=DB.lv.filter(l=>l.kbId===kb.id).length,B=[['K2','K2 Gesamtzuschlag',1],['K3',`K3 Personalpreis (${kb.k3.length} Blatt)`,kb.k3.length],['K4',`K4 Material (${kb.k4.length} Zeilen, quer)`,kb.k4.length],['K5',`K5 Preiskomponenten (${kb.k5.length})`,kb.k5.length],['K6',`K6 Geräte (${kb.k6.length}, quer)`,kb.k6.length],['K7',`K7 Positionen (${nL} LV, quer)`,nL]];
+  const o=await formDialog({titel:'K-Blätter drucken / PDF',ok:'Drucken',felder:[...B.map(([k,l,n])=>({k,l,typ:'checkbox',wert:!!n,dis:!n,neu:1})),{typ:'hinweis',l:'Für eine PDF-Datei im Druckdialog „Als PDF speichern“ wählen.',neu:1}]});
+  if(!o)return;const sel=B.map(x=>x[0]).filter(k=>o[k]);if(sel.length)druckHTML(kbFormDoc(kb,sel),'K-Blaetter '+kb.name)}
 /* --- LV → Angebot --- */
 function lvZuAngebot(lv){
   if(!lv.kontaktId){alert('Bitte zuerst den Auftraggeber im LV wählen.');return}
@@ -3640,7 +3723,7 @@ const ACT_LV=({
   ...ACT_KBW,
   kbdel:el=>{if(DB.lv.some(l=>l.kbId===el.dataset.id)){alert('Basis wird in einem LV verwendet.');return}if(!confirm('K-Blätter löschen?'))return;DB.kalk=DB.kalk.filter(x=>x.id!==el.dataset.id);persist();go('kbs')},
   kbdup:el=>{const s=ROOT.kb(el.dataset.id),c=JSON.parse(JSON.stringify(s)),m={};c.id=uid();c.name=s.name+' (Kopie)';for(const x of c.k3)x.id=m[x.id]=uid();const um=o=>{if(o&&typeof o==='object')for(const k in o)if(k==='k3Id'&&m[o[k]])o[k]=m[o[k]];else um(o[k])};um(c.k5);DB.kalk.push(c);persist();go('kbs/'+c.id)}, // K3-Verweise in K5 auf die Kopie (P34)
-  kbdruck:el=>{const kb=ROOT.kb(el.dataset.id);druckHTML(kbDocHTML(kb),'K-Blaetter '+kb.name)},
+  kbdruck:el=>{const kb=ROOT.kb(el.dataset.id);if(erw('kbDruck')){kbDruckDialog(kb);return}druckHTML(kbDocHTML(kb),'K-Blaetter '+kb.name)}, // Formblätter nach Vorlage (P34 Teil 3)
   k4art:el=>{const kb=ROOT[el.dataset.r.split('|')[0]](el.dataset.r.split('|')[1]);const nr=prompt('Artikel-Nr. (mehrere mit Komma) oder * für alle Waren:','*');if(!nr)return;
     const L=nr.trim()==='*'?DB.artikel.filter(a=>a.art!=='L'&&a.aktiv!==false):nr.split(',').map(x=>DB.artikel.find(a=>a.nr===x.trim())).filter(Boolean);
     for(const a of L)if(!kb.k4.some(m=>m.bez===a.bez)){const lf=(a.lieferanten||[]).find(l=>+l.lp>0);kb.k4.push({...TPL.k4(),bez:a.bez,einheit:a.einheit,lp:lf?+lf.lp:+a.ek||0,rab:lf?+lf.rabatt||0:0})}persist();render()},

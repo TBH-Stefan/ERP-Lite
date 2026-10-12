@@ -1249,6 +1249,27 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 
 ---
 
+### P31 – Stammdaten: Lieferant direkt anlegen, Dublettenprüfung, Listenpreis/Rabatt/EK
+- **Entscheidung des Anwenders (12.10.2026):** Lieferant aus der Artikelanlage anlegen (Pop-up), bei allen Neuanlagen prüfen, ob der Artikel bzw. Kontakt schon angelegt ist, EK/Listenpreis/Rabatt gegenseitig berechnen, Bild je Artikel.
+- **Schalter:** `erw.lfNeu`, `erw.dublette`, `erw.ekRechnen` (alle Standard ein, Paket „Stammdaten (P31)“); Bild je Artikel `erw.artBild` als Teil von P24 (Paket „Bilder (P24)“, Dateien in der Ablage wie in P24 vorgesehen, Druck noch offen).
+- ✅ umgesetzt (Commits 04bd23c, 30cbf83).
+
+### P32 – Belegstatus: Auftragsbestätigung nach Ausgabe „abgeschlossen“
+- **Entscheidung des Anwenders (12.10.2026):** Status der AB auf „abgeschlossen“, sobald sie gedruckt, als PDF gespeichert oder per E-Mail versendet wird. Schalter `erw.abAbschluss` (Standard ein), Rücknahme über „Status wieder offen“.
+- ✅ umgesetzt (Commit cf0457e).
+
+### P33 – Bedienung: ⓘ beim Darüberfahren, Scrollen im Pop-up, Explorer-Auswahl, Rechtsklick
+- **Entscheidung des Anwenders (12.10.2026):** Erläuterungen nur beim Darüberfahren mit der Maus, Scrollen in Auswahlfenstern ohne den Hauptbildschirm, Struktur-Auswahl mit nächster Ebene beim Darüberfahren (wie Windows-Explorer/iOS), Rechtsklick-Funktionen im System.
+- **Schalter:** `erw.ihHover`, `erw.scrollSperre`, `erw.baumHover`, `erw.kontext` (Standard ein, Paket „Bedienung (P33)“); am Handy/Tablet bleibt Antippen.
+- ✅ umgesetzt (Commit d3cc148).
+
+### Ergänzungen vom 12.10.2026 ohne eigenes Paket
+- Infoblock „UID Kunde“ und Gliederung Belegdaten | Kunde | Kontakt (Druckoptionen `lblUid`, `infoGrp`, neuer Standard laut Anwender; festgeschriebene Belege über `DRUCK_ALT` wie gedruckt) – Commit 6351e48.
+- Druck ohne Browser-Kopfzeile, Datei-Info der PDF – Commit fc199bd.
+- „+ Stundentarif …“ in Verkaufsbelegen (`erw.tarifPos`, Paket P12) – Commit f5e28f9.
+
+---
+
 ### Bereits vorhanden (kein eigenes Paket)
 
 | ETU-Funktion | ERP-Lite heute (wo) | Kleine Ergänzung |
@@ -1318,6 +1339,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - seit U10 (P6, P8, P9, 10.10.2026): rückwärts P9 (395368b) → P8 (f385ffd) → P6 (570074f); einzeln nur P9 (P8 nutzt `briefAnrede()`/`anrBeleg()` aus P6 und ändert dessen Zeilen, P9 erweitert `PLATZH`/`phWerte()` aus P8). U10 vor (geänderte bzw. direkt angrenzende Zeilen): P0 c (f6526f9, `belegFix()` mit `lnwAus`), P0 e (1c61540), P0 j (7de8798), P1 (d5237b2), P3 (06ffa33), P4 Spalten (8a9b49b), P4 Positionsdarstellung (1d7338f), P5 (7bca588) samt Korrektur b626535, P6 Teil (072ff14), P11 (3e041e7), U7 Commit 5 (050e6d5) und 6 (89025f2), U8 Commit 1 (fcfbee7), 2 (8311235), 3 (f974f09) und Korrektur 68e30f6. Davon neu nur erst nach U10 rücknehmbar: U7 Commit 6 (89025f2, Einstellungen: E-Mail-Vorlage und Spalte „Lohnnachweis“; nach P9 und P8) und P4 Positionsdarstellung (1d7338f, Zeile „davon Lohn“; nach P9); alle übrigen Code-Commits seit ETU wie vor U10. Geprüft: U10 rückwärts konfliktfrei, Programm nach jedem Schritt ohne Konsolenfehler (390 und 1400 px), danach `index.html` gleich dem Stand vor U10 (6daa4c2). Die Prüfkorrektur „U10: Korrektur Platzhalter-Einfügen und Häkchen Lohnkostennachweis“ ändert Zeilen aus P8 und P9 und wird zuerst zurückgenommen.
   - Korrektur iOS-Schalterbreite (Prüfung U9, 10.10.2026; Schalter in „Druckoptionen“, Einstellungen und Pop-ups waren am Handy 20 px breit, der Knopf überdeckte den Text): einzeln rücknehmbar, vor dem iOS-Commit ae69ae6.
   - seit U11 (P10, P12, 12.10.2026): rückwärts Korrektur 4710d17 → P12 (73ee3b1) → P10 (48ff8cf) (die Korrektur ändert die Zeile `const st=…` in `gesamtKalk()`, an die P12 direkt anschließt); einzeln nur P12 (P12 erweitert `gkNeu()`/`gesamtKalk()` aus P10, seine Schalter stehen direkt nach denen von P10). Neu erst nach U11 rücknehmbar: P9 (395368b, Stundentarife: Spalten „Aufschlag“ und „DB/Std“ in dessen Zeilen; vorher P12) und der iOS-Commit ae69ae6 (Schalter `gkalk` in `ERW` direkt angrenzend; vorher P12 und P10) – damit auch alle Commits, die P9 bzw. ae69ae6 schon bisher voraussetzten (z. B. U10-Kette, P3, P4, P11, P0 j, P0 l, P2, U8 samt Korrektur 68e30f6, U7 Commit 2, 5 und 6 und alle, die U7 Commit 2 voraussetzen; sonst bleiben ihre Vorgänger gleich). Alle übrigen Code-Commits seit ETU wie vor U11. Geprüft (Klon, `git apply -R --3way` je Commit an der Spitze vor und nach U11): U11 rückwärts konfliktfrei, danach `index.html` gleich dem Stand vor U11 (dffb7d3); Programm nach der Rücknahme von P12 ohne Konsolenfehler (390 und 1400 px).
+  - Ergänzungen vom 12.10.2026: rückwärts f5e28f9 (Stundentarif) → d3cc148 (P33) → 30cbf83 (Bild als Datei) → cf0457e (P32) → fc199bd (Druck) → 6351e48 (Infoblock) → 04bd23c (P31); einzeln jeweils nur der zuletzt verbliebene (die Schalter-Einträge stehen untereinander vor `snapshot`, P33 ergänzt Zeilen von P31/P32/30cbf83).
 - Noch offen: Test an echten Geräten (Edge, Firefox, Android, iOS; Druck, Strg+P, Browsermenü), echter Mailversand und Abgleich über OneDrive mit zwei Geräten, Tag `vor-etu` (nicht gesetzt).
 
 **Stufe 2: Kernfunktionen nach ETU (ca. 12–13 Tage)**
@@ -1371,6 +1393,7 @@ Jedes Paket wird erst nach Ihrem Test im Browser nach `main` übernommen. Bis da
 - **Lohnkostennachweis (P9):** nur auf Wunsch je Beleg (Standard aus). ✅ umgesetzt (U10).
 - **Briefanrede (P6):** österreichische Form „Sehr geehrter Herr Ing. Mustermann,“, je Kontakt überschreibbar. ✅ umgesetzt (U10).
 - **Pflichtangaben/Duplikat (P0 m/n):** Firmenbuchgericht nicht vorbelegen, nur Hinweis bei leerem Feld; Duplikat-Vermerk Standard aus.
+- **12.10.2026:** P31 (Lieferant direkt anlegen, Dublettenprüfung, Listenpreis/Rabatt/EK), Bild je Artikel (Teil P24), Infoblock „UID Kunde“ mit Gliederung (neuer Standard), Druck ohne Browser-Kopfzeile, P32 (AB nach Ausgabe „abgeschlossen“), P33 (Bedienung), „+ Stundentarif …“ – alle ✅ umgesetzt, Standard ein.
 - Noch offen: Fragen 5, 6, 7, 9, 10, 11.
 
 ## 6. Offene Fragen

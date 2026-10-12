@@ -165,6 +165,12 @@ label>input,label>select,label>textarea{margin-top:2px;color:var(--ink);font-siz
 .pfehlt,.pfehlt .bwfeld{border-color:var(--err)!important;box-shadow:0 0 0 2px rgba(180,35,24,.22)!important}
 /* Bild je Artikel (P31) */
 .abild{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}.abild img{max-width:220px;max-height:220px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}
+/* Bedienung (P33): ⓘ als Fenster beim Darüberfahren (body.ihh), nur im Pop-up scrollen (body.ssp), Struktur-Auswahl in Spalten (#bw-l.bwk) */
+body.ihh details.ih[open]{display:inline-block;flex-basis:auto;order:0;margin:0 0 0 4px}
+body.ihh details.ih>.ihx{position:fixed;z-index:300;width:max-content;max-width:min(360px,calc(100vw - 16px));padding:8px 10px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);font-size:13px;line-height:1.45;pointer-events:none}
+html:has(body.ssp){scrollbar-gutter:stable}body.ssp:has(.modal){overflow:hidden}body.ssp :is(.modal,.mbox,.pop,#bw-l,.bwc){overscroll-behavior:contain}
+#bw-l.bwk{display:flex;overflow-x:auto;overflow-y:hidden}.bwc{flex:0 0 200px;max-height:50vh;overflow-y:auto;border-right:1px solid var(--line)}.bwc:last-child{border-right:0}
+.bwc .bwz.auf{background:var(--acc2)}.bwc .bwz.sel{background:var(--acc);color:#fff}.bwc .bwz.sel .mut{color:#fff}
 .mut{color:var(--mut)}.err{color:var(--err)}.okc{color:var(--ok)}.warnc{color:var(--warn)}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .bar select{width:auto}
@@ -533,6 +539,10 @@ const ERW=[
   {k:'ekRechnen',std:true,p:'Stammdaten (P31)',l:'Listenpreis, Rabatt und EK: zwei Werte ergeben den dritten',info:'In „Neuer Artikel“, im Artikel-Pop-up einer Position (✎) und in der Lieferantenliste eines Artikels: Listenpreis und Rabatt ergeben den EK, EK und Listenpreis den Rabatt, EK und Rabatt den Listenpreis. Neu berechnet wird jeweils das Feld, das am längsten nicht bearbeitet wurde. Wird zuerst nur der EK oder nur der Listenpreis eingetragen, gilt Listenpreis = EK und Rabatt 0 – so sind immer alle drei Felder ausgefüllt. Aus = wie bisher (nur im Artikel-Pop-up einer Position: Listenpreis/Rabatt → EK, EK → Rabatt).'},
   {k:'artBild',std:true,p:'Bilder (P24)',l:'Bild je Artikel',info:'Im Artikel (Karte „Bild“) und in „Neuer Artikel“ lässt sich ein Foto oder Bild einfügen, am Handy auch direkt mit der Kamera. Das Bild liegt als Datei in der Ablage unter „bilder/“ (OneDrive bzw. Ordner, im Test nur in diesem Browser) – als Vorschau mit höchstens 320 Pixeln und in voller Größe (große Bilder verkleinert); die Daten (erp-daten.json) enthalten nur den Dateinamen. Ein Klick auf die Vorschau öffnet das Bild. Belege und Ausdrucke bleiben unverändert (Bilder im Druck folgen mit P24). Aus = Karte und Feld ausgeblendet, gespeicherte Bilder bleiben erhalten.'},
   {k:'abAbschluss',std:true,p:'Belegstatus (P32)',l:'Auftragsbestätigung nach der Ausgabe „abgeschlossen“',info:'Sobald eine festgeschriebene Auftragsbestätigung gedruckt, als PDF gespeichert oder per E-Mail versendet wird, steht ihr Status auf „abgeschlossen“ (nicht mehr unter „offen“). „Status wieder offen“ im Beleg nimmt das zurück, „Bearbeiten“ ebenfalls. Aus = Status wie bisher nach Lieferung und Rechnung (offen, teilweise, erledigt).'},
+  {k:'ihHover',std:true,p:'Bedienung (P33)',l:'Erläuterungen ⓘ beim Darüberfahren mit der Maus',info:'Am Bildschirm mit Maus erscheint die Erläuterung, solange der Mauszeiger auf dem ⓘ steht, als kleines Fenster – ohne Klick und ohne dass sich die Seite verschiebt. Am Handy und Tablet weiter durch Antippen. Aus = Aufklappen per Klick.'},
+  {k:'scrollSperre',std:true,p:'Bedienung (P33)',l:'Bei offenem Pop-up nur im Pop-up scrollen',info:'Solange ein Pop-up offen ist, scrollen Mausrad und Wischen nur das Pop-up bzw. die Liste darin (z. B. Struktur-Auswahl, Menü), der Bildschirm dahinter bleibt stehen – auch am Ende der Liste. Aus = wie bisher.'},
+  {k:'baumHover',std:true,p:'Bedienung (P33)',l:'Struktur-Auswahl wie im Explorer: nächste Ebene beim Darüberfahren',info:'In „Artikelgruppe wählen“ und „Lagerplatz wählen“ öffnet sich die nächste Ebene als weitere Spalte, sobald der Mauszeiger kurz auf einem Eintrag steht (wie im Windows-Explorer bzw. in iOS-Menüs). Klick markiert den Eintrag, Doppelklick übernimmt ihn. Am Handy und Tablet weiter durch Antippen. Aus = Ebene per Klick öffnen.'},
+  {k:'kontext',std:true,p:'Bedienung (P33)',l:'Rechtsklick-Menüs',info:'Rechtsklick (am Handy langes Drücken) auf einen Beleg, Kontakt oder Artikel in Listen und Karten öffnet ein Menü mit passenden Aktionen (Öffnen, PDF speichern, Drucken, Senden, Duplizieren, Neuer Beleg, Bearbeiten, Löschen …), auf eine Position im Beleg das Positionsmenü, sonst im Beleg das Belegmenü. In Eingabefeldern, bei markiertem Text und mit gedrückter Umschalttaste erscheint das Menü des Browsers (Kopieren, Einfügen …).'},
   {k:'snapshot',std:true,p:'Nachdruck (P0 c)',l:'Nachdruck wie das Original',info:'Beim Festschreiben werden Fußzeile, Ansprechperson, E-Mail, Telefon, Unterzeichner und die verwendeten Steuersätze im Beleg eingefroren. Nachdruck, PDF, Summen, FiBu und UVA festgeschriebener Belege verwenden diese Werte statt der aktuellen Einstellungen; Bestellungen drucken die Lieferanten-Art.-Nr. aus der Position bzw. aus dem Artikelstamm beim Festschreiben. Das Logo wird nicht eingefroren. Ältere Belege ohne eingefrorene Werte bleiben unverändert. Aus: wie bisher die aktuellen Einstellungen (eingefrorene Werte bleiben gespeichert). Fehlerbehebung, daher Standard ein.'},
   {k:'scanPE',std:true,p:'Einlesen (P14)',l:'Preiseinheit beim Einlesen prüfen',info:'Beim Einlesen von PDF-Text und Scans wird je Zeile Menge × Einzelpreis gegen den Gesamtpreis geprüft. Ergibt sich genau ein Faktor 10, 100 oder 1000 (±2 %), galt der Einzelpreis je 10/100/1000 Einheiten (z. B. Kabel „Preis/100“): er wird auf je Einheit umgerechnet; ohne Gesamtpreis gilt eine Spalte „PE“ bzw. der Spaltenkopf („Preis/100“). Im Abgleich ist die Umrechnung je Zeile markiert und abwählbar, der EK-Vorschlag für den Artikelstamm hat dann mehr Nachkommastellen (z. B. 0,4537 €/m). Zeilen, bei denen Menge × Einzelpreis nicht zum Gesamtpreis passt, werden markiert. E-Rechnungen sind nicht betroffen. Aus: wie bisher. Fehlerbehebung (sonst 100-fach zu hoher EK im Artikelstamm), daher Standard ein.'},
   {k:'duplikat',std:true,p:'Duplikat (P0 n)',l:'Vermerk „DUPLIKAT“ bei erneuter Ausgabe von Rechnungen',info:'Druck, PDF und E-Mail-Versand festgeschriebener Rechnungen (auch Anzahlungs-, Teil-, Schlussrechnungen und Gutschriften) werden gezählt. Ab der zweiten Ausgabe fragt das Programm „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja), der Vermerk steht dann über dem Belegtitel; beim Druck über das Browsermenü wird ohne Rückfrage gekennzeichnet. Das erste Original bleibt unverändert. Gezählt wird nur bei eingeschaltetem Schalter (bei älteren Rechnungen zählen bereits per E-Mail versendete mit). Eine zweite gleichlautende Rechnung ohne Vermerk kann eine zusätzliche Steuerschuld auslösen (§ 11 Abs. 12 und 14 UStG).'},
@@ -1322,6 +1332,7 @@ function render(){
   document.body.classList.toggle('zlaus',!erw('zuletzt'));if(arg&&ZL_V.includes(view))zuletztMerk(view+'/'+arg); // Zuletzt geöffnet (P19 a)
   requestAnimationFrame(vorschauSeiten);
   if(erw('artBild'))bilderLaden(); // Bild je Artikel (P24, Teil)
+  document.body.classList.toggle('ihh',erw('ihHover')&&HOVER.matches);document.body.classList.toggle('ssp',erw('scrollSperre')); // Bedienung (P33)
   document.querySelectorAll('.modal').forEach(m=>{try{if(m._gilt&&!m._gilt()){(m._weg||(()=>m.remove()))();return}m._zeich?.()}catch(e){}}); // offene Bearbeiten-Pop-ups (P30) zeigen den neuen Stand; Pop-ups eines verlassenen oder ersetzten Belegs (Navigation, Abgleich, Verwerfen) schließen
 }
 window.addEventListener('hashchange',async()=>{
@@ -1398,6 +1409,27 @@ function akk(id,titel,inhalt,{offen=false,zusatz='',kopf=''}={}){if(!kmp())retur
 document.addEventListener('toggle',e=>{const d=e.target;if(!d.matches?.('details[data-akk]')||d.open===(d.dataset.auf==='1'))return;d.dataset.auf=d.open?1:0;const z=akkZ(),id=d.dataset.akk; // toggle steigt nicht auf → Capture; Ereignis beim Zeichnen (Zustand wie data-auf) ändert nichts
   if(d.open===(d.dataset.std==='1'))delete z[id];else z[id]=d.open?1:0;lsSet('erp-akk',Object.keys(z).length?JSON.stringify(z):null)},true);
 const hilfe=t=>`<details class="ih"><summary title="Erläuterung" aria-label="Erläuterung">ⓘ</summary><div class="ihx">${t}</div></details>`;
+/* Bedienung (P33): ⓘ beim Darüberfahren (erw.ihHover, nur mit Maus: body.ihh), Rechtsklick-Menüs (erw.kontext) */
+const HOVER=matchMedia('(hover:hover) and (pointer:fine)');
+document.addEventListener('mouseover',e=>{if(!document.body.classList.contains('ihh'))return;const d=e.target.closest?.('details.ih');if(!d||d.open)return;d.open=true;
+  const s=d.querySelector('summary').getBoundingClientRect(),x=d.querySelector('.ihx');if(!x)return;const w=x.offsetWidth,h=x.offsetHeight; // Fenster unter (bzw. über) dem ⓘ, innerhalb des Bildschirms
+  x.style.left=Math.max(8,Math.min(s.left,innerWidth-w-8))+'px';x.style.top=(s.bottom+h+12>innerHeight?Math.max(8,s.top-h-4):s.bottom+4)+'px'});
+document.addEventListener('mouseout',e=>{if(!document.body.classList.contains('ihh'))return;const d=e.target.closest?.('details.ih');if(d?.open&&!d.contains(e.relatedTarget))d.open=false});
+document.addEventListener('click',e=>{if(document.body.classList.contains('ihh')&&e.target.closest?.('details.ih>summary'))e.preventDefault()},true); // kein Aufklappen per Klick
+addEventListener('scroll',()=>{if(document.body.classList.contains('ihh'))document.querySelectorAll('details.ih[open]').forEach(d=>d.open=false)},true);
+const KM={ // Rechtsklick auf Einträge mit nav('<art>/<id>'): Menüeinträge über vorhandene Aktionen
+  beleg:id=>{const b=beleg(id);if(!b)return[];const d=a=>({id,a});return[{l:'Öffnen',ic:'↗',act:'kmo',d:{r:'beleg/'+id}},{trenn:1},{l:'PDF speichern',ic:'⤓',act:'kmb',d:d('pdf')},{l:'Drucken',ic:'🖨',act:'kmb',d:d('druck')},{l:'Senden …',ic:'✉',act:'kmb',d:d('senden')},{trenn:1},
+    {l:'Duplizieren',ic:'⧉',act:'kmb',d:d('dup')},!b.storno&&{l:b.fest?'Stornieren …':'Löschen …',ic:'🗑',act:'kmb',d:d('storno'),gefahr:1}]},
+  kontakt:id=>{const k=kontakt(id);if(!k)return[];const V=k.typ!=='L',E=k.typ!=='K';return[{l:'Öffnen',ic:'↗',act:'kmo',d:{r:'kontakt/'+id}},{l:'Bearbeiten …',ic:'✎',act:'kmk',d:{id}},{trenn:1},
+    V&&{l:'Neues Angebot',ic:BICON.AN,act:'kbel',d:{id,t:'AN'}},V&&{l:'Neue Rechnung',ic:BICON.RE,act:'kbel',d:{id,t:'RE'}},E&&{l:'Neue Bestellung',ic:BICON.BE,act:'kbel',d:{id,t:'BE'}},{l:'Löschen …',ic:'🗑',act:'kdel',d:{id},gefahr:1}]},
+  artikel:id=>artikel(id)?[{l:'Öffnen',ic:'↗',act:'kmo',d:{r:'artikel/'+id}},{l:'Löschen …',ic:'🗑',act:'adel',d:{id},gefahr:1}]:[]};
+document.addEventListener('contextmenu',e=>{if(!DB||!erw('kontext')||e.shiftKey)return;const t=e.target;
+  if(!t.closest||t.closest('input,textarea,select,[contenteditable="true"],.modal,.pop,nav')||String(getSelection()).trim())return; // Browsermenü
+  let L=null;const nv=t.closest('[onclick*="nav(\'"]'),m=nv&&/nav\('([a-z]+)\/([^'\/]+)'\)/.exec(nv.getAttribute('onclick'));
+  if(m)L=(KM[m[1]]||(id=>[{l:'Öffnen',ic:'↗',act:'kmo',d:{r:m[1]+'/'+id}}]))(m[2]);
+  else if(curBeleg()&&t.closest('#main')){const z=t.closest('table.pos tr,[data-act="pbear"][data-i]'),i=z?.dataset.i??z?.querySelector('[data-p]')?.dataset.p;if(i!=null)L=MENUE.pos({dataset:{i}});if(!L?.length)L=MENUE.beleg()}
+  L=(L||[]).filter(Boolean);if(!L.length)return;e.preventDefault();const x=e.clientX,y=e.clientY;menuePop({getBoundingClientRect:()=>({left:x,right:x,top:y,bottom:y})},L);
+  const p=document.querySelector('.mpop:not(.unten)'),r=p?.getBoundingClientRect();if(r&&r.bottom>innerHeight-8)p.style.top=Math.max(8,y-r.height)+scrollY+'px'});
 function livePop(titel,inhalt,{verwerfen=null,breit=false}={}){
   document.querySelectorAll('.modal.live').forEach(x=>x.remove());
   const d=document.createElement('div');d.className='modal live';const alt=verwerfen?JSON.stringify(verwerfen):null;
@@ -3762,13 +3794,17 @@ function ketteHTML(k,wert,attr=''){const B=k==='lp'?LP:GR,p=B.pfad(wert);
 function baumWahl(k,wert){
   const B=k==='lp'?LP:GR;return new Promise(res=>{
     const d=document.createElement('div');d.className='modal';let cur=wert&&B.G(wert)?wert:'';
+    const SP=erw('baumHover')&&HOVER.matches,pfadIds=id=>{const r=[];let g=B.G(id),n=0;while(g&&n++<50){r.unshift(g.id);g=B.G(g.parent)}return r};let auf=pfadIds(cur),tH=0; // Spalten wie im Explorer (P33): auf = geöffnete Ebenen
+    const spalten=()=>{const L=d.querySelector('#bw-l'),sc=[...L.querySelectorAll('.bwc')].map(c=>c.scrollTop),E=['',...auf].filter((id,i)=>!i||B.kinder(id).length);L.classList.add('bwk');
+      L.innerHTML=E.map(id=>`<div class="bwc">${B.kinder(id).map(x=>`<div class="bwz${auf.includes(x.id)?' auf':''}${x.id===cur?' sel':''}" data-bwid="${x.id}" title="Klick: markieren · Doppelklick: übernehmen"><span>${esc(x.bez)}</span>${B.kinder(x.id).length?'<span class="mut" style="margin-left:auto">›</span>':''}</div>`).join('')||'<p class="mut" style="margin:8px">keine Einträge</p>'}</div>`).join('');
+      L.querySelectorAll('.bwc').forEach((c,i)=>{if(sc[i])c.scrollTop=sc[i]});L.scrollLeft=L.scrollWidth};
     const zeich=()=>{const ids=[];let g=B.G(cur),n=0;while(g&&n++<50){ids.unshift(g.id);g=B.G(g.parent)}
       d.querySelector('#bw-pfad').innerHTML=`<a href="javascript:void 0" data-bwgo="">${k==='lp'?'Alle Lager':'Alle Gruppen'}</a>`+ids.map(id=>` › <a href="javascript:void 0" data-bwgo="${id}">${esc(B.G(id).bez)}</a>`).join('');
       const K=B.kinder(cur);
-      d.querySelector('#bw-l').innerHTML=K.map(x=>{const nk=B.kinder(x.id).length;return`<div class="bwz" data-bwin="${x.id}" title="Klick: Ebene öffnen · Doppelklick: wählen"><span>${esc(x.bez)}</span><span class="mut" style="margin-left:auto;font-size:12px">${nk?nk+' Unterebene'+(nk>1?'n':'')+' ›':''}</span></div>`}).join('')||`<p class="mut" style="margin:8px 0">Keine weiteren Unterebenen${cur?' – „Übernehmen“ wählt „'+esc(B.pfad(cur))+'“.':'.'}</p>`;
+      if(SP)spalten();else d.querySelector('#bw-l').innerHTML=K.map(x=>{const nk=B.kinder(x.id).length;return`<div class="bwz" data-bwin="${x.id}" title="Klick: Ebene öffnen · Doppelklick: wählen"><span>${esc(x.bez)}</span><span class="mut" style="margin-left:auto;font-size:12px">${nk?nk+' Unterebene'+(nk>1?'n':'')+' ›':''}</span></div>`}).join('')||`<p class="mut" style="margin:8px 0">Keine weiteren Unterebenen${cur?' – „Übernehmen“ wählt „'+esc(B.pfad(cur))+'“.':'.'}</p>`;
       d.querySelector('#bw-ok').textContent=cur?`„${B.pfad(cur)}“ übernehmen`:(k==='lp'?'Ohne Lagerplatz übernehmen':'Ohne Gruppe übernehmen');
       d.querySelector('#bw-neu').placeholder=cur?`Neue Unterebene in „${B.G(cur).bez}“`:(k==='lp'?'Neues Lager':'Neue Hauptgruppe')};
-    d.innerHTML=`<div class="mbox" style="max-width:560px"><h2>${k==='lp'?'Lagerplatz wählen':'Artikelgruppe wählen'}</h2>
+    d.innerHTML=`<div class="mbox" style="max-width:${SP?780:560}px"><h2>${k==='lp'?'Lagerplatz wählen':'Artikelgruppe wählen'}</h2>
       <div id="bw-pfad" style="margin-bottom:8px"></div><div id="bw-l" style="max-height:50vh;min-height:220px;overflow:auto;border:1px solid var(--line);border-radius:6px"></div>
       <div class="bar" style="margin:10px 0 0"><input id="bw-neu" style="flex:1"><button id="bw-add">+ Anlegen</button></div>
       <div class="bar" style="margin:12px 0 0">${cur?'':''}<button id="bw-hoch">‹ Ebene zurück</button><span class="sp"></span><button id="m-no">Abbrechen</button><button class="p" id="bw-ok"></button></div></div>`;
@@ -3777,11 +3813,13 @@ function baumWahl(k,wert){
     const kd=e=>{if(e.key==='Escape'){e.stopPropagation();fin(null)}};document.addEventListener('keydown',kd,true);
     let letzt=0; // Doppelklick: zweiter Klick kurz nach einem Eintrags-Klick wählt die geöffnete Ebene (Liste ist dann schon neu aufgebaut)
     d.addEventListener('click',e=>{if(letzt&&Date.now()-letzt<450&&e.detail>=2&&e.target.closest('#bw-l')){fin(cur);return}
-      const t=e.target.closest('[data-bwin],[data-bwgo]');if(!t)return;letzt=t.dataset.bwin!=null?Date.now():0;cur=t.dataset.bwin??t.dataset.bwgo;zeich()});
+      const t=e.target.closest('[data-bwin],[data-bwgo]');if(!t)return;letzt=t.dataset.bwin!=null?Date.now():0;cur=t.dataset.bwin??t.dataset.bwgo;auf=pfadIds(cur);zeich()});
+    if(SP){d.addEventListener('click',e=>{const t=e.target.closest('[data-bwid]');if(!t)return;if(e.detail>=2&&t.dataset.bwid===cur){fin(cur);return}cur=t.dataset.bwid;auf=pfadIds(cur);zeich()});
+      d.addEventListener('mouseover',e=>{const t=e.target.closest('[data-bwid]');clearTimeout(tH);if(!t)return;tH=setTimeout(()=>{if(!t.isConnected)return;const p=pfadIds(t.dataset.bwid),n=B.kinder(t.dataset.bwid).length?p:p.slice(0,-1);if(n.join()!==auf.join()){auf=n;spalten()}},220)})} // nächste Ebene beim Darüberfahren
     const add=()=>{const e=d.querySelector('#bw-neu'),n=e.value.trim();if(!n)return;let g=B.kinder(cur).find(x=>x.bez.toLowerCase()===n.toLowerCase());
-      if(!g){g={id:uid(),bez:n,parent:cur};B.L().push(g);log(B.c.name+' angelegt',B.pfad(g.id))}e.value='';cur=g.id;zeich()};
+      if(!g){g={id:uid(),bez:n,parent:cur};B.L().push(g);log(B.c.name+' angelegt',B.pfad(g.id))}e.value='';cur=g.id;auf=pfadIds(cur);zeich()};
     d.querySelector('#bw-add').onclick=add;d.querySelector('#bw-neu').onkeydown=e=>{if(e.key==='Enter'){e.stopPropagation();add()}};
-    d.querySelector('#bw-hoch').onclick=()=>{cur=B.G(cur)?.parent||'';zeich()};
+    d.querySelector('#bw-hoch').onclick=()=>{cur=B.G(cur)?.parent||'';auf=pfadIds(cur);zeich()};
     d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#bw-ok').onclick=()=>fin(cur);
   });
 }
@@ -5045,6 +5083,8 @@ const ACT={
   storno:()=>stornieren(curBeleg()),
   dup:()=>duplizieren(curBeleg()),
   abauf:()=>{const b=curBeleg();if(!b?.abgeschlossen)return;delete b.abgeschlossen;log('Auftragsbestätigung wieder offen',b.nr);commit();render()}, // Status (P32)
+  kmo:el=>nav(el.dataset.r),kmk:async el=>{const k=kontakt(el.dataset.id);if(k&&await kontaktPopup(k.typ==='L'?'L':'K',{},k)){persist();render()}}, // Rechtsklick-Menüs (P33)
+  kmb:el=>{const b=beleg(el.dataset.id),a=el.dataset.a;if(!b)return;if(a==='pdf')return belegPDF(b);if(a==='druck')return belegDrucken(b);if(a==='senden')return versenden(b);if(a==='dup')return duplizieren(b);if(a==='storno')return stornieren(b)},
   reopen:()=>{const b=curBeleg();if(!confirm('Beleg wieder bearbeiten? Die Nummer bleibt erhalten.'))return;b.fest=false;delete b.druckFix;delete b.abgeschlossen;log('wieder geöffnet',`${T[b.typ].bez} ${b.nr}`);commit();render()},
   anst:el=>{const b=curBeleg();b.status=el.dataset.v;log('Angebotsstatus',`${b.nr}: ${b.status||'offen'}`);commit();render()},
   padd:el=>{const b=curBeleg(),a=el.dataset.art,i=b.pos.length,kr=T[b.typ].b==='V'&&['W','L','F'].includes(a)?+kontakt(b.kontaktId)?.rabatt||0:0;b.pos.push(neuPos({art:a,einheit:a==='L'?'h':'Stk',menge:a==='T'||a==='G'?0:1,rabatt:kr,...(a==='G'?{pauschal:0,ohneEP:false}:{})}));lsAufteilen(b,b.pos[i]);persist();

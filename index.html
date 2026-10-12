@@ -532,6 +532,7 @@ const ERW=[
   {k:'dublette',std:true,p:'Stammdaten (P31)',l:'Bei Neuanlage prüfen, ob Artikel bzw. Kontakt schon angelegt ist',info:'Beim Anlegen eines Artikels (Artikelstamm, aus einer Position, Artikel-Pop-up einer Position) meldet das Programm Artikel mit gleicher oder sehr ähnlicher Bezeichnung (Zahlen wie 3x1,5 müssen übereinstimmen) oder mit gleicher Art.-Nr. beim selben Lieferanten, auch deaktivierte. Beim Anlegen eines Kunden oder Lieferanten meldet es Kontakte mit gleichem oder ähnlichem Namen (ohne GmbH, KG …), gleicher UID-Nr. oder gleicher E-Mail, auch solche der anderen Art. Angelegt wird erst nach Rückfrage, sonst bleibt das Formular offen. Beim Einlesen von Belegen werden Zeilen wie bisher vorhandenen Artikeln zugeordnet.'},
   {k:'ekRechnen',std:true,p:'Stammdaten (P31)',l:'Listenpreis, Rabatt und EK: zwei Werte ergeben den dritten',info:'In „Neuer Artikel“, im Artikel-Pop-up einer Position (✎) und in der Lieferantenliste eines Artikels: Listenpreis und Rabatt ergeben den EK, EK und Listenpreis den Rabatt, EK und Rabatt den Listenpreis. Neu berechnet wird jeweils das Feld, das am längsten nicht bearbeitet wurde. Wird zuerst nur der EK oder nur der Listenpreis eingetragen, gilt Listenpreis = EK und Rabatt 0 – so sind immer alle drei Felder ausgefüllt. Aus = wie bisher (nur im Artikel-Pop-up einer Position: Listenpreis/Rabatt → EK, EK → Rabatt).'},
   {k:'artBild',std:true,p:'Stammdaten (P31)',l:'Bild je Artikel',info:'Im Artikel (Karte „Bild“) und in „Neuer Artikel“ lässt sich ein Foto oder Bild einfügen, am Handy auch direkt mit der Kamera. Im Artikel steht eine kleine Vorschau (höchstens 320 Pixel), das Bild selbst liegt in der Ablage unter „Artikel/“ (OneDrive bzw. Ordner, im Test nur in diesem Browser; große Bilder verkleinert). Ein Klick auf die Vorschau öffnet es. Belege und Ausdrucke bleiben unverändert. Aus = Karte und Feld ausgeblendet, gespeicherte Bilder bleiben erhalten.'},
+  {k:'abAbschluss',std:true,p:'Belegstatus (P32)',l:'Auftragsbestätigung nach der Ausgabe „abgeschlossen“',info:'Sobald eine festgeschriebene Auftragsbestätigung gedruckt, als PDF gespeichert oder per E-Mail versendet wird, steht ihr Status auf „abgeschlossen“ (nicht mehr unter „offen“). „Status wieder offen“ im Beleg nimmt das zurück, „Bearbeiten“ ebenfalls. Aus = Status wie bisher nach Lieferung und Rechnung (offen, teilweise, erledigt).'},
   {k:'snapshot',std:true,p:'Nachdruck (P0 c)',l:'Nachdruck wie das Original',info:'Beim Festschreiben werden Fußzeile, Ansprechperson, E-Mail, Telefon, Unterzeichner und die verwendeten Steuersätze im Beleg eingefroren. Nachdruck, PDF, Summen, FiBu und UVA festgeschriebener Belege verwenden diese Werte statt der aktuellen Einstellungen; Bestellungen drucken die Lieferanten-Art.-Nr. aus der Position bzw. aus dem Artikelstamm beim Festschreiben. Das Logo wird nicht eingefroren. Ältere Belege ohne eingefrorene Werte bleiben unverändert. Aus: wie bisher die aktuellen Einstellungen (eingefrorene Werte bleiben gespeichert). Fehlerbehebung, daher Standard ein.'},
   {k:'scanPE',std:true,p:'Einlesen (P14)',l:'Preiseinheit beim Einlesen prüfen',info:'Beim Einlesen von PDF-Text und Scans wird je Zeile Menge × Einzelpreis gegen den Gesamtpreis geprüft. Ergibt sich genau ein Faktor 10, 100 oder 1000 (±2 %), galt der Einzelpreis je 10/100/1000 Einheiten (z. B. Kabel „Preis/100“): er wird auf je Einheit umgerechnet; ohne Gesamtpreis gilt eine Spalte „PE“ bzw. der Spaltenkopf („Preis/100“). Im Abgleich ist die Umrechnung je Zeile markiert und abwählbar, der EK-Vorschlag für den Artikelstamm hat dann mehr Nachkommastellen (z. B. 0,4537 €/m). Zeilen, bei denen Menge × Einzelpreis nicht zum Gesamtpreis passt, werden markiert. E-Rechnungen sind nicht betroffen. Aus: wie bisher. Fehlerbehebung (sonst 100-fach zu hoher EK im Artikelstamm), daher Standard ein.'},
   {k:'duplikat',std:true,p:'Duplikat (P0 n)',l:'Vermerk „DUPLIKAT“ bei erneuter Ausgabe von Rechnungen',info:'Druck, PDF und E-Mail-Versand festgeschriebener Rechnungen (auch Anzahlungs-, Teil-, Schlussrechnungen und Gutschriften) werden gezählt. Ab der zweiten Ausgabe fragt das Programm „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja), der Vermerk steht dann über dem Belegtitel; beim Druck über das Browsermenü wird ohne Rückfrage gekennzeichnet. Das erste Original bleibt unverändert. Gezählt wird nur bei eingeschaltetem Schalter (bei älteren Rechnungen zählen bereits per E-Mail versendete mit). Eine zweite gleichlautende Rechnung ohne Vermerk kann eine zusätzliche Steuerschuld auslösen (§ 11 Abs. 12 und 14 UStG).'},
@@ -1085,6 +1086,7 @@ function statusTag(b){
   if(b.typ==='AN')return b.status==='angenommen'?tag('angenommen','ok'):b.status==='abgelehnt'?tag('abgelehnt','err'):(b.gueltigBis&&b.gueltigBis<isoD()?tag('abgelaufen','warn'):tag('offen','acc'));
   if(b.typ==='GS'&&beleg(b.vorgaengerId)&&T[beleg(b.vorgaengerId).typ].re)return tag('verrechnet','ok');
   if(T[b.typ].re){const o=offen(b);if(Math.abs(o)<0.005)return tag('bezahlt','ok');return faellig(b)<isoD()?tag('überfällig','err'):tag('offen','acc')}
+  if(abZu(b))return tag('abgeschlossen','ok'); // nach der Ausgabe (P32)
   if(['AB','BE'].includes(b.typ)){const e=erledigung(b);return e>=0.9999?tag('erledigt','ok'):e>0?tag('teilweise','warn'):tag('offen','acc')}
   return tag('gebucht','ok');
 }
@@ -1556,7 +1558,7 @@ V.belege=(bereich='V')=>{
   const typen=Object.keys(T).filter(t=>T[t].b===bereich);
   let L=DB.belege.filter(b=>T[b.typ].b===bereich&&(!typ||b.typ===typ));
   if(st==='entwurf')L=L.filter(b=>!b.fest&&!b.storno);
-  if(st==='offen')L=L.filter(b=>b.fest&&!b.storno&&(T[b.typ].re?Math.abs(offen(b))>0.005:b.typ==='AN'?!b.status:['AB','BE'].includes(b.typ)?erledigung(b)<0.9999:false));
+  if(st==='offen')L=L.filter(b=>b.fest&&!b.storno&&(T[b.typ].re?Math.abs(offen(b))>0.005:b.typ==='AN'?!b.status:['AB','BE'].includes(b.typ)?!abZu(b)&&erledigung(b)<0.9999:false));
   if(st==='offenRe')L=L.filter(b=>T[b.typ].re&&b.fest&&!b.storno&&Math.abs(offen(b))>0.005);
   if(st==='ueber')L=L.filter(b=>T[b.typ].re&&offen(b)>0.005&&faellig(b)<heute);
   if(st==='storno')L=L.filter(b=>b.storno);
@@ -1697,7 +1699,7 @@ V.beleg=id=>{
     ${b.typ==='LS'&&!b.storno?`<button data-act="sammelre">Sammelrechnung …</button>`:''}
     <button data-act="senden" title="Als PDF per E-Mail versenden">✉ Senden …</button><button data-act="pdfdl" title="PDF-Datei speichern">PDF speichern</button>
     ${b.fest&&!b.storno&&b.typ==='AN'&&b.status!=='ersetzt'?`<button data-act="anrev" title="Erstellt eine neue Revision zum Bearbeiten – dieser Stand bleibt unverändert gespeichert">✎ Bearbeiten (Revision)</button><button data-act="anfolge">Folgeangebot</button><button data-act="anst" data-v="${b.status==='abgelehnt'?'':'abgelehnt'}">${b.status==='abgelehnt'?'wieder offen':'abgelehnt'}</button>`:''}
-    ${b.fest&&!b.storno&&REOPEN.includes(b.typ)&&b.status!=='ersetzt'?`<button data-act="reopen">Bearbeiten</button>`:''}
+    ${abZu(b)?`<button data-act="abauf" title="Ausgegeben am ${dAT(b.abgeschlossen.slice(0,10))} – Status wieder auf offen bzw. nach Lieferung und Rechnung">Status wieder offen</button>`:''}${b.fest&&!b.storno&&REOPEN.includes(b.typ)&&b.status!=='ersetzt'?`<button data-act="reopen">Bearbeiten</button>`:''}
     <button data-act="dup">Duplizieren</button>
     ${b.storno?'':`<button class="d" data-act="storno">${b.fest?'Stornieren':'Löschen'}</button>`}
   </div>${belegStatus(b)}${b.status==='ersetzt'?`<div class="hint">Dieses Angebot wurde durch eine Revision ersetzt.</div>`:''}`;
@@ -1783,7 +1785,7 @@ MENUE.beleg=()=>{const b=curBeleg();if(!b)return[];const t=T[b.typ],H=HANDY.matc
     !b.fest&&{l:'Spalten & Druck …',ic:'☰',act:'lpop',d:{lp:'spalten'},titel:'Rabatt, Lohn / Sonstiges, Langtext drucken, Druckoptionen'},{l:'Duplizieren',ic:'⧉',act:'dup'},
     anF&&{l:'Neue Revision bearbeiten',ic:'✎',act:'anrev',titel:'Erstellt eine neue Revision zum Bearbeiten – dieser Stand bleibt unverändert gespeichert'},anF&&{l:'Folgeangebot',ic:BICON.AN,act:'anfolge'},
     anF&&{l:b.status==='abgelehnt'?'wieder offen':'abgelehnt',ic:b.status==='abgelehnt'?'↺':'✗',act:'anst',d:{v:b.status==='abgelehnt'?'':'abgelehnt'}},
-    b.fest&&!b.storno&&REOPEN.includes(b.typ)&&b.status!=='ersetzt'&&{l:'Wieder öffnen (Inhalt bearbeiten)',ic:'🔓',act:'reopen',titel:'Die Nummer bleibt erhalten'},
+    abZu(b)&&{l:'Status wieder offen',ic:'↺',act:'abauf',titel:'Ausgegeben am '+dAT(b.abgeschlossen.slice(0,10))},b.fest&&!b.storno&&REOPEN.includes(b.typ)&&b.status!=='ersetzt'&&{l:'Wieder öffnen (Inhalt bearbeiten)',ic:'🔓',act:'reopen',titel:'Die Nummer bleibt erhalten'},
     !b.storno&&{l:b.fest?'Stornieren …':'Löschen …',ic:'🗑',act:'storno',gefahr:1}].filter(Boolean);
   return L.filter((x,i)=>!x.trenn||(i>0&&!L[i-1].trenn&&L.slice(i+1).some(y=>!y.trenn&&!y.gefahr)))};
 // Häkchen „Lohnkostennachweis“ je Beleg (P9): setzt die Abweichung b.druck.lohnNw ('text' bzw. 'ls'), nur Verkaufsbelege mit Preisen und eingeschaltetem Druckprofil
@@ -4844,7 +4846,7 @@ function drucken(b,o={}){
 function druckLeeren(){const p=$('#print');if(p){p.innerHTML='';p.classList.remove('mb')}const s=$('#pgfuss');if(s)s.textContent='';if(DRUCK?.t!=null)document.title=DRUCK.t;DRUCK=null}
 // Druck über das Browsermenü (oder Strg+P ohne Abfangen): aktuellen Beleg drucken, sonst nichts Fremdes
 window.addEventListener('beforeprint',()=>{if(!DB||!erw('strgP')||DRUCK?.an)return;const b=curBeleg();
-  if(b){const a=dupAuto(b),t=druckVorbereiten(b,a);DRUCK={h:location.hash,an:0,t:DRUCK?.t??t};ausgabeZaehlen(b,a)}else if(DRUCK?.h!==location.hash)druckLeeren()});
+  if(b){const a=dupAuto(b),t=druckVorbereiten(b,a);DRUCK={h:location.hash,an:0,t:DRUCK?.t??t};ausgabeZaehlen(b,a);abAbschluss(b,1)}else if(DRUCK?.h!==location.hash)druckLeeren()});
 /* Vermerk „DUPLIKAT“ (erw.duplikat): Zähler b.ausgaben für Druck, PDF und Versand festgeschriebener Rechnungsarten (RE_V); ältere Belege ohne Zähler: Anzahl Versand.
    Ab der zweiten Ausgabe Rückfrage (vorbelegt Ja), docHTML setzt den Vermerk über den Titel; das erste Original bleibt unverändert.
    Ausgabe-Info a={dup,z:zählt,n:bisherige Ausgaben}. Der Zähler wird nach der Ausgabe per commit() erhöht, ohne eigenen Rückgängig-Schritt, und nie zurückgedreht (undoAnwenden, merge3). */
@@ -4860,8 +4862,12 @@ function dupFrage(b){ // → Promise mit Ausgabe-Info oder null (abgebrochen)
     const kd=e=>{if(e.key==='Escape'){e.stopPropagation();fin(null)}};document.addEventListener('keydown',kd,true);
     d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#m-ohne').onclick=()=>fin({dup:false,z:1,n});d.querySelector('#m-ok').onclick=()=>fin({dup:true,z:1,n});setTimeout(()=>d.querySelector('#m-ok').focus(),0)})}
 function ausgabeZaehlen(b,a,speichern=true){if(!a?.z)return;b.ausgaben=a.n+1;if(!speichern)return;LAST=JSON.stringify(DB);commit();if(curBeleg()?.id===b.id)render()}
-async function belegDrucken(b){const a=await dupFrage(b);if(!a)return;drucken(b,a);ausgabeZaehlen(b,a)}
-async function belegPDF(b){const a=await dupFrage(b);if(!a)return;await pdfHerunterladen(b,a);ausgabeZaehlen(b,a)}
+// Auftragsbestätigung (erw.abAbschluss): erste Ausgabe einer festgeschriebenen AB (Druck, PDF, E-Mail) setzt b.abgeschlossen (Zeitpunkt) → Status „abgeschlossen“;
+// s: 2 = speichern und neu zeichnen, 1 = nur speichern (Druck über das Browsermenü), 0 = speichert der Aufrufer
+const abZu=b=>!!(erw('abAbschluss')&&b?.typ==='AB'&&b.abgeschlossen&&!b.storno);
+function abAbschluss(b,s=2){if(!erw('abAbschluss')||b?.typ!=='AB'||!b.fest||b.storno||b.abgeschlossen)return;b.abgeschlossen=new Date().toISOString();log('Auftragsbestätigung abgeschlossen',`${b.nr} (ausgegeben)`);if(s)commit();if(s>1&&curBeleg()?.id===b.id)render()}
+async function belegDrucken(b){const a=await dupFrage(b);if(!a)return;drucken(b,a);ausgabeZaehlen(b,a);abAbschluss(b)}
+async function belegPDF(b){const a=await dupFrage(b);if(!a)return;await pdfHerunterladen(b,a);ausgabeZaehlen(b,a);abAbschluss(b)}
 window.addEventListener('afterprint',()=>{if(DRUCK&&!DRUCK.an&&DRUCK.t!=null){document.title=DRUCK.t;DRUCK.t=null}});
 
 /* ---------- PDF-Erzeugung ohne Fremdbibliothek: Layout aus der Belegvorschau (Arial ≙ Helvetica) ---------- */
@@ -4974,7 +4980,7 @@ async function versenden(b){
   if(an.some(x=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x))){alert('Bitte gültige E-Mail-Adresse(n) angeben.');return}
   const da=await dupFrage(b);if(!da)return;
   saveState('PDF wird erstellt …');const pdf=await pdfAusBeleg(b,da),name=pdfName(b);
-  if(!od){pdfHerunterladen(b,da);ausgabeZaehlen(b,da);location.href=`mailto:${an.join(';')}?${new URLSearchParams({cc:cc.join(';'),subject:o.betreff,body:o.text}).toString().replace(/\+/g,'%20')}`;
+  if(!od){pdfHerunterladen(b,da);ausgabeZaehlen(b,da);abAbschluss(b);location.href=`mailto:${an.join(';')}?${new URLSearchParams({cc:cc.join(';'),subject:o.betreff,body:o.text}).toString().replace(/\+/g,'%20')}`;
     alert('Das PDF wurde gespeichert – bitte in der E-Mail anhängen.\n(Direkter Versand nur mit Office-365-Anmeldung.)');return}
   saveState('wird gesendet …');
   let tok=await mailToken();
@@ -4985,7 +4991,7 @@ async function versenden(b){
       toRecipients:an.map(a=>({emailAddress:{address:a}})),ccRecipients:cc.map(a=>({emailAddress:{address:a}})),bccRecipients:o.kopie&&lsGet('erp-user')?[{emailAddress:{address:lsGet('erp-user')}}]:[],
       attachments:[{'@odata.type':'#microsoft.graph.fileAttachment',name,contentType:'application/pdf',contentBytes:await b64aus(pdf)}]},saveToSentItems:true})});
   if(!r.ok){const j=await r.json().catch(()=>({}));saveState('');alert('Senden fehlgeschlagen:\n'+(j.error?.message||r.status));return}
-  ausgabeZaehlen(b,da,false);(b.versand=b.versand||[]).push({datum:new Date().toISOString(),an:an.join('; '),cc:cc.join('; '),betreff:o.betreff,datei:name});
+  ausgabeZaehlen(b,da,false);abAbschluss(b,0);(b.versand=b.versand||[]).push({datum:new Date().toISOString(),an:an.join('; '),cc:cc.join('; '),betreff:o.betreff,datei:name});
   log('per E-Mail versendet',`${T[b.typ].bez} ${bNr(b)} an ${an.join(', ')}`);
   const vn=name.replace(/\.pdf$/,'')+'_versendet'+((b.versand.length>1)?'_'+b.versand.length:'')+'.pdf';
   try{await anhaengeHochladen(b,[new File([pdf],vn,{type:'application/pdf'})],true,vn)}catch(e){commit()}
@@ -5028,7 +5034,8 @@ const ACT={
   senden:()=>versenden(curBeleg()),pdfdl:()=>belegPDF(curBeleg()),
   storno:()=>stornieren(curBeleg()),
   dup:()=>duplizieren(curBeleg()),
-  reopen:()=>{const b=curBeleg();if(!confirm('Beleg wieder bearbeiten? Die Nummer bleibt erhalten.'))return;b.fest=false;delete b.druckFix;log('wieder geöffnet',`${T[b.typ].bez} ${b.nr}`);commit();render()},
+  abauf:()=>{const b=curBeleg();if(!b?.abgeschlossen)return;delete b.abgeschlossen;log('Auftragsbestätigung wieder offen',b.nr);commit();render()}, // Status (P32)
+  reopen:()=>{const b=curBeleg();if(!confirm('Beleg wieder bearbeiten? Die Nummer bleibt erhalten.'))return;b.fest=false;delete b.druckFix;delete b.abgeschlossen;log('wieder geöffnet',`${T[b.typ].bez} ${b.nr}`);commit();render()},
   anst:el=>{const b=curBeleg();b.status=el.dataset.v;log('Angebotsstatus',`${b.nr}: ${b.status||'offen'}`);commit();render()},
   padd:el=>{const b=curBeleg(),a=el.dataset.art,i=b.pos.length,kr=T[b.typ].b==='V'&&['W','L','F'].includes(a)?+kontakt(b.kontaktId)?.rabatt||0:0;b.pos.push(neuPos({art:a,einheit:a==='L'?'h':'Stk',menge:a==='T'||a==='G'?0:1,rabatt:kr,...(a==='G'?{pauschal:0,ohneEP:false}:{})}));lsAufteilen(b,b.pos[i]);persist();
     if(a==='T')render(),setTimeout(()=>document.querySelector(`.rte[data-ed="p:${i}:text"]`)?.focus(),0);else renderFocus(`[data-p="${i}"][data-f="${a==='G'?'bez':'artikel'}"]`)},

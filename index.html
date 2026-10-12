@@ -100,7 +100,7 @@ table.kbv{width:100%}table.kbv td.kz{width:22px;font-weight:700;text-align:cente
 .kbk{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:flex-end;margin:0 0 8px}.kbk>label{font-size:12px;display:flex;flex-direction:column}table.kbg{width:auto}table.kbg td,table.kbg th{white-space:nowrap}table.kbg input{width:76px}
 table.k4v td,table.k4v th,table.k6v td,table.k6v th{white-space:nowrap}table.k4v input,table.k6v input{width:64px}table.k6v td.an{color:var(--mut);font-size:12px}table.k6v tr.ks6 td{border-bottom:2px solid var(--line)}
 .kbk .kbm{display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap}.kvb{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}.kwl .chk{display:flex;padding:4px 0;border-bottom:1px solid var(--line)}.kwl .chk:last-child{border-bottom:0}table.kvg{width:100%;max-width:520px}table.kvg td:first-child input{width:100%}table.kvg td:nth-child(2) input{width:96px} /* Auswahlfelder (P34 Teil 2) */
-@media(max-width:760px){table.kbg td:first-child select{width:118px!important;padding-left:6px!important;padding-right:4px!important}}@media(max-width:760px){table.kbg input,table.kbv input,.kbk .kbm input{width:58px!important;padding-left:5px!important;padding-right:5px!important}table.kbg td:first-child input{width:76px!important}table.kbg td,table.kbg th,table.kbv td{padding-left:3px;padding-right:3px}table.kbv td{font-size:13px;hyphens:auto;overflow-wrap:anywhere}}
+@media(max-width:760px){table.kbg td:first-child select{width:118px!important;padding-left:6px!important;padding-right:4px!important}}@media(max-width:760px){table.kbg input,table.kbv input,.kbk .kbm input{width:58px!important;padding-left:5px!important;padding-right:5px!important}table.kbg td:first-child input{width:76px!important}table.kbg td,table.kbg th,table.kbv td{padding-left:3px;padding-right:3px}table.kbv td{font-size:13px;hyphens:auto;overflow-wrap:anywhere}}.seg.kbsg{flex-wrap:wrap;max-width:100%}@media(max-width:380px){table.kbg th,table.kbg td{white-space:normal;hyphens:auto}table.kbg input,table.kbg td:first-child input{width:50px!important}table.kbg td:first-child select{width:92px!important}} /* Korrektur U13: Reiter umbrechen (7 Reiter), KV-Tabelle bei 360 px */
 table.ps td{white-space:nowrap}
 .lv-LG{background:#eef2f8;border:1px solid #d5deea;border-radius:8px;padding:8px 10px;margin:12px 0 6px}
 .lv-ULG{background:#f6f8fb;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:8px 0 6px 12px}
@@ -3272,7 +3272,7 @@ function kbEdit(id){
   const del=(f,i)=>`<button class="s d" data-act="arrdel" data-r="${R}" data-f="${f}" data-i="${i}">✕</button>`;
   let body='';
   const VL=erw('kbVorlage'); // Formblätter nach Vorlage (P34)
-  if(VL&&tab==='K2')body=kbK2V(kb,R);else if(VL&&tab==='K3')body=kb.k3.map((c,ci)=>akk('kb3-'+c.id,`${esc(K3B[c.blatt||'ML'])} · ${esc(c.name||'')}`,kbK3V(kb,R,c,ci),{offen:!ci,zusatz:fmt(k3calc(kb,c).mlp)+' €/h'})).join('')+`<button data-act="arradd" data-r="${R}" data-f="k3" data-tpl="k3v">+ weiteres K3-Blatt (z. B. Regielohnpreis, Gehaltspreis, Fremdleistungen)</button>`;
+  if(VL&&tab==='K2')body=kbK2V(kb,R);else if(VL&&tab==='K3')body=kb.k3.map((c,ci)=>akk('kb3-'+c.id,`${esc(K3B[c.blatt||'ML'])} · ${esc(c.name||'')}`,kbK3V(kb,R,c,ci),{offen:!ci,zusatz:fmt(k3calc(kb,c).mlp)+' €/h'})).join('')+`<button data-act="arradd" data-r="${R}" data-f="k3" data-tpl="k3v" style="white-space:normal;text-align:left">+ weiteres K3-Blatt (z. B. Regielohnpreis, Gehaltspreis, Fremdleistungen)</button>`;
   else if(VL&&tab==='K4')body=kbK4V(kb,R);else if(VL&&tab==='K5')body=kbK5V(kb,R);else if(VL&&tab==='K6')body=kbK6V(kb,R);else if(VL&&tab==='K7')body=kbK7V(kb);
   else if(tab==='K2'){
     body=`<table class="k"><thead><tr><th>Zuschlagsbestandteil</th><th class="n">auf Lohn %</th><th class="n">auf Sonstiges %</th><th></th></tr></thead><tbody>
@@ -3338,7 +3338,7 @@ function kbEdit(id){
     <button data-act="kbdruck" data-id="${kb.id}">PDF / Drucken</button><button data-act="kbdup" data-id="${kb.id}">Kopie (neues Jahr)</button><button class="d" data-act="kbdel" data-id="${kb.id}">Löschen</button></div>
   <div class="card"><div class="row"><label class="w2">Bezeichnung${fi(R,'name',kb.name)}</label>${kb.art==='bieter'?`<label>Bieter${fi(R,'bieter',kb.bieter)}</label>`:''}<label>Projekt / Gültigkeit${fi(R,'projekt',kb.projekt)}</label>${kbPrjFeld(kb,R)}</div>${VL?kbKopfV(kb,R):''}
   <div class="row"><label>Notiz / Prüfvermerk${ft(R,'notiz',kb.notiz)}</label></div></div>
-  <div class="bar"><span class="seg">${tabs.map(([k,l])=>`<button class="${tab===k?'on':''}" data-act="kbtab" data-t="${k}">${l}</button>`).join('')}</span></div>
+  <div class="bar"><span class="seg${VL?' kbsg':''}">${tabs.map(([k,l])=>`<button class="${tab===k?'on':''}" data-act="kbtab" data-t="${k}">${l}</button>`).join('')}</span></div>
   <div class="card" style="overflow-x:auto">${body}</div>
   <p class="mut" style="font-size:12px">Aufbau nach dem Grundschema der ÖNORM B 2061. Zeilen und Bezeichnungen bitte mit der gültigen Normfassung und dem aktuellen Kollektivvertrag abgleichen.</p>`;
 }
@@ -3487,7 +3487,7 @@ function kbEditK(kb,R,tab,tabs,body){const H=kmpH();
   return`<div class="bar"><h1 style="margin:0">${esc(kb.name)}</h1>${kb.art==='bieter'?tag('Prüfung Bieter','warn'):''}<span class="sp"></span><button data-act="kbdruck" data-id="${kb.id}">PDF / Drucken</button><button class="mehr" data-act="menue" data-m="kb" data-id="${kb.id}" title="Kopie, Löschen">⋯</button></div>
   ${akk('kbkopf','Kopfdaten',`<div class="card"><div class="row"><label class="w2">Bezeichnung${fi(R,'name',kb.name)}</label>${kb.art==='bieter'?`<label>Bieter${fi(R,'bieter',kb.bieter)}</label>`:''}<label>Projekt / Gültigkeit${fi(R,'projekt',kb.projekt)}</label>${kbPrjFeld(kb,R)}</div>${kbKopfV(kb,R)}
     <div class="row"><label>Notiz / Prüfvermerk${ft(R,'notiz',kb.notiz)}</label></div></div>`,{offen:!H,zusatz:esc([kb.bau||kb.projekt,kb.angebotNr&&'Angebot '+kb.angebotNr].filter(Boolean).join(' · '))})}
-  <div class="bar">${H?`<select data-o="ui" data-f="kbTab" style="flex:1">${tabs.map(([k,l])=>opt(k,l,tab)).join('')}</select>`:`<span class="seg">${tabs.map(([k,l])=>`<button class="${tab===k?'on':''}" data-act="kbtab" data-t="${k}">${l}</button>`).join('')}</span>`}</div>
+  <div class="bar">${H?`<select data-o="ui" data-f="kbTab" style="flex:1">${tabs.map(([k,l])=>opt(k,l,tab)).join('')}</select>`:`<span class="seg kbsg">${tabs.map(([k,l])=>`<button class="${tab===k?'on':''}" data-act="kbtab" data-t="${k}">${l}</button>`).join('')}</span>`}</div>
   <div class="card" style="overflow-x:auto">${body}</div>
   <div class="mut" style="font-size:12px;margin:0 0 10px">Aufbau nach dem Grundschema der ÖNORM B 2061. ${H?hilfe('Zeilen und Bezeichnungen bitte mit der gültigen Normfassung und dem aktuellen Kollektivvertrag abgleichen.'):'Zeilen und Bezeichnungen bitte mit der gültigen Normfassung und dem aktuellen Kollektivvertrag abgleichen.'}</div>`}
 MENUE.kb=el=>[{l:'Kopie (neues Jahr)',ic:'⧉',act:'kbdup',d:{id:el.dataset.id}},{l:'Löschen …',ic:'🗑',act:'kbdel',d:{id:el.dataset.id},gefahr:1}];
@@ -3765,7 +3765,7 @@ function kbF4(kb){const z=k2sp(kb),rd=kbRund(kb),s3=k3std(kb),lk=s3?k3calc(kb,s3
 function kbF5(kb){const rd=kbRund(kb),z=k2sp(kb),f4=v=>(+v||0).toLocaleString('de-AT',{minimumFractionDigits:2,maximumFractionDigits:4});
   const zeile=(t,k3d,an)=>{const r=teileCalc(kb,[t]),q=teilePreis(kb,r,k3d),m=+t.menge||0,nm=esc(t.typ==='M'?kb.k4.find(x=>x.id===t.ref)?.bez||t.bez||'':t.typ==='G'?kb.k6.find(x=>x.id===t.ref)?.bez||t.bez||'':t.bez||(t.typ==='L'?'Lohn':''));
     if(an==='L'&&!q.pL||an==='S'&&!q.pS)return'';const v=an==='L'?q.pL:q.pS;
-    const fo=t.typ==='L'?`${fmtQ(m)} h × ${fmt(k3calc(kb,k3von(kb,t.k3Id)||k3d).mlp)} =`:t.typ==='G'?`${fmtQ(m)} × ${fmt(an==='L'?k6teile(kb.k6.find(x=>x.id===t.ref)||{}).L:k6teile(kb.k6.find(x=>x.id===t.ref)||{}).S)} × ${f4(1+(an==='L'?z.l:z[t.sp||'g'])/100)} =`
+    const fo=t.typ==='L'?`${fmtQ(m)} h × ${fmt(k3calc(kb,(t.k3Id&&kb.k3.find(x=>x.id===t.k3Id))||k3d).mlp)} =`:t.typ==='G'?`${fmtQ(m)} × ${fmt(an==='L'?k6teile(kb.k6.find(x=>x.id===t.ref)||{}).L:k6teile(kb.k6.find(x=>x.id===t.ref)||{}).S)} × ${f4(1+(an==='L'?z.l:z[t.sp||'g'])/100)} =`
       :`${fmtQ(m)} × ${fmt(m?(an==='L'?q.kL:q.kS)/m:0)} × ${f4(m&&(an==='L'?q.kL:q.kS)?v/(an==='L'?q.kL:q.kS):1)} =`;
     return`<tr class="an"><td class="kbsub">${nm}</td><td class="kbsub">${fo}</td><td></td><td class="n">${an==='L'?'€ '+fmt(v):''}</td><td class="n">${an==='S'?'€ '+fmt(v):''}</td></tr>`};
   return`<section class="kbf">${kbKopfF(kb,5,'KOSTEN-/PREISERMITTLUNG<br>ZUSAMMENGESETZTE PREISKOMPONENTEN','')}

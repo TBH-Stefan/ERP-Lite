@@ -110,6 +110,30 @@ table.ps td{white-space:nowrap}
 .lvact{display:flex;gap:3px;align-self:center}
 details summary{cursor:pointer;font-size:12px;margin:4px 0}
 .k7bar{display:flex;gap:10px;align-items:center;margin-top:4px}
+/* Kompakt (P30) Endkontrolle: LV-Positionen am Handy als Karten (.lvkl), Kopfleiste mit nur ⋯ einzeilig, Tippziele für Links in Karten und Kartenköpfen,
+   Segment „Art“ im Positions-Pop-up ohne Querbildlauf, Beleg-Kopfleiste bei 360 px einzeilig, K3-Tabelle der KV-Gruppen bis 430 px, Belegliste am Bildschirm ohne Unterzeile,
+   K2 am Handy als Raster (table.k2k), Gruppenkopf der Positionskarten einzeilig, Tablet-Spalten (Klassen t-<k> aus tabelle()), Typ-Chips ab 1101 px umbrechend, Links der Belegkette und Lese-Ansicht mit größerer Tippfläche */
+body.kompakt .segr input{left:0;top:0;width:1px;height:1px;min-height:0;margin:0}
+body.kompakt td>.nw+br,body.kompakt td>.nw+br+.mut{display:none}
+.lvkl .lvu>.kk{background:#f6f8fb}.lvkl .k7k{padding:0 8px 10px 12px;border-top:1px solid var(--line)}
+@media(max-width:760px){
+  body.kompakt .bar:has(>h1:first-child):has(>.sp+.mehr:last-child)>h1{flex:1 1 0;min-width:0}body.kompakt .bar:has(>h1:first-child):has(>.sp+.mehr:last-child)>.sp{display:none}
+  body.kompakt .kk a,body.kompakt .card h2>a:not(:first-child){padding:10px 2px;margin:0 -2px}
+  body.kompakt .kk :is(.kku,.kkz):has(a){padding:10px 0;margin:-10px 0}
+}
+@media(max-width:430px){body.kompakt table.kbg th,body.kompakt table.kbg td{white-space:normal;hyphens:auto}body.kompakt table.kbg input,body.kompakt table.kbg td:first-child input{width:50px!important}body.kompakt table.kbg td:first-child select{width:92px!important}}
+@media(max-width:760px){ /* K2 am Handy: Bezeichnung über die volle Breite, darunter die vier Spalten (Kopfzeile = Beschriftung) */
+  body.kompakt table.k2k,body.kompakt table.k2k>:is(thead,tbody,tfoot){display:block;width:100%!important}body.kompakt table.k2k tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 40px;gap:4px 6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+  body.kompakt table.k2k :is(td,th){padding:0!important;border:0;white-space:normal!important}body.kompakt table.k2k :is(td,th):first-child{grid-column:1/-1}body.kompakt table.k2k thead th:first-child{display:none}body.kompakt table.k2k.kbg td input{width:100%!important}
+  body.kompakt .pkl details.akk>summary{flex-wrap:nowrap}body.kompakt .pkl details.akk>summary>.akt{min-width:0}
+  body.kompakt .kk :is(.kku,.kkz) a{padding:12px 2px}
+  body.kompakt .chain a{padding:10px 0}body.kompakt dl.kvl dd a{padding:12px 0}
+}
+@media(min-width:761px) and (max-width:1100px){body.kompakt table:is([data-tab^=belege],[data-tab=artikel]) :is(.t-art,.t-netto,.t-rev,.t-lnr){display:none}body.kompakt table[data-tab^=belege] td.t-nr{white-space:nowrap}body.kompakt table[data-tab^=belege] :is(th,td){padding-left:6px;padding-right:6px}} /* Tablet: entbehrliche Spalten aus (nur ohne eigene Spaltenwahl) */
+@media(max-width:1100px){body.kompakt .chips.ein{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);padding-right:24px}} /* Typ-Chips: Hinweis auf weitere rechts */
+@media(min-width:1101px){body.kompakt .chips.ein{flex-wrap:wrap}}
+@media(max-width:380px){table.gkr th,table.gkr td{padding-left:3px;padding-right:3px}table.gkr td:nth-child(3){overflow-wrap:anywhere;hyphens:auto}table.gkr td.n{font-size:13px}} /* Fehlerbehebung: „Preise nach K-Blatt“ bei 360 px ohne Querbildlauf */
+@media(max-width:380px){body.kompakt .bka>.p{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:8px;padding-right:8px}body.kompakt .bka .seg button{padding:6px 7px}}
 .k7{background:#fafbfd;border:1px solid var(--line);border-radius:6px;padding:8px;margin-top:6px}
 @media(max-width:760px){.lv-POS,.lv-ULG{margin-left:0}.oz{min-width:0}}
 nav{width:200px;background:var(--side);color:#cfd6e4;flex-shrink:0;position:sticky;top:0;height:100vh;overflow:auto;display:flex;flex-direction:column}
@@ -3369,7 +3393,7 @@ function kbKopfV(kb,R){ // Formblatt-Kopf: Erstellt am, Bau, Angebot Nr., Preisb
   return`<div class="row"><label class="w05">Erstellt am<input type="date" data-o="path" data-r="${R}" data-f="datum" value="${esc(kb.datum||'')}"></label><label>Bau / Bauvorhaben${fi(R,'bau',kb.bau,{ph:kb.projekt||'Projekt, Adresse'})}</label><label class="w05">Angebot Nr.${fi(R,'angebotNr',kb.angebotNr)}</label>
     <label>Preisbasis${fi(R,'preisbasis',kb.preisbasis,{ph:'lt. Angebotsunterlagen'})}</label><label class="w05">Preise runden${fsel(R,'rund',kb.rund||'',[['','auf Cent'],['0.05','auf 0,05'],['0.1','auf 0,10']])}</label></div>`}
 function kbK2V(kb,R){const z=k2sp(kb);
-  return`<table class="k kbg"><thead><tr><th>Zuschlagsbestandteil</th>${K2SP.map(([,l])=>`<th class="n">${l} %</th>`).join('')}<th></th></tr></thead><tbody>
+  return`<table class="k kbg${kmp()?' k2k':''}"><thead><tr><th>Zuschlagsbestandteil</th>${K2SP.map(([,l])=>`<th class="n">${l} %</th>`).join('')}<th></th></tr></thead><tbody>
   ${kb.k2.zeilen.map((x,i)=>{const P=`k2.zeilen.${i}`;return`<tr><td>${fi(R,P+'.bez',x.bez,{w:'280px'})}</td><td>${fi(R,P+'.l',x.l,{n:1})}</td><td>${fi(R,P+'.s',x.s,{n:1})}</td><td>${fnl(R,P+'.g',x.g,'76px',fmt(+x.s||0))}</td><td>${fnl(R,P+'.f',x.f,'76px',fmt(+x.s||0))}</td><td>${kbDel(R,'k2.zeilen',i)}</td></tr>`}).join('')}
   </tbody><tfoot><tr><td>Gesamtzuschlag (auf Kosten, „vom Hundert“)</td>${K2SP.map(([c])=>`<td class="n"><b>${fmt(z[c])} %</b></td>`).join('')}<td></td></tr>
   <tr><td class="mut">entspricht „im Hundert“ (Anteil am Preis)</td>${K2SP.map(([c])=>`<td class="n mut">${fmt(imHundert(z[c]))} %</td>`).join('')}<td></td></tr></tfoot></table>${kbBtn(R,'k2.zeilen','k2z','+ Zeile')}
@@ -3582,11 +3606,11 @@ V.lvs=id=>{
 function lvEdit(id){
   const lv=ROOT.lv(id);if(!lv)return'<p>Nicht gefunden.</p>';
   const R='lv|'+lv.id,oz=lvOZ(lv),kb=lvKB(lv),tab=UI.lvTab||'lv',sm=lvSummen(lv),aus=lv.art==='ausschreibung';
-  const kunden=DB.kontakte.filter(k=>k.typ!=='L');
+  const kunden=DB.kontakte.filter(k=>k.typ!=='L'),lvKA=akk('lvkopf','Kopfdaten','\u0000',{offen:!kmpH(),zusatz:esc([kontakt(lv.kontaktId)?.name,lv.datum&&dAT(lv.datum)].filter(Boolean).join(' · '))}).split('\u0000'); // Kompakt: Kopfdaten als Akkordeon (ohne kompakt: leer)
   let body='';
   if(tab==='lv'){
-    body=lv.items.map((it,i)=>{
-      const P=`items.${i}`,act=`<span class="lvact"><button class="s" data-act="lvmv" data-id="${lv.id}" data-i="${i}" data-d="-1">↑</button><button class="s" data-act="lvmv" data-id="${lv.id}" data-i="${i}" data-d="1">↓</button>${it.typ==='POS'?`<button class="s" data-act="lvbib" data-id="${lv.id}" data-i="${i}" title="als Textbaustein speichern">→ Baustein</button>`:''}<button class="s d" data-act="lvdel" data-id="${lv.id}" data-i="${i}">✕</button></span>`;
+    body=(kmpH()?lvKartenK(lv,oz,sm,aus):lv.items.map((it,i)=>{
+      const P=`items.${i}`,act=kmp()?lvActK(lv,it):`<span class="lvact"><button class="s" data-act="lvmv" data-id="${lv.id}" data-i="${i}" data-d="-1">↑</button><button class="s" data-act="lvmv" data-id="${lv.id}" data-i="${i}" data-d="1">↓</button>${it.typ==='POS'?`<button class="s" data-act="lvbib" data-id="${lv.id}" data-i="${i}" title="als Textbaustein speichern">→ Baustein</button>`:''}<button class="s d" data-act="lvdel" data-id="${lv.id}" data-i="${i}">✕</button></span>`;
       if(it.typ!=='POS')return`<div class="lv-${it.typ}"><div class="row" style="margin:0"><b class="oz">${oz[it.id]}</b><label class="w2">${it.typ==='LG'?'Leistungsgruppe':'Unterleistungsgruppe'}${fi(R,P+'.titel',it.titel)}</label><span class="n" style="align-self:center">${fmt(it.typ==='LG'?sm.lg[it.id]:sm.ulg[it.id])}</span>${act}</div>
         <details ${it.vorb?'open':''}><summary class="mut">Vorbemerkung</summary>${ft(R,P+'.vorb',it.vorb)}</details></div>`;
       const pr=posPreis(lv,it),gp=r2((+it.menge||0)*pr.ep),offen=UI.lvOffen===it.id;
@@ -3603,25 +3627,25 @@ function lvEdit(id){
         ${aus&&!lv.schaetzung?'':`<div class="k7bar"><button class="s ${offen?'p':''}" data-act="lvk7" data-p="${it.id}">K7 ${it.modus==='k7'?`✓ ${fmtQ(pr.k7?.std||0)} h`:'(manuell)'}</button>${pr.kosten?`<span class="mut">Kosten ${fmt(pr.kosten)} · DB ${pct(pr.ep?(pr.ep-pr.kosten)/pr.ep:NaN)}</span>`:''}</div>
         ${offen?k7Editor(lv,it,P):''}`}
       </div>`;
-    }).join('')+`<div class="bar" style="margin-top:10px"><button data-act="lvadd" data-id="${lv.id}" data-t="LG">+ Leistungsgruppe</button><button data-act="lvadd" data-id="${lv.id}" data-t="ULG">+ Unterleistungsgruppe</button><button class="p" data-act="lvadd" data-id="${lv.id}" data-t="POS">+ Position</button>
-      <button data-act="lvzulb" data-id="${lv.id}">+ aus Standard-LB</button>${DB.lvbib.length?`<select data-act="lvausbib" data-id="${lv.id}">${opt('','+ aus Textbaustein …','')}${DB.lvbib.map(b=>opt(b.id,(b.gruppe?b.gruppe+' · ':'')+b.kurz,'')).join('')}</select>`:''}</div>
+    }).join(''))+(kmpH()?'':`<div class="bar" style="margin-top:10px"><button data-act="lvadd" data-id="${lv.id}" data-t="LG">+ Leistungsgruppe</button><button data-act="lvadd" data-id="${lv.id}" data-t="ULG">+ Unterleistungsgruppe</button><button class="p" data-act="lvadd" data-id="${lv.id}" data-t="POS">+ Position</button>
+      <button data-act="lvzulb" data-id="${lv.id}">+ aus Standard-LB</button>${DB.lvbib.length?`<select data-act="lvausbib" data-id="${lv.id}">${opt('','+ aus Textbaustein …','')}${DB.lvbib.map(b=>opt(b.id,(b.gruppe?b.gruppe+' · ':'')+b.kurz,'')).join('')}</select>`:''}</div>`)+`
       <div class="card" style="margin-top:12px"><dl class="kv"><dt class="tot">${aus?(lv.schaetzung?'Kostenschätzung netto':'Summe'):'Angebotssumme netto'}</dt><dd class="tot">${fmt(sm.gesamt)}</dd>${!aus&&+lv.nachlass?`<dt>abzgl. Nachlass ${fmtQ(lv.nachlass)} %</dt><dd>−${fmt(sm.gesamt*lv.nachlass/100)}</dd><dt class="tot">Summe nach Nachlass</dt><dd class="tot">${fmt(sm.gesamt*(1-lv.nachlass/100))}</dd>`:''}</dl></div>`;
   }
   if(tab==='vorschau')body=`<div class="blatt">${lvDocHTML(lv,!aus||lv.schaetzung?'preise':'leer')}</div>`;
   if(tab==='ps')body=preisspiegel(lv);
   const tabs=[['lv','Positionen'],['vorschau','Vorschau'],['ps',`Preisspiegel${lv.bieter.length?' ('+lv.bieter.length+')':''}`]];
-  return`<div class="bar"><h1 style="margin:0">LV ${esc(lv.nr)} ${esc(lv.titel)}</h1>${aus?tag('Ausschreibung','warn'):tag('Angebot','acc')}<span class="sp"></span>
+  return`${kmp()?lvKopfbarK(lv,aus):`<div class="bar"><h1 style="margin:0">LV ${esc(lv.nr)} ${esc(lv.titel)}</h1>${aus?tag('Ausschreibung','warn'):tag('Angebot','acc')}<span class="sp"></span>
     <select data-act="lvdruck" data-id="${lv.id}">${opt('','PDF / Drucken …','')}${opt('leer','LV ohne Preise (Ausschreibung)','')}${opt('preise','LV mit Preisen (Lohn/Sonstiges)','')}${opt('k7','K7-Blätter je Position','')}${lv.bieter.length?opt('ps','Preisspiegel',''):''}</select>
     ${aus?'':`<button class="p" data-act="lvan" data-id="${lv.id}">→ Angebot erzeugen</button>`}
-    <button data-act="lvdup" data-id="${lv.id}">Kopie</button><button class="d" data-act="lvlos" data-id="${lv.id}">Löschen</button></div>
-  <div class="card"><div class="row"><label class="w05">LV-Nr.${fi(R,'nr',lv.nr)}</label><label class="w2">Titel / Projekt${fi(R,'titel',lv.titel)}</label>
+    <button data-act="lvdup" data-id="${lv.id}">Kopie</button><button class="d" data-act="lvlos" data-id="${lv.id}">Löschen</button></div>`}
+  ${lvKA[0]}<div class="card"><div class="row"><label class="w05">LV-Nr.${fi(R,'nr',lv.nr)}</label><label class="w2">Titel / Projekt${fi(R,'titel',lv.titel)}</label>
     <label>Auftraggeber${fsel(R,'kontaktId',lv.kontaktId,[['','–'],...kunden.map(k=>[k.id,k.name])])}</label>
     <label class="w05">Art${fsel(R,'art',lv.art,[['angebot','Angebot (eigene Preise)'],['ausschreibung','Ausschreibung']])}</label></div>
   <div class="row"><label>Kalkulationsbasis (K2–K6)${fsel(R,'kbId',lv.kbId,[['','– keine (Preise manuell) –'],...DB.kalk.filter(k=>k.art==='eigen').map(k=>[k.id,k.name])])}</label>
     ${aus?`<label class="w05">Kostenschätzung<br><input type="checkbox" data-o="path" data-r="${R}" data-f="schaetzung" ${lv.schaetzung?'checked':''}></label>`:`<label class="w05">Nachlass %${fi(R,'nachlass',lv.nachlass,{n:1})}</label>`}
     <label class="w05">Datum<input type="date" data-o="path" data-r="${R}" data-f="datum" value="${esc(lv.datum)}"></label></div>
   <details ${lv.vorb?'open':''}><summary class="mut">Allgemeine Vorbemerkungen</summary>${ft(R,'vorb',lv.vorb)}</details>
-  ${!kb&&(!aus||lv.schaetzung)?'<div class="hint" style="margin-top:8px">Ohne Kalkulationsbasis werden EP Lohn/Sonstiges manuell eingegeben. Für K7 eine Basis unter <a href="#/kbs">K-Blätter</a> anlegen und hier wählen.</div>':''}</div>
+  ${!kb&&(!aus||lv.schaetzung)?'<div class="hint" style="margin-top:8px">Ohne Kalkulationsbasis werden EP Lohn/Sonstiges manuell eingegeben. Für K7 eine Basis unter <a href="#/kbs">K-Blätter</a> anlegen und hier wählen.</div>':''}</div>${lvKA[1]}
   <div class="bar"><span class="seg">${tabs.map(([k,l])=>`<button class="${tab===k?'on':''}" data-act="lvtab" data-t="${k}">${l}</button>`).join('')}</span></div>
   ${body}`;
 }
@@ -3639,6 +3663,48 @@ function k7Editor(lv,it,P){
     <tr><td>Sonstiges: Kosten ${fmt(erw('kbVorlage')?k.kS:k.sk)} + ${erw('kbVorlage')&&Math.abs(k.pS-k.kS*(1+k.gzS/100))>0.004?'Zuschlag je Spalte (K2)':fmt(k.gzS)+' % Gesamtzuschlag'}${k.xs?` + Umlage X ${fmt(k.xs)} %`:''}</td><td class="n"><b>EP Sonstiges ${fmt(k.epS)}</b></td></tr>
     <tr class="kt"><td>Einheitspreis je ${esc(it.einheit)}${it.modus!=='k7'?' <span class="warnc">(noch nicht aktiv – Preisermittlung auf „nach K7“ stellen)</span>':''}</td><td class="n">${fmt(k.ep)}</td></tr></table></div>`;
 }
+/* Kompakt (P30) LV (Endkontrolle): Kopfleiste mit Hauptaktion und ⋯ (MENUE.lv, Drucken MENUE.lvdr), Kopfdaten als Akkordeon (lvKA in lvEdit), am Handy Positionen als
+   Karten (lvKartenK, Leistungsgruppe als Akkordeon mit Summe) mit Live-Pop-up (LIVE.lvz → lvFelder, dieselben Felder data-o="path"), Verschieben/Baustein/K7/Löschen im ⋯ (MENUE.lvz,
+   vorhandene Aktionen lvmv/lvbib/lvk7/lvdel); am Bildschirm ⋯ statt ↑ ↓ → Baustein ✕ (lvActK). Hinzufügen am Handy: „+ Position“ (öffnet das Pop-up) und MENUE.lvneu. */
+function lvKopfbarK(lv,aus){return`<div class="bar"><h1 style="margin:0">LV ${esc(lv.nr)} ${esc(lv.titel)}</h1>${aus?tag('Ausschreibung','warn'):tag('Angebot','acc')}<span class="sp"></span>
+  ${aus?`<button data-act="menue" data-m="lvdr" data-id="${lv.id}">PDF / Drucken ▾</button>`:`<button class="p" data-act="lvan" data-id="${lv.id}">→ Angebot erzeugen</button>`}<button class="mehr" data-act="menue" data-m="lv" data-id="${lv.id}" title="Drucken, Kopie, Löschen">⋯</button></div>`}
+const lvDrL=lv=>[['leer','LV ohne Preise (Ausschreibung)'],['preise','LV mit Preisen (Lohn/Sonstiges)'],['k7','K7-Blätter je Position'],...(lv.bieter.length?[['ps','Preisspiegel']]:[])].map(([v,l])=>({l,ic:'🖨',act:'lvdruck',value:v,d:{id:lv.id}}));
+MENUE.lvdr=el=>{const lv=ROOT.lv(el.dataset.id);return lv?lvDrL(lv):[]};
+MENUE.lv=el=>{const lv=ROOT.lv(el.dataset.id);if(!lv)return[];const d={id:lv.id};return[{l:'PDF / Drucken',ic:'🖨',sub:lvDrL(lv)},{l:'Kopie',ic:'⧉',act:'lvdup',d},{l:'Löschen …',ic:'🗑',act:'lvlos',d,gefahr:true}]};
+MENUE.lvz=el=>{const lv=ROOT.lv(el.dataset.id),i=lv?lv.items.findIndex(x=>x.id===el.dataset.p):-1,it=lv?.items[i];if(!it)return[];const d={id:lv.id,i},P=it.typ==='POS',k7=P&&!(lv.art==='ausschreibung'&&!lv.schaetzung);
+  return[kmpH()&&{l:'Bearbeiten …',ic:'✎',act:'lpop',d:{lp:'lvz',id:lv.id,p:it.id}},{l:'Nach oben',ic:'↑',act:'lvmv',d:{...d,d:-1},dis:!i},{l:'Nach unten',ic:'↓',act:'lvmv',d:{...d,d:1},dis:i>=lv.items.length-1},
+    P&&{l:'Als Textbaustein speichern',ic:'📚',act:'lvbib',d},k7&&kmpH()&&{l:UI.lvOffen===it.id?'K7 schließen':'K7-Kalkulation …',ic:'🧮',act:'lvk7',d:{p:it.id}},{l:'Löschen …',ic:'🗑',act:'lvdel',d,gefahr:true}]};
+MENUE.lvneu=el=>{const lv=ROOT.lv(el.dataset.id);if(!lv)return[];const d={id:lv.id};
+  return[{l:'Leistungsgruppe',ic:'🗂',act:'lvadd',d:{...d,t:'LG'}},{l:'Unterleistungsgruppe',ic:'📁',act:'lvadd',d:{...d,t:'ULG'}},{l:'aus Standard-LB …',ic:'📖',act:'lvzulb',d},
+    DB.lvbib.length&&{l:'aus Textbaustein',ic:'📚',sub:DB.lvbib.map(b=>({l:(b.gruppe?b.gruppe+' · ':'')+b.kurz,act:'lvausbib',value:b.id,d}))}]};
+const lvActK=(lv,it)=>`<span class="lvact"><button class="mehr" data-act="menue" data-m="lvz" data-id="${lv.id}" data-p="${it.id}" title="Verschieben, Textbaustein, Löschen">⋯</button></span>`;
+function lvKartenK(lv,oz,sm,aus){const ohneP=aus&&!lv.schaetzung,m=it=>`<button class="mehr" data-act="menue" data-m="lvz" data-id="${lv.id}" data-p="${it.id}" title="Bearbeiten, Verschieben, K7, Löschen">⋯</button>`,
+    at=it=>` data-act="lpop" data-lp="lvz" data-id="${lv.id}" data-p="${it.id}" role="button"`;
+  let o='',g=null,inn='';
+  const zu=()=>{if(g)o+=akk('lvg-'+g.id,`<span class="pgt"${at(g)} title="Leistungsgruppe bearbeiten" onclick="event.preventDefault()"><span class="pnr">${oz[g.id]}</span> ${esc(g.titel)||'Leistungsgruppe'} <span class="kzed">✎</span></span>`,
+      (g.vorb?`<div class="pgx mut">${esc(rtText(g.vorb))}</div>`:'')+(inn||'<p class="mut" style="margin:6px 0">Keine Positionen.</p>'),{offen:true,kopf:`<span class="sp"></span>${ohneP?'':`<b>${fmt(sm.lg[g.id]||0)}</b>`}${m(g)}`});else o+=inn;inn=''};
+  lv.items.forEach((it,i)=>{if(it.typ==='LG'){zu();g=it;return}
+    if(it.typ!=='POS'){inn+=`<div class="kkf pkf lvu"><div class="kk pk"${at(it)} title="Unterleistungsgruppe bearbeiten"><div class="kk1"><span class="kkt"><span class="pnr">${oz[it.id]}</span> ${esc(it.titel)||'Unterleistungsgruppe'}</span>${ohneP?'':`<span class="kkb">${fmt(sm.ulg[it.id]||0)}</span>`}</div></div>${m(it)}</div>`;return}
+    const pr=posPreis(lv,it),gp=r2((+it.menge||0)*pr.ep),lt=it.lang?rtText(it.lang):'',tags=[it.art?tag(POSART[it.art]||it.art,'warn'):'',!ohneP&&it.modus==='k7'?tag(`K7 ${fmtQ(pr.k7?.std||0)} h`):'',it.lb?tag('Standard-LB'):''].join('');
+    inn+=`<div class="kkf pkf${it.art?' pko':''}"><div class="kk pk"${at(it)} title="Position bearbeiten"><div class="kk1"><span class="kkt"><span class="pnr">${oz[it.id]}</span> ${esc(it.kurz)||'<i class="mut">ohne Kurztext</i>'}</span>${ohneP?'':`<span class="kkb">${it.art?`(${fmt(gp)})`:fmt(gp)}</span>`}</div>
+      <div class="kku">${fmtQ(it.menge)} ${esc(it.einheit||'')}${ohneP?'':` × ${fmt(pr.ep)}`}${tags?' '+tags:''}</div>${lt?`<div class="kkz">${esc(lt)}</div>`:''}</div>${m(it)}</div>${UI.lvOffen===it.id&&!ohneP?`<div class="k7k" id="k7-${it.id}">${k7Editor(lv,it,`items.${i}`)}</div>`:''}`});
+  zu();
+  return`<div class="card pkl lvkl" style="padding:0"><h2 class="pkh">Positionen <span class="mut" style="font-weight:400">(${lv.items.filter(x=>x.typ==='POS').length})</span></h2>${o||'<p class="mut" style="padding:0 12px">Noch keine Positionen.</p>'}
+  <div class="bar pkn"><button class="p" data-act="lvadd" data-id="${lv.id}" data-t="POS" onclick="setTimeout(()=>lvNeuPop('${lv.id}'),0)">+ Position</button><button data-act="menue" data-m="lvneu" data-id="${lv.id}">+ Weitere ▾</button></div></div>`}
+function lvNeuPop(id){const it=ROOT.lv(id)?.items.slice(-1)[0];if(it)LIVE.lvz({dataset:{id,p:it.id}})}
+function lvK7K(el){el.closest('.modal')?._weg?.();UI.lvOffen=el.dataset.p;render();setTimeout(()=>document.getElementById('k7-'+el.dataset.p)?.scrollIntoView({block:'start'}),0)}
+LIVE.lvz=el=>{const id=el.dataset.id,pid=el.dataset.p,it0=ROOT.lv(id)?.items.find(x=>x.id===pid);if(!it0)return;let d=null;
+  d=livePop(it0.typ==='LG'?'Leistungsgruppe bearbeiten':it0.typ==='ULG'?'Unterleistungsgruppe bearbeiten':'Position bearbeiten',()=>{const lv=ROOT.lv(id),i=lv?lv.items.findIndex(x=>x.id===pid):-1;
+    if(i<0){setTimeout(()=>d?.querySelector('#m-ok')?.click(),0);return'<p class="mut">Eintrag gelöscht.</p>'}return lvFelder(lv,i)},{verwerfen:it0});return d};
+function lvFelder(lv,i){const it=lv.items[i],R='lv|'+lv.id,P=`items.${i}`,oz=lvOZ(lv),ohneP=lv.art==='ausschreibung'&&!lv.schaetzung,kn=(a,l,x='')=>`<button data-act="${a}" data-id="${lv.id}" data-i="${i}"${x}>${l}</button>`;
+  const nav=`<div class="bar" style="margin-top:10px">${kn('lvmv','↑',' data-d="-1" title="nach oben"')}${kn('lvmv','↓',' data-d="1" title="nach unten"')}${it.typ==='POS'?kn('lvbib','→ Baustein',' title="als Textbaustein speichern"'):''}${it.typ==='POS'&&!ohneP?`<button onclick="lvK7K(this)" data-p="${it.id}" title="K7-Kalkulation unter der Position öffnen">K7 …</button>`:''}<span class="sp"></span>${kn('lvdel','Löschen',' class="d"')}</div>`;
+  if(it.typ!=='POS')return`<div class="row"><label>${it.typ==='LG'?'Leistungsgruppe':'Unterleistungsgruppe'} <span class="mut">${oz[it.id]}</span>${fi(R,P+'.titel',it.titel)}</label></div><div class="row"><label>Vorbemerkung${ft(R,P+'.vorb',it.vorb)}</label></div>${nav}`;
+  const pr=posPreis(lv,it),gp=r2((+it.menge||0)*pr.ep);
+  return`<div class="row"><label>${it.lb?'Stichwort (Standard-LB)':'Kurztext'} <span class="mut">${oz[it.id]}</span>${fi(R,P+'.kurz',it.kurz,{dis:!!it.lb})}</label></div>
+  <div class="row"><label class="w05">Menge${fi(R,P+'.menge',it.menge,{n:1})}</label><label class="w05">Einh.${fsel(R,P+'.einheit',it.einheit,S().einheiten.map(e=>[e,e]))}</label><label class="w05">Art${fsel(R,P+'.art',it.art,Object.entries(POSART))}</label></div>
+  ${ohneP?'':`<div class="row"><label class="w05">EP Lohn${it.modus==='k7'?`<input disabled value="${fmt(pr.l)}">`:fi(R,P+'.epL',it.epL,{n:1})}</label><label class="w05">EP Sonst.${it.modus==='k7'?`<input disabled value="${fmt(pr.s)}">`:fi(R,P+'.epS',it.epS,{n:1})}</label><label class="w05">GP<input disabled value="${fmt(gp)}${it.art?' (n. i. S.)':''}"></label></div>
+  <p class="mut" style="margin:6px 0 0;font-size:12px">${it.modus==='k7'?`Preis nach K7 · ${fmtQ(pr.k7?.std||0)} h`:'Preis manuell'}${pr.kosten?` · Kosten ${fmt(pr.kosten)} · DB ${pct(pr.ep?(pr.ep-pr.kosten)/pr.ep:NaN)}`:''}</p>`}
+  ${it.lb?lbPosEditor(lv,it,P):`<div class="row"><label>Langtext${ft(R,P+'.lang',it.lang)}</label></div>`}${nav}`}
 function preisspiegel(lv){
   const R='lv|'+lv.id,oz=lvOZ(lv),gr=S().abwGrenze/100,pos=lv.items.filter(i=>i.typ==='POS');
   const bp=(p,b)=>{const x=p.preise?.[b.id];return x?{l:+x.l||0,s:+x.s||0,ep:r2((+x.l||0)+(+x.s||0))}:null};
@@ -4218,7 +4284,7 @@ const TABS={};
 function tabelle(id,cols,rows,{zeile,vor,nach,leer='Keine Einträge.',fuss,zwischen,mf,kfuss}={}){
   if(kmpH()&&(mf||cols.some(c=>c.m))){TABS[id]=cols;return tabKarten(id,cols,rows,{zeile,vor,nach,leer,zwischen,mf,kfuss})} // Kartenmodus am Handy (P30)
   TABS[id]=cols;const w=S().spalten?.[id],vis=(w?w.map(k=>cols.find(c=>c.k===k)).filter(Boolean):cols.filter(c=>c.std!==false));if(!vis.length)vis.push(cols[0]);
-  const cl=c=>[c.n?'n':'',c.hm?'hm':''].join(' ').trim();
+  const tb=kmp()&&!w,cl=c=>[c.n?'n':'',c.hm?'hm':'',tb?'t-'+c.k:''].join(' ').trim(); // Kompakt: t-<k> für die Tablet-Spalten (nur ohne eigene Spaltenwahl)
   return`<div class="card" style="padding:0;overflow-x:auto"><table data-tab="${id}"><thead><tr>${vor?`<th style="width:28px">${vor.kopf||''}</th>`:''}${vis.map(c=>`<th class="${cl(c)}">${c.l}</th>`).join('')}${nach?'<th></th>':''}<th style="width:30px;text-align:right"><button class="s" data-act="spalten" data-id="${id}" title="Spalten auswählen">⚙</button></th></tr></thead><tbody>
   ${rows.map(r=>`${zwischen?zwischen(r,vis.length+(vor?1:0)+(nach?1:0)+1):''}<tr ${zeile?zeile(r):''}>${vor?vor.zelle(r):''}${vis.map(c=>`<td class="${cl(c)} ${c.cls?c.cls(r):''}">${c.f(r)??''}</td>`).join('')}${nach?nach(r):''}<td></td></tr>`).join('')||`<tr><td colspan="${vis.length+3}" class="mut">${leer}</td></tr>`}</tbody>${fuss?fuss(vis,!!vor):''}</table></div>`;
 }

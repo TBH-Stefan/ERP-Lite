@@ -1361,6 +1361,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - seit U12 (P14, P18, P20, 12.10.2026): jeder der drei Commits einzeln rücknehmbar (P20 4fae2a5, P18 8cc4e82, P14 028e467; Schalter, CSS, Aktionen und Funktionen stehen an getrennten Stellen), rückwärts P20 → P18 → P14 ergibt genau den Stand vor U12 (bbe14b2). Neu erst nach U12 rücknehmbar (geänderte bzw. direkt angrenzende Zeilen): P0 g (1da5180), P0 h (5c2836b), Korrektur bec643e, Firmenvorgabe/Duplikat c9703e5 und Restfehler P0 o a (2498cb0) – vorher P14 (028e467); Druck/PDF-Datei-Info fc199bd – vorher P18 (8cc4e82). Alle übrigen Code-Commits wie vor U12. Geprüft (Klon, `git apply -R --3way` je Commit an der Basis und an der Spitze): Rücknahme konfliktfrei; Programm ohne je einen der drei Commits ohne Konsolenfehler (alle Ansichten, 390 und 1400 px). Korrekturen aus der Prüfung (12.10.2026): aadf42a (Preiseinheit: Lohn/Sonstiges als Zeile je Einheit ungekürzt, Artikel-Pop-up „je Einheit“ kürzt nicht auf Cent) – vor P14 zurücknehmen; 5d46434 (Kopfzeile am Handy bis 420 px ohne Schriftzug, damit der Speicherstatus neben 🔍 lesbar bleibt) – vor P20 zurücknehmen; beide einzeln rücknehmbar, rückwärts 5d46434 → aadf42a → P20 → P18 → P14 ergibt genau bbe14b2.
   - seit U13 (P34, 12.10.2026): zuerst die Korrektur bc9d31c (ändert Zeilen aus Teil 1, 2 und 3; einzeln rücknehmbar), dann die Korrektur 1007ff6 (K7 am Handy, ändert Zeilen aus Teil 1 und 2; einzeln rücknehmbar); einzeln rücknehmbar sind außerdem Teil 5 (93398de), Teil 4 (9f49f0b) und Teil 3 (f4953c5); Teil 2 (043e8fa) erst nach Teil 3 und Teil 4 (beide ergänzen Zeilen von Teil 2: `kbdup`/`kbdruck` in `ACT_LV`, Kopf in `kbEditK()`); Teil 1 (89529cb) ganz zuletzt (alle Teile nutzen `erwPlus()` und den Rechenkern). Rückwärts 1007ff6 → 5 → 4 → 3 → 2 → 1 ergibt genau den Stand vor U13 (cd570b3). Neu erst nach U13 rücknehmbar (geänderte bzw. direkt angrenzende Zeilen): P18 (8cc4e82, Eintrag im ⋯-Menü des Belegs) und „+ Stundentarif …“ (f5e28f9, Tarifliste `tfListe()`) – vorher P34 Teil 5; U7 Commit 1 (7acb6e1, CSS vor `#print`) – vorher P34 Teil 3; damit auch alle Commits, die diese schon bisher voraussetzten. Alle übrigen Code-Commits seit ETU wie vor U13. Geprüft (Klon, `git revert` je Commit an der Spitze und an cd570b3): Rücknahme konfliktfrei in dieser Reihenfolge; Programm ohne Teil 3, ohne Teil 4, ohne Teil 5 und mit nur Teil 1 ohne Konsolenfehler (390 und 1400 px).
   - Endkontrolle (13.10.2026, a1fc952): einzeln rücknehmbar (Rücknahme ergibt genau e16378a); vorher zurückzunehmen vor U7 Commit 2 (4e15709), U8 Commit 1 (fcfbee7) und 3 (f974f09), iOS ae69ae6 (Bausteine bzw. CSS-Klassen) und vor P34 Teil 1 (89529cb, Zeile `kbK2V()`); alle übrigen Commits wie vorher.
+  - Gesamttest Stufe 2 (13.10.2026): Korrektur c4c2a6c einzeln rücknehmbar, vor U7 Commit 6 (89025f2, Zeile `lpEntf()`) und damit vor U7 Commit 2. Die vollständige, geprüfte Vorgängerliste je Code-Commit steht unten bei „Gesamttest Stufe 2“; wo sie strenger ist als die Angaben oben, gilt sie.
 - Noch offen: Test an echten Geräten (Edge, Firefox, Android, iOS; Druck, Strg+P, Browsermenü), echter Mailversand und Abgleich über OneDrive mit zwei Geräten, Tag `vor-etu` (nicht gesetzt).
 
 **Stufe 2: Kernfunktionen nach ETU (ca. 12–13 Tage)**
@@ -1371,6 +1372,78 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - P3 Schalter für Preise und Summen (S), P4 Spalten und Positionsdarstellung (M–L) – ✅ umgesetzt (U9: Commits 06ffa33, 8a9b49b, 1d7338f)
 - P14 Preiseinheit, vollständig (M) – ✅ umgesetzt (U12: Commit 028e467)
 - P18 Gliederung (M), P20 globale Suche (M) – ✅ umgesetzt (U12: Commits 8cc4e82, 4fae2a5)
+
+**Gesamttest Stufe 2 (13.10.2026, Stand c4c2a6c):** ✅
+- **Testskripte:** t2–t39 (22 Skripte) mit ausgeschalteter kompakter Ansicht: alle Ergebnisse gleich wie an c9703e5, abweichend nur beabsichtigt (Struktur-Auswahl wie im Explorer P33 in t24, `text-size-adjust:100%` der Handy-Vorschau aus dddb216 in t39, neue IDs). Mit kompakter Ansicht (Standard) weichen t3, t21, t26, t29–t33, t35–t37 nur wegen der geänderten Oberfläche ab (Aktionen im ⋯ bzw. in Pop-ups, Systemschrift am iPhone). t22/t28 waren schon an c9703e5 veraltet; die angepassten Fassungen etu/t22.js und t28.js laufen (t28 zeigt in kompakt die Auswertung als Kennzahlen). P31-Tests (t1, t2, t33, tab, ttarif, tinfo gegen 04bd23c) und alle 13 P34-Tests ohne Fehler. stufe1.js als angepasste Kopie (Schalter per Skript statt per Klick, weil sie in kompakt in zugeklappten Abschnitten liegen) mit und ohne kompakte Ansicht: ALLES OK.
+- **Ansichten und Schalter:** 28 Ansichten, 8 FiBu-Reiter und 3 LV-Reiter bei 1400 und 390 px ohne Konsolenfehler und ohne Seitenüberlauf. Alle 38 Schalter einzeln um- und zurückgeschaltet bei 1400 px, bei 390 px (Handy mit Touch, samt Positions-Pop-up, ⋯-Menü, Kopfdaten, Summe, Gliederung) und mit `erw.kompakt=false`: Summen gleich, keine Fehler, kein Überlauf. „Alle Schalter auf Standard“ (Druckprofile bleiben, Strg+Z stellt wieder her) und „Standard wiederherstellen“ je Paket (20 Pakete).
+- **Regression gegen c9703e5** (30 Belege mit Standardeinstellungen, 1500 px und 390 px Handy, `docHTML`, Vorschau, PDF): mit den bisherigen Infoblock-Werten (`infoGrp:''`, `lblUid:'Ihre UID'`) 30/30 gleich. Beabsichtigt abweichend: gegliederter Infoblock mit „UID Kunde“ (6351e48; Entwürfe und neu festgeschriebene Belege, 5 der 30; ältere festgeschriebene bleiben wie gedruckt), Logo „Technisches Büro“ (dddb216; Alternativtext, Bild in der LV-Vorschau), `data-pi` nur in der Bildschirm-Vorschau (P18), am Handy Vorschau zum Lesen ohne Eingabefelder (U8; mit `erw.kompakt=false` gleich).
+- **Aktionen:** keine doppelten Schlüssel in `ACT`, `ACT_LV` (samt `ACT_KBW`), `ACT_LB`, `ACT_FB` und keine Überschneidung (132 + 34 + 5 + 7 = 178 Aktionen zur Laufzeit).
+- **Korrektur c4c2a6c:** `lpEntf()` merkt das Pop-up vor dem Löschen (seit `render()` offene Live-Pop-ups neu zeichnet, blieben Steuersatz- und Tarif-Pop-up mit „Nicht mehr vorhanden.“ offen); in „Beides“ (kompakt) Datumsfelder mindestens 124 px breit (vorher 90 px, abgeschnitten).
+- **Rücknahme (geprüft im Klon für alle 55 Code-Commits seit c9703e5):** Vorgänger textuell (`git apply -R --3way` an der Spitze, rekursiv) und zusätzlich semantisch (spätere Commits, die eine neu definierte Funktion bzw. Konstante nutzen). Mit diesen Vorgängern ist jede Rücknahme konfliktfrei und das Programm danach in allen Ansichten (1400/390 px) ohne Konsolenfehler (55/55); alle Code-Commits rückwärts ergeben genau c9703e5. Doku-Commits werden nicht zurückgenommen (einzeln per `git revert` kollidieren sie mit späteren Doku-Commits). Neu gegenüber den Angaben oben:
+  - Restfehler P0 o a (2498cb0) erst nach P34 Teil 5 (93398de) und den Nutzern von `lsAufteilen()`: „+ Stundentarif“ (f5e28f9), P18 (8cc4e82).
+  - U7 Commit 3 (439ca23) erst nach den Nutzern von `auftragKurz()`: U8 Commit 2 und 5, P34 Teil 4 und 5 samt Vorgängern; U7 Commit 5 Teil Kaufmännisch (56f4235) erst nach P34 Teil 4 (`KB_INFO`).
+  - U7 Commit 2, 5, 6, U8, P3, P4, P6, P8, P9, P10, iOS ae69ae6, Korrektur 68e30f6: zusätzlich nach Endkontrolle a1fc952 und P34 Teil 1 (samt Teil 2–5) bzw. P20 (4fae2a5 samt 5d46434), die Bausteine der kompakten Ansicht oder `persName()` nutzen.
+  - P12 (73ee3b1) erst nach P14 (028e467 samt aadf42a) und P34 Teil 1 (`k3TfKnopf()`) samt allen P34-Commits; P10 (48ff8cf) erst nach P34 Teil 5 (`gkDarf()`/`gkKalk()`) und P14; P31 (04bd23c) und Pflichtfelder 1e322aa erst nach P14 und P34 Teil 2 (`mOben()`) samt Teil 3 und 4.
+  - P34 Teil 1 (89529cb) erst nach Teil 5 (`erwPlus()`), wie schon „ganz zuletzt“ beschrieben.
+
+  | Commit | Inhalt | vorher zurücknehmen (in dieser Reihenfolge, neueste zuerst) |
+  |---|---|---|
+  | 2498cb0 | ETU Rest: Lohn/Sonstiges bei Artikelwahl, Preisverlauf, ne … | 93398de, aadf42a, 8cc4e82, 028e467, f5e28f9 |
+  | 04c1ad1 | ETU Rest: Optionen/Alternativen auch über die Gruppe in Sa … | – |
+  | d477ebc | ETU Rest: Abgleich meldet „Einstellungen“ nicht, wenn beid … | – |
+  | 7acb6e1 | Kompakt: Fehlerbehebung Seitenüberlauf, Reiter, Leiste „Un … | bc9d31c, f4953c5 |
+  | 4e15709 | Kompakt: Schalter erw.kompakt und Grundbausteine | c4c2a6c, a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, 48ff8cf, dffb7d3, 395368b, f385ffd, 570074f, 6daa4c2, 1d7338f, 1e322aa, 8a9b49b, 06ffa33, ae69ae6, b6f7a9f, 68e30f6, c5a105f, 281c9b9, d1dc351, f974f09, 8311235, fcfbee7, 32f486a, 89025f2, 56f4235, 050e6d5, 7160459, 439ca23 |
+  | 439ca23 | Kompakt: Listen als Karten | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, 48ff8cf, dffb7d3, 395368b, f385ffd, 570074f, 6daa4c2, 1d7338f, 8a9b49b, 06ffa33, ae69ae6, b6f7a9f, 68e30f6, c5a105f, 281c9b9, d1dc351, f974f09, 8311235 |
+  | 7160459 | Kompakt: Neu-/Einlesen-Menüs und Filter-Pop-up | 32f486a |
+  | 050e6d5 | Kompakt: Kontakt als Visitenkarte, Artikel als Akkordeon | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, dffb7d3, 395368b, f385ffd, 570074f, 1e322aa |
+  | 56f4235 | Kompakt: Kosten, Verrechnung, Aufträge, Auswertung, Konten … | 9f49f0b |
+  | 89025f2 | Kompakt: Einstellungen als Akkordeon | c4c2a6c, a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, 73ee3b1, dffb7d3, 395368b, f385ffd |
+  | 32f486a | U7: Korrektur Auswahlleiste Artikel am Handy verdeckt die … | – |
+  | fcfbee7 | Kompakt: Beleg | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, 48ff8cf, dffb7d3, 395368b, f385ffd, 570074f, 6daa4c2, 1d7338f, 8a9b49b, 06ffa33, ae69ae6, b6f7a9f, 68e30f6, c5a105f, 281c9b9, d1dc351, f974f09, 8311235 |
+  | 8311235 | Kompakt: Beleg | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, 48ff8cf, dffb7d3, 395368b, f385ffd, 570074f, 6daa4c2, 1d7338f, 8a9b49b, 06ffa33, ae69ae6, b6f7a9f, 68e30f6, c5a105f, 281c9b9, d1dc351, f974f09 |
+  | f974f09 | Kompakt: Beleg | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, 48ff8cf, dffb7d3, 395368b, f385ffd, 570074f, 6daa4c2, 1d7338f, 8a9b49b, 06ffa33, ae69ae6, 68e30f6, c5a105f, 281c9b9, d1dc351 |
+  | d1dc351 | Kompakt: Beleg | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, dffb7d3, 395368b, f385ffd, 570074f, 1d7338f, 8a9b49b, 06ffa33 |
+  | 281c9b9 | Kompakt: Beleg | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, dffb7d3, 395368b, f385ffd, 570074f, 1d7338f, 8a9b49b, 06ffa33, 68e30f6, c5a105f |
+  | c5a105f | Kompakt: Beleg | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, dffb7d3, 395368b, f385ffd, 570074f, 1d7338f, 8a9b49b, 06ffa33, 68e30f6 |
+  | 68e30f6 | U8: Korrektur Beleg-Pop-ups beim Belegwechsel, Gruppensumme | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, 73ee3b1, dffb7d3, 395368b, 1d7338f |
+  | dddb216 | Logo „Technisches Büro“; Handy-Vorschau: keine automatisch … | – |
+  | 4affb0f | Handy: Eingabefelder mit 16 px Schrift, damit iOS beim Ant … | – |
+  | b6f7a9f | Fehlerbehebung: Auswahllisten in Pop-ups öffnen sich nach … | – |
+  | ae69ae6 | Handy: iOS-Darstellung (Schalter erw.ios) | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 028e467, 4710d17, 73ee3b1, 48ff8cf, 6daa4c2 |
+  | 06ffa33 | ETU P3: Schalter für Preise und Summen im Druckprofil | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, dffb7d3, 395368b, f385ffd, 570074f, 1d7338f, 8a9b49b |
+  | 8a9b49b | ETU P4: Spalten im Druckprofil (Art.-Nr., Pos, Menge/Einhe … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, dffb7d3, 395368b, f385ffd, 570074f, 1d7338f |
+  | 1e322aa | Pflichtfelder: deutliche Warnung beim Speichern, fehlende … | bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, aadf42a, 028e467, f5e28f9, d3cc148, 30cbf83, cf0457e, 04bd23c |
+  | 1d7338f | ETU P4: Positionsdarstellung im Druckprofil, Zuschlag je P … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, 73ee3b1, dffb7d3, 395368b |
+  | 6daa4c2 | U9: Korrektur iOS-Schalter am Handy (Breite) | – |
+  | 570074f | ETU P6: Anrede, Titel, Vor-/Nachname und Briefanrede (Kont … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, dffb7d3, 395368b, f385ffd |
+  | f385ffd | ETU P8: Platzhalter in Texten ({Kunde}, {Nr} …) mit Einfüg … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, 73ee3b1, dffb7d3, 395368b |
+  | 395368b | ETU P9: Lohnkostennachweis nur auf Wunsch je Beleg (Satz n … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, 73ee3b1, dffb7d3 |
+  | dffb7d3 | U10: Korrektur Platzhalter-Einfügen und Häkchen Lohnkosten … | – |
+  | 48ff8cf | ETU P10: Gesamtkalkulation mit „Aufschlag neu“ und teilwei … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 028e467, 4710d17, 73ee3b1 |
+  | 73ee3b1 | ETU P12: DB je Lohnstunde mit Ampel, Lohnkalkulation je Ta … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 028e467, 4710d17 |
+  | 04bd23c | P31 Stammdaten: Lieferant direkt anlegen, Dublettenprüfung … | bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, aadf42a, 028e467, f5e28f9, d3cc148, 30cbf83, cf0457e |
+  | 6351e48 | Infoblock: „UID Kunde“ statt „Ihre UID“, gegliedert in Bel … | – |
+  | fc199bd | Druck: keine Browser-Kopfzeile (Datum, Titel), Datei-Info … | 93398de, 8cc4e82 |
+  | cf0457e | P32 Belegstatus: Auftragsbestätigung nach Druck, PDF oder … | 93398de, f5e28f9, d3cc148, 30cbf83 |
+  | 30cbf83 | P24 (Teil): Artikelbild als Datei in der Ablage statt Vors … | 93398de, f5e28f9, d3cc148 |
+  | d3cc148 | P33 Bedienung: ⓘ beim Darüberfahren, Scrollen nur im Pop-u … | 93398de, f5e28f9 |
+  | f5e28f9 | Verkauf: Stundentarif als Position wählen („+ Stundentarif … | 93398de |
+  | 4710d17 | U11: Korrektur Gesamtkalkulation ohne VK und Meldung über … | – |
+  | 028e467 | ETU P14: Preiseinheit vollständig (Preis je 10/100/1000 Ei … | aadf42a |
+  | 8cc4e82 | ETU P18: Gliederung / Dokumentenübersicht mit Sprung zur P … | 93398de |
+  | 4fae2a5 | ETU P20: Globale Suche (Strg+K, F3, Lupe) als Pop-up | 5d46434 |
+  | aadf42a | U12: Korrektur Preiseinheit | – |
+  | 5d46434 | U12: Korrektur Suche | – |
+  | 89529cb | ETU P34: K-Blätter im Aufbau der Formblätter K2–K7 (Zeilen … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa |
+  | 043e8fa | ETU P34: K-Blätter | bc9d31c, 1007ff6, 9f49f0b, f4953c5 |
+  | f4953c5 | ETU P34: K-Blätter drucken im Layout der Formblätter (K2–K … | bc9d31c |
+  | 9f49f0b | ETU P34: K-Blätter einem Projekt bzw. Auftrag zuordnen | – |
+  | 93398de | ETU P34: Verkaufsbelege nach K-Blatt | – |
+  | 1007ff6 | ETU P34: Korrektur | – |
+  | bc9d31c | U13: Korrektur K-Blätter | – |
+  | a1fc952 | Kompakt: Endkontrolle | – |
+  | c4c2a6c | ETU Stufe 2: Korrektur Löschen im Pop-up und Datumsfelder … | – |
+
 
 **Stufe 3: optional nach Bedarf (ca. 18–21 Tage)**
 - P26 Datanorm: Stufe 1 (M–L, mit ZIP-Leser und Zeichentabelle), sobald eine Musterdatei da ist; Stufe 2 (L)
@@ -1413,7 +1486,8 @@ Jedes Paket wird erst nach Ihrem Test im Browser nach `main` übernommen. Bis da
 - **Gesamtkalkulation (P10, später):** proportional als Standard; einheitlicher Aufschlag im Dialog wählbar. ✅ umgesetzt (U11), dazu P12 (DB je Lohnstunde, Lohnkalkulation je Tarif).
 - **Lohnkostennachweis (P9):** nur auf Wunsch je Beleg (Standard aus). ✅ umgesetzt (U10).
 - **Briefanrede (P6):** österreichische Form „Sehr geehrter Herr Ing. Mustermann,“, je Kontakt überschreibbar. ✅ umgesetzt (U10).
-- **Pflichtangaben/Duplikat (P0 m/n):** Firmenbuchgericht nicht vorbelegen, nur Hinweis bei leerem Feld; Duplikat-Vermerk Standard aus.
+- **Pflichtangaben/Duplikat (P0 m/n):** zunächst (08.10.2026) Firmenbuchgericht nicht vorbelegen, Duplikat-Vermerk Standard aus; geändert am 09.10.2026: Firmenbuchgericht LG Wiener Neustadt als Firmenvorgabe (`FIRMA_TBH`), Duplikat-Vermerk Standard ein (Commit c9703e5). Lieferanten-Art.-Nr. auf Bestellentwürfen bestätigt (P0 j).
+- **Kompakte Ansicht (P30, 09.10.2026):** Die App-Ansicht am Handy war überladen; kompakter darstellen, Web-Ansicht ebenfalls, wo nötig Pop-ups. Ausdrücklich gewünscht mit Schalter `erw.kompakt` (Standard ein), abschaltbar (aus = bisherige Darstellung). ✅ umgesetzt (U7, U8, iOS-Darstellung, Endkontrolle 13.10.2026).
 - **12.10.2026:** P31 (Lieferant direkt anlegen, Dublettenprüfung, Listenpreis/Rabatt/EK), Bild je Artikel (Teil P24), Infoblock „UID Kunde“ mit Gliederung (neuer Standard), Druck ohne Browser-Kopfzeile, P32 (AB nach Ausgabe „abgeschlossen“), P33 (Bedienung), „+ Stundentarif …“ – alle ✅ umgesetzt, Standard ein.
 - **Stufe 2, Rest (U12, 12.10.2026):** P14 Preiseinheit vollständig, P18 Gliederung, P20 globale Suche – ✅ umgesetzt (Schalter `erw.pe`, `erw.gliederung`, `erw.suche`, Standard ein; Druckoptionen „Einzelpreis bei Preiseinheit“ je Preiseinheit, „PDF mit Lesezeichen“ aus); kompakte Darstellung am Handy (Pop-ups) wie gewünscht.
 - **12.10.2026, P34 K-Blätter nach Vorlage (U13):** Formblätter K2–K7 wie die Vorlagen, Eingabe über Auswahlfelder, Logo und Firmendaten der TBH im Ausdruck, Projektzuordnung, Zuschläge und Mittellohn in Angeboten und Rechnungen – ✅ umgesetzt (Schalter `erw.kbVorlage`, `erw.kbDruck`, `erw.kbProjekt`, `erw.kbBeleg`, Standard ein).

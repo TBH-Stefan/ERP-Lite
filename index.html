@@ -182,6 +182,7 @@ button.s{padding:2px 7px;font-size:12px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px}
 .row>label{flex:1;min-width:130px}
 .row>label.w2{flex:2}.row>label.w05{flex:.5;min-width:90px}
+body.kompakt .split .row>label.w05:has(>input[type=date]){min-width:124px} /* Kompakt (P30) Gesamttest: Datumsfelder in „Beides“ nicht abgeschnitten */
 label{display:block;font-size:12px;color:var(--mut)}
 label>input,label>select,label>textarea{margin-top:2px;color:var(--ink);font-size:14px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:14px}
@@ -4443,7 +4444,7 @@ const lf1=a=>(a.lieferanten||[]).find(l=>+l.lp>0)||(a.lieferanten||[])[0]||{};
    Erweiterungen je Schalter eine Zeile mit ⓘ, Paket als Akkordeon (offen bei Abweichung), Druckprofil je Gruppe als Akkordeon ---------- */
 const einlesenInfo=(a,b)=>kmp()?`<p style="margin-top:0">E-Rechnungen und PDFs mit Textebene werden kostenlos gelesen, Fotos optional per KI-Erkennung (eigener Schlüssel). ${hilfe(a+'<br><br>'+b)}</p>`:`<p style="margin-top:0">${a}</p>
   <p class="mut">${b}</p>`;
-function lpEntf(btn,act,liste){const n=liste().length;ACT[act](btn);if(liste().length<n)btn.closest('.modal')?.querySelector('#m-ok')?.click()} // Löschen im Pop-up: vorhandene Aktion, bei Erfolg schließen
+function lpEntf(btn,act,liste){const n=liste().length,m=btn.closest('.modal');ACT[act](btn);if(liste().length<n)m?.querySelector('#m-ok')?.click()} // Löschen im Pop-up: vorhandene Aktion, bei Erfolg schließen (Pop-up vorher merken: render() zeichnet es neu)
 const stKarten=()=>{const stG=stGesperrt();return`<div class="kkl">${S().steuer.map((x,i)=>karte({t:esc(x.bez||x.code),s:stG.has(x.code)?tag('gesperrt'):'',u:esc(x.hinweis||''),z:'Code '+esc(x.code),b:fmtQ(x.satz)+' %',a:`onclick="ACT.lpop(this)" data-lp="st" data-i="${i}"`})).join('')}</div><button style="margin-top:8px" data-act="lpop" data-lp="stneu">+ Steuersatz</button>`};
 LIVE.st=el=>{const i=+el.dataset.i,x=S().steuer[i];if(!x)return;
   livePop('Steuersatz',()=>{const y=S().steuer[i];if(y!==x)return'<p class="mut">Nicht mehr vorhanden.</p>';const g=stGesperrt().has(y.code),ds=g?' disabled':'',a=f=>`data-o="st" data-i="${i}" data-f="${f}"`;

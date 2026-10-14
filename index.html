@@ -750,7 +750,10 @@ function saveState(t,bad){for(const e of [$('#savestate'),$('#sync2')]){if(e){e.
 function persist(){merk();DIRTY=true;dirtyBar()}
 function snap(){SNAP=JSON.stringify(DB)}
 async function commit(){merk();DIRTY=false;dirtyBar();pending=true;await saveNow();snap();LAST=SNAP}
-function verwerfen(){if(SNAP)DB=migrate(JSON.parse(SNAP));merk();DIRTY=false;dirtyBar();artDatalist();render()}
+// Verwerfen: gibt es den geöffneten Datensatz danach nicht mehr (neu angelegt, noch nicht gespeichert), zur zugehörigen Liste wechseln statt „Nicht gefunden.“
+const LISTE_VON={beleg:[id=>beleg(id),b=>'belege/'+(T[b?.typ]?.b||'V')],kontakt:[id=>kontakt(id),()=>'kontakte'],artikel:[id=>artikel(id),()=>'artikel'],kbs:[id=>ROOT.kb(id),()=>'kbs'],lvs:[id=>ROOT.lv(id),()=>'lvs']};
+function verwerfen(){const[v,id]=location.hash.replace(/^#\/?/,'').split('/'),L=LISTE_VON[v],vor=L&&id?L[0](id):null;
+  if(SNAP)DB=migrate(JSON.parse(SNAP));merk();DIRTY=false;dirtyBar();artDatalist();if(vor&&!L[0](id)){go(L[1](vor));return}render()}
 /* Verlauf „Zurück“: vor jeder vorgemerkten oder gespeicherten Änderung wird der vorige Stand gemerkt (max. 50 Schritte).
    Maus-Zurücktaste = Änderung auf der aktuellen Seite rückgängig (sonst normale Navigation), Maus-Vortaste = wiederholen.
    Strg+Z / Strg+Y außerhalb von Eingabefeldern. Festschreiben und vergebene Nummern werden nie zurückgedreht. */

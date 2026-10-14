@@ -78,6 +78,8 @@ nav .nbz{display:inline-block;min-width:18px;padding:0 6px;margin-left:4px;borde
 .rte{border:1px solid #cdd2da;border-radius:5px;padding:5px 7px;min-height:32px;background:#fff;margin-top:2px;color:var(--ink);font-size:13px;line-height:1.4;cursor:text}
 .pos .rte{max-height:calc(5 * 1.4em + 12px);overflow-y:auto;resize:vertical} /* Langtext in der Eingabe: ca. 5 Zeilen, scrollbar */
 .rte[contenteditable]:focus{outline:2px solid var(--acc);outline-offset:-1px}
+/* Liefertermine (P35): Kundenlieferungen in der Karte „Lieferverzug“, Hinweis „Material verspätet“ in der Auftragsbestätigung */
+.lfd h2.lfdk{font-size:14px;margin:14px 0 6px}.kkl.lfd>h2.lfdk{margin:0;border-top:1px solid var(--line);padding-top:10px}.lfm a{color:var(--acc)}
 .rte:not([contenteditable]){background:#f3f4f6}
 .rte:empty:before{content:attr(data-ph);color:#9aa3b2}
 .rte ul,.rte ol,.doc ul,.doc ol{margin:2px 0;padding-left:20px}
@@ -2047,7 +2049,7 @@ V.beleg=id=>{
       <td data-l="Kz" style="width:74px">${kzSel(i,p)}</td>${akt}
     </tr>`}).join('');
   const kette=DB.belege.filter(x=>b.auftragId?x.auftragId===b.auftragId:(x.id===b.id||x.vorgaengerId===b.id||x.id===b.vorgaengerId)).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
-  const k=kontakt(b.kontaktId),scan=(['WE','ER','BE'].includes(b.typ)?scanBox(b):'')+lfKarte(b); // Karte „Lieferung“ der Bestellung (P35)
+  const k=kontakt(b.kontaktId),scan=(['WE','ER','BE'].includes(b.typ)?scanBox(b):'')+lfKarte(b)+lfHinweis(b); // Karte „Lieferung“ der Bestellung, Hinweis in der Auftragsbestätigung (P35)
   const ans=ansicht();
   const kopfbar=kmpB()?belegKopfbarK(b,ans)+zahlKopfK(b)+aktLeiste(b):`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
@@ -5825,12 +5827,16 @@ const lfWv=(b,h=isoD())=>!!(erw('lfErinnern')&&b.lief?.wv&&b.lief.wv>h); // Wied
 const lfFaellig=(h=isoD(),n=lfN())=>lfOffen(h).filter(x=>x.termin&&x.tage>=-n&&!lfWv(x.b,h)); // überfällig bzw. in n Tagen fällig
 Object.defineProperty(LF_ST,'bald',{enumerable:true,get:()=>erw('lfErinnern')?`fällig bis ${dAT(addDays(isoD(),lfN()))}`:''});LF_F.bald=x=>!!x.termin&&x.tage>=-lfN()&&!lfWv(x.b); // Filter der Liste wie die Karte „Lieferverzug“
 LF_SP.push({k:'wv',l:'Wiedervorlage',get std(){return!!erw('lfErinnern')},f:x=>lfWv(x.b)?'💤 '+dAT(x.b.lief.wv):''},{k:'erin',l:'Erinnert',std:false,f:x=>{const e=x.b.lief?.erinnert||[];return e.length?dAT(e[e.length-1].ts.slice(0,10))+(e.length>1?` (${e.length}×)`:''):''}});
-function lfDash(){if(!erw('lfErinnern'))return'';const E=lfFaellig(),G=new Map();if(!E.length)return'';
+function lfDash(){const E=erw('lfErinnern')?lfFaellig():[],K=erw('lfVerkauf')?lfKunden():[],G=new Map(),H=kmpH();if(!E.length&&!K.length)return''; // K: Kundenlieferungen (Teil 4)
   for(const x of E){const g=G.get(x.b.id)||{b:x.b,P:[]};g.P.push(x);G.set(x.b.id,g)}
   const L=[...G.values()].map(g=>({...g,w:lfStand(g.P)})).sort((a,c)=>a.w.termin.localeCompare(c.w.termin)),was=g=>g.P.length>1?`${g.P.length} Positionen`:esc(g.P[0].p.bez),tm=g=>dAT(g.w.termin)+(g.w.best?'':' <span class="mut">(gewünscht)</span>');
-  const kopf=`<a href="javascript:void 0" onclick="${erw('lfListe')?"zuLief('bald')":"zuListe('E','BE','offen')"}">Lieferverzug →</a> <span class="mut">überfällig und in den nächsten ${lfN()} Tagen fällig</span>`;
-  return kmpH()?`<div class="card kkl lfd" style="padding:0"><h2>${kopf}</h2>${L.map(g=>karte({t:esc(bNr(g.b)),s:lfTag(g.w),u:`${esc(kName(g.b.kontaktId))} · ${was(g)}`,z:'Termin '+tm(g),a:`onclick="nav('beleg/${g.b.id}')"`})).join('')}</div>`
-    :`<div class="card lfd"><h2>${kopf}</h2><table>${L.map(g=>`<tr class="click" onclick="nav('beleg/${g.b.id}')"><td>${esc(bNr(g.b))}</td><td>${esc(kName(g.b.kontaktId))}</td><td>${was(g)}</td><td>${tm(g)}</td><td>${lfTag(g.w)}</td></tr>`).join('')}</table></div>`}
+  const kopf=E.length?`<a href="javascript:void 0" onclick="${erw('lfListe')?"zuLief('bald')":"zuListe('E','BE','offen')"}">Lieferverzug →</a> <span class="mut">überfällig und in den nächsten ${lfN()} Tagen fällig</span>`:'Lieferverzug';
+  const ze=!E.length?'':H?L.map(g=>karte({t:esc(bNr(g.b)),s:lfTag(g.w),u:`${esc(kName(g.b.kontaktId))} · ${was(g)}`,z:'Termin '+tm(g),a:`onclick="nav('beleg/${g.b.id}')"`})).join('')
+    :`<table>${L.map(g=>`<tr class="click" onclick="nav('beleg/${g.b.id}')"><td>${esc(bNr(g.b))}</td><td>${esc(kName(g.b.kontaktId))}</td><td>${was(g)}</td><td>${tm(g)}</td><td>${lfTag(g.w)}</td></tr>`).join('')}</table>`;
+  const kt=x=>tag(`überfällig ${x.tage} Tag${x.tage===1?'':'e'}`,'err')+(x.m.length?' '+tag('Material verspätet','warn'):''),ku=x=>[kName(x.b.kontaktId),x.b.betreff].filter(y=>y&&y!=='–').map(esc).join(' · ');
+  const zk=!K.length?'':`<h2 class="lfdk"><a href="javascript:void 0" onclick="zuListe('V','AB','offen')">Kunden →</a> <span class="mut">Liefertermin laut Auftragsbestätigung überschritten</span></h2>${H?K.map(x=>karte({t:esc(bNr(x.b)),s:kt(x),u:ku(x),z:'Liefertermin '+dAT(x.b.liefertermin),a:`onclick="nav('beleg/${x.b.id}')"`})).join('')
+    :`<table>${K.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${esc(bNr(x.b))}</td><td>${ku(x)}</td><td>${dAT(x.b.liefertermin)}</td><td>${kt(x)}</td></tr>`).join('')}</table>`}`;
+  return`<div class="card${H?' kkl':''} lfd"${H?' style="padding:0"':''}><h2>${kopf}</h2>${ze}${zk}</div>`}
 // in der Karte „Lieferung“: Erinnerungen, Wiedervorlage und die beiden Knöpfe
 function lfErinInfo(b,w){if(!erw('lfErinnern'))return'';const L=b.lief||{},E=L.erinnert||[],z=E[E.length-1],wv=lfWv(b);if(!w&&!E.length)return'';
   return`<div class="bar lfe">${E.length?`<span>✉ erinnert ${E.length>1?E.length+'×, zuletzt ':''}${dtAT(z.ts)} an ${esc(z.an)}${z.weg==='mailto'?' <span class="mut">(E-Mail-Programm)</span>':''}</span>`:''}${wv?`<span>💤 Wiedervorlage am <b>${dAT(L.wv)}</b>${L.wvNotiz?' – '+esc(L.wvNotiz):''}</span>`:''}<span class="sp"></span>
@@ -5877,6 +5883,15 @@ function lfEinst(){if(!erw('lfErinnern'))return'';const m=S().mailVorlage||{};
   <div class="row"><label class="w2">Text der Erinnerung<textarea data-o="s" data-f="mailVorlage.lfText" style="height:200px" placeholder="${esc(LF_MAIL.text)}">${esc(m.lfText||'')}</textarea></label></div>
   <div class="bar" style="margin:4px 0 0">${phKnopf()}<span class="mut" style="font-size:13px">${LF_PH.map(([n,l])=>`<span title="${esc(l)}">{${n}}</span>`).join(' ')}</span></div></div>`,{zusatz:`${lfN()} Tage · ${m.lfText||m.lfBetreff?'eigene Vorlage':'Standardtext'}`})}
 queueMicrotask(()=>Object.assign(ACT,{lfmail:()=>lfMail(curBeleg()),lfwv:()=>lfWvPop(curBeleg())}));
+/* ---------- Lieferverzug im Verkauf (P35 Teil 4, erw.lfVerkauf): Auftragsbestätigungen an Kunden mit überschrittenem Liefertermin (fest, nicht storniert, erledigung() < 1
+   über Lieferscheine bzw. Rechnungen, nicht abgeschlossen nach P32) → eigener Abschnitt in der Karte „Lieferverzug“ (lfKunden); Bestellungen aus der Belegkette einer AB
+   (vorgaengerId bzw. gleicher Auftrag) mit überfälligen Positionen → Hinweis „Material verspätet“ in der AB (lfMaterial, lfHinweis). Nur Anzeige ---------- */
+erwPlus({k:'lfVerkauf',std:true,p:'Liefertermine (P35)',l:'Lieferverzug im Verkauf: Kundenlieferungen und verspätetes Material',info:'Auftragsbestätigungen an Kunden, deren Liefertermin vorbei ist und die noch nicht vollständig geliefert bzw. verrechnet sind (Lieferscheine, Rechnungen), stehen in einem eigenen Abschnitt der Karte „Lieferverzug“ im Überblick; ausgenommen sind Auftragsbestätigungen mit Status „abgeschlossen“ (Belegstatus P32). In der Auftragsbestätigung erscheint der Hinweis „Material verspätet“, wenn eine Bestellung aus derselben Belegkette (bzw. demselben Auftrag) überfällige Positionen hat, mit Bestellung, Lieferant und Termin.'});
+function lfMaterial(ab,h=isoD()){if(!ab?.fest)return[];return DB.belege.filter(x=>x.typ==='BE'&&x.fest&&!x.storno&&(x.vorgaengerId===ab.id||(ab.auftragId&&x.auftragId===ab.auftragId)))
+  .map(b=>({b,w:lfStand(lfPos(b,h).filter(x=>x.st==='ueber'))})).filter(x=>x.w)} // Bestellungen der Belegkette mit überfälligen Positionen
+const lfKunden=(h=isoD())=>DB.belege.filter(b=>b.typ==='AB'&&b.fest&&!b.storno&&b.liefertermin&&b.liefertermin<h&&!abZu(b)&&erledigung(b)<0.9999).map(b=>({b,tage:lfTage(b.liefertermin,h),m:lfMaterial(b,h)})).sort((a,c)=>a.b.liefertermin.localeCompare(c.b.liefertermin));
+function lfHinweis(b){if(!erw('lfVerkauf')||b.typ!=='AB'||!b.fest||b.storno)return'';const h=isoD(),M=lfMaterial(b,h),t=b.liefertermin&&b.liefertermin<h&&!abZu(b)&&erledigung(b)<0.9999?lfTage(b.liefertermin,h):0;if(!M.length&&!t)return'';
+  return`<div class="hint lfm">${t?`<div>⚠ Liefertermin an den Kunden überschritten: ${dAT(b.liefertermin)} (${t} Tag${t===1?'':'e'})</div>`:''}${M.length?`<div>⚠ Material verspätet: ${M.map(m=>`<a href="#/beleg/${m.b.id}">Bestellung ${esc(bNr(m.b))}</a> (${esc(kName(m.b.kontaktId))}, Termin ${dAT(m.w.termin)}${m.w.best?'':' gewünscht'}, ${m.w.tage} Tag${m.w.tage===1?'':'e'} überfällig)`).join(' · ')}</div>`:''}</div>`}
 
 /* ---------- Rechnung aus mehreren Lieferscheinen (Sammelrechnung) ---------- */
 function offeneLS(kid){return DB.belege.filter(x=>x.typ==='LS'&&x.fest&&!x.storno&&(!kid||x.kontaktId===kid)&&(gi=>x.pos.some(p=>!isInfo(p)&&!effKz(p,gi)&&(+p.menge||0)-kinderMenge(p.id,['RE','TR','SR'])>0.0001))(gruppenInfo(x))).sort((a,c)=>a.datum.localeCompare(c.datum))}

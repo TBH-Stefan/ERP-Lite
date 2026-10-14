@@ -64,6 +64,8 @@ button.gef{background:var(--err);border-color:var(--err)}
 .lbcols{display:grid;grid-template-columns:260px 300px 1fr;gap:10px;align-items:start}.lblist{max-height:70vh;overflow:auto;padding:6px}.lblist a{display:block;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:13px}.lblist a:hover{background:var(--acc2)}.lblist a.on{background:var(--acc);color:#fff}
 .lbgt{border-top:1px solid var(--line);padding:6px 0}.lbfp{display:flex;gap:10px;align-items:center;padding:3px 0;font-size:13px;cursor:pointer;color:var(--ink)}.lbfp input{width:16px;height:16px}.lbft{margin-left:26px}.lbft summary{font-size:11px}
 .lbsel{position:sticky;bottom:0;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;box-shadow:0 -4px 16px rgba(0,0,0,.08);margin-top:10px}.lbsel select{width:auto}
+/* Liefertermine (P35): „Offene Lieferungen“ in der Seitenleiste unter „Einkauf“ */
+nav a.navlf{padding-left:32px;font-size:13px}body.lfaus nav a.navlf{display:none}
 .rte table,.doc .lt table{border-collapse:collapse;margin:3px 0}.rte td,.doc .lt td{border:1px solid #ccc;padding:2px 5px;font-size:inherit}
 @media(max-width:1000px){.lbcols{grid-template-columns:1fr}.lblist{max-height:30vh}}
 #dirtybar{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:60;background:#1d2330;color:#fff;border-radius:10px;padding:8px 10px 8px 16px;display:flex;gap:10px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.3);min-width:360px}
@@ -1305,7 +1307,7 @@ function lfPos(b,h=isoD()){const L=lfL(b),gi=gruppenInfo(b),pnr=posNummern(b),w=
 const LF_RANG={erledigt:0,ohne:1,ok:2,heute:3,ueber:4};
 const lfStand=P=>P.filter(x=>x.offen>0).reduce((a,x)=>!a||LF_RANG[x.st]>LF_RANG[a.st]||(x.st===a.st&&(x.tage??-1e9)>(a.tage??-1e9))?x:a,null); // dringendste offene Position
 const lfTag=x=>x.st==='ueber'?tag(`überfällig ${x.tage} Tag${x.tage===1?'':'e'}`,'err'):x.st==='heute'?tag('heute fällig','warn'):x.st==='ok'?`<span title="fällig in ${-x.tage} Tag${x.tage===-1?'':'en'}">${tag('rechtzeitig','ok')}</span>`:x.st==='ohne'?tag('ohne Termin'):tag(x.gestrichen?'erledigt':'geliefert','ok');
-const lfTerminTxt=x=>{const f=t=>t.termin?dAT(t.termin)+(t.best?'':' <span class="mut">(gewünscht)</span>'):'<span class="mut">ohne Termin</span>';return x.teile.length>1?x.teile.map(t=>`${fmtQ(t.menge)} ${esc(x.p.einheit||'')} bis ${f(t)}`).join('<br>'):x.teile.length?f(x.teile[0]):''};
+const lfTerminTxt=x=>{const f=t=>t.termin?dAT(t.termin)+(t.best?'':' <span class="mut">(gewünscht)</span>'):'<span class="mut">ohne Termin</span>';return x.teile.length>1?x.teile.map(t=>`${fmtQ(t.menge)} ${esc(x.p.einheit||'')} bis ${f(t)}`).join('<br>'):x.teile[0]?.termin?f(x.teile[0]):x.teile.length?'–':''};
 function lfVerlaufTxt(b,v){const p=v.pos&&b.pos.find(q=>q.id===v.pos),pz=v.pos?`Pos ${esc(posNummern(b)[v.pos]||'')} ${esc(p?.bez||'(entfernt)')}: `:'Ganze Bestellung: ';
   return pz+(v.g!=null?(+v.g>0?`Restmenge ${fmtQ(v.g)} ${esc(p?.einheit||'')} gestrichen`:'Streichung aufgehoben'):`Termin ${esc(lfD(v.alt))} → ${esc(lfD(v.neu))}`)+(v.grund?` – ${esc(v.grund)}`:'')}
 function lfKarte(b){if(b.typ!=='BE'||!b.fest||b.storno||!erw('lfTermin'))return'';
@@ -1568,6 +1570,7 @@ function render(){
   if(erw('artBild'))bilderLaden(); // Bild je Artikel (P24, Teil)
   document.body.classList.toggle('ihh',erw('ihHover')&&HOVER.matches);document.body.classList.toggle('ssp',erw('scrollSperre')); // Bedienung (P33)
   document.querySelectorAll('.modal').forEach(m=>{try{if(m._gilt&&!m._gilt()){(m._weg||(()=>m.remove()))();return}m._zeich?.()}catch(e){}}); // offene Bearbeiten-Pop-ups (P30) zeigen den neuen Stand; Pop-ups eines verlassenen oder ersetzten Belegs (Navigation, Abgleich, Verwerfen) schließen
+  lfNav(); // Seitenleiste: „Offene Lieferungen“ (P35)
 }
 window.addEventListener('hashchange',async()=>{
   if(!DB)return;
@@ -1923,6 +1926,33 @@ V.belege=(bereich='V')=>{
      vor:mitGr?{kopf:`<span style="white-space:nowrap"><button class="s" onclick="grpAuf('*')" title="Alle aufklappen">+</button><button class="s" onclick="grpAuf('-')" title="Alle zuklappen">−</button></span>`,
        zelle:b=>KIND.has(b.id)?'<td class="mut" style="text-align:right;padding-right:2px">└</td>':`<td>${ANZ.get(b.id)?`<button class="s grpk" onclick="event.stopPropagation();grpAuf('${b.id}')" title="${ANZ.get(b.id)} zugehörige(r) Beleg(e) (Revisionen, Folgebelege) ${UI.auf[b.id]?'zuklappen':'aufklappen'}">${UI.auf[b.id]?'−':'+'}${ANZ.get(b.id)}</button>${beleg(PRJ.get(b.id))?.projekt?'':`<button class="s" onclick="event.stopPropagation();projektName('${PRJ.get(b.id)}')" title="Projektname als Überschrift vergeben">🏷</button>`}`:''}</td>`}:null})}`;
 };
+/* ---------- Offene Lieferungen (P35 Teil 2, erw.lfListe): je offene Position festgeschriebener Bestellungen (lfPos) Lieferant, Bestellung, Artikel, offen, Termin (bestätigt,
+   sonst gewünscht) und Status; Filter UI.lfSt (Status, LF_F), UI.lfK (Lieferant), UI.lfQ (Suche); Spalten LF_SP über tabelle() mit Spaltenauswahl, am Handy Karten;
+   Zeile → Bestellung, „📦 WE“ → lfWE() (Folgebeleg BE → WE mit den offenen Mengen). Seitenleiste „Offene Lieferungen“ unter „Einkauf“, lfNav() aus render() ---------- */
+erwPlus({k:'lfListe',std:true,p:'Liefertermine (P35)',l:'Liste „Offene Lieferungen“ (Einkauf)',info:'In der Seitenleiste unter „Einkauf“: alle noch nicht (vollständig) gelieferten Positionen festgeschriebener Bestellungen mit Lieferant, Bestellung, Artikel, offener Menge, Termin (bestätigt laut Auftragsbestätigung des Lieferanten, sonst der gewünschte Liefertermin) und Status rechtzeitig, heute fällig, überfällig (Tage) oder ohne Termin. Filter nach Status und Lieferant, Suche, Spaltenauswahl (⚙), am Handy als Karten. Antippen öffnet die Bestellung, „📦 WE“ erfasst den Wareneingang mit den offenen Mengen.'});
+const lfOffen=()=>DB.belege.filter(b=>b.typ==='BE'&&b.fest&&!b.storno).flatMap(b=>lfPos(b).filter(x=>x.offen>0));
+const LF_ST={ueber:'überfällig',heute:'heute fällig',ok:'rechtzeitig',ohne:'ohne Termin'},LF_F={ueber:x=>x.st==='ueber',heute:x=>x.st==='heute',ok:x=>x.st==='ok',ohne:x=>x.st==='ohne'};
+const LF_SP=[{k:'lief',l:'Lieferant',f:x=>esc(kName(x.b.kontaktId))},{k:'be',l:'Bestellung',f:x=>`<span class="nw">${esc(bNr(x.b))}</span><br><span class="mut">${dAT(x.b.datum)}</span>`},{k:'pos',l:'Pos',f:x=>esc(x.nr),std:false},
+  {k:'nr',l:'Art.-Nr.',f:x=>esc(x.p.nr||'')+(x.p.lnr?`<br><span class="mut">Lief.: ${esc(x.p.lnr)}</span>`:'')},{k:'bez',l:'Artikel',f:x=>esc(x.p.bez)},
+  {k:'bestellt',l:'bestellt',n:1,f:x=>fmtQ(x.bestellt),std:false},{k:'geliefert',l:'geliefert',n:1,f:x=>fmtQ(x.geliefert),std:false},{k:'offen',l:'offen',n:1,f:x=>`<b>${fmtQ(x.offen)}</b> ${esc(x.p.einheit||'')}`},
+  {k:'termin',l:'Termin',f:x=>lfTerminTxt(x)},{k:'status',l:'Status',f:x=>lfTag(x)},{k:'tage',l:'Verzug Tage',n:1,f:x=>x.tage>0?x.tage:'',std:false},{k:'wunsch',l:'gewünscht',f:x=>dAT(x.b.liefertermin),std:false},
+  {k:'ab',l:'AB Lieferant',f:x=>esc(lfL(x.b)?.abNr||''),std:false},{k:'auftrag',l:'Auftrag',f:x=>x.b.auftragId?esc(auftragKurz(x.b.auftragId)):'',std:false}];
+V.lieferungen=()=>{if(!erw('lfListe'))return'<h1>Offene Lieferungen</h1><p class="mut">Die Liste ist ausgeschaltet (Einstellungen → Erweiterungen → Liefertermine).</p>';
+  const A=lfOffen(),q=(UI.lfQ||'').toLowerCase().trim(),st=LF_F[UI.lfSt]?UI.lfSt:'',kid=UI.lfK||'';
+  const lief=[...new Set(A.map(x=>x.b.kontaktId))].map(kontakt).filter(Boolean).sort((a,c)=>a.name.localeCompare(c.name));
+  const L=A.filter(x=>(!st||LF_F[st](x))&&(!kid||x.b.kontaktId===kid)&&(!q||[bNr(x.b),x.b.fremdNr,x.b.lief?.abNr,x.b.betreff,kName(x.b.kontaktId),x.p.nr,x.p.lnr,x.p.bez].join(' ').toLowerCase().includes(q)))
+    .sort((a,c)=>(a.termin||'9').localeCompare(c.termin||'9')||bNr(a.b).localeCompare(bNr(c.b))||a.i-c.i);
+  const chips=[['','Alle',A.length],...Object.entries(LF_ST).map(([k,l])=>[k,l,A.filter(LF_F[k]).length])].map(([k,l,z])=>`<button class="${st===k?'on':''}" data-act="lfst" data-v="${k}">${esc(l)} (${z})</button>`).join('');
+  return`<h1>Offene Lieferungen</h1>
+  <div class="bar chips${kmp()?' ein':''}">${chips}</div>
+  <div class="bar"><select data-o="ui" data-f="lfK" title="Lieferant">${opt('','alle Lieferanten',kid)}${lief.map(k=>opt(k.id,k.name,kid)).join('')}</select><input data-o="ui" data-f="lfQ" placeholder="Suche Bestellung, Artikel, Lieferant" value="${esc(UI.lfQ||'')}"${kmpH()?'':' style="width:260px"'}></div>
+  ${tabelle('lieferungen',LF_SP,L,{zeile:x=>`class="click" onclick="nav('beleg/${x.b.id}')"`,leer:A.length?'Keine Treffer.':'Keine offenen Lieferungen.',
+    nach:x=>`<td style="white-space:nowrap;padding-right:6px"><button class="s" onclick="event.stopPropagation();lfWE('${x.b.id}')" title="Wareneingang zur Bestellung ${esc(bNr(x.b))} mit den offenen Mengen erfassen">📦 WE</button></td>`,
+    mf:x=>karte({t:esc(x.p.bez),s:lfTag(x),u:`${esc(bNr(x.b))} Pos ${esc(x.nr)} · ${esc(kName(x.b.kontaktId))}`,z:x.termin?'Termin '+lfTerminTxt(x):'',b:`${fmtQ(x.offen)} ${esc(x.p.einheit||'')}`})})}`};
+function zuLief(st=''){UI.lfSt=st;UI.lfK='';UI.lfQ='';if(location.hash==='#/lieferungen')render();else nav('lieferungen')} // Sprung in die Liste mit Statusfilter
+document.querySelector('nav a[data-n="belege/E"]')?.insertAdjacentHTML('afterend','<a href="#/lieferungen" data-n="lieferungen" class="navlf">Offene Lieferungen</a>');
+function lfNav(){document.body.classList.toggle('lfaus',!erw('lfListe'))}
+queueMicrotask(()=>Object.assign(ACT,{lfst:el=>{UI.lfSt=el.dataset.v||'';render()}}));
 
 /* Kompakt (P30 U8): Kopfdaten des Belegs. kopfFelder(b,teil) = bisheriges Formular (ohne teil die ganze Karte, HTML wie bisher), teil 'kopf' (Kunde bis Wareneingang),
    'zahl' (Zahlungsbedingungen), 'texte' (Kopf- und Fußtext untereinander). kopfK(b) in kompakt: am Handy Zusammenfassung kopfZus(b) (Kunde · Ort, Datum, Betreff · Bezug), antippen

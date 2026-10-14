@@ -55,6 +55,11 @@ tr.kind td{background:#f7f8fa;font-size:13px}tr.kind td:nth-child(2){padding-lef
 @media(max-width:760px){body.kompakt :is(.kakk,.modal.live) .rte{min-height:40px}}
 label.chk{display:flex;gap:8px;align-items:center;color:var(--ink);font-size:14px;margin-top:12px;cursor:pointer}
 label.chk input{width:18px;height:18px}
+/* Liefertermine (P35): Karte „Lieferung“ in der Bestellung (Rand nach dem Stand der Lieferung), Pop-up „Bestätigung & Termine“ */
+.lfk{border-left:4px solid var(--ok)}.lfk.lf-ueber{border-left-color:var(--err)}.lfk.lf-heute{border-left-color:var(--warn)}.lfk.lf-ok,.lfk.lf-ohne{border-left-color:var(--acc)}.lfk .bar{flex-wrap:wrap;row-gap:6px}
+table.lft{font-size:13px}table.lft td,table.lft th{padding:4px 6px;vertical-align:top}table.lft td.n{white-space:nowrap}table.lft button.s{padding:2px 8px}.lfg{font-size:12px}.lfkl{border-top:1px solid var(--line)}.lfkl :is(.kku,.kkz){white-space:normal}
+details.lfv{font-size:13px;margin-top:8px}details.lfv>summary{cursor:pointer;color:var(--mut)}details.lfv>div{padding:2px 0 0 14px}
+.lfp{border-top:1px solid var(--line);padding:8px 0 2px;margin-top:6px}.lftl{margin-left:18px}.lfb{align-self:flex-end;margin-bottom:6px}@media(max-width:760px){.lftl{margin-left:8px}}
 button.gef{background:var(--err);border-color:var(--err)}
 .lbcols{display:grid;grid-template-columns:260px 300px 1fr;gap:10px;align-items:start}.lblist{max-height:70vh;overflow:auto;padding:6px}.lblist a{display:block;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:13px}.lblist a:hover{background:var(--acc2)}.lblist a.on{background:var(--acc);color:#fff}
 .lbgt{border-top:1px solid var(--line);padding:6px 0}.lbfp{display:flex;gap:10px;align-items:center;padding:3px 0;font-size:13px;cursor:pointer;color:var(--ink)}.lbfp input{width:16px;height:16px}.lbft{margin-left:26px}.lbft summary{font-size:11px}
@@ -1156,7 +1161,7 @@ function offen(b){
 }
 function zaehltUmsatz(b){return RE_V.includes(b.typ)&&b.fest&&!b.storno&&!(b.typ==='GS'&&b.stornoVon)}
 function kinderMenge(posId,typen){let m=0;for(const b of DB.belege){if(b.storno||!typen.includes(b.typ))continue;for(const p of b.pos)if(p.herkunftPosId===posId)m+=(+p.menge||0)}return m}
-function erledigung(b){
+function erledigung(b){if(lfL(b))return lfErl(b); // Bestellung mit Restmenge gestrichen (P35)
   const cat=b.typ==='BE'?['WE']:['LS'],cat2=b.typ==='BE'?['ER']:['RE','TR','SR'];
   let soll=0,ist=0;const gi=gruppenInfo(b); // Options-/Alternativpositionen (auch über die Gruppe) werden nicht geliefert
   for(const p of b.pos){if(isInfo(p)||effKz(p,gi))continue;const m=+p.menge||0;soll+=m;ist+=Math.min(m,Math.max(kinderMenge(p.id,cat),kinderMenge(p.id,cat2)))}
@@ -1261,7 +1266,7 @@ function folge(src,typ,extra={}){
     if(effKz(p,gi)&&!(src.typ==='AN'&&['AB','PR'].includes(typ)))continue; // Option/Alternative auch über die Gruppe; AN → AB/PR übernimmt alles
     if(typ==='BE'&&(p.art==='L'||isInfo(p)))continue;
     let menge=+p.menge||0;
-    if(!isInfo(p)&&cat){menge=r3(menge-kinderMenge(p.id,cat));if(menge<=0)continue}
+    if(!isInfo(p)&&cat){menge=r3(menge-kinderMenge(p.id,cat)-lfGestr(src,p));if(menge<=0)continue} // gestrichene Restmenge der Bestellung (P35) nicht übernehmen
     const np=neuPos({...p,id:uid(),herkunftPosId:p.id,menge});
     if(typ==='BE'){np.ep=+p.ek||0;np.rabatt=0;np.steuer=S().stdSteuer}
     b.pos.push(np);
@@ -1273,6 +1278,105 @@ function folge(src,typ,extra={}){
   return b;
 }
 function folgeGo(src,typ){const b=folge(src,typ);if(b){log('Folgebeleg',`${T[typ].bez} aus ${src.nr}`);persist();go('beleg/'+b.id)}}
+/* ---------- Liefertermine (P35 Teil 1, erw.lfTermin): Auftragsbestätigung des Lieferanten an der Bestellung ----------
+   Statusangaben, kein Belegsinhalt – auch an festgeschriebenen Bestellungen (Nummer, Positionen, Summen, Druck und PDF bleiben unverändert), gespeichert per commit() mit log():
+   b.lief={abNr,abDatum,termin (bestätigt für die ganze Bestellung),pos:{<posId>:{termin,teil:[{menge,termin}],gestrichen,gDatum,gGrund}},verlauf:[{ts,pos,alt,neu,grund} bzw. {ts,pos,g,grund}]}.
+   lfPos(b) je Position (ohne Text/Gruppe/Option/Alternative): bestellt, geliefert (Wareneingänge bzw. Eingangsrechnung direkt aus der Bestellung, wie erledigung()), gestrichen, offen, offene Teilmengen mit Termin (bestätigt: Teilmenge → Position →
+   Bestellung, sonst gewünscht = b.liefertermin; Lieferungen decken die früheste Teilmenge, gestrichen wird die späteste), termin = frühester offener, tage = Verzug, st = Status.
+   „Restmenge streichen“: erledigung() (über lfErl) und Folgebelege BE → WE/ER rechnen mit Menge − gestrichen. Schalter aus: b.lief wird nicht gelesen (Termin = Liefertermin der Bestellung) */
+erwPlus({k:'lfTermin',std:true,p:'Liefertermine (P35)',l:'Bestellungen: Auftragsbestätigung des Lieferanten, Liefertermine je Position, Restmenge streichen',info:'Festgeschriebene Bestellungen zeigen die Karte „Lieferung“ mit je Position bestellt, geliefert (Wareneingänge), offen, Termin und Verzug in Tagen. „Bestätigung & Termine …“ erfasst Nummer und Datum der Auftragsbestätigung des Lieferanten, den bestätigten Liefertermin der ganzen Bestellung und wahlweise je Position, auch Teilmengen mit eigenem Termin (Teillieferungen); geänderte Termine kommen mit Grund in den Terminverlauf. „Restmenge streichen …“ (⋯ an der Position) für Mengen, die der Lieferant nicht mehr liefert: Die Position gilt dann als erledigt, der Wareneingang übernimmt nur den Rest. Das sind Statusangaben – Nummer, Positionen, Summen und Ausdruck der Bestellung bleiben unverändert. Aus: Die Angaben bleiben gespeichert, gelten aber nicht (Status wie bisher).'});
+const lfL=b=>erw('lfTermin')&&b?.typ==='BE'&&b.lief||null;
+const lfGestr=(b,p)=>+lfL(b)?.pos?.[p.id]?.gestrichen||0;
+const lfTage=(iso,h=isoD())=>iso?Math.round((new Date(h+'T12:00:00')-new Date(iso+'T12:00:00'))/864e5):null; // Tage seit dem Termin (> 0 = überfällig)
+const lfD=v=>/^\d{4}-\d\d-\d\d$/.test(v||'')?dAT(v):v||'–';
+function lfErl(b){let soll=0,ist=0,gs=0;const gi=gruppenInfo(b); // wie erledigung(), Menge abzüglich gestrichen; alles gestrichen = erledigt
+  for(const p of b.pos){if(isInfo(p)||effKz(p,gi))continue;const g=Math.min(lfGestr(b,p),+p.menge||0),m=(+p.menge||0)-g;gs+=g;soll+=m;ist+=Math.min(m,Math.max(kinderMenge(p.id,['WE']),kinderMenge(p.id,['ER'])))}
+  return soll?ist/soll:gs?1:0}
+function lfPos(b,h=isoD()){const L=lfL(b),gi=gruppenInfo(b),pnr=posNummern(b),w=b.liefertermin||'',R=[],ord=(a,c)=>(a.termin||'9').localeCompare(c.termin||'9');
+  b.pos.forEach((p,i)=>{if(isInfo(p)||effKz(p,gi))return;
+    const x=L?.pos?.[p.id]||{},m=+p.menge||0,g=Math.max(kinderMenge(p.id,['WE']),kinderMenge(p.id,['ER'])),gs=Math.min(+x.gestrichen||0,m),tb=x.termin||L?.termin||'',tl=L&&Array.isArray(x.teil)?x.teil.filter(t=>+t.menge>0):[],A=[];
+    let rest=g,frei=Math.max(0,m-g);
+    for(const t of [...tl].sort(ord)){const d=Math.min(+t.menge,rest);rest-=d;const o=Math.min(+t.menge-d,frei);frei-=o;if(o>0.0001)A.push({menge:o,termin:t.termin||tb||w,best:!!(t.termin||tb)})}
+    if(frei>0.0001)A.push({menge:frei,termin:tb||w,best:!!tb});
+    A.sort(ord);let s=gs;for(let j=A.length-1;j>=0&&s>0;j--){const d=Math.min(A[j].menge,s);A[j].menge-=d;s-=d}
+    const teile=A.filter(t=>t.menge>0.0001).map(t=>({...t,menge:r3(t.menge)})),offen=r3(Math.max(0,m-g-gs)),termin=offen>0?teile[0]?.termin||'':'',tage=termin?lfTage(termin,h):null;
+    R.push({b,p,i,nr:pnr[p.id]||'',bestellt:m,geliefert:g,gestrichen:gs,offen,teile,termin,best:!!(offen>0&&teile[0]?.best),tage,st:offen<=0?'erledigt':!termin?'ohne':tage>0?'ueber':tage===0?'heute':'ok',x})});
+  return R}
+const LF_RANG={erledigt:0,ohne:1,ok:2,heute:3,ueber:4};
+const lfStand=P=>P.filter(x=>x.offen>0).reduce((a,x)=>!a||LF_RANG[x.st]>LF_RANG[a.st]||(x.st===a.st&&(x.tage??-1e9)>(a.tage??-1e9))?x:a,null); // dringendste offene Position
+const lfTag=x=>x.st==='ueber'?tag(`überfällig ${x.tage} Tag${x.tage===1?'':'e'}`,'err'):x.st==='heute'?tag('heute fällig','warn'):x.st==='ok'?`<span title="fällig in ${-x.tage} Tag${x.tage===-1?'':'en'}">${tag('rechtzeitig','ok')}</span>`:x.st==='ohne'?tag('ohne Termin'):tag(x.gestrichen?'erledigt':'geliefert','ok');
+const lfTerminTxt=x=>{const f=t=>t.termin?dAT(t.termin)+(t.best?'':' <span class="mut">(gewünscht)</span>'):'<span class="mut">ohne Termin</span>';return x.teile.length>1?x.teile.map(t=>`${fmtQ(t.menge)} ${esc(x.p.einheit||'')} bis ${f(t)}`).join('<br>'):x.teile.length?f(x.teile[0]):''};
+function lfVerlaufTxt(b,v){const p=v.pos&&b.pos.find(q=>q.id===v.pos),pz=v.pos?`Pos ${esc(posNummern(b)[v.pos]||'')} ${esc(p?.bez||'(entfernt)')}: `:'Ganze Bestellung: ';
+  return pz+(v.g!=null?(+v.g>0?`Restmenge ${fmtQ(v.g)} ${esc(p?.einheit||'')} gestrichen`:'Streichung aufgehoben'):`Termin ${esc(lfD(v.alt))} → ${esc(lfD(v.neu))}`)+(v.grund?` – ${esc(v.grund)}`:'')}
+function lfKarte(b){if(b.typ!=='BE'||!b.fest||b.storno||!erw('lfTermin'))return'';
+  const L=b.lief||{},P=lfPos(b),w=lfStand(P),H=kmpH(),e=x=>esc(x.p.einheit||''),q=fmtQ,V=(L.verlauf||[]).slice().reverse();
+  const ab=L.abNr||L.abDatum||L.termin?`Auftragsbestätigung des Lieferanten${L.abNr?' Nr. <b>'+esc(L.abNr)+'</b>':''}${L.abDatum?' vom '+dAT(L.abDatum):''}${L.termin?' · Liefertermin <b>'+dAT(L.termin)+'</b>':''}`:'<span class="mut">Noch keine Auftragsbestätigung des Lieferanten erfasst.</span>';
+  const gs=x=>x.gestrichen?`<div class="mut lfg">Rest ${q(x.gestrichen)} ${e(x)} gestrichen${x.x.gDatum?' am '+dAT(x.x.gDatum.slice(0,10)):''}${x.x.gGrund?' – '+esc(x.x.gGrund):''}</div>`:'';
+  const vz=x=>x.st==='ueber'?`<b class="err">${x.tage}</b>`:x.st==='heute'?'<span class="warnc">heute</span>':'';
+  const mn=(x,c)=>x.offen>0||x.gestrichen?`<button class="${c}" data-act="menue" data-m="lfpos" data-pid="${esc(x.p.id)}" title="Restmenge streichen …">⋯</button>`:'';
+  const rows=H?`<div class="kkl lfkl">${P.map(x=>`<div class="kkf">${karte({t:`${esc(x.nr)} ${esc(x.p.bez)}`,s:lfTag(x),u:`bestellt ${q(x.bestellt)} · geliefert ${q(x.geliefert)} · offen <b>${q(x.offen)}</b> ${e(x)}${gs(x)}`,z:x.offen>0?'Termin '+lfTerminTxt(x):'',b:x.st==='ueber'?`<span class="err">${x.tage} Tg. Verzug</span>`:''})}${mn(x,'mehr')}</div>`).join('')}</div>`
+    :`<div style="overflow-x:auto"><table class="lft"><thead><tr><th>Pos</th><th>Artikel</th><th class="n">bestellt</th><th class="n" title="Wareneingänge (bzw. Eingangsrechnungen direkt aus der Bestellung)">geliefert</th><th class="n">offen</th><th>Termin</th><th class="n" title="Tage über dem Termin">Verzug</th><th></th></tr></thead><tbody>${P.map(x=>`<tr${x.offen>0?'':' class="mut"'}><td>${esc(x.nr)}</td><td>${x.p.nr?`<span class="mut">${esc(x.p.nr)}</span> `:''}${esc(x.p.bez)}${gs(x)}</td><td class="n">${q(x.bestellt)}</td><td class="n">${q(x.geliefert)}</td><td class="n"><b>${q(x.offen)}</b> ${e(x)}</td><td>${lfTerminTxt(x)}</td><td class="n">${vz(x)}</td><td>${mn(x,'s')}</td></tr>`).join('')}</tbody></table></div>`;
+  return`<div class="card lfk${w?' lf-'+w.st:''}"><div class="bar" style="margin:0 0 6px"><h2 style="margin:0">Lieferung</h2>${w?lfTag(w):tag(P.some(x=>x.gestrichen)?'erledigt':'geliefert','ok')}<span class="sp"></span>${w||lfWEe(b)?`<button data-act="lfwe" title="${w?'Wareneingang mit den offenen Mengen anlegen':'Wareneingang im Entwurf öffnen'}">📦 Wareneingang …</button>`:''}<button class="p" data-act="lfab">Bestätigung &amp; Termine …</button></div>
+  <div style="font-size:13px;margin-bottom:6px">${ab}${b.liefertermin?` <span class="mut">· gewünscht ${dAT(b.liefertermin)}</span>`:''}</div>${rows}
+  ${V.length?`<details class="lfv"><summary>Terminverlauf (${V.length})</summary>${V.map(v=>`<div>${dtAT(v.ts)} · ${lfVerlaufTxt(b,v)}</div>`).join('')}</details>`:''}</div>`}
+// „Bestätigung & Termine …“: AB-Nr./Datum des Lieferanten, Termin der ganzen Bestellung, je Position Termin und Teilmengen mit Termin; geänderte Termine → Verlauf mit Grund; ein commit()
+function lfAbPop(b){if(!b||b.typ!=='BE'||!b.fest||b.storno||!erw('lfTermin'))return;
+  const L=b.lief||{},P=lfPos(b),Z={};for(const x of P)Z[x.p.id]={termin:x.x.termin||'',teil:(Array.isArray(x.x.teil)?x.x.teil:[]).map(t=>({menge:t.menge,termin:t.termin||''}))};
+  const zeile=x=>{const z=Z[x.p.id],e=esc(x.p.einheit||'');return`<div class="lfp" data-pid="${esc(x.p.id)}"><div><b>${esc(x.nr)}</b> ${esc(x.p.bez)}<div class="mut" style="font-size:12px">bestellt ${fmtQ(x.bestellt)} · geliefert ${fmtQ(x.geliefert)}${x.gestrichen?' · gestrichen '+fmtQ(x.gestrichen):''} · offen ${fmtQ(x.offen)} ${e}</div></div>
+    <div class="row"><label class="w05">Termin der Position<input type="date" data-lf="t" value="${esc(z.termin)}"></label><button class="s lfb" data-lfadd="1">+ Teilmenge mit Termin</button></div>
+    ${z.teil.map((t,j)=>`<div class="row lftl"><label class="w05">Teilmenge${e?' ('+e+')':''}<input type="number" step="any" inputmode="decimal" data-lf="m" data-j="${j}" value="${esc(t.menge)}"></label><label class="w05">Termin<input type="date" data-lf="d" data-j="${j}" value="${esc(t.termin)}"></label><button class="s d lfb" data-lfdel="${j}" title="Teilmenge entfernen">✕</button></div>`).join('')}</div>`};
+  const d=document.createElement('div');d.className='modal';
+  d.innerHTML=`<div class="mbox" style="max-width:760px;max-height:88vh;overflow:auto"><h2>Auftragsbestätigung des Lieferanten – Bestellung ${esc(bNr(b))}</h2>
+    <div class="row"><label class="w05">AB-Nr. des Lieferanten<input id="lf-nr" value="${esc(L.abNr||'')}"></label><label class="w05">AB vom<input type="date" id="lf-dat" value="${esc(L.abDatum||'')}"></label><label class="w05">Liefertermin (ganze Bestellung)<input type="date" id="lf-t" value="${esc(L.termin||'')}"></label></div>
+    <p class="mut" style="margin:6px 0 4px;font-size:13px">${b.liefertermin?`Gewünscht laut Bestellung: ${dAT(b.liefertermin)}. `:''}Termin der Position leer = Termin der ganzen Bestellung. Teillieferungen: „+ Teilmenge mit Termin“ (Wareneingänge decken die früheste Teilmenge zuerst).</p>
+    <div id="lf-pl">${P.map(zeile).join('')||'<p class="mut">Keine Positionen.</p>'}</div>
+    <div class="row"><label class="w2">Grund einer Terminverschiebung (für den Terminverlauf)<input id="lf-gr" placeholder="z. B. Lieferengpass beim Hersteller"></label></div>
+    <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Übernehmen</button></div></div>`;
+  document.body.appendChild(d);const pl=d.querySelector('#lf-pl'),zeich=()=>{pl.innerHTML=P.map(zeile).join('')};
+  const ein=e=>{const t=e.target,z=Z[t.closest('.lfp')?.dataset.pid];if(!z||!t.dataset.lf)return;if(t.dataset.lf==='t')z.termin=t.value;else{const r=z.teil[+t.dataset.j];if(r)r[t.dataset.lf==='m'?'menge':'termin']=t.value}};
+  pl.addEventListener('input',ein);pl.addEventListener('change',ein);
+  pl.addEventListener('click',e=>{const a=e.target.closest('[data-lfadd],[data-lfdel]');if(!a)return;e.preventDefault();const pid=a.closest('.lfp').dataset.pid,z=Z[pid];
+    if(a.dataset.lfadd){z.teil.push({menge:'',termin:''});zeich();pl.querySelector(`.lfp[data-pid="${CSS.escape(pid)}"] [data-lf="m"][data-j="${z.teil.length-1}"]`)?.focus()}else{z.teil.splice(+a.dataset.lfdel,1);zeich()}});
+  const fin=()=>{d.remove();document.removeEventListener('keydown',kd)},kd=e=>{if(e.key==='Escape'&&mOben(d))fin()};document.addEventListener('keydown',kd);d._gilt=()=>curBeleg()===b;d._weg=fin;
+  d.querySelector('#m-no').onclick=fin;
+  d.querySelector('#m-ok').onclick=()=>{if(curBeleg()!==b||b.storno){fin();return}const err=[],NP={};
+    for(const x of P){const z=Z[x.p.id],tl=z.teil.filter(t=>String(t.menge).trim()!==''||t.termin).map(t=>({menge:r3(num(t.menge)),termin:t.termin||''})),s=tl.reduce((a,t)=>a+t.menge,0);
+      if(tl.some(t=>!(t.menge>0)))err.push(`Pos ${x.nr}: Teilmenge größer als 0 eintragen.`);else if(s>x.bestellt-x.gestrichen+0.0001)err.push(`Pos ${x.nr}: Teilmengen zusammen (${fmtQ(s)}) mehr als bestellt${x.gestrichen?' abzüglich gestrichen':''} (${fmtQ(x.bestellt-x.gestrichen)}).`);
+      NP[x.p.id]={termin:z.termin||'',teil:tl}}
+    if(err.length){d.querySelector('#m-err').textContent=err.join(' ');return}
+    const nr=d.querySelector('#lf-nr').value.trim(),dat=d.querySelector('#lf-dat').value,t=d.querySelector('#lf-t').value,gr=d.querySelector('#lf-gr').value.trim(),ts=new Date().toISOString();
+    const n=JSON.parse(JSON.stringify(L)),Vn=[],tt=l=>l.map(y=>`${fmtQ(y.menge)} bis ${y.termin?dAT(y.termin):'–'}`).join('; ');
+    if(L.termin&&L.termin!==t)Vn.push({ts,pos:'',alt:L.termin,neu:t,grund:gr});
+    n.abNr=nr;n.abDatum=dat;n.termin=t;n.pos=n.pos||{};
+    for(const x of P){const a=x.x,z=NP[x.p.id],e=n.pos[x.p.id]||{},ta=tt(Array.isArray(a.teil)?a.teil:[]),tn=tt(z.teil);
+      if(a.termin&&a.termin!==z.termin)Vn.push({ts,pos:x.p.id,alt:a.termin,neu:z.termin,grund:gr});
+      if(ta&&ta!==tn)Vn.push({ts,pos:x.p.id,alt:ta,neu:tn,grund:gr});
+      if(z.termin)e.termin=z.termin;else delete e.termin;if(z.teil.length)e.teil=z.teil;else delete e.teil;
+      if(Object.keys(e).length)n.pos[x.p.id]=e;else delete n.pos[x.p.id]}
+    if(!Object.keys(n.pos).length)delete n.pos;for(const k of ['abNr','abDatum','termin'])if(!n[k])delete n[k];
+    if(Vn.length)n.verlauf=[...(n.verlauf||[]),...Vn];
+    if(JSON.stringify(n)===JSON.stringify(L)){fin();return}
+    if(Object.keys(n).length)b.lief=n;else delete b.lief;
+    log('Lieferantenbestätigung',`${bNr(b)}: ${[nr&&'AB '+nr,dat&&'vom '+dAT(dat),t&&'Termin '+dAT(t),Vn.length&&Vn.length+' Terminänderung(en)'+(gr?' – '+gr:'')].filter(Boolean).join(', ')||'Angaben geändert'}`);
+    fin();commit();render()}}
+// „Restmenge streichen …“ (Lieferant liefert nicht mehr): gestrichene Menge gesamt mit Grund und Zeitpunkt, Verlauf und Protokoll; „Streichung aufheben“
+async function lfRest(b,pid){const x=b?.fest&&lfPos(b).find(y=>y.p.id===pid);if(!x)return;const e=x.p.einheit||'',max=r3(x.bestellt-x.geliefert);
+  const o=await formDialog({titel:`Restmenge streichen – Pos ${esc(x.nr)} ${esc(x.p.bez)}`,ok:'Streichen',felder:[
+    {typ:'hinweis',l:`bestellt ${fmtQ(x.bestellt)} · geliefert ${fmtQ(x.geliefert)} · offen ${fmtQ(x.offen)} ${esc(e)}. Der Lieferant liefert die gestrichene Menge nicht mehr: Die Position gilt dann als erledigt, der Wareneingang übernimmt nur den Rest. Die Bestellung selbst (Nummer, Positionen, Summen, Ausdruck) bleibt unverändert.`},
+    {k:'menge',l:`Gestrichene Menge gesamt${e?' ('+esc(e)+')':''}`,typ:'number',wert:r3(x.gestrichen+x.offen),neu:1,cls:'w05',im:'decimal'},{k:'grund',l:'Grund',wert:'',pflicht:true,ph:'z. B. Artikel ausgelaufen',cls:'w2'}],
+    pruef:o=>{if(!(o.menge>0)||o.menge>max+0.0001){alert(`Bitte eine Menge größer 0 und höchstens ${fmtQ(max)} eintragen (bestellt abzüglich geliefert).`);return false}}});
+  if(!o||curBeleg()!==b)return;const L=b.lief??={},z=(L.pos??={})[pid]??={},m=r3(o.menge);
+  z.gestrichen=m;z.gDatum=new Date().toISOString();z.gGrund=o.grund;(L.verlauf??=[]).push({ts:z.gDatum,pos:pid,g:m,grund:o.grund});
+  log('Restmenge gestrichen',`${bNr(b)} Pos ${x.nr} ${x.p.bez}: ${fmtQ(m)} ${e} – ${o.grund}`);commit();render()}
+function lfRestX(b,pid){const x=b&&lfPos(b).find(y=>y.p.id===pid),z=b?.lief?.pos?.[pid];if(!x||!z?.gestrichen||!confirm(`Streichung der Restmenge (${fmtQ(z.gestrichen)} ${x.p.einheit||''}) bei Pos ${x.nr} aufheben?\nDie Menge gilt dann wieder als offen.`))return;
+  delete z.gestrichen;delete z.gDatum;delete z.gGrund;if(!Object.keys(z).length)delete b.lief.pos[pid];(b.lief.verlauf??=[]).push({ts:new Date().toISOString(),pos:pid,g:0,grund:''});
+  log('Streichung aufgehoben',`${bNr(b)} Pos ${x.nr} ${x.p.bez}`);commit();render()}
+// „Wareneingang …“: vorhandener Folgebeleg BE → WE mit den offenen Mengen (ohne gestrichene); ein Entwurf zur Bestellung wird angeboten
+const lfWEe=b=>DB.belege.find(x=>x.typ==='WE'&&x.vorgaengerId===b.id&&!x.fest&&!x.storno);
+function lfWE(id){const b=beleg(id);if(!b)return;const e=lfWEe(b);
+  if(e&&confirm(`Zur Bestellung ${bNr(b)} gibt es schon einen Wareneingang im Entwurf.\nDiesen öffnen?`)){go('beleg/'+e.id);return}folgeGo(b,'WE')}
+queueMicrotask(()=>{Object.assign(ACT,{lfab:()=>lfAbPop(curBeleg()),lfwe:el=>lfWE(el.dataset.id||curBeleg()?.id),lfrest:el=>lfRest(curBeleg(),el.dataset.pid),lfrestx:el=>lfRestX(curBeleg(),el.dataset.pid)}); // nach den Definitionen von ACT und MENUE
+  MENUE.lfpos=el=>{const b=curBeleg(),x=b&&lfPos(b).find(y=>y.p.id===el.dataset.pid);return x?[x.offen>0&&{l:'Restmenge streichen …',ic:'✂',act:'lfrest',d:{pid:x.p.id},titel:'Lieferant liefert diese Menge nicht mehr'},x.gestrichen>0&&{l:'Streichung aufheben',ic:'↺',act:'lfrestx',d:{pid:x.p.id}}]:[]}});
 
 /* ---------- Festschreiben / Storno ---------- */
 function adressSnapshot(k){return k?{nr:k.nr,name:k.name,zusatz:k.zusatz,strasse:k.strasse,plz:k.plz,ort:k.ort,land:k.land,uid:k.uid,kundenart:k.kundenart||'',...(k.kdNrLief?{kdNrLief:k.kdNrLief}:{}),...Object.fromEntries(PERSF.filter(f=>pT(k[f])).map(f=>[f,k[f]]))}:{}} // kundenart immer speichern ('' = Unternehmen), sonst liest der Nachdruck den aktuellen Kontakt; Anrede, Titel, Name und Briefanrede nur, wenn eingetragen (P6)
@@ -1908,7 +2012,7 @@ V.beleg=id=>{
       <td data-l="Kz" style="width:74px">${kzSel(i,p)}</td>${akt}
     </tr>`}).join('');
   const kette=DB.belege.filter(x=>b.auftragId?x.auftragId===b.auftragId:(x.id===b.id||x.vorgaengerId===b.id||x.id===b.vorgaengerId)).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
-  const k=kontakt(b.kontaktId),scan=['WE','ER','BE'].includes(b.typ)?scanBox(b):'';
+  const k=kontakt(b.kontaktId),scan=(['WE','ER','BE'].includes(b.typ)?scanBox(b):'')+lfKarte(b); // Karte „Lieferung“ der Bestellung (P35)
   const ans=ansicht();
   const kopfbar=kmpB()?belegKopfbarK(b,ans)+zahlKopfK(b)+aktLeiste(b):`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>

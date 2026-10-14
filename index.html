@@ -1294,9 +1294,10 @@ const lfD=v=>/^\d{4}-\d\d-\d\d$/.test(v||'')?dAT(v):v||'–';
 function lfErl(b){let soll=0,ist=0,gs=0;const gi=gruppenInfo(b); // wie erledigung(), Menge abzüglich gestrichen; alles gestrichen = erledigt
   for(const p of b.pos){if(isInfo(p)||effKz(p,gi))continue;const g=Math.min(lfGestr(b,p),+p.menge||0),m=(+p.menge||0)-g;gs+=g;soll+=m;ist+=Math.min(m,Math.max(kinderMenge(p.id,['WE']),kinderMenge(p.id,['ER'])))}
   return soll?ist/soll:gs?1:0}
-function lfPos(b,h=isoD()){const L=lfL(b),gi=gruppenInfo(b),pnr=posNummern(b),w=b.liefertermin||'',R=[],ord=(a,c)=>(a.termin||'9').localeCompare(c.termin||'9');
+const lfMengen=()=>{const M=new Map();for(const x of DB.belege)if(!x.storno&&(x.typ==='WE'||x.typ==='ER'))for(const p of x.pos)if(p.herkunftPosId){const k=p.herkunftPosId+'|'+x.typ;M.set(k,(M.get(k)||0)+(+p.menge||0))}return M}; // wie kinderMenge(), einmal für alle Bestellpositionen (Listen, Zähler)
+function lfPos(b,h=isoD(),M=null){const L=lfL(b),gi=gruppenInfo(b),pnr=posNummern(b),w=b.liefertermin||'',R=[],ord=(a,c)=>(a.termin||'9').localeCompare(c.termin||'9');
   b.pos.forEach((p,i)=>{if(isInfo(p)||effKz(p,gi))return;
-    const x=L?.pos?.[p.id]||{},m=+p.menge||0,g=Math.max(kinderMenge(p.id,['WE']),kinderMenge(p.id,['ER'])),gs=Math.min(+x.gestrichen||0,m),tb=x.termin||L?.termin||'',tl=L&&Array.isArray(x.teil)?x.teil.filter(t=>+t.menge>0):[],A=[];
+    const x=L?.pos?.[p.id]||{},m=+p.menge||0,g=M?Math.max(M.get(p.id+'|WE')||0,M.get(p.id+'|ER')||0):Math.max(kinderMenge(p.id,['WE']),kinderMenge(p.id,['ER'])),gs=Math.min(+x.gestrichen||0,m),tb=x.termin||L?.termin||'',tl=L&&Array.isArray(x.teil)?x.teil.filter(t=>+t.menge>0):[],A=[];
     let rest=g,frei=Math.max(0,m-g);
     for(const t of [...tl].sort(ord)){const d=Math.min(+t.menge,rest);rest-=d;const o=Math.min(+t.menge-d,frei);frei-=o;if(o>0.0001)A.push({menge:o,termin:t.termin||tb||w,best:!!(t.termin||tb)})}
     if(frei>0.0001)A.push({menge:frei,termin:tb||w,best:!!tb});
@@ -1930,7 +1931,7 @@ V.belege=(bereich='V')=>{
    sonst gewünscht) und Status; Filter UI.lfSt (Status, LF_F), UI.lfK (Lieferant), UI.lfQ (Suche); Spalten LF_SP über tabelle() mit Spaltenauswahl, am Handy Karten;
    Zeile → Bestellung, „📦 WE“ → lfWE() (Folgebeleg BE → WE mit den offenen Mengen). Seitenleiste „Offene Lieferungen“ unter „Einkauf“, lfNav() aus render() ---------- */
 erwPlus({k:'lfListe',std:true,p:'Liefertermine (P35)',l:'Liste „Offene Lieferungen“ (Einkauf)',info:'In der Seitenleiste unter „Einkauf“: alle noch nicht (vollständig) gelieferten Positionen festgeschriebener Bestellungen mit Lieferant, Bestellung, Artikel, offener Menge, Termin (bestätigt laut Auftragsbestätigung des Lieferanten, sonst der gewünschte Liefertermin) und Status rechtzeitig, heute fällig, überfällig (Tage) oder ohne Termin. Filter nach Status und Lieferant, Suche, Spaltenauswahl (⚙), am Handy als Karten. Antippen öffnet die Bestellung, „📦 WE“ erfasst den Wareneingang mit den offenen Mengen.'});
-const lfOffen=()=>DB.belege.filter(b=>b.typ==='BE'&&b.fest&&!b.storno).flatMap(b=>lfPos(b).filter(x=>x.offen>0));
+const lfOffen=(h=isoD(),M=lfMengen())=>DB.belege.filter(b=>b.typ==='BE'&&b.fest&&!b.storno).flatMap(b=>lfPos(b,h,M).filter(x=>x.offen>0));
 const LF_ST={ueber:'überfällig',heute:'heute fällig',ok:'rechtzeitig',ohne:'ohne Termin'},LF_F={ueber:x=>x.st==='ueber',heute:x=>x.st==='heute',ok:x=>x.st==='ok',ohne:x=>x.st==='ohne'};
 const LF_SP=[{k:'lief',l:'Lieferant',f:x=>esc(kName(x.b.kontaktId))},{k:'be',l:'Bestellung',f:x=>`<span class="nw">${esc(bNr(x.b))}</span><br><span class="mut">${dAT(x.b.datum)}</span>`},{k:'pos',l:'Pos',f:x=>esc(x.nr),std:false},
   {k:'nr',l:'Art.-Nr.',f:x=>esc(x.p.nr||'')+(x.p.lnr?`<br><span class="mut">Lief.: ${esc(x.p.lnr)}</span>`:'')},{k:'bez',l:'Artikel',f:x=>esc(x.p.bez)},

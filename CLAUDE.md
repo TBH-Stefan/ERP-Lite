@@ -72,4 +72,5 @@ Anwender: Stefan Horvath. Sprache in Code-Kommentaren, Oberfläche und Antworten
 - Rechtliche Vorgaben (Österreich) beachten: § 11 UStG Rechnungsmerkmale, lückenlose Nummernkreise, festgeschriebene Belege unveränderbar (Korrektur nur per Storno/Gutschrift), BAO-Aufbewahrung.
 - Datenmodell nur abwärtskompatibel erweitern; fehlende Felder in `migrate()` bzw. `neueDB()` ergänzen.
 - Nach Änderungen im Browser testen (Start „Nur im Browser testen“), Konsole auf Fehler prüfen, Rechenergebnisse nachrechnen.
+- Regressionstests in `tests/` (Playwright, nur Entwicklung; `tests/README.md`): vor jedem Commit `cd tests && npx playwright test` (doppelte `ACT`-Schlüssel, alle Schalter aus = Ausgangsstand `BASIS`, festgeschriebene Belege, Ansichten bei 1400 und 390 px). Läuft auch bei jedem Pull Request (`.github/workflows/tests.yml`). Beabsichtigte Unterschiede bei ausgeschalteten Schaltern in `tests/erlaubte-abweichungen.json` eintragen; neue Belegarten/Ansichten in `tests/testdaten.js` bzw. `ansichten()` ergänzen.
 - Commit-Nachrichten auf Deutsch, kurz und beschreibend.

@@ -2,6 +2,8 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<!-- Sicherheit (P37 S3): erlaubte Ziele für Skripte und Verbindungen. Neue externe Verbindung → hier ergänzen. frame-ancestors wirkt per meta nicht → Prüfung im Script (P37) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: blob: https://login.microsoftonline.com https://graph.microsoft.com https://*.sharepoint.com https://*.1drv.com https://*.livefilestore.com https://api.anthropic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d2330">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -517,6 +519,7 @@ body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150p
 /* ===================== KONFIGURATION =====================
    Nach der App-Registrierung in Microsoft Entra eintragen
    (siehe ANLEITUNG-MOBIL.md). Diese Werte sind nicht geheim. */
+if(window.top!==window.self){document.documentElement.innerHTML='';throw new Error('ERP-Lite darf nicht in fremde Seiten eingebettet werden.')} // Schutz gegen Einbetten (Clickjacking, P37 S3)
 const CONFIG={
   clientId:'',          // Anwendungs-ID (Client), z. B. '1a2b3c4d-....'
   tenantId:'',          // Verzeichnis-ID (Mandant)
@@ -5038,9 +5041,10 @@ function xmlBeleg(txt){
   return d;
 }
 /* Texterkennung für Scans/Fotos: Tesseract (Apache-2.0), wird nur bei Bedarf von jsDelivr geladen und läuft lokal */
-const TESS={js:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/',core:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/deu@1.0.0/4.0.0_best_int'};
+const TESS={js:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/',core:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/deu@1.0.0/4.0.0_best_int',
+  sri:'sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F'}; // Prüfsumme tesseract.min.js 5.1.1 (P37 S7): veränderte Datei wird nicht ausgeführt; bei Versionswechsel neu berechnen
 async function ocrZeilen(bilder,info=()=>{}){
-  if(!window.Tesseract)await new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=TESS.js+'tesseract.min.js';sc.onload=ok;sc.onerror=()=>err(new Error('Texterkennung konnte nicht geladen werden – Internetverbindung prüfen.'));document.head.appendChild(sc)});
+  if(!window.Tesseract)await new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=TESS.js+'tesseract.min.js';sc.integrity=TESS.sri;sc.crossOrigin='anonymous';sc.onload=ok;sc.onerror=()=>err(new Error('Texterkennung konnte nicht geladen werden – Internetverbindung prüfen.'));document.head.appendChild(sc)});
   let seite=0;info('Texterkennung wird geladen (beim ersten Mal einige MB) …');
   const w=await Tesseract.createWorker('deu',1,{workerPath:TESS.js+'worker.min.js',corePath:TESS.core,langPath:TESS.lang,
     logger:m=>{if(m.status==='recognizing text')info(`Texterkennung Seite ${seite} von ${bilder.length} – ${Math.round(m.progress*100)} %`)}});

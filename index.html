@@ -871,7 +871,7 @@ const AUTH={
     this.merke(j);return true;
   },
   merke(j){lsSet('erp-tok-mail',null);
-    this.setTok({access:j.access_token,refresh:j.refresh_token||this.tok()?.refresh,exp:Date.now()+((+j.expires_in||3600)-120)*1000});
+    this.setTok({access:j.access_token,refresh:j.refresh_token||this.tok()?.refresh,exp:Date.now()+((+j.expires_in||3600)-120)*1000,mfa:amrMfa(j.access_token)});
     try{const id=JSON.parse(atob(j.id_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));if(id.preferred_username)lsSet('erp-user',id.preferred_username)}catch(e){}
   },
   async token(){
@@ -1057,10 +1057,24 @@ async function start(){
   if(lsGet('erp-modus')==='od'&&AUTH.tok()){try{await odStart();return}catch(e){if(!e.login)alert('OneDrive nicht erreichbar:\n'+e.message)}}
   startScreen();
 }
+/* Zweiter Faktor (P37, erw.mfaPflicht, Standard aus): Microsoft trägt im Zugriffstoken unter „amr“ ein, wie angemeldet wurde ("pwd", "mfa").
+   Mit Schalter lädt das Programm die Daten aus dem OneDrive nur, wenn die Anmeldung einen zweiten Faktor hatte (Authenticator, SMS …).
+   Einschalten nur in einer solchen Anmeldung (mfaFrei), damit man sich nicht selbst aussperrt. Ersetzt nicht die MFA-Pflicht in Microsoft Entra */
+erwPlus({k:'mfaPflicht',std:false,p:'Sicherheit (P37)',l:'Anmeldung nur mit zweitem Faktor (Authenticator)',info:'Die Daten aus dem OneDrive werden nur geöffnet, wenn Microsoft bei der Anmeldung einen zweiten Faktor bestätigt hat (z. B. Microsoft Authenticator). Fehlt er, meldet das Programm ab. Einschalten geht nur, wenn die aktuelle Anmeldung schon mit zweitem Faktor erfolgt ist. Die Mehrfaktor-Anmeldung selbst wird bei Microsoft eingerichtet (Entra → Sicherheitsstandards bzw. mysignins.microsoft.com).'});
+function amrMfa(at){try{const p=JSON.parse(decodeURIComponent(escape(atob(String(at).split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))));return Array.isArray(p.amr)?p.amr.includes('mfa'):null}catch(e){return null}}
+const mfaOk=()=>AUTH.tok()?.mfa===true;
+function mfaFrei(){
+  if(STORE.art!=='od'){alert('Diese Einstellung gilt für die Anmeldung mit Microsoft 365. Bitte zuerst mit OneDrive anmelden und dann einschalten.');return false}
+  if(!mfaOk()){alert('Die aktuelle Anmeldung erfolgte ohne zweiten Faktor.\n\nBitte zuerst bei Microsoft die Mehrfaktor-Anmeldung einrichten (mysignins.microsoft.com → Sicherheitsinformationen → Authenticator-App), dann in ERP-Lite ab- und wieder anmelden und erst danach einschalten.');return false}
+  return true}
+function mfaSperre(){AUTH.setTok(null);lsSet('erp-tok-mail',null);lsSet('erp-modus',null);
+  alert('Anmeldung ohne zweiten Faktor.\n\nIn ERP-Lite ist „Anmeldung nur mit zweitem Faktor“ eingeschaltet. Bitte bei Microsoft die Mehrfaktor-Anmeldung (Authenticator) einrichten bzw. bestätigen und erneut anmelden.');
+  location.hash='';location.reload()}
 async function odStart(){
   STORE=ODSTORE;saveState('lade aus OneDrive …');
   const txt=await STORE.load();
   let data=txt?JSON.parse(txt):null;
+  if(data?.settings?.erw?.mfaPflicht&&!mfaOk()){mfaSperre();return}
   if(!data){const c=cacheLaden();data=(c&&c.belege?.length&&confirm('Im OneDrive liegt noch keine Datenbank.\nDaten aus diesem Browser übernehmen?\n\n(Abbrechen = neue, leere Datenbank)'))?c:neueDB()}
   laden(data);
   const u=await kvGet('unsynced').catch(()=>null);
@@ -6129,7 +6143,8 @@ document.addEventListener('change',e=>{
       const l=artikel(d.id).lieferanten[+d.i],K={lp:'lp',rabatt:'rab',ek:'ek'}[d.f];if(!K||!erw('ekRechnen')){l[d.f]=v;break}
       const w={lp:l.lp??'',rab:l.rabatt??'',ek:l.ek??''},r=EKR[d.id+'|'+d.i]??=ekReihe(w);w[K]=v;const o=ekDreieck(w,K,r);l[d.f]=nv; // Listenpreis, Rabatt, EK (P31)
       for(const x in o){const f={lp:'lp',rab:'rabatt',ek:'ek'}[x];l[f]=o[x];document.querySelectorAll(`[data-o="al"][data-id="${d.id}"][data-i="${d.i}"][data-f="${f}"]`).forEach(e=>e.value=o[x])}break}
-    case's':if(d.f.startsWith('druckprofil.')){dpSetzen(d.f,v);return}if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()]??={};o[pth[0]]=d.t==='b'?v===true||v==='true':nv;if(d.f.startsWith('erw.')){persist();render();return}}break;
+    case's':if(d.f==='erw.mfaPflicht'&&el.checked&&!mfaFrei()){el.checked=false;return} // nur mit Anmeldung über zweiten Faktor einschaltbar (P37)
+      if(d.f.startsWith('druckprofil.')){dpSetzen(d.f,v);return}if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()]??={};o[pth[0]]=d.t==='b'?v===true||v==='true':nv;if(d.f.startsWith('erw.')){persist();render();return}}break;
     case'st':{const x=S().steuer[+d.i];if(stGesperrt().has(x.code)){alert(`Steuersatz „${x.bez||x.code}“ wird in festgeschriebenen Belegen verwendet und kann nicht geändert werden (§ 11 UStG, § 131 BAO).\nFür einen neuen Satz bitte einen neuen Code anlegen.`);render();return}if(d.f==='code'){const alt=x.code;if(S().steuer.some((y,j)=>j!==+d.i&&y.code===v)){alert('Code existiert bereits.');render();return}if(DB.belege.some(b=>b.pos.some(p=>p.steuer===alt))){alert('Code wird verwendet und kann nicht geändert werden.');render();return}}x[d.f]=nv;break}
     case'tf':S().tarife[+d.i][d.f]=nv;break;
     case'kbbel':{const b=curBeleg();if(!b||b.fest)return;b.kbId=v;log('K-Blatt im Beleg',`${bNr(b)}: ${ROOT.kb(v)?.name||'keines'}`);persist();render();return} // K-Blatt des Verkaufsbelegs (P34, '' = bewusst keines)

@@ -25,6 +25,10 @@ body.loaded #app{display:flex}
 .bka{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto}
 @media(max-width:760px){.bka{width:100%;margin-left:0;gap:6px}.bka>.seg{flex:none;margin-right:auto}.bka .seg button{padding:6px 8px}}
 .quick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+/* Unterschrift (P36 a): Feld im Pop-up sigPop(), Block sigBlock() */
+.sgf{position:relative;border:1px solid var(--line);border-radius:8px;background:#fff;height:220px}.sgf canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}.sgf.aus{opacity:.35;pointer-events:none}
+.sgl{position:absolute;left:14px;right:14px;bottom:12px;border-top:1px solid #c9ced6;padding-top:2px;font-size:12px;color:#9aa1ad;pointer-events:none}@media(max-width:760px){.sgf{height:min(240px,42vh)}}
+.sigb{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:16px}.sigz{flex:1 1 220px}.sigbild{height:72px;border-bottom:1px solid #555;display:flex;align-items:flex-end}.sigbild img{max-height:70px;max-width:100%}.sigl,.sigp{font-size:12px;color:var(--mut);margin:3px 0 0}
 .quick>*{flex:1 1 140px;text-align:center;padding:12px 10px;font-weight:600}
 .att{display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid #eef0f3}
 /* Bautagesbericht (P36 Teil 1): Zeilen im Editor, Ansicht btbDoc() */
@@ -795,6 +799,7 @@ function aenderungText(a,b){
 function undoSperre(alt){const A=new Map((alt.belege||[]).map(b=>[b.id,b]));
   for(const b of DB.belege)if(b.fest){const o=A.get(b.id);if(!o||!o.fest)return`${bNr(b)} wurde inzwischen festgeschrieben – Korrektur nur per Storno/Gutschrift.`}
   if(JSON.stringify(alt.settings?.nk)!==JSON.stringify(S().nk))return'Seither wurde eine Belegnummer vergeben (Nummernkreise bleiben lückenlos).';
+  {const u=sigUndo(alt);if(u)return u} // Unterschriften und Sperren (P36 a) bleiben
   return''}
 function undoAnwenden(j,h){const az=new Map(DB.belege.map(b=>[b.id,b.ausgaben]));DB=migrate(JSON.parse(j));for(const b of DB.belege){const n=az.get(b.id);if(n>(b.ausgaben??0))b.ausgaben=n} /* Ausgabezähler (DUPLIKAT) wird nie zurückgedreht */LAST=JSON.stringify(DB);DIRTY=LAST!==SNAP;dirtyBar();artDatalist();
   if(h&&location.hash!==h){SKIP=true;location.hash=h}else render();undoBtn()}
@@ -1020,6 +1025,7 @@ function merge3(base,local,remote){
     const L=new Set((local[c]||[]).map(x=>x.id));
     for(const [id,b] of B)if(!L.has(id)&&R.has(id)&&eq(R.get(id),b))out[c].splice(out[c].indexOf(R.get(id)),1);
   }
+  for(const c in SIG_C){const L_=new Map((local[c]||[]).map(x=>[x.id,x]));out[c]=(out[c]||[]).map(r=>{const l=L_.get(r.id);return l?sigMerge(l,r):r})} // gesperrte Datensätze (P36 a): gesperrter Stand gewinnt
   for(const r of out.belege){const n=AZ.get(r.id);if(n>(r.ausgaben??0))r.ausgaben=n} // Ausgabezähler (DUPLIKAT) nie verkleinern
   const seen=new Set((out.log||[]).map(x=>x.ts+x.aktion));
   out.log=[...(out.log||[]),...(local.log||[]).filter(x=>!seen.has(x.ts+x.aktion))].sort((a,b)=>a.ts.localeCompare(b.ts));
@@ -1604,7 +1610,7 @@ function render(){
   $('#main').innerHTML=f(arg);
   document.body.classList.toggle('zlaus',!erw('zuletzt'));if(arg&&ZL_V.includes(view))zuletztMerk(view+'/'+arg); // Zuletzt geöffnet (P19 a)
   requestAnimationFrame(vorschauSeiten);
-  if(erw('artBild'))bilderLaden(); // Bild je Artikel (P24, Teil)
+  bilderLaden(); // Bilder aus der Ablage: Artikel (P24, Teil), Fotos und Unterschriften (P36)
   document.body.classList.toggle('ihh',erw('ihHover')&&HOVER.matches);document.body.classList.toggle('ssp',erw('scrollSperre')); // Bedienung (P33)
   document.querySelectorAll('.modal').forEach(m=>{try{if(m._gilt&&!m._gilt()){(m._weg||(()=>m.remove()))();return}m._zeich?.()}catch(e){}}); // offene Bearbeiten-Pop-ups (P30) zeigen den neuen Stand; Pop-ups eines verlassenen oder ersetzten Belegs (Navigation, Abgleich, Verwerfen) schließen
   lfNav(); // Seitenleiste: „Offene Lieferungen“ (P35)
@@ -4061,8 +4067,8 @@ const ACT_LV=({
     const L=nr.trim()==='*'?DB.artikel.filter(a=>a.art!=='L'&&a.aktiv!==false):nr.split(',').map(x=>DB.artikel.find(a=>a.nr===x.trim())).filter(Boolean);
     for(const a of L)if(!kb.k4.some(m=>m.bez===a.bez)){const lf=(a.lieferanten||[]).find(l=>+l.lp>0);kb.k4.push({...TPL.k4(),bez:a.bez,einheit:a.einheit,lp:lf?+lf.lp:+a.ek||0,rab:lf?+lf.rabatt||0:0})}persist();render()},
   kbneuA:el=>{const aid=el.dataset.id,r=beleg(aid);const kb=neueKB({auftragId:aid,projekt:r?.projekt||'',name:'Kalkulation '+(r?.projekt||(r?bNr(r):''))});DB.kalk.push(kb);log('K-Blatt angelegt',`${kb.name} (Auftrag ${r?bNr(r):''})`);persist();go('kbs/'+kb.id)}, // K-Blatt zum Auftrag (P34 Teil 4)
-  arradd:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id);let arr=getP(o,el.dataset.f);if(!arr){setP(o,el.dataset.f,[]);arr=getP(o,el.dataset.f)}arr.push(TPL[el.dataset.tpl]());persist();render()},
-  arrdel:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id),arr=getP(o,el.dataset.f);arr.splice(+el.dataset.i,1);persist();render()},
+  arradd:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id);if(gesperrt(o))return; /* P36 a */let arr=getP(o,el.dataset.f);if(!arr){setP(o,el.dataset.f,[]);arr=getP(o,el.dataset.f)}arr.push(TPL[el.dataset.tpl]());persist();render()},
+  arrdel:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id),arr=getP(o,el.dataset.f);if(gesperrt(o))return; /* P36 a */arr.splice(+el.dataset.i,1);persist();render()},
   bibneu:()=>{DB.lvbib.unshift({id:uid(),gruppe:'',kurz:'',lang:'',einheit:'Stk',k7:null});persist();render()},
   bibdel:el=>{if(!confirm('Baustein löschen?'))return;DB.lvbib=DB.lvbib.filter(x=>x.id!==el.dataset.id);persist();render()},
   lvneu:el=>{const s=S();s.lvnr=(s.lvnr||0)+1;const kbE=DB.kalk.filter(k=>k.art==='eigen');
@@ -6210,7 +6216,7 @@ document.addEventListener('change',e=>{
   switch(d.o){
     case'ui':UI[d.f]=v;render();return;
     case'lbsel':{const s=UI.lbSel||(UI.lbSel=[]),i=s.indexOf(d.k);if(el.checked&&i<0)s.push(d.k);if(!el.checked&&i>=0)s.splice(i,1);const z=document.querySelector('.lbsel b');if(z)z.textContent=s.length;const bt=document.querySelector('[data-act=lbins]');if(bt)bt.disabled=!(s.length&&UI.lbZiel);return}
-    case'path':{const[c,id]=d.r.split('|'),o=ROOT[c](id);if(!o)return;if(c==='lv')lvBieterPreisInit(o,d.f);setP(o,d.f,d.t==='n'?num(v):d.t==='nl'?(String(v).trim()===''?'':num(v)):el.type==='checkbox'?el.checked:v);persist();renderErhalten();return} // nl = Zahl, leer erlaubt (leer = Vorgabe, P34)
+    case'path':{const[c,id]=d.r.split('|'),o=ROOT[c](id);if(!o)return;if(gesperrt(o)){alert('Unterschrieben und gesperrt – keine Änderung möglich.');render();return} /* P36 a */if(c==='lv')lvBieterPreisInit(o,d.f);setP(o,d.f,d.t==='n'?num(v):d.t==='nl'?(String(v).trim()===''?'':num(v)):el.type==='checkbox'?el.checked:v);persist();renderErhalten();return} // nl = Zahl, leer erlaubt (leer = Vorgabe, P34)
     case'k3z':{const kb=ROOT.kb(d.r.split('|')[1]),c=kb?.k3?.[+d.ci];if(!c)return;k3zSet(c,d.z,num(v));persist();renderErhalten();return} // K3-Zeile B–G bzw. I–L nach Kennbuchstabe (P34)
     case'k3kv':case'k3gr':case'kbref':kbWahlSet(d,v);return; // Auswahlfelder der K-Blätter (P34 Teil 2)
     case'k':{const k=kontakt(d.id);
@@ -6292,6 +6298,61 @@ function onPos(b,i,f,v){
   });
   document.addEventListener('focusout',e=>{setTimeout(()=>{if(!document.activeElement?.closest?.('.rte,.ed.ml'))bar.style.display='none'},0)});
 })();
+/* Unterschrift und Sperre (P36 Teil 3a, erw.unterschrift): gemeinsamer Baustein für Bautagesbericht und Messprotokoll (OVE E 8101).
+   ablegen(pfad,blob): Datei in die Ablage; ohne Netz bleibt sie in diesem Browser (IndexedDB 'img:'+pfad, Liste localStorage erp-ablage-q) und wird nachgeladen (ablageNachladen,
+   bei 'online' und jede Minute; nie in den Test-Speicher). ablOffen(präfix) = Anzahl wartender Dateien. sigPop(titel,{name,ohne,hinweis}) → {name,zeit,png} | {name,zeit,ohne} | null;
+   sigAblegen(ordner,rolle,e) → {name,zeit,pfad} bzw. {name,zeit,ohne}. Sperre: o.gesperrt (Zeitpunkt) = unveränderbar, unabhängig vom Schalter; sperren(o) setzt gesperrt und
+   o.hash = sperrWert(o) (SHA-256 über den Inhalt ohne SIG_FREI, Schlüssel sortiert); sperrTag(o) prüft ihn (gültig / verändert). Pfad-Setter, arradd/arrdel, Rückgängig (undoSperre)
+   und Abgleich (merge3 → sigMerge: gesperrt gewinnt, Unterschriften beider Geräte) achten auf die Sperre der Sammlungen in SIG_C {sammlung:{n:o=>Name}}. sigBlock(o,rollen) für Ansicht/Druck */
+erwPlus({k:'unterschrift',std:false,p:'Unterschrift (P36 a)',l:'Unterschrift am Gerät und Sperre',info:'Grundlage für Bautagesberichte und Messprotokolle: Unterschrift mit Finger, Stift oder Maus auf dem Bildschirm, gespeichert als Bild in der Ablage (OneDrive bzw. Ordner) mit Name und Zeitpunkt. Mit der ersten Pflicht-Unterschrift ist der Datensatz gesperrt: keine Änderung, kein Zurücknehmen über „Zurück“, beim Abgleich zwischen Geräten gilt der gesperrte Stand. Ein Prüfwert (SHA-256) über den Inhalt zeigt, ob die Datei nachträglich verändert wurde. Es ist eine einfache elektronische Unterschrift (wie am Tablet des Paketdienstes), keine qualifizierte Signatur. Fotos und Unterschriften, die ohne Netz entstehen, bleiben in diesem Browser und werden nachgeladen, sobald wieder eine Verbindung besteht. Aus = keine neue Unterschrift; bestehende Sperren bleiben wirksam.'});
+const SIG_C={},SIG_FREI=['sig','hash','gesperrt','status','ausgaben'],gesperrt=o=>!!o?.gesperrt;
+const ABLQ='erp-ablage-q',ablQ=()=>{try{const q=JSON.parse(lsGet(ABLQ)||'[]');return Array.isArray(q)?q:[]}catch(e){return[]}},ablOffen=pr=>ablQ().filter(p=>p.startsWith(pr)).length;
+async function ablegen(pfad,blob){await kvSet('img:'+pfad,blob).catch(()=>{});
+  try{if(navigator.onLine===false)throw new Error('offline');await STORE.putFile(pfad,blob);return true}
+  catch(e){const q=ablQ();if(!q.includes(pfad)){q.push(pfad);lsSet(ABLQ,JSON.stringify(q))}return false}}
+let ablLauf=false;
+async function ablageNachladen(){if(ablLauf||!DB||STORE===CACHESTORE||navigator.onLine===false||!ablQ().length)return;ablLauf=true;let n=0;
+  try{for(const p of ablQ()){const b=await kvGet('img:'+p).catch(()=>null);if(b){try{await STORE.putFile(p,b);n++}catch(e){break}}const r=ablQ().filter(x=>x!==p);lsSet(ABLQ,r.length?JSON.stringify(r):null)}}
+  finally{ablLauf=false}}
+addEventListener('online',()=>ablageNachladen());setInterval(ablageNachladen,60000);
+const kanon=v=>Array.isArray(v)?'['+v.map(kanon).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+kanon(v[k])).join(',')+'}':JSON.stringify(v??null);
+async function sperrWert(o){if(!globalThis.crypto?.subtle)return'';const x={};for(const k in o)if(!SIG_FREI.includes(k))x[k]=o[k];
+  const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(kanon(x)));return[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function sperren(o){o.gesperrt=new Date().toISOString();o.hash=await sperrWert(o)}
+function sperrTag(o){if(!o?.gesperrt)return'';if(!o.hash)return tag('ohne Prüfwert','warn');const id='pr'+uid();
+  sperrWert(o).then(h=>{const e=document.getElementById(id);if(e)e.outerHTML=h===o.hash?tag('Prüfwert gültig','ok'):h?tag('Prüfwert ungültig – Inhalt nachträglich verändert','err'):tag('Prüfwert hier nicht prüfbar')});
+  return`<span id="${id}" class="mut">Prüfwert …</span>`}
+function sigMerge(l,r){if(!l.gesperrt)return r;if(!r.gesperrt)return l;const o=JSON.parse(JSON.stringify(r));o.sig=o.sig||{};for(const k in l.sig||{})if(!o.sig[k])o.sig[k]=l.sig[k];return o} // gesperrter Stand gewinnt, Unterschriften beider Geräte
+function sigUndo(alt){for(const c in SIG_C)for(const o of DB[c]||[])if(o.gesperrt){const a=(alt[c]||[]).find(x=>x.id===o.id);if(!a?.gesperrt||JSON.stringify(a.sig)!==JSON.stringify(o.sig))return`${SIG_C[c].n(o)} wurde inzwischen unterschrieben – Unterschriften werden nicht zurückgenommen.`}return''}
+const sigAblegen=async(ordner,rolle,e)=>{if(e.ohne)return{name:e.name,zeit:e.zeit,ohne:e.ohne};const pfad=`${ordner}/unterschrift-${rolle}-${Date.now().toString(36)}.png`;await ablegen(pfad,e.png);return{name:e.name,zeit:e.zeit,pfad}};
+function sigPop(titel,{name='',ohne=false,hinweis=''}={}){return new Promise(res=>{
+  const d=document.createElement('div');d.className='modal sigm';
+  d.innerHTML=`<div class="mbox"><h2>${esc(titel)}</h2>${hinweis?`<p class="mut" style="margin:0 0 8px">${hinweis}</p>`:''}
+    <div class="row"><label class="w2">Name *<input id="sg-n" value="${esc(name)}" autocomplete="off"></label></div>
+    <div class="sgf"><canvas id="sg-c"></canvas><span class="sgl">Unterschrift</span></div>
+    ${ohne?`<label class="chk"><input type="checkbox" id="sg-o"> <span>unterschreibt nicht</span></label><div class="row" id="sg-or" hidden style="margin-top:6px"><label class="w2">Vermerk<input id="sg-ov" placeholder="z. B. nicht anwesend, verweigert"></label></div>`:''}
+    <p class="err" id="m-err" style="margin:6px 0 0"></p>
+    <div class="bar" style="margin:12px 0 0"><button id="sg-x">Löschen</button><span class="sp"></span><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Übernehmen</button></div></div>`;
+  document.body.appendChild(d);
+  const c=d.querySelector('#sg-c'),x=c.getContext('2d'),q=s=>d.querySelector(s);let leer=true,zieh=false,lp=null,bb=null;const bbP=p=>{bb=bb?[Math.min(bb[0],p[0]),Math.min(bb[1],p[1]),Math.max(bb[2],p[0]),Math.max(bb[3],p[1])]:[p[0],p[1],p[0],p[1]]};
+  const neu=()=>{const r=c.getBoundingClientRect(),k=devicePixelRatio||1;c.width=Math.max(1,Math.round(r.width*k));c.height=Math.max(1,Math.round(r.height*k));x.setTransform(k,0,0,k,0,0);
+    x.lineWidth=2.2;x.lineCap='round';x.lineJoin='round';x.strokeStyle=x.fillStyle='#0b1f4d';leer=true;bb=null;q('.sgl').hidden=false};
+  requestAnimationFrame(neu);const rs=()=>{if(leer)neu()};addEventListener('resize',rs);
+  const pt=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  c.addEventListener('pointerdown',e=>{if(q('#sg-o')?.checked)return;e.preventDefault();c.setPointerCapture?.(e.pointerId);zieh=true;lp=pt(e);bbP(lp);x.beginPath();x.arc(lp[0],lp[1],1.1,0,7);x.fill();leer=false;q('.sgl').hidden=true});
+  c.addEventListener('pointermove',e=>{if(!zieh)return;e.preventDefault();for(const v of e.getCoalescedEvents?.()||[e]){const p=pt(v);x.beginPath();x.moveTo(lp[0],lp[1]);x.lineTo(p[0],p[1]);x.stroke();lp=p;bbP(p)}});
+  for(const t of['pointerup','pointercancel','pointerleave'])c.addEventListener(t,()=>{zieh=false});
+  q('#sg-x').onclick=neu;q('#sg-o')?.addEventListener('change',e=>{q('#sg-or').hidden=!e.target.checked;q('.sgf').classList.toggle('aus',e.target.checked)});
+  const fin=v=>{d.remove();document.removeEventListener('keydown',kd);removeEventListener('resize',rs);res(v)};
+  const ok=()=>{const n=q('#sg-n').value.trim(),zeit=new Date().toISOString();if(!n){pflichtWarnung(d,['Name'],[q('#sg-n')]);return}
+    if(q('#sg-o')?.checked){fin({name:n,zeit,ohne:q('#sg-ov').value.trim()||'unterschreibt nicht'});return}
+    if(leer){q('#m-err').textContent='Bitte im Feld unterschreiben.';return}
+    const k=devicePixelRatio||1,[x0,y0,x1,y1]=bb.map((v,i)=>Math.round((i<2?v-6:v+6)*k)),z=document.createElement('canvas'),zx=Math.max(0,x0),zy=Math.max(0,y0); // auf die Unterschrift zuschneiden
+    z.width=Math.max(1,Math.min(c.width,x1)-zx);z.height=Math.max(1,Math.min(c.height,y1)-zy);z.getContext('2d').drawImage(c,zx,zy,z.width,z.height,0,0,z.width,z.height);
+    z.toBlob(b=>{if(b)fin({name:n,zeit,png:b});else q('#m-err').textContent='Unterschrift konnte nicht gespeichert werden.'},'image/png')};
+  const kd=e=>{if(!mOben(d))return;if(e.key==='Escape')fin(null)};document.addEventListener('keydown',kd);
+  q('#m-no').onclick=()=>fin(null);q('#m-ok').onclick=ok;setTimeout(()=>{if(!name)q('#sg-n').focus()},0)})}
+const sigBlock=(o,rollen)=>`<div class="sigb">${rollen.map(([k,l])=>{const s=o.sig?.[k];return`<div class="sigz"><div class="sigbild">${s?.pfad?`<img data-bild="${esc(s.pfad)}" alt="Unterschrift ${esc(s.name||'')}">`:s?.ohne?`<span class="mut">${esc(s.ohne)}</span>`:''}</div><div class="sigl">${esc(l)}${s?`: ${esc(s.name||'')} · ${dtAT(s.zeit)}`:''}</div></div>`}).join('')}</div>${o.gesperrt?`<p class="sigp">Gesperrt seit ${dtAT(o.gesperrt)} · ${sperrTag(o)}</p>`:''}`;
 function logoUpload(el){
   const file=el.files[0];if(!file)return;
   if(file.size>300*1024){alert('Logo zu groß (max. 300 kB).');return}

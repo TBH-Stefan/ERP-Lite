@@ -2,6 +2,8 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<!-- Sicherheit (P37 S3): erlaubte Ziele für Skripte und Verbindungen. Neue externe Verbindung → hier ergänzen. frame-ancestors wirkt per meta nicht → Prüfung im Script (P37) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: blob: https://login.microsoftonline.com https://graph.microsoft.com https://*.sharepoint.com https://*.1drv.com https://*.livefilestore.com https://api.anthropic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d2330">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -517,6 +519,7 @@ body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150p
 /* ===================== KONFIGURATION =====================
    Nach der App-Registrierung in Microsoft Entra eintragen
    (siehe ANLEITUNG-MOBIL.md). Diese Werte sind nicht geheim. */
+if(window.top!==window.self){document.documentElement.innerHTML='';throw new Error('ERP-Lite darf nicht in fremde Seiten eingebettet werden.')} // Schutz gegen Einbetten (Clickjacking, P37 S3)
 const CONFIG={
   clientId:'',          // Anwendungs-ID (Client), z. B. '1a2b3c4d-....'
   tenantId:'',          // Verzeichnis-ID (Mandant)
@@ -887,6 +890,21 @@ const AUTH={
   },
   abmelden(){if(pending&&!confirm('Es gibt noch nicht gespeicherte Änderungen. Trotzdem abmelden?'))return;this.setTok(null);lsSet('erp-user',null);lsSet('erp-modus',null);location.hash='';location.reload()}
 };
+/* Gerät aufräumen (P37 S5, erw.geraetLoeschen): entfernt Anmeldung, Datenkopie (erp-lite-cache), Anhänge/Bilder/Ordnerzugriff (IndexedDB) und Zuletzt-Liste von diesem Gerät.
+   Nur wenn die Daten anderswo sicher liegen (OneDrive oder lokaler Ordner, alles gespeichert) – im Modus „nur Browser“ wären sie sonst verloren. Client-/Mandanten-ID bleiben */
+erwPlus({k:'geraetLoeschen',std:true,p:'Sicherheit (P37)',l:'„Abmelden und Gerät leeren“',info:'Neben „Abmelden“ bzw. „Speicherort wechseln“ entfernt ein zusätzlicher Knopf Anmeldung, Datenkopie, Anhänge und Bilder aus diesem Browser – z. B. vor der Rückgabe eines Geräts oder an einem fremden PC. Die Daten im OneDrive bzw. im lokalen Ordner bleiben unverändert. Nur möglich, wenn alles gespeichert ist; im Modus „nur Browser“ nicht angeboten.'});
+const geraetKnopf=()=>erw('geraetLoeschen')&&STORE.art!=='cache'?' <button data-act="geraetweg" class="d" title="Anmeldung, Datenkopie, Anhänge und Bilder aus diesem Browser entfernen">Abmelden und Gerät leeren</button>':'';
+async function geraetLeeren(){
+  if(STORE.art==='cache')return;
+  if(pending||DIRTY){alert('Es gibt noch nicht gespeicherte Änderungen – bitte zuerst speichern.');return}
+  if(!confirm('Anmeldung, Datenkopie, Anhänge und Bilder werden aus diesem Browser entfernt.\nDie Daten '+(STORE.art==='od'?'im OneDrive':'im lokalen Ordner')+' bleiben erhalten.\n\nFortfahren?'))return;
+  const halten=['erp-cid','erp-tid'];
+  try{for(const k of Object.keys(localStorage))if(/^erp/.test(k)&&!halten.includes(k))localStorage.removeItem(k)}catch(e){}
+  try{sessionStorage.clear()}catch(e){}
+  await new Promise(r=>{try{const q=indexedDB.deleteDatabase('erp-lite');q.onsuccess=q.onerror=q.onblocked=()=>r()}catch(e){r()}});
+  DIRTY=false;pending=false;location.hash='';location.reload();
+}
+queueMicrotask(()=>Object.assign(ACT,{geraetweg:()=>geraetLeeren()}));
 async function graph(path,opt={},nochmal=true){
   const t=await AUTH.token();
   if(!t)throw Object.assign(new Error('Anmeldung abgelaufen'),{login:true});
@@ -938,10 +956,16 @@ const DIRSTORE={
   async backup(old,tag){const bd=await this.h.getDirectoryHandle('backup',{create:true});try{await bd.getFileHandle(`erp-daten_${tag}.json`);return}catch(e){}const w=await (await bd.getFileHandle(`erp-daten_${tag}.json`,{create:true})).createWritable();await w.write(old);await w.close()},
   async dir(parts,create){let d=this.h;for(const p of parts)d=await d.getDirectoryHandle(p,{create});return d},
   async putFile(path,blob){const parts=path.split('/'),fn=parts.pop(),d=await this.dir(parts,true);const w=await (await d.getFileHandle(fn,{create:true})).createWritable();await w.write(blob);await w.close();return{name:fn,path,id:'',url:''}},
-  async openFile(a){const parts=a.path.split('/'),fn=parts.pop(),f=await (await (await this.dir(parts,false)).getFileHandle(fn)).getFile();window.open(URL.createObjectURL(f),'_blank')}
+  async openFile(a){const parts=a.path.split('/'),fn=parts.pop(),f=await (await (await this.dir(parts,false)).getFileHandle(fn)).getFile();blobOeffnen(f,fn)}
 };
 const CACHESTORE={art:'cache',lastText:null,name:'nur dieser Browser (Test)',async save(){},async backup(){},async putFile(path,blob){await kvSet('att:'+path,blob);return{name:path.split('/').pop(),path,id:'',url:''}},
-  async openFile(a){const b=await kvGet('att:'+a.path);if(!b)throw new Error('Datei nicht mehr im Browser vorhanden.');window.open(URL.createObjectURL(b),'_blank')}};
+  async openFile(a){const b=await kvGet('att:'+a.path);if(!b)throw new Error('Datei nicht mehr im Browser vorhanden.');blobOeffnen(b,a.path.split('/').pop())}};
+/* Anhänge sicher öffnen (P37 S1): blob:-Adressen laufen in der Herkunft des Programms – SVG, HTML oder XML könnten dort Code ausführen und Anmeldung/Daten lesen.
+   Nur PDF und Rasterbilder werden angezeigt (Typ aus der Dateiendung, nicht aus der Datei), alles andere wird heruntergeladen */
+const BLOB_TYP={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',bmp:'image/bmp',txt:'text/plain'};
+function blobOeffnen(b,name){const t=BLOB_TYP[(String(name).match(/\.(\w+)$/)||[])[1]?.toLowerCase()];
+  if(!t){dl(b,name);return}
+  const u=URL.createObjectURL(new Blob([b],{type:t}));window.open(u,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(u),60000)}
 let STORE=CACHESTORE,saving=false,saveAgain=false,retryT=null;
 
 async function saveNow(){
@@ -4417,7 +4441,7 @@ V.export=()=>{
   <div class="bar"><button data-act="exp" data-k="ra">Rechnungsausgangsbuch</button><button data-act="exp" data-k="re">Rechnungseingangsbuch</button><button data-act="exp" data-k="za">Zahlungen</button><button data-act="exp" data-k="op">Offene Posten</button><button data-act="exp" data-k="lg">Lagerbestand</button><button data-act="exp" data-k="au">Aufträge DB II</button></div></div>
   <div class="card"><h2>Datensicherung</h2>
   <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>
-  <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}</div>
+  <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}${geraetKnopf()}</div>
   <div class="bar"><button data-act="exp" data-k="json">Gesamtdaten exportieren (JSON)</button><label class="btn" style="font-size:14px;color:inherit">Daten importieren (ersetzt alles)<input type="file" id="imp" accept=".json" style="display:none"></label><button data-act="savenow">Jetzt speichern</button></div></div>
   ${kmp()&&!DB.papierkorb.length?'<div class="card mut">Papierkorb: leer</div>':`<div class="card"><h2>Papierkorb</h2>${DB.papierkorb.length?`<table><thead><tr><th>Gelöscht am</th><th>Art</th><th>Eintrag</th><th></th></tr></thead><tbody>${DB.papierkorb.slice().reverse().map(e=>`<tr><td style="white-space:nowrap">${new Date(e.ts).toLocaleString('de-AT')}</td><td>${PK[e.c]?.n||e.c}</td><td>${esc(e.info)}</td><td style="white-space:nowrap"><button class="s" data-act="pkrest" data-id="${e.id}">Wiederherstellen</button> <button class="s d" data-act="pkdel" data-id="${e.id}">Endgültig löschen</button></td></tr>`).join('')}</tbody></table>
     <div class="bar" style="margin-top:8px"><button data-act="pkrestall">Alle wiederherstellen</button><button class="d" data-act="pkleer">Papierkorb leeren …</button></div>`:'<p class="mut" style="margin:0">leer</p>'}</div>`}
@@ -4640,7 +4664,8 @@ V.einstellungen=()=>{
   ${akk('e-ein','Belege einlesen',`<div class="card"><h2>Belege einlesen</h2>
   ${einlesenInfo(`Kostenlos und ohne Internetdienst werden gelesen: <b>E-Rechnungen</b> (ZUGFeRD/Factur-X, XRechnung, ebInterface) und <b>PDFs mit Textebene</b> (z. B. PDF aus der E-Mail des Lieferanten). Fotos und eingescannte Papierbelege enthalten keinen Text – Positionen dann manuell erfassen.`,
   `Optional (kostenpflichtig): KI-Erkennung für Fotos durch Claude (Anthropic) – nur wenn hier ein Schlüssel eingetragen ist. Den API-Schlüssel erhalten Sie in der Anthropic Console (console.anthropic.com → API Keys). Er wird nur in diesem Browser gespeichert, nicht in der Datenbank – auf jedem Gerät einmal eintragen. Kosten ca. 1–3 Cent je Seite; das Bild wird zur Auswertung an Anthropic übertragen.`)}
-  <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${lsGet('erp-ki-key')?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><span style="flex:2"></span></div></div>`,{zusatz:lsGet('erp-ki-key')?'KI-Schlüssel gespeichert':'PDF-Text und E-Rechnung'})}
+  <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${kiKey()?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><label class="chk" title="Der Schlüssel wird beim Schließen des Browsers vergessen – sicherer an fremden oder geteilten Geräten (P37 S6)"><input type="checkbox" id="kises"${kiSitzung()?' checked':''}> nur bis zum Schließen des Browsers merken</label><span style="flex:2"></span></div>
+  <p class="mut" style="margin:4px 0 0">Datenschutz: Mit Schlüssel gehen Belegbilder und -texte an Anthropic (USA). Vorher Auftragsverarbeitung (DSGVO Art. 28) und Datenverarbeitungs-Zusatz von Anthropic prüfen; Belege mit Gesundheits- oder Personaldaten nicht über die KI einlesen.</p></div>`,{zusatz:kiKey()?'KI-Schlüssel gespeichert':'PDF-Text und E-Rechnung'})}
   ${akk('e-kfm','Kaufmännisch',`<div class="card"><h2>Kaufmännisch</h2><div class="row">
     <label class="w05">Letzte Kunden-Nr.<input type="number" data-o="s" data-f="knr.K" value="${s.knr.K}" title="Nächster Kunde erhält diese Nummer + 1"></label><label class="w05">Letzte Lieferanten-Nr.<input type="number" data-o="s" data-f="knr.L" value="${s.knr.L}"></label>
     ${sf('zahlungsziel','Zahlungsziel Tage')}${sf('skonto','Skonto %')}${sf('skontoTage','Skonto Tage')}${sf('angebotGueltig','Angebot gültig Tage')}
@@ -5032,9 +5057,10 @@ function xmlBeleg(txt){
   return d;
 }
 /* Texterkennung für Scans/Fotos: Tesseract (Apache-2.0), wird nur bei Bedarf von jsDelivr geladen und läuft lokal */
-const TESS={js:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/',core:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/deu@1.0.0/4.0.0_best_int'};
+const TESS={js:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/',core:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/deu@1.0.0/4.0.0_best_int',
+  sri:'sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F'}; // Prüfsumme tesseract.min.js 5.1.1 (P37 S7): veränderte Datei wird nicht ausgeführt; bei Versionswechsel neu berechnen
 async function ocrZeilen(bilder,info=()=>{}){
-  if(!window.Tesseract)await new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=TESS.js+'tesseract.min.js';sc.onload=ok;sc.onerror=()=>err(new Error('Texterkennung konnte nicht geladen werden – Internetverbindung prüfen.'));document.head.appendChild(sc)});
+  if(!window.Tesseract)await new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=TESS.js+'tesseract.min.js';sc.integrity=TESS.sri;sc.crossOrigin='anonymous';sc.onload=ok;sc.onerror=()=>err(new Error('Texterkennung konnte nicht geladen werden – Internetverbindung prüfen.'));document.head.appendChild(sc)});
   let seite=0;info('Texterkennung wird geladen (beim ersten Mal einige MB) …');
   const w=await Tesseract.createWorker('deu',1,{workerPath:TESS.js+'worker.min.js',corePath:TESS.core,langPath:TESS.lang,
     logger:m=>{if(m.status==='recognizing text')info(`Texterkennung Seite ${seite} von ${bilder.length} – ${Math.round(m.progress*100)} %`)}});
@@ -5068,6 +5094,10 @@ async function belegLokal(files,typ,info,mitKI){
 
 /* ---------- Beleg-Scan: Abgleich und Übernahme (optional KI für Fotos) ---------- */
 // API-Schlüssel nur im Browser des Geräts (localStorage), nicht in erp-daten.json
+/* KI-Schlüssel (P37 S6): dauerhaft in localStorage (bisher) oder nur für die Sitzung in sessionStorage */
+const kiSitzung=()=>lsGet('erp-ki-ses')==='1'; // Wahl je Gerät, der Schlüssel selbst bleibt in sessionStorage
+const kiKey=()=>{try{const k=sessionStorage.getItem('erp-ki-key');if(k)return k}catch(e){}return lsGet('erp-ki-key')};
+function kiKeySetzen(k,sitzung){try{sitzung&&k?sessionStorage.setItem('erp-ki-key',k):sessionStorage.removeItem('erp-ki-key')}catch(e){}lsSet('erp-ki-key',sitzung?null:k);lsSet('erp-ki-ses',sitzung?'1':null)}
 const KI_URL='https://api.anthropic.com/v1/messages',KI_MODELL='claude-opus-5-5';
 const LS_SCHEMA={type:'object',additionalProperties:false,required:['lieferant','lieferscheinNr','datum','bestellNr','lieferadresse','positionen'],properties:{
   lieferant:{type:'object',additionalProperties:false,required:['name','uid','strasse','plz','ort'],properties:{name:{type:'string'},uid:{type:'string'},strasse:{type:'string'},plz:{type:'string'},ort:{type:'string'}}},
@@ -5163,7 +5193,7 @@ async function belegScan(files,typ){
   await (SCANUP[b.id]=anhaengeHochladen(b,files,true,true)); // Originalbeleg unverändert ablegen
 }
 async function scanStart(b){
-  const key=lsGet('erp-ki-key'),files=SCANFILES[b.id];if(!files)return;
+  const key=kiKey(),files=SCANFILES[b.id];if(!files)return;
   b.scan={status:'läuft'};render();
   try{
     const info=t=>{const e=document.getElementById('scaninfo');if(e)e.textContent=t};
@@ -6069,7 +6099,8 @@ document.addEventListener('change',e=>{
   if(el.id==='imp')return importJSON(el);
   if(el.id==='lbimp')return lbImport(el);
   if(['lsscan','erfoto','bescan'].includes(el.id)){const f=[...el.files];el.value='';belegScan(f,{lsscan:'WE',erfoto:'ER',bescan:'BE'}[el.id]);return}
-  if(el.id==='kikey'){lsSet('erp-ki-key',el.value.trim()||null);render();return}
+  if(el.id==='kikey'){kiKeySetzen(el.value.trim()||null,kiSitzung());render();return}
+  if(el.id==='kises'){kiKeySetzen(kiKey(),el.checked);render();return}
   if(d.sc!==undefined)return scanSet(el);
   if(d.kette!==undefined){if(d.fk)return;const a=artikel(d.aid);if(!a)return;ketteWert(el).then(v=>{if(v!==null){const B=d.kette==='lp'?LP:GR;a[B.c.feld]=v;log(B.c.name+' zugeordnet',`${a.nr} → ${B.pfad(v)||'keine'}`);persist()}render()});return}
   if(d.lpa!==undefined){const a=artikel(d.lpa);a.lagerplatz=el.value;log('Lagerplatz zugeordnet',`${a.nr} → ${LP.pfad(el.value)||'keiner'}`);commit();return}

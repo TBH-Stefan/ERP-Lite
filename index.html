@@ -25,11 +25,21 @@ body.loaded #app{display:flex}
 .bka{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto}
 @media(max-width:760px){.bka{width:100%;margin-left:0;gap:6px}.bka>.seg{flex:none;margin-right:auto}.bka .seg button{padding:6px 8px}}
 .quick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+/* Unterschrift (P36 a): Feld im Pop-up sigPop(), Block sigBlock() */
+.sgf{position:relative;border:1px solid var(--line);border-radius:8px;background:#fff;height:220px}.sgf canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}.sgf.aus{opacity:.35;pointer-events:none}
+.sgl{position:absolute;left:14px;right:14px;bottom:12px;border-top:1px solid #c9ced6;padding-top:2px;font-size:12px;color:#9aa1ad;pointer-events:none}@media(max-width:760px){.sgf{height:min(240px,42vh)}}
+.sigb{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:16px}.sigz{flex:1 1 220px}.sigbild{height:72px;border-bottom:1px solid #555;display:flex;align-items:flex-end}.sigbild img{max-height:70px;max-width:100%}.sigl,.sigp{font-size:12px;color:var(--mut);margin:3px 0 0}
 .quick>*{flex:1 1 140px;text-align:center;padding:12px 10px;font-weight:600}
 .att{display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid #eef0f3}
+/* Bautagesbericht (P36 Teil 1): Zeilen im Editor, Ansicht btbDoc() */
+.btbz{padding-bottom:6px;border-bottom:1px dashed var(--line)}.btbz>button.d{align-self:flex-end;margin-bottom:2px}.btbz label:has(>input[type=time]){min-width:96px}
+.btbd h3{font-size:15px;margin:14px 0 6px}.btbd table{width:100%;border-collapse:collapse}.btbd th,.btbd td{text-align:left;vertical-align:top;padding:4px 6px;border-bottom:1px solid var(--line)}.btbd .n{text-align:right}.btbk th{width:30%;font-weight:600;color:var(--mut)}
 .seg{display:inline-flex;border:1px solid #cdd2da;border-radius:6px;overflow:hidden}
 .seg button{border:0;border-radius:0;border-right:1px solid #e2e5ea}.seg button:last-child{border-right:0}
 .seg button.on{background:var(--acc2);color:var(--acc);font-weight:600}
+/* Bautagesbericht Fotos (P36 Teil 2): Editor .btbb, Ansicht/Druck .btbbd, Großansicht .btblb */
+.btbb{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.btbbi{display:flex;flex-direction:column;gap:4px;position:relative}.btbbi img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;background:#eef0f3;cursor:zoom-in}.btbbi>button{position:absolute;top:4px;right:4px}.btbbi .mut{font-size:11px}
+.btbbd{display:grid;grid-template-columns:1fr 1fr;gap:12px}.btbbd figure{margin:0;break-inside:avoid}.btbbd img{width:100%;max-height:90mm;object-fit:contain;background:#f4f5f7}.btbbd figcaption{font-size:11px;color:var(--mut)}.btblb .mbox{max-width:min(96vw,1100px)}.btblb img{max-width:100%;max-height:78vh;display:block;margin:auto}
 .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
 .split .sticky{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}
 .blatt{background:#fff;color:#000;max-width:210mm;min-height:120mm;margin:0 auto 14px;padding:10mm 14mm 12mm 20mm;box-shadow:0 2px 14px rgba(0,0,0,.12);border:1px solid var(--line)}
@@ -135,7 +145,8 @@ body.kompakt td>.nw+br,body.kompakt td>.nw+br+.mut{display:none}
   body.kompakt .kk a,body.kompakt .card h2>a:not(:first-child){padding:10px 2px;margin:0 -2px}
   body.kompakt .kk :is(.kku,.kkz):has(a){padding:10px 0;margin:-10px 0}
 }
-@media(max-width:430px){body.kompakt table.kbg th,body.kompakt table.kbg td{white-space:normal;hyphens:auto}body.kompakt table.kbg input,body.kompakt table.kbg td:first-child input{width:50px!important}body.kompakt table.kbg td:first-child select{width:92px!important}}
+@media(max-width:430px){body.kompakt table.kbg th,body.kompakt table.kbg td{white-space:normal;hyphens:auto}body.kompakt table.kbg input,body.kompakt table.kbg td:first-child input{width:50px!important}body.kompakt table.kbg td:first-child select{width:92px!important}}
+
 @media(max-width:760px){ /* K2 am Handy: Bezeichnung über die volle Breite, darunter die vier Spalten (Kopfzeile = Beschriftung) */
   body.kompakt table.k2k,body.kompakt table.k2k>:is(thead,tbody,tfoot){display:block;width:100%!important}body.kompakt table.k2k tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 40px;gap:4px 6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
   body.kompakt table.k2k :is(td,th){padding:0!important;border:0;white-space:normal!important}body.kompakt table.k2k :is(td,th):first-child{grid-column:1/-1}body.kompakt table.k2k thead th:first-child{display:none}body.kompakt table.k2k.kbg td input{width:100%!important}
@@ -159,6 +170,12 @@ nav button.zl{display:block;width:100%;text-align:left;background:none;border:0;
 .zlaus .zl{display:none!important}.pop.zlpop{z-index:45;padding:8px}.zlpop .bwz{border-radius:5px} /* Zuletzt geöffnet (P19 a) */
 nav .grp{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#8792a8;padding:12px 18px 3px}
 nav a.navkl{display:none;padding-left:32px;font-size:13px}body.navkl nav a.navkl{display:block} /* Kunden / Lieferanten in der Seitenleiste (P6, erw.navKL) */
+body:not(.btb) nav a.navbtb{display:none!important} /* Bautagesberichte (P36 Teil 1, erw.btb) */
+/* Messprotokoll (P39, erw.messprot): Eintrag in der Seitenleiste, Markierung der Grenzwerte, Stromkreis-Karten am Handy */
+nav a.navmp{display:none}body.mpan nav a.navmp{display:block}
+.mpt td{padding:3px 3px;white-space:nowrap}.mpt input{padding-left:5px;padding-right:5px}.mpt th{white-space:nowrap;font-size:12px}.mpt select{min-width:0;padding-left:4px;padding-right:2px}.mppt td:first-child{white-space:normal}
+td.mpok input,label.mpok input{border-color:var(--ok);background:rgba(30,122,70,.08)}td.mpwarn input,label.mpwarn input{border-color:var(--warn);background:rgba(154,91,0,.1)}td.mperr input,label.mperr input{border-color:var(--err);background:rgba(180,35,24,.1)}
+.mpk{border-top:1px solid var(--line);padding:8px 0}.mpk:first-child{border-top:0}.mpk .row{margin-bottom:6px}
 #savestate{font-size:12px;color:#8fd3a8;padding:4px 18px 12px}
 #undobtn{margin:auto 18px 0;background:#2c3446;color:#fff;border:0}#undobtn:disabled{opacity:.4}
 #savestate.bad{color:#ffb4ab}
@@ -332,6 +349,21 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .kbf td.kbt{font-weight:700;font-size:11pt}.kbf .kbn{font-weight:700;font-size:12pt;text-align:center}.kbf .kbl{max-height:15mm;max-width:40mm;display:block;margin:0 auto}.kbf .kbfi{font-size:6.5pt;text-align:center;margin-top:.5mm}
 .kbf table.kbx td{border:0;padding:.3mm 0;font-weight:700}.kbf table.kbx td.x{width:8mm;text-align:center}.kbf td.lb2{font-size:6.5pt;border-left:0}.kbf .kbs td{font-weight:700;background:#f2f2f2}.kbf .kbft{margin-top:3mm;font-size:6.5pt;text-align:center;border-top:.6pt solid #80704d;padding-top:1mm}
 .kbf thead{display:table-header-group}.kbf tr{break-inside:avoid}.kbf .an td{font-size:7pt}.kbf td.kbsub{color:#1a4f9c;font-size:7pt}
+/* Messprotokoll drucken (P39 Teil 2): Blätter .mpf, Messwerte quer (@page mpq) */
+@page mpq{size:A4 landscape;margin:10mm 12mm 17.3mm 12mm}.mpf{font:8.5pt/1.3 Arial,Helvetica,sans-serif;color:#000}.mpf+.mpf{break-before:page}.mpf.quer{page:mpq}
+.mpf table{width:100%;border-collapse:collapse;margin:0}.mpf table+table{margin-top:-.6pt}.mpf th,.mpf td{border:.6pt solid #000;padding:.8mm 1.2mm;vertical-align:middle;color:#000;background:none;font-size:8.5pt}.mpf th{font-weight:700;text-align:center}
+.mpf .c{text-align:center}.mpf .n{text-align:right;white-space:nowrap}.mpf h4{margin:3.5mm 0 1mm;font-size:9.5pt}.mpf thead{display:table-header-group}.mpf tr{break-inside:avoid}
+.mpf .kbl{max-height:15mm;max-width:40mm;display:block;margin:0 auto}.mpf .kbfi{font-size:6.5pt;text-align:center;margin-top:.5mm}.mpf .kbft{margin-top:3mm;font-size:6.5pt;text-align:center;border-top:.6pt solid #80704d;padding-top:1mm}
+.mpf table.mpm th,.mpf table.mpm td{font-size:7.5pt;padding:.6mm .8mm}.mpf .mpl{font-size:6.5pt;margin:1.5mm 0 0}.mpf .mpsig{display:flex;gap:12mm;margin-top:14mm;break-inside:avoid}.mpf .mpsig>div{flex:1;font-size:7.5pt}.mpf .mpsl{border-bottom:.6pt solid #000;height:16mm;margin-bottom:1mm}@media print{body:has(#print .mpf) #dirtybar{display:none!important}}
+fieldset.mpfs{border:0;padding:0;margin:0;min-width:0}.mpf .sigb{margin-top:0}.mpf .sigbild{height:16mm}.mpf .sigbild img{max-height:15mm}.mpf .sigl,.mpf .sigp{font-size:7.5pt;color:#000} /* Messprotokoll Teil 3: gesperrter Editor, Unterschriften im Druck */
+/* Messprotokoll Teil 4 (P39, erw.mpVorlage): Häkchen, Prüfumfang-Matrix, Deckblatt im Druck */
+.mpckl{display:flex;flex-wrap:wrap;gap:0 20px;margin:2px 0 6px}label.mpck{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--fg,inherit);margin:3px 0;min-height:28px;cursor:pointer}label.mpck input{width:20px;height:20px;margin:0;flex:none}.mph{font-size:13px;margin:12px 0 2px}
+.mpums{overflow-x:auto}table.mpum th span{writing-mode:vertical-rl;transform:rotate(180deg);display:inline-block;max-height:140px;font-size:11px;font-weight:500;white-space:normal;text-align:left}table.mpum th{vertical-align:bottom}
+table.mpum td select{width:54px;padding:3px 2px}table.mpum td:first-child{white-space:nowrap}table.mpumh{table-layout:fixed;width:100%}table.mpumh th,table.mpumh td{padding:4px 2px}table.mpumh th:not(:first-child){width:56px;text-align:center}table.mpumh td:first-child{white-space:normal;font-size:12px;overflow-wrap:anywhere}table.mpumh th{font-size:11px}table.mpumh td select{width:100%;min-width:0;padding-left:6px!important;padding-right:0!important}.mpumb+.mpumb{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}
+.mpf .mpcbw{display:inline-block;margin-right:4mm;white-space:nowrap}.mpf .mpcb{display:inline-block;width:3.2mm;height:3.2mm;border:.6pt solid #000;text-align:center;line-height:3.2mm;font-size:8pt;font-weight:700;vertical-align:-.6mm;margin-right:1.5mm}
+.mpf .mpt1{margin:4mm 0 3mm;font-size:9pt}.mpf .mpt1 b{font-size:20pt;margin-right:2mm}.mpf .mpt1 span{font-size:7.5pt}.mpf .mpvt{font-size:7pt;font-style:italic;border:.6pt solid #000;padding:1.5mm 2mm;margin:3mm 0}.mpf .mpsk{font-size:6.5pt;text-align:right}.mpf .mpsi{max-height:11mm;max-width:50mm;vertical-align:middle}
+.mpf .mpumd th.mplg{text-align:left;font-weight:400;vertical-align:top;width:42%;font-size:7.5pt}.mpf .mpvh{height:44mm;vertical-align:bottom;padding:1mm .5mm}.mpf .mpvh span{writing-mode:vertical-rl;transform:rotate(180deg);font-weight:400;font-size:7pt;text-align:left}.mpf tr.mput td{background:#eef1fb}
+.mpf .mpc3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8mm 3mm}.mpf .mpc3 .mpcbw{white-space:normal}
 #print{display:none}
 .pgw,.pgw>*>tr>td{border:0;padding:0;width:100%;border-collapse:collapse}.pgw .pgf{height:16mm}
 @media print{#app,#start,.pop{display:none!important}#print{display:block}body{background:#fff}@page{size:A4;margin:10mm 14mm 17.3mm 20mm;@top-left{content:'\00a0'}@top-center{content:'\00a0'}@top-right{content:'\00a0'}@bottom-right{content:'Seite ' counter(page) ' von ' counter(pages);white-space:nowrap;font:7.5pt Arial,sans-serif;vertical-align:top;text-align:right;padding-top:10.5mm;width:30mm;margin-right:1mm}}#print.mb .ft{display:none}#print.mb .pgf{height:0}
@@ -370,6 +402,7 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .doc .kzl{font-size:8pt;color:#333}.doc .lt.lk{font-size:9pt;color:#000}.doc table.p tr.mlt>td{border-bottom:0;padding-bottom:1px}.doc table.p tr.ltz>td{padding-top:0}
 .doc.gf tr.grpz td:not(.n)>b{color:var(--gf,#80704d)}.doc.gu tr.grpz td:not(.n)>b{text-decoration:underline}.doc.nf table.p tbody tr:not(.grpz):not(.gsum)>td>b{font-weight:400}
 @media print{.doc table.p tr.mlt{break-after:avoid}}
+@media print{.btbp .btbd h3{break-after:avoid}.btbp .btbbd figure,.btbp .sigb,.btbp tr{break-inside:avoid}.btbp .btbbd img{max-height:85mm}} /* Bautagesbericht (P36 Teil 4) */
 .doc table.p.sp tbody td:first-child{text-align:left;white-space:normal}.doc table.p.sp tbody td.c,.doc table.p.sp tbody td.pn{text-align:center}.doc table.p.sp tbody td.pn{white-space:nowrap}.doc table.p.sp tbody td.n,.doc table.p.sp tbody tr.gsum td{text-align:right}.doc table.p td.an{font-size:8.5pt}
 .doc .lt{font-size:8.5pt;color:#333;white-space:pre-wrap}
 .doc .pe{font-size:7pt;line-height:1.2;color:#444;white-space:nowrap}.pez{font-size:11px;line-height:1.2;color:var(--mut);white-space:nowrap;text-align:right;margin-top:1px} /* Preiseinheit (P14): „je 100 m“ */
@@ -489,6 +522,8 @@ body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150p
     <a href="#/auftraege" data-n="auftraege">Aufträge &amp; DB II</a>
     <a href="#/kosten" data-n="kosten">Laufende Kosten</a>
     <a href="#/zeiten" data-n="zeiten">Zeiterfassung</a>
+    <a href="#/berichte" data-n="berichte" class="navbtb">Bautagesberichte</a>
+    <a href="#/mps" data-n="mps" class="navmp">Messprotokolle</a>
     <div class="grp">Stammdaten</div>
     <a href="#/kontakte" data-n="kontakte">Kunden &amp; Lieferanten</a>
     <a href="#/kontakte/K" data-n="kontakte/K" class="navkl">Kunden</a>
@@ -731,7 +766,7 @@ function neueDB(){
       nk,texte,knr:{K:10000,L:70000},anr:0,
       spalten:{},artgruppen:[],lagerplaetze:[],zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,papier:'A4',lvnr:0,erw:{},druckprofil:{},kvListe:[],geraete:[]
     },
-    kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],kosten:[],fibu:fibuNeu(),log:[],papierkorb:[]
+    kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],kosten:[],fibu:fibuNeu(),log:[],papierkorb:[],berichte:[],messprot:[]
   };
 }
 // Firmendaten laut Briefpapier (Fußzeile der Vorlagen); füllen nur leere Felder
@@ -779,7 +814,7 @@ function undoBtn(){const e=document.getElementById('undobtn');if(e){e.disabled=!
 // Was unterscheidet zwei Stände? (für den Hinweis)
 function aenderungText(a,b){
   for(const[k,n]of[['lagerplaetze','Lagerplätze'],['artgruppen','Artikelgruppen']])if(JSON.stringify(a.settings?.[k])!==JSON.stringify(b.settings?.[k]))return n;
-  const L=[['belege','Beleg',x=>bNr(x)],['artikel','Artikel',x=>x.nr+' '+x.bez],['kontakte','Kontakt',x=>x.name],['lager','Lagerbuchung',()=>''],['zeiten','Zeiterfassung',()=>''],['kalk','K-Blatt',x=>x.bez||x.name||''],['lv','LV',x=>x.bez||x.name||''],['lvbib','Textbaustein',x=>x.bez||x.kurz||''],['kosten','Laufende Kosten',x=>x.bez||''],['papierkorb','Papierkorb',()=>'']];
+  const L=[['belege','Beleg',x=>bNr(x)],['artikel','Artikel',x=>x.nr+' '+x.bez],['kontakte','Kontakt',x=>x.name],['lager','Lagerbuchung',()=>''],['zeiten','Zeiterfassung',()=>''],['kalk','K-Blatt',x=>x.bez||x.name||''],['lv','LV',x=>x.bez||x.name||''],['lvbib','Textbaustein',x=>x.bez||x.kurz||''],['kosten','Laufende Kosten',x=>x.bez||''],['papierkorb','Papierkorb',()=>''],['berichte','Bautagesbericht',x=>'BTB '+x.nr]];
   for(const[k,n,f]of L){const A=a[k]||[],B=b[k]||[];if(JSON.stringify(A)===JSON.stringify(B))continue;
     const m=new Map(A.map(x=>[x.id,JSON.stringify(x)])),bi=new Set(B.map(x=>x.id));
     const x=B.find(x=>m.get(x.id)!==JSON.stringify(x))||A.find(x=>!bi.has(x.id));let t='';try{t=x?f(x):''}catch(e){}return(n+' '+(t||'')).trim()}
@@ -789,6 +824,7 @@ function aenderungText(a,b){
 function undoSperre(alt){const A=new Map((alt.belege||[]).map(b=>[b.id,b]));
   for(const b of DB.belege)if(b.fest){const o=A.get(b.id);if(!o||!o.fest)return`${bNr(b)} wurde inzwischen festgeschrieben – Korrektur nur per Storno/Gutschrift.`}
   if(JSON.stringify(alt.settings?.nk)!==JSON.stringify(S().nk))return'Seither wurde eine Belegnummer vergeben (Nummernkreise bleiben lückenlos).';
+  {const u=sigUndo(alt);if(u)return u} // Unterschriften und Sperren (P36 a) bleiben
   return''}
 function undoAnwenden(j,h){const az=new Map(DB.belege.map(b=>[b.id,b.ausgaben]));DB=migrate(JSON.parse(j));for(const b of DB.belege){const n=az.get(b.id);if(n>(b.ausgaben??0))b.ausgaben=n} /* Ausgabezähler (DUPLIKAT) wird nie zurückgedreht */LAST=JSON.stringify(DB);DIRTY=LAST!==SNAP;dirtyBar();artDatalist();
   if(h&&location.hash!==h){SKIP=true;location.hash=h}else render();undoBtn()}
@@ -1000,7 +1036,7 @@ function merge3(base,local,remote){
   const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b),konfl=[],out=remote;
   // Ausgabezähler (DUPLIKAT) allein ist keine Änderung und kein Konflikt; es gilt der höhere Stand beider Geräte
   const ohneZ=({ausgaben,...x})=>x,AZ=new Map();for(const x of [...(remote.belege||[]),...(local.belege||[])])if(x.ausgaben>(AZ.get(x.id)??0))AZ.set(x.id,x.ausgaben);
-  for(const c of ['kontakte','artikel','belege','lager','zeiten','kalk','lv','lvbib','kosten','papierkorb']){
+  for(const c of ['kontakte','artikel','belege','lager','zeiten','kalk','lv','lvbib','kosten','messprot','papierkorb','berichte']){
     out[c]=out[c]||[];const gl=c==='belege'?(a,b)=>eq(ohneZ(a),ohneZ(b)):eq;
     const B=new Map((base?.[c]||[]).map(x=>[x.id,x])),R=new Map(out[c].map(x=>[x.id,x]));
     for(const l of local[c]||[]){
@@ -1014,6 +1050,7 @@ function merge3(base,local,remote){
     const L=new Set((local[c]||[]).map(x=>x.id));
     for(const [id,b] of B)if(!L.has(id)&&R.has(id)&&eq(R.get(id),b))out[c].splice(out[c].indexOf(R.get(id)),1);
   }
+  for(const c in SIG_C){const L_=new Map((local[c]||[]).map(x=>[x.id,x]));out[c]=(out[c]||[]).map(r=>{const l=L_.get(r.id);return l?sigMerge(l,r):r})} // gesperrte Datensätze (P36 a): gesperrter Stand gewinnt
   for(const r of out.belege){const n=AZ.get(r.id);if(n>(r.ausgaben??0))r.ausgaben=n} // Ausgabezähler (DUPLIKAT) nie verkleinern
   const seen=new Set((out.log||[]).map(x=>x.ts+x.aktion));
   out.log=[...(out.log||[]),...(local.log||[]).filter(x=>!seen.has(x.ts+x.aktion))].sort((a,b)=>a.ts.localeCompare(b.ts));
@@ -1587,17 +1624,19 @@ function render(){
   if(!DB)return;
   document.body.classList.toggle('suaus',!erw('suche')); // Globale Suche (P20)
   const h=location.hash.replace(/^#\/?/,'')||'dash',[view,arg]=h.split('/');
-  const nz=view==='beleg'?(beleg(arg)?'belege/'+T[beleg(arg).typ].b:''):{kontakt:'kontakte',auftrag:'auftraege'}[view]||''; // Seitenleiste: Bereich des geöffneten Datensatzes markieren (P19 d)
+  const nz=view==='beleg'?(beleg(arg)?'belege/'+T[beleg(arg).typ].b:''):{kontakt:'kontakte',auftrag:'auftraege',bericht:'berichte'}[view]||''; // Seitenleiste: Bereich des geöffneten Datensatzes markieren (P19 d)
   document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('on',a.dataset.n===h||a.dataset.n===view||(!!nz&&a.dataset.n===nz)));
   closePop();
   document.body.classList.toggle('navkl',!!(erw('navKL')&&erw('kFilter'))); // Untereinträge Kunden/Lieferanten (P6)
+  document.body.classList.toggle('btb',erw('btb')); // Bautagesberichte (P36)
+  document.body.classList.toggle('mpan',!!erw('messprot')); // Messprotokolle in der Seitenleiste (P39)
   const f=V[view]||V.dash;
   document.body.classList.toggle('kompakt',kmp()); // Kompakte Ansicht (P30): CSS für bestehende Elemente nur unter body.kompakt
   document.body.classList.toggle('ios',kmp()&&erw('ios')); // iOS-Darstellung am Handy (CSS nur unter body.ios in @media max-width 760px)
   $('#main').innerHTML=f(arg);
   document.body.classList.toggle('zlaus',!erw('zuletzt'));if(arg&&ZL_V.includes(view))zuletztMerk(view+'/'+arg); // Zuletzt geöffnet (P19 a)
   requestAnimationFrame(vorschauSeiten);
-  if(erw('artBild'))bilderLaden(); // Bild je Artikel (P24, Teil)
+  bilderLaden(); // Bilder aus der Ablage: Artikel (P24, Teil), Fotos und Unterschriften (P36)
   document.body.classList.toggle('ihh',erw('ihHover')&&HOVER.matches);document.body.classList.toggle('ssp',erw('scrollSperre')); // Bedienung (P33)
   document.querySelectorAll('.modal').forEach(m=>{try{if(m._gilt&&!m._gilt()){(m._weg||(()=>m.remove()))();return}m._zeich?.()}catch(e){}}); // offene Bearbeiten-Pop-ups (P30) zeigen den neuen Stand; Pop-ups eines verlassenen oder ersetzten Belegs (Navigation, Abgleich, Verwerfen) schließen
   lfNav(); // Seitenleiste: „Offene Lieferungen“ (P35)
@@ -1656,6 +1695,8 @@ function suIndex(){const E=[],add=(g,o,...h)=>E.push({g,...o,h:h.flat().filter(x
   for(const x of DB.kalk)add('kb',{r:'kbs/'+x.id,ic:'🧮',t:x.name||'K-Blatt',u:'K-Blatt'},x.name,x.nr);
   for(const k of DB.kosten||[])add('kosten',{r:'kosten',k:k.id,ic:'💳',t:k.bez||'Kostenposition',u:[k.partner,k.vertragNr,KKAT[k.kat]?.[0]].filter(Boolean).join(' · '),b:fmt(k.betrag)+' €',betr:[+k.betrag]},k.bez,k.partner,k.vertragNr,k.notiz,KKAT[k.kat]?.[0]);
   for(const x of DB.lvbib||[])add('bib',{r:'lvbib',k:x.id,ic:'🧩',t:x.kurz||'Textbaustein',u:x.gruppe||''},x.kurz,x.gruppe,suTxt(x.lang));
+  if(erw('btb'))for(const r of DB.berichte||[])add('btb',{r:'bericht/'+r.id,ic:'📝',t:`Bautagesbericht ${r.nr} · ${dAT(r.datum)}`,u:auftragKurz(r.auftragId),s:btbStatus(r),d:r.datum},'BTB '+r.nr,dAT(r.datum),r.ort,r.verfasser,auftragLabel(r.auftragId),(r.taet||[]).map(t=>[t.text,t.ort]),(r.personal||[]).map(p=>p.name),Object.values(r.vork||{})); // Bautagesberichte (P36)
+  if(erw('messprot'))mpSuche(add); // Messprotokolle (P39)
   return E}
 function suTreffer(E,q){const w=q.toLowerCase().split(/\s+/).filter(Boolean),z=/^[-\d.,\s€]+$/.test(q)&&/\d/.test(q)?zahlDE(q.replace(/\s/g,'')):null,G={};
   for(const e of E){const tx=w.every(t=>e.h.includes(t)),bt=z!=null&&(e.betr||[]).some(v=>Math.abs(v-z)<0.005);if(tx||bt)(G[e.g]=G[e.g]||[]).push(bt&&!tx?{...e,u:'Betrag '+fmt(z)+' € · '+e.u}:e)}
@@ -2882,7 +2923,8 @@ V.auftrag=aid=>{
   ${zt.map(z=>`<tr><td>${dAT(z.datum)}</td><td>${esc(z.tarif)}</td><td>${esc(z.text)}</td><td class="n">${fmtQ(z.stunden)}</td><td class="n">${fmt(z.stunden*z.kosten)}</td><td>${z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn')}</td></tr>`).join('')||'<tr><td colspan="6" class="mut">keine – Erfassung unter <a href="#/zeiten">Zeiterfassung</a></td></tr>'}
   </tbody></table></div>`}
   </div><div>
-  ${kbAuftragKarte(aid)}
+  ${kbAuftragKarte(aid)}${btbAuftragKarte(aid)}
+  ${mpAuftragKarte(aid)}
   <div class="card"><h2>Vor- / Nachkalkulation</h2><table><thead><tr><th></th><th class="n">Vorkalk.</th><th class="n">Ist</th></tr></thead><tbody>
   ${row('Umsatz nach Skonto',v?fmt(v.uS):'–',fmt(n.uN))}
   ${row('Material / Ware',v?fmt(v.mat):'–',fmt(n.material+n.fremd))}
@@ -3059,7 +3101,8 @@ V.zeiten=()=>{
     ${auf.length?'':'<p class="hint">Zuerst ein Angebot oder einen Auftrag anlegen.</p>'}</div>
   ${tabelle('zeiten',[
     {k:'datum',l:'Datum',f:z=>dAT(z.datum)},{k:'auftrag',l:'Auftrag',f:z=>kmp()?`<a href="#/auftrag/${z.auftragId}" title="${esc(auftragLabel(z.auftragId))}">${esc(auftragKurz(z.auftragId))}</a>`:`<a href="#/auftrag/${z.auftragId}">${esc(auftragLabel(z.auftragId))}</a>`},{k:'kunde',l:'Kunde',f:z=>esc(kName((beleg(z.auftragId)||{}).kontaktId)),std:false},
-    {k:'tarif',l:'Tarif',f:z=>esc(z.tarif)},{k:'text',l:'Tätigkeit',f:z=>esc(z.text)},{k:'std',l:'Std.',n:1,f:z=>fmtQ(z.stunden)},{k:'kosten',l:'Kosten/h',n:1,f:z=>fmt(z.kosten)},{k:'vk',l:'VK/h',n:1,f:z=>fmt(z.vk)},
+    {k:'tarif',l:'Tarif',f:z=>esc(z.tarif)},{k:'text',l:'Tätigkeit',f:z=>esc(z.text)},...(erw('btbZeit')?[{k:'btb',l:'Bericht',f:z=>{const r=z.berichtId&&ROOT.btb(z.berichtId);return r?`<a href="#/bericht/${r.id}">BTB ${r.nr}</a>`:''}}]:[]), // Bautagesbericht (P36 Teil 5)
+    {k:'std',l:'Std.',n:1,f:z=>fmtQ(z.stunden)},{k:'kosten',l:'Kosten/h',n:1,f:z=>fmt(z.kosten)},{k:'vk',l:'VK/h',n:1,f:z=>fmt(z.vk)},
     {k:'kges',l:'Kosten gesamt',n:1,f:z=>fmt(z.stunden*z.kosten),std:false},{k:'vges',l:'VK gesamt',n:1,f:z=>fmt(z.stunden*z.vk),std:false},
     {k:'status',l:'Status',f:z=>z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn')}],L,
     {nach:kmpH()?z=>`<td>${z.belegId?'':`<button class="mehr" data-act="menue" data-m="zeit" data-id="${z.id}" title="Weitere Aktionen">⋯</button>`}</td>`:z=>`<td>${z.belegId?'':`<button class="s d" data-act="ztdel" data-id="${z.id}">✕</button>`}</td>`,leer:'Keine Einträge.',
@@ -4053,8 +4096,8 @@ const ACT_LV=({
     const L=nr.trim()==='*'?DB.artikel.filter(a=>a.art!=='L'&&a.aktiv!==false):nr.split(',').map(x=>DB.artikel.find(a=>a.nr===x.trim())).filter(Boolean);
     for(const a of L)if(!kb.k4.some(m=>m.bez===a.bez)){const lf=(a.lieferanten||[]).find(l=>+l.lp>0);kb.k4.push({...TPL.k4(),bez:a.bez,einheit:a.einheit,lp:lf?+lf.lp:+a.ek||0,rab:lf?+lf.rabatt||0:0})}persist();render()},
   kbneuA:el=>{const aid=el.dataset.id,r=beleg(aid);const kb=neueKB({auftragId:aid,projekt:r?.projekt||'',name:'Kalkulation '+(r?.projekt||(r?bNr(r):''))});DB.kalk.push(kb);log('K-Blatt angelegt',`${kb.name} (Auftrag ${r?bNr(r):''})`);persist();go('kbs/'+kb.id)}, // K-Blatt zum Auftrag (P34 Teil 4)
-  arradd:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id);let arr=getP(o,el.dataset.f);if(!arr){setP(o,el.dataset.f,[]);arr=getP(o,el.dataset.f)}arr.push(TPL[el.dataset.tpl]());persist();render()},
-  arrdel:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id),arr=getP(o,el.dataset.f);arr.splice(+el.dataset.i,1);persist();render()},
+  arradd:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id);if(gesperrt(o))return; /* P36 a */let arr=getP(o,el.dataset.f);if(!arr){setP(o,el.dataset.f,[]);arr=getP(o,el.dataset.f)}arr.push(TPL[el.dataset.tpl]());persist();render()},
+  arrdel:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id),arr=getP(o,el.dataset.f);if(gesperrt(o))return; /* P36 a */arr.splice(+el.dataset.i,1);persist();render()},
   bibneu:()=>{DB.lvbib.unshift({id:uid(),gruppe:'',kurz:'',lang:'',einheit:'Stk',k7:null});persist();render()},
   bibdel:el=>{if(!confirm('Baustein löschen?'))return;DB.lvbib=DB.lvbib.filter(x=>x.id!==el.dataset.id);persist();render()},
   lvneu:el=>{const s=S();s.lvnr=(s.lvnr||0)+1;const kbE=DB.kalk.filter(k=>k.art==='eigen');
@@ -6001,7 +6044,7 @@ const ACT={
   ztadd:()=>{const a=$('#zt-a').value,t=$('#zt-t').value,h=num($('#zt-h').value);if(!a||!h){alert('Auftrag und Stunden angeben.');return}
     const tf=S().tarife.find(x=>x.kz===t)||{kosten:0,vk:0};lsSet('erp-lastA',a);lsSet('erp-lastT',t);
     DB.zeiten.push({id:uid(),datum:$('#zt-d').value||isoD(),auftragId:a,tarif:t,stunden:h,text:$('#zt-x').value,kosten:+tf.kosten||0,vk:+tf.vk||0,belegId:''});commit();render()},
-  ztdel:el=>{const z=DB.zeiten.find(z=>z.id===el.dataset.id);if(z&&confirm('Eintrag löschen?')){wegwerfen('zeiten',[z]);render()}},
+  ztdel:el=>{const z=DB.zeiten.find(z=>z.id===el.dataset.id),bz=z?.berichtId&&ROOT.btb?.(z.berichtId);if(bz?.gesperrt){alert(`Der Eintrag gehört zum unterschriebenen Bautagesbericht ${bz.nr} und kann nicht gelöscht werden.`);return} /* P36 Teil 5 */if(z&&confirm('Eintrag löschen?')){wegwerfen('zeiten',[z]);render()}},
   knew:async el=>{const k=await kontaktPopup(el.dataset.t);if(k){commit();go('kontakt/'+k.id)}},
   ktyp:el=>{const v=el.dataset.t||'';UI.kTyp=v;lsSet('erp-kTyp',v||null);const h='kontakte'+(v?'/'+v:'');if(location.hash==='#/'+h)render();else nav(h)}, // Kontaktfilter (P6)
   kdel:el=>{const id=el.dataset.id;if(DB.belege.some(b=>b.kontaktId===id)){alert('Kontakt hat Belege und kann nicht gelöscht werden.');return}if(!confirm('Kontakt löschen?'))return;wegwerfen('kontakte',[kontakt(id)]);go('kontakte')},
@@ -6079,6 +6122,294 @@ const ACT={
   lpop:el=>LIVE[el.dataset.lp]?.(el), // Bearbeiten-Pop-up mit Live-Feldern (P30)
 };
 Object.assign(ACT,ACT_LV,ACT_LB,ACT_FB);
+/* Bautagesbericht (P36 Teil 1, erw.btb): je Auftrag und Tag ein Bericht (mehrere je Tag erlaubt) mit Witterung, Personal und Stunden, Tätigkeiten, Material/Geräten und
+   besonderen Vorkommnissen. Sammlung DB.berichte {id,nr (laufend je Auftrag),auftragId,datum,ort,verfasser,wetter{vm,nm,tMin,tMax,beh,behStd,behTxt},
+   personal[{name,tarif,von,bis,pause,stunden}] (von/bis gesetzt = Stunden daraus, sonst stunden),taet[{text,ort}],material[{bez,menge,einh}],geraete[{bez,stunden}],
+   vork{beh,anord,zusatz,maengel,sicher},erstellt}; Eingaben über den Pfad-Setter (ROOT.btb, data-r="btb|<id>"). Erweiterungspunkte der weiteren Teile: BTB_ED (Abschnitte im Editor),
+   BTB_DOC (Abschnitte der Ansicht/des Drucks), BTB_KN (Knöpfe im Kopf), BTB_ST (Status). Abgeschlossen bzw. gesperrt (Teil 3: abgeschlossen, gesperrt) = nur Ansicht btbDoc() */
+erwPlus({k:'btb',std:false,p:'Bautagesbericht (P36)',l:'Bautagesberichte',info:'Seitenleiste „Bautagesberichte“ und im Auftrag die Karte „Bautagesberichte“: je Auftrag und Tag ein Bericht mit Baustelle, Witterung (Vormittag/Nachmittag, Temperatur, Behinderung), Personal mit Tarif, Beginn, Ende, Pause und Stunden, Tätigkeiten (auch aus Textbausteinen), Material, Geräten und besonderen Vorkommnissen (Behinderungen, Anordnungen des Auftraggebers, Zusatz- und Regieleistungen, Mängel, Sicherheit). Nummer laufend je Auftrag; ein neuer Bericht übernimmt Baustelle, Verfasser und Personal vom letzten Bericht desselben Auftrags. Aus = Seitenleiste und Karte ausgeblendet, gespeicherte Berichte bleiben erhalten.'});
+ROOT.btb=id=>DB.berichte.find(x=>x.id===id);
+PK.berichte={n:'Bautagesbericht',info:r=>`BTB ${r.nr} ${auftragKurz(r.auftragId)} ${dAT(r.datum)}`};
+const BTB_ED=[],BTB_DOC=[],BTB_KN=[],BTB_ST=[];
+const WETTER=[['','–'],['sonnig','☀ sonnig'],['heiter','🌤 heiter'],['bewoelkt','☁ bewölkt'],['nebel','🌫 Nebel'],['regen','🌧 Regen'],['schnee','🌨 Schnee'],['frost','❄ Frost'],['wind','💨 Sturm/Wind']];
+const wTxt=w=>w?(WETTER.find(x=>x[0]===w)||['',w])[1]:'';
+const VORK=[['beh','Behinderungen, Wartezeiten'],['anord','Anordnungen des Auftraggebers'],['zusatz','Zusatz- und Regieleistungen'],['maengel','Mängel, Schäden'],['sicher','Sicherheit, Unfälle']];
+Object.assign(TPL,{btbp:()=>({name:'',tarif:(S().tarife.find(t=>t.kz==='MONT')||S().tarife[0])?.kz||'',von:'',bis:'',pause:'',stunden:''}),btbt:()=>({text:'',ort:''}),btbm:()=>({bez:'',menge:'',einh:'Stk'}),btbg:()=>({bez:'',stunden:''})});
+const btbMin=t=>{const m=/^(\d{1,2}):(\d{2})/.exec(t||'');return m?+m[1]*60+ +m[2]:null};
+const btbStd=p=>{const a=btbMin(p.von),e=btbMin(p.bis);if(a==null||e==null)return+p.stunden||0;let d=e-a;if(d<0)d+=1440;return Math.max(0,r2((d-(+p.pause||0))/60))}; // über Mitternacht: + 24 h
+const btbSumme=r=>sum(r.personal||[],btbStd);
+const btbFest=r=>!!(r?.abgeschlossen||r?.gesperrt);
+const btbRoot=r=>beleg(r.auftragId)||DB.belege.find(b=>b.auftragId===r.auftragId);
+const btbOrdner=r=>{const a=btbRoot(r);return`Berichte/${(r.datum||isoD()).slice(0,4)}/${String(a?.nr||'Auftrag-'+r.auftragId).replace(/[^\w.\-]+/g,'_')}_BTB-${r.nr}`}; // Ablageordner für Fotos und Unterschriften
+const btbStatus=r=>{for(const f of BTB_ST){const t=f(r);if(t)return t}return tag('Entwurf')};
+const btbWetter=r=>{const w=r.wetter||{},t=[w.tMin,w.tMax].filter(x=>x!==''&&x!=null);return[[wTxt(w.vm),wTxt(w.nm)].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i).join(' / '),t.length?t.map(x=>fmtQ(x)).join(' bis ')+' °C':''].filter(Boolean).join(' · ')};
+const btbAuftraege=()=>auftragsListe().filter(a=>!a.docs.every(d=>d.storno));
+function btbNeu(aid){
+  const L=DB.berichte.filter(x=>x.auftragId===aid),vor=[...L].sort((a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt))[0],k=kontakt((beleg(aid)||DB.belege.find(b=>b.auftragId===aid))?.kontaktId);
+  const nr=Math.max(0,...L.map(x=>+x.nr||0),...DB.papierkorb.filter(e=>e.c==='berichte'&&e.daten?.auftragId===aid).map(e=>+e.daten.nr||0))+1; // Nummer laufend je Auftrag, auch Gelöschtes zählt
+  const r={id:uid(),nr,auftragId:aid,datum:isoD(),ort:vor?.ort||[k?.strasse,[k?.plz,k?.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '),verfasser:vor?.verfasser||S().bearbeiter||'',
+    wetter:{vm:'',nm:'',tMin:'',tMax:'',beh:false,behStd:'',behTxt:''},personal:(vor?.personal||[]).map(p=>({name:p.name,tarif:p.tarif,von:p.von,bis:p.bis,pause:p.pause,stunden:p.von&&p.bis?'':p.stunden})),
+    taet:[TPL.btbt()],material:[],geraete:[],vork:{},erstellt:new Date().toISOString()};
+  if(!r.personal.length)r.personal=[{...TPL.btbp(),name:S().bearbeiter||''}];
+  DB.berichte.push(r);log('Bautagesbericht angelegt',`BTB ${r.nr} ${auftragKurz(aid)}`);return r}
+const bIn=(R,f,v,{t='text',l='',ph='',cls='',list='',dis=false}={})=>`<label class="${cls}">${l}<input type="${t}"${t==='number'?' step="any" inputmode="decimal" data-t="nl"':''} data-o="path" data-r="${R}" data-f="${f}" value="${esc(v??'')}"${ph?` placeholder="${esc(ph)}"`:''}${list?` list="${list}"`:''}${dis?' disabled':''}></label>`;
+const bTa=(R,f,v,{l='',ph='',cls='w2'}={})=>`<label class="${cls}">${l}${ft(R,f,v,ph)}</label>`;
+const bAbs=(id,titel,inhalt,{offen=true,zusatz=''}={})=>kmp()?akk(id,titel,inhalt,{offen,zusatz}):`<div class="card"><h2>${titel}${zusatz?` <span class="mut" style="font-weight:400;font-size:13px">· ${zusatz}</span>`:''}</h2>${inhalt}</div>`;
+function btbEditor(r){const R='btb|'+r.id,w=r.wetter||{},T_=S().tarife,add=(f,tpl,l)=>`<button class="s" data-act="arradd" data-r="${R}" data-f="${f}" data-tpl="${tpl}">${l}</button>`,del=(f,i)=>`<button class="s d" data-act="arrdel" data-r="${R}" data-f="${f}" data-i="${i}" title="Zeile entfernen">✕</button>`;
+  const kopf=`<div class="row">${bIn(R,'datum',r.datum,{t:'date',l:'Datum',cls:'w05'})}${bIn(R,'ort',r.ort,{l:'Baustelle / Ort',cls:'w2'})}${bIn(R,'verfasser',r.verfasser,{l:'Verfasser (Monteur)'})}</div>`;
+  const wetter=`<div class="row"><label>Vormittag${fsel(R,'wetter.vm',w.vm,WETTER)}</label><label>Nachmittag${fsel(R,'wetter.nm',w.nm,WETTER)}</label>${bIn(R,'wetter.tMin',w.tMin,{t:'number',l:'Temp. min °C',cls:'w05'})}${bIn(R,'wetter.tMax',w.tMax,{t:'number',l:'Temp. max °C',cls:'w05'})}</div>
+    <label class="chk"><input type="checkbox" data-o="path" data-r="${R}" data-f="wetter.beh"${w.beh?' checked':''}> Arbeit witterungsbedingt behindert / unterbrochen</label>
+    ${w.beh?`<div class="row" style="margin-top:6px">${bIn(R,'wetter.behStd',w.behStd,{t:'number',l:'Ausfall Std.',cls:'w05'})}${bIn(R,'wetter.behTxt',w.behTxt,{l:'Beschreibung',cls:'w2'})}</div>`:''}`;
+  const pers=(r.personal||[]).map((p,i)=>{const P=`personal.${i}`,ber=btbMin(p.von)!=null&&btbMin(p.bis)!=null;
+    return`<div class="row btbz">${bIn(R,P+'.name',p.name,{l:'Name',cls:'w2'})}<label>Tarif${fsel(R,P+'.tarif',p.tarif,T_.map(t=>[t.kz,t.kz+' – '+t.bez]))}</label>${bIn(R,P+'.von',p.von,{t:'time',l:'Beginn',cls:'w05'})}${bIn(R,P+'.bis',p.bis,{t:'time',l:'Ende',cls:'w05'})}${bIn(R,P+'.pause',p.pause,{t:'number',l:'Pause min',cls:'w05'})}
+      ${ber?`<label class="w05">Std.<input value="${fmtQ(btbStd(p))}" disabled title="aus Beginn, Ende und Pause"></label>`:bIn(R,P+'.stunden',p.stunden,{t:'number',l:'Std.',cls:'w05'})}${del('personal',i)}</div>`}).join('')
+    +`<div class="bar" style="margin:4px 0 0">${add('personal','btbp','+ Person')}<span class="sp"></span><b>Summe ${fmtQ(btbSumme(r))} h</b></div>`;
+  const taet=(r.taet||[]).map((t,i)=>`<div class="row btbz">${bTa(R,`taet.${i}.text`,t.text,{l:'Tätigkeit',ph:'ausgeführte Arbeiten'})}${bIn(R,`taet.${i}.ort`,t.ort,{l:'Bauteil / Geschoß / Raum'})}${del('taet',i)}</div>`).join('')
+    +`<div class="bar" style="margin:4px 0 0">${add('taet','btbt','+ Tätigkeit')}${DB.lvbib?.length?`<select data-act="btbbib" data-id="${r.id}" style="width:auto"><option value="">+ aus Textbausteinen …</option>${DB.lvbib.map(x=>opt(x.id,(x.gruppe?x.gruppe+' · ':'')+(x.kurz||suTxt(x.lang).slice(0,60)),'')).join('')}</select>`:''}</div>`;
+  const mat=`<p class="mut" style="margin:0 0 4px">Material</p>${(r.material||[]).map((m,i)=>`<div class="row btbz">${bIn(R,`material.${i}.bez`,m.bez,{l:'Bezeichnung',cls:'w2',list:'dl-art'})}${bIn(R,`material.${i}.menge`,m.menge,{t:'number',l:'Menge',cls:'w05'})}<label class="w05">Einheit${fsel(R,`material.${i}.einh`,m.einh,S().einheiten.map(e=>[e,e]))}</label>${del('material',i)}</div>`).join('')}${add('material','btbm','+ Material')}
+    <p class="mut" style="margin:10px 0 4px">Geräte</p>${(r.geraete||[]).map((g,i)=>`<div class="row btbz">${bIn(R,`geraete.${i}.bez`,g.bez,{l:'Gerät',cls:'w2'})}${bIn(R,`geraete.${i}.stunden`,g.stunden,{t:'number',l:'Std.',cls:'w05'})}${del('geraete',i)}</div>`).join('')}${add('geraete','btbg','+ Gerät')}`;
+  const vk=r.vork||{},vork=VORK.map(([k,l])=>`<div class="row">${bTa(R,'vork.'+k,vk[k],{l})}</div>`).join('');
+  const nMat=(r.material||[]).length+(r.geraete||[]).length,nVork=VORK.filter(([k])=>pT(vk[k])).length;
+  return bAbs('btb-kopf','Kopfdaten',kopf,{zusatz:esc(dAT(r.datum))})+bAbs('btb-wetter','Witterung',wetter,{zusatz:esc(btbWetter(r))})+bAbs('btb-pers','Personal und Zeiten',pers,{zusatz:fmtQ(btbSumme(r))+' h'})
+    +bAbs('btb-taet','Tätigkeiten',taet,{zusatz:(r.taet||[]).filter(t=>pT(t.text)).length+''})+bAbs('btb-mat','Material und Geräte',mat,{offen:!!nMat,zusatz:nMat?nMat+'':'keine'})
+    +bAbs('btb-vork','Besondere Vorkommnisse',vork,{offen:!!nVork,zusatz:nVork?nVork+'':'keine'})+BTB_ED.map(f=>f(r)).join('')}
+// Ansicht (abgeschlossen) und Grundlage des Drucks (Teil 4): nur Lesen
+function btbDoc(r){const w=r.wetter||{},vk=r.vork||{},root=btbRoot(r),k=kontakt(root?.kontaktId),zl=(l,v)=>v?`<tr><th>${l}</th><td>${v}</td></tr>`:'',nl=s=>esc(s).replace(/\n/g,'<br>');
+  const P=(r.personal||[]).filter(p=>pT(p.name)||btbStd(p)),Tt=(r.taet||[]).filter(t=>pT(t.text)),M=(r.material||[]).filter(m=>pT(m.bez)),G=(r.geraete||[]).filter(g=>pT(g.bez));
+  return`<div class="btbd"><table class="btbk"><tbody>${zl('Bericht-Nr.',`${r.nr}${root?' · Auftrag '+esc(bNr(root)):''}`)}${zl('Datum',dAT(r.datum))}${zl('Auftraggeber',esc(k?.name||''))}${zl('Betreff',esc(root?.betreff||root?.projekt||''))}${zl('Baustelle',esc(r.ort))}${zl('Verfasser',esc(r.verfasser))}
+    ${zl('Witterung',esc(btbWetter(r))+(w.beh?`<br><b>Behinderung:</b> ${w.behStd!==''&&w.behStd!=null?fmtQ(w.behStd)+' h ':''}${esc(w.behTxt||'')}`:''))}</tbody></table>
+  <h3>Personal und Zeiten</h3>${P.length?`<table class="btbt"><thead><tr><th>Name</th><th>Tarif</th><th>Beginn</th><th>Ende</th><th class="n">Pause</th><th class="n">Std.</th></tr></thead><tbody>${P.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.tarif)}</td><td>${esc(p.von||'')}</td><td>${esc(p.bis||'')}</td><td class="n">${p.pause!==''&&p.pause!=null?fmtQ(p.pause)+' min':''}</td><td class="n">${fmtQ(btbStd(p))}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="5"><b>Summe</b></td><td class="n"><b>${fmtQ(btbSumme(r))}</b></td></tr></tfoot></table>`:'<p class="mut">keine Angaben</p>'}
+  <h3>Tätigkeiten</h3>${Tt.length?`<table class="btbt"><tbody>${Tt.map(t=>`<tr><td>${nl(t.text)}</td><td>${esc(t.ort||'')}</td></tr>`).join('')}</tbody></table>`:'<p class="mut">keine Angaben</p>'}
+  ${M.length||G.length?`<h3>Material und Geräte</h3><table class="btbt"><tbody>${M.map(m=>`<tr><td>${esc(m.bez)}</td><td class="n">${m.menge!==''&&m.menge!=null?fmtQ(m.menge)+' '+esc(m.einh||''):''}</td></tr>`).join('')}${G.map(g=>`<tr><td>Gerät: ${esc(g.bez)}</td><td class="n">${g.stunden!==''&&g.stunden!=null?fmtQ(g.stunden)+' h':''}</td></tr>`).join('')}</tbody></table>`:''}
+  ${VORK.some(([x])=>pT(vk[x]))?`<h3>Besondere Vorkommnisse</h3><table class="btbk"><tbody>${VORK.map(([x,l])=>zl(l,pT(vk[x])?nl(vk[x]):'')).join('')}</tbody></table>`:''}
+  ${BTB_DOC.map(f=>f(r)).join('')}</div>`}
+V.bericht=id=>{const r=ROOT.btb(id);if(!r)return'<p>Bautagesbericht nicht gefunden.</p>';const root=btbRoot(r),fest=btbFest(r);
+  return`<div class="bar"><h1 style="margin:0">Bautagesbericht ${r.nr}</h1>${btbStatus(r)}<span class="sp"></span>${BTB_KN.map(f=>f(r)).join('')}${fest?'':`<button class="d" data-act="btbdel" data-id="${r.id}">Löschen</button>`}</div>
+  <p class="mut" style="margin:2px 0 10px"><a href="#/berichte">Bautagesberichte</a> › <a href="#/auftrag/${r.auftragId}">Auftrag ${esc(auftragLabel(r.auftragId))}</a>${root?'':' (Auftrag nicht mehr vorhanden)'}</p>
+  ${fest?`<div class="card">${btbDoc(r)}</div>`:btbEditor(r)}`};
+V.berichte=()=>{const auf=btbAuftraege(),A=UI.btbA||'',L=DB.berichte.filter(r=>!A||r.auftragId===A).sort((a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt));
+  return`<div class="bar"><h1 style="margin:0">Bautagesberichte</h1><span class="sp"></span><button class="p" data-act="btbneu"${A?` data-id="${A}"`:''}>+ Bericht</button></div>
+  ${erw('btb')?'':'<p class="hint">Bautagesberichte sind ausgeschaltet (Einstellungen → Erweiterungen); vorhandene Berichte bleiben lesbar.</p>'}
+  <div class="row" style="max-width:520px"><label class="w2">Auftrag<select data-o="ui" data-f="btbA"><option value="">alle Aufträge</option>${auf.map(a=>opt(a.id,auftragLabel(a.id),A)).join('')}</select></label></div>
+  ${tabelle('berichte',[{k:'nr',l:'Nr.',f:r=>'BTB '+r.nr},{k:'datum',l:'Datum',f:r=>dAT(r.datum)},{k:'auftrag',l:'Auftrag',f:r=>esc(auftragKurz(r.auftragId))},{k:'kunde',l:'Kunde',f:r=>esc(kName(btbRoot(r)?.kontaktId)),std:false},
+    {k:'ort',l:'Baustelle',f:r=>esc(r.ort),std:false},{k:'taet',l:'Tätigkeit',f:r=>esc(suTxt((r.taet||[]).map(t=>t.text).filter(Boolean).join('; ')).slice(0,80))},{k:'wetter',l:'Witterung',f:r=>esc(btbWetter(r)),std:false},
+    {k:'std',l:'Std.',n:1,f:r=>fmtQ(btbSumme(r))},{k:'status',l:'Status',f:btbStatus}],L,
+    {zeile:r=>`class="click" onclick="nav('bericht/${r.id}')"`,leer:'Noch keine Bautagesberichte.',
+     mf:r=>karte({t:`BTB ${r.nr} · ${dAT(r.datum)}`,s:btbStatus(r),u:esc(suTxt((r.taet||[]).map(t=>t.text).filter(Boolean).join('; ')).slice(0,80)),z:esc(auftragKurz(r.auftragId)),b:fmtQ(btbSumme(r))+' h'})})}`};
+function btbAuftragKarte(aid){if(!erw('btb'))return'';const L=DB.berichte.filter(r=>r.auftragId===aid).sort((a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt));
+  const inh=`<div class="card">${kmp()?'':'<h2>Bautagesberichte</h2>'}${L.length?`<table><tbody>${L.map(r=>`<tr class="click" onclick="nav('bericht/${r.id}')"><td>BTB ${r.nr} · ${dAT(r.datum)}</td><td class="n">${fmtQ(btbSumme(r))} h</td><td>${btbStatus(r)}</td></tr>`).join('')}</tbody></table>`:'<p class="mut" style="margin:0">Noch kein Bautagesbericht zu diesem Auftrag.</p>'}
+    <div class="bar" style="margin:8px 0 0"><button class="s" data-act="btbneu" data-id="${aid}">+ Bautagesbericht</button></div></div>`;
+  return kmp()?akk('a-btb','Bautagesberichte',inh,{offen:!!L.length,zusatz:L.length+''}):inh}
+Object.assign(ACT,{
+  btbneu:async el=>{let aid=el.dataset.id;const A=btbAuftraege();if(!aid){if(!A.length){alert('Zuerst ein Angebot oder einen Auftrag anlegen.');return}
+      const o=await formDialog({titel:'Neuer Bautagesbericht',ok:'Anlegen',felder:[{k:'a',l:'Auftrag',wert:A[0].id,opts:A.map(a=>[a.id,auftragLabel(a.id)]),cls:'w2',pflicht:true}]});if(!o)return;aid=o.a}
+    const r=btbNeu(aid);persist();go('bericht/'+r.id)},
+  btbdel:el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r)||!confirm(`Bautagesbericht ${r.nr} löschen?`))return;wegwerfen('berichte',[r]);go('berichte')},
+  btbbib:el=>{const r=ROOT.btb(el.dataset.id),x=DB.lvbib.find(y=>y.id===el.value);el.value='';if(!r||!x||btbFest(r))return;
+    const t=[x.kurz,suTxt(x.lang).replace(/[ \t]+/g,' ').trim()].filter(Boolean).filter((s,i,a)=>a.indexOf(s)===i).join('\n'),L=r.taet||(r.taet=[]),leer=L.findIndex(y=>!pT(y.text)&&!pT(y.ort));
+    if(leer>=0)L[leer].text=t;else L.push({text:t,ort:''});persist();render()}});
+SU_G.push(['btb','Bautagesberichte']); // Globale Suche (P20)
+/* ---------- Messprotokoll nach OVE E 8101 (P39 Teil 1, erw.messprot) ----------
+   Prüfbefund einer elektrischen Anlage nach OVE E 8101 Teil 6: Kopf (Kunde, Auftrag, Anlage, Prüfart, Netzform, Nennspannung, Prüfer, Prüfgeräte), Besichtigung und Erprobung als Prüfpunkte
+   (i. O. / Mangel / n. z.), Messwerte je Verteiler und Stromkreis, Erder/Potentialausgleich, Mängel, Ergebnis und nächste Prüfung. Sammlung DB.messprot (neueDB/migrate, merge3, Papierkorb PK),
+   Felder über den Pfad-Setter (ROOT.mp, data-o="path"), Zeilen über arradd/arrdel (TPL.mpv/mpsk). Prüfgeräte S().pgeraete {id,bez,typ,snr,kal = Kalibrierung gültig bis}.
+   Grenzwerte (mpPruef) markieren nur, die Bewertung trifft der Prüfer. Nummer MP-<Jahr>-<nnnn> beim Anlegen (mpNr, laufend je Jahr). Liste #/mps, Editor #/mps/<id>. */
+erwPlus({k:'messprot',std:false,p:'Messprotokoll (P39)',l:'Messprotokolle nach OVE E 8101 (Prüfbefund)',info:'In der Seitenleiste erscheint „Messprotokolle“: je Anlage ein Prüfbefund nach OVE E 8101 Teil 6 mit Kopfdaten (Kunde, Auftrag, Anlage, Prüfart, Netzform, Nennspannung, Vorsicherung, Prüfer, Prüfgeräte mit Kalibrierdatum), Besichtigung und Erprobung als Prüfpunkte (i. O. / Mangel / nicht zutreffend), Messwerte je Verteiler und Stromkreis (Schutzleiter, Isolationswiderstand, Schleifenimpedanz, RCD-Auslösezeit und -strom, Berührungsspannung), Erder und Potentialausgleich, Mängel, Gesamtergebnis und nächste Prüfung. Grenzwerte werden farbig markiert, die Bewertung trifft der Prüfer. „Wiederholungsprüfung“ übernimmt Anlage, Verteiler und Stromkreise aus dem letzten Protokoll (ohne Messwerte). Im Auftrag gibt es die Karte „Messprotokolle“. Aus: Seitenleiste und Auftrag wie bisher, gespeicherte Protokolle bleiben erhalten.'});
+const MP_ART=[['erst','Erstprüfung'],['wieder','Wiederkehrende Prüfung'],['aend','Prüfung nach Änderung / Erweiterung']];
+const MP_NETZ=['TN-C-S','TN-S','TN-C','TT','IT'];
+const MP_ERG=[['','–'],['io','i. O.'],['m','Mangel'],['nz','n. z.']];
+const MP_GES=[['','– offen –'],['io','Anlage in Ordnung, keine Mängel'],['m','Mängel festgestellt, Anlage kann betrieben werden'],['nio','Anlage nicht in Ordnung, Betrieb erst nach Mängelbehebung']];
+const MP_BES=[['basis','Schutz gegen direktes Berühren (Basisschutz): Abdeckungen, Umhüllungen, Isolierung'],['fehler','Schutz bei indirektem Berühren (Fehlerschutz): Schutzmaßnahme passend zur Netzform'],['zusatz','Zusätzlicher Schutz: RCD ≤ 30 mA, wo gefordert (Steckdosen, Bad, im Freien)'],
+  ['leit','Leitungen nach Strombelastbarkeit, Verlegeart und Spannungsfall ausgewählt'],['schutz','Schutzeinrichtungen richtig ausgewählt und eingestellt (Leitungsschutz, Selektivität)'],['trenn','Trenn- und Schalteinrichtungen vorhanden, richtig angeordnet und gekennzeichnet'],
+  ['aeuss','Betriebsmittel passend zu den äußeren Einflüssen (IP-Schutzart, mechanische Beanspruchung)'],['pe','Schutzleiter, Haupt- und zusätzlicher Schutzpotentialausgleich vorhanden und richtig ausgeführt'],['kennz','Kennzeichnung von N- und PE-Leiter, Stromkreisen, Schutzeinrichtungen und Klemmen'],
+  ['verb','Leiterverbindungen und Klemmstellen fachgerecht'],['brand','Schutz gegen thermische Auswirkungen, Brandabschottungen'],['ueber','Überspannungsschutz (SPD), wo gefordert'],['zug','Zugänglichkeit für Bedienung, Wartung und Prüfung'],
+  ['bes','Räume und Anlagen besonderer Art (z. B. Bad, Sauna, im Freien) nach OVE E 8101 Teil 7'],['doku','Schaltpläne, Unterlagen und Warnhinweise vorhanden']];
+const MP_ERP=[['rcdt','Fehlerstrom-Schutzschalter: Prüftaste ausgelöst'],['funk','Funktion der Schalt-, Steuer- und Verriegelungseinrichtungen'],['not','Not-Aus / Not-Halt, Hauptschalter'],['dreh','Drehfeld der Drehstromsteckdosen (Rechtsdrehfeld)'],['iso','Isolationsüberwachung (IT-System)']];
+const MP_SO=[['LS','LS-Schalter'],['gG','Schmelzsicherung gG'],['LSS','Leistungsschalter']];
+const MP_IA={B:5,C:10,D:20,K:14,Z:3}; // Abschaltstrom Ia = Faktor × In (LS-Schalter, magnetischer Auslöser)
+const MP_RCD=['','A','F','B','AC','A-S','B-S'];
+ROOT.mp=id=>DB.messprot?.find(x=>x.id===id);ROOT.mpset=()=>S();
+Object.assign(TPL,{
+  mpsk:()=>({id:uid(),nr:'',bez:'',leit:'',typ:'LS',ch:'B',in:16,rcd:'',idn:'',rpe:'',riso:'',uiso:500,zs:'',ta:'',ia:'',ub:'',erg:''}),
+  mpv:()=>({id:uid(),bez:'Hauptverteiler',ort:'',stk:[TPL.mpsk()]}),
+  pger:()=>({id:uid(),bez:'',typ:'',snr:'',kal:''}),
+});
+PK.messprot={n:'Messprotokoll',info:m=>`${m.nr} ${m.anlage||kName(m.kontaktId)}`};
+LISTE_VON.mps=[id=>ROOT.mp(id),()=>'mps'];
+SU_G.push(['mp','Messprotokolle']);
+function mpNr(datum){const j=String(datum||isoD()).slice(0,4),n=Math.max(0,...(DB.messprot||[]).filter(m=>String(m.nr).startsWith(`MP-${j}-`)).map(m=>+m.nr.slice(8)||0))+1;return`MP-${j}-${String(n).padStart(4,'0')}`}
+function mpNeu(o={}){const d=isoD();
+  return{id:uid(),nr:mpNr(d),datum:d,art:'erst',kontaktId:'',auftragId:'',anlage:'',adresse:'',netz:'TN-C-S',un:'230/400',vs:'',netzbetr:'',zp:'',pruefer:S().bearbeiter||S().firma.zeichner||'',
+    gerIds:(S().pgeraete||[]).map(g=>g.id),bes:{},erp:{},vt:[TPL.mpv()],re:'',hpa:'',rpa:'',maengel:'',ergebnis:'',naechste:'',bem:'',vorgaengerId:'',erstellt:new Date().toISOString(),...o}}
+// Wiederholungsprüfung: Anlage, Netz, Verteiler und Stromkreise übernehmen (Messwerte und Ergebnisse leer)
+function mpWiederholung(alt){const leer={rpe:'',riso:'',zs:'',ta:'',ia:'',ub:'',erg:''};
+  return mpNeu({art:'wieder',kontaktId:alt.kontaktId,auftragId:'',anlage:alt.anlage,adresse:alt.adresse,netz:alt.netz,un:alt.un,vs:alt.vs,netzbetr:alt.netzbetr,zp:alt.zp,vorgaengerId:alt.id,
+    vt:(alt.vt||[]).map(v=>({...v,id:uid(),stk:(v.stk||[]).map(s=>({...s,...leer,id:uid()}))}))})}
+const mpU0=m=>num(String(m.un||'230').split('/')[0])||230;
+const mpZsMax=(m,s)=>s.typ==='LS'&&MP_IA[s.ch]&&+s.in>0?mpU0(m)/(MP_IA[s.ch]*+s.in):null; // Zs ≤ U0 / Ia
+const mpLeer=v=>v===''||v==null;
+// Grenzwerte je Stromkreis → {feld:'ok'|'warn'|'err'}; nur Markierung (Bewertung durch den Prüfer)
+function mpPruef(m,s){const r={},z=mpZsMax(m,s),idn=+s.idn||0,uiso=+s.uiso||500;
+  if(!mpLeer(s.riso))r.riso=+s.riso>=(uiso<=250?0.5:1)?'ok':'err'; // OVE E 8101-6: SELV/PELV 250 V ≥ 0,5 MΩ, bis 500 V bzw. darüber ≥ 1 MΩ
+  if(!mpLeer(s.zs)&&z)r.zs=+s.zs>z?'err':+s.zs>z*2/3?'warn':'ok'; // über 2/3 des Grenzwerts: Erwärmung der Leiter beachten
+  if(!mpLeer(s.ta)&&idn)r.ta=+s.ta<=(/S/.test(s.rcd)?500:300)&&(!/S/.test(s.rcd)||+s.ta>=130)?'ok':'err';
+  if(!mpLeer(s.ia)&&idn)r.ia=+s.ia<=idn&&+s.ia>=idn/2?'ok':'err';
+  if(!mpLeer(s.ub))r.ub=+s.ub<=50?'ok':'err';
+  return r}
+const mpIk=(m,s)=>+s.zs>0?mpU0(m)/+s.zs:null;
+function mpZaehl(m){let n=0,e=0,w=0;for(const v of m.vt||[])for(const s of v.stk||[]){n++;const r=Object.values(mpPruef(m,s));if(r.includes('err'))e++;else if(r.includes('warn'))w++}return{n,e,w}}
+const mpGerOk=g=>!g.kal||g.kal>=isoD();
+const mpTag=m=>m.ergebnis==='io'?tag('i. O.','ok'):m.ergebnis==='m'?tag('Mängel','warn'):m.ergebnis==='nio'?tag('nicht i. O.','err'):tag('offen');
+const mpFaellig=m=>m.naechste&&m.naechste<isoD()&&!(DB.messprot||[]).some(x=>x.vorgaengerId===m.id);
+function mpSuche(add){for(const m of DB.messprot||[])add('mp',{r:'mps/'+m.id,ic:'⚡',t:`${m.nr} ${m.anlage||''}`.trim(),u:[kName(m.kontaktId),dAT(m.datum)].filter(x=>x&&x!=='–').join(' · '),s:mpTag(m),d:m.datum},m.nr,m.anlage,m.adresse,kName(m.kontaktId),m.maengel,m.bem,(m.vt||[]).map(v=>[v.bez,(v.stk||[]).map(s=>s.bez)]))}
+
+V.mps=id=>{if(!erw('messprot'))return'<p class="mut">Messprotokolle sind ausgeschaltet (Einstellungen → Erweiterungen).</p>';if(id)return mpEdit(id);
+  const q=(UI.mpQ||'').toLowerCase(),L=[...(DB.messprot||[])].sort((a,c)=>c.datum.localeCompare(a.datum)||c.nr.localeCompare(a.nr)).filter(m=>!q||[m.nr,m.anlage,m.adresse,kName(m.kontaktId)].join(' ').toLowerCase().includes(q));
+  return`<div class="bar"><h1 style="margin:0">Messprotokolle (OVE E 8101)</h1><span class="sp"></span><button class="p" data-act="mpneu">+ Neues Messprotokoll</button></div>
+  <div class="row" style="max-width:420px"><label>Suche<input data-o="ui" data-f="mpQ" value="${esc(UI.mpQ||'')}" placeholder="Nr., Anlage, Kunde …"></label></div>
+  ${tabelle('mps',[{k:'nr',l:'Nr.',f:m=>esc(m.nr)},{k:'datum',l:'Datum',f:m=>dAT(m.datum)},{k:'kunde',l:'Kunde',f:m=>esc(kName(m.kontaktId))},{k:'anlage',l:'Anlage',f:m=>esc(m.anlage)},
+    {k:'art',l:'Prüfart',f:m=>esc((MP_ART.find(a=>a[0]===m.art)||['',''])[1])},{k:'stk',l:'Stromkreise',n:1,f:m=>mpZaehl(m).n,std:false},{k:'erg',l:'Ergebnis',f:mpTag},
+    {k:'naechste',l:'Nächste Prüfung',f:m=>m.naechste?(mpFaellig(m)?tag(dAT(m.naechste)+' fällig','err'):dAT(m.naechste)):''}],L,
+    {zeile:m=>`class="click" onclick="nav('mps/${m.id}')"`,leer:'Noch keine Messprotokolle.',
+     mf:m=>karte({t:`${esc(m.nr)} · ${esc(m.anlage||kName(m.kontaktId))}`,s:mpTag(m),u:esc([kName(m.kontaktId),(MP_ART.find(a=>a[0]===m.art)||['',''])[1]].filter(x=>x&&x!=='–').join(' · ')),z:dAT(m.datum),b:m.naechste?(mpFaellig(m)?tag('fällig '+dAT(m.naechste),'err'):'nächste '+dAT(m.naechste)):''})})}
+  ${akk('mp-ger','Prüfgeräte',mpGeraete(),{zusatz:`${(S().pgeraete||[]).length}`})}`};
+function mpGeraete(){const G=S().pgeraete||[],R='mpset|';
+  const zl=(g,i)=>{const P='pgeraete.'+i;return kmpH()?`<div class="kk" style="padding:8px 0;border-top:1px solid var(--line)"><div class="row"><label>Bezeichnung${fi(R,P+'.bez',g.bez,{ph:'z. B. Installationstester'})}</label><label>Typ${fi(R,P+'.typ',g.typ,{ph:'Hersteller, Typ'})}</label></div>
+    <div class="row"><label>Serien-Nr.${fi(R,P+'.snr',g.snr)}</label><label>Kalibriert bis<input type="date" data-o="path" data-r="${R}" data-f="${P}.kal" value="${esc(g.kal||'')}"></label></div><div class="bar" style="margin:0">${mpGerOk(g)?'':tag('Kalibrierung abgelaufen','err')}<span class="sp"></span>${kbDel(R,'pgeraete',i,'Entfernen')}</div></div>`
+    :`<tr><td>${fi(R,P+'.bez',g.bez,{ph:'z. B. Installationstester'})}</td><td>${fi(R,P+'.typ',g.typ,{ph:'Hersteller, Typ'})}</td><td>${fi(R,P+'.snr',g.snr,{w:'140px'})}</td><td><input type="date" data-o="path" data-r="${R}" data-f="${P}.kal" value="${esc(g.kal||'')}"> ${mpGerOk(g)?'':tag('abgelaufen','err')}</td><td>${kbDel(R,'pgeraete',i)}</td></tr>`};
+  return`<div class="card">${kmp()?'':'<h2>Prüfgeräte</h2>'}<p class="mut" style="margin-top:0">Messgeräte für die Protokolle; im Protokoll wählbar, abgelaufene Kalibrierung wird angezeigt.</p>
+  ${kmpH()?G.map(zl).join(''):`<table class="k"><thead><tr><th>Bezeichnung</th><th>Hersteller / Typ</th><th>Serien-Nr.</th><th>Kalibriert bis</th><th></th></tr></thead><tbody>${G.map(zl).join('')}</tbody></table>`}
+  ${G.length?'':'<p class="mut">Noch keine Prüfgeräte.</p>'}${kbBtn(R,'pgeraete','pger','+ Prüfgerät')}</div>`}
+
+function mpEdit(id){const m=ROOT.mp(id);if(!m)return'<p>Nicht gefunden.</p>';const R='mp|'+m.id,z=mpZaehl(m);
+  const kunden=DB.kontakte.filter(k=>k.typ!=='L').sort((a,c)=>String(a.name).localeCompare(String(c.name)));
+  const auf=auftragsListe().filter(a=>!m.kontaktId||a.root.kontaktId===m.kontaktId||a.id===m.auftragId);
+  const dat=(f,v)=>`<input type="date" data-o="path" data-r="${R}" data-f="${f}" value="${esc(v||'')}">`;
+  const vg=m.vorgaengerId?ROOT.mp(m.vorgaengerId):null;
+  const kopf=`<div class="card">${kmp()?'':'<h2>Anlage und Prüfung</h2>'}
+    <div class="row"><label class="w05" style="min-width:140px">Datum${dat('datum',m.datum)}</label><label>Prüfart${fsel(R,'art',m.art,MP_ART)}</label>
+      <label class="w2">Kunde<select data-act="mpkd" data-id="${m.id}">${opt('','– Kunde wählen –',m.kontaktId)}${kunden.map(k=>opt(k.id,`${k.nr} ${k.name}`,m.kontaktId)).join('')}</select></label>
+      <label class="w2">Auftrag<select data-act="mpauf" data-id="${m.id}">${opt('','– ohne Auftrag –',m.auftragId)}${auf.map(a=>opt(a.id,auftragLabel(a.id),m.auftragId)).join('')}</select></label></div>
+    <div class="row"><label class="w2">Anlage / Objekt${fi(R,'anlage',m.anlage,{ph:'z. B. Einfamilienhaus, Werkstatt, Zubau'})}</label><label class="w2">Anschrift der Anlage${fi(R,'adresse',m.adresse,{ph:'Straße, PLZ Ort'})}</label></div>
+    <div class="row"><label class="w05">Netzform${fsel(R,'netz',m.netz,MP_NETZ.map(x=>[x,x]))}</label><label class="w05">Nennspannung V${fi(R,'un',m.un,{ph:'230/400'})}</label><label class="w05">Vorsicherung${fi(R,'vs',m.vs,{ph:'z. B. 3 × 35 A gG'})}</label>
+      <label>Netzbetreiber${fi(R,'netzbetr',m.netzbetr)}</label><label>Zählpunkt${fi(R,'zp',m.zp,{ph:'AT00…'})}</label></div>
+    <div class="row"><label>Prüfer${fi(R,'pruefer',m.pruefer)}</label></div>
+    <div style="margin:4px 0"><b style="font-size:13px">Prüfgeräte</b> ${(S().pgeraete||[]).length?(S().pgeraete||[]).map(g=>`<label style="display:inline-flex;gap:6px;align-items:center;margin:4px 14px 4px 0;font-weight:400"><input type="checkbox" data-act="mpger" data-id="${m.id}" data-g="${g.id}"${(m.gerIds||[]).includes(g.id)?' checked':''}>${esc([g.bez,g.typ].filter(Boolean).join(' · ')||'Prüfgerät')}${g.snr?` <span class="mut">(${esc(g.snr)})</span>`:''}${mpGerOk(g)?'':' '+tag('Kalibrierung abgelaufen','err')}</label>`).join(''):`<span class="mut">Noch keine Prüfgeräte – in der <a href="#/mps">Liste der Messprotokolle</a> unter „Prüfgeräte“ anlegen.</span>`}</div>
+    ${vg?`<p class="mut" style="margin:6px 0 0">Wiederholungsprüfung zu <a href="#/mps/${vg.id}">${esc(vg.nr)}</a> vom ${dAT(vg.datum)}.</p>`:''}</div>`;
+  const punkte=(feld,L)=>`<table class="k mppt"><tbody>${L.map(([k,t])=>`<tr><td>${esc(t)}</td><td style="width:110px">${fsel(R,feld+'.'+k,m[feld]?.[k]||'',MP_ERG)}</td></tr>`).join('')}</tbody></table>
+    <div class="bar" style="margin:6px 0 0"><span class="sp"></span><button class="s" data-act="mpalle" data-id="${m.id}" data-f="${feld}">Alle offenen auf „i. O.“</button></div>`;
+  const pz=f=>{const o=m[f]||{},n=Object.values(o).filter(Boolean).length,mg=Object.values(o).filter(x=>x==='m').length;return`${n} bewertet${mg?` · ${mg} Mangel`:''}`};
+  const vt=(m.vt||[]).map((v,vi)=>{const inh=`<div class="card">${kmp()?'':`<h2>Verteiler ${esc(v.bez||'')}</h2>`}
+      <div class="row"><label>Verteiler${fi(R,`vt.${vi}.bez`,v.bez,{ph:'z. B. HV, UV EG'})}</label><label class="w2">Einbauort${fi(R,`vt.${vi}.ort`,v.ort)}</label></div>
+      ${kmpH()?mpStkKarten(m,R,v,vi):mpStkTab(m,R,v,vi)}
+      <div class="bar" style="margin:8px 0 0">${kbBtn(R,`vt.${vi}.stk`,'mpsk','+ Stromkreis')}<span class="sp"></span>${(m.vt||[]).length>1?kbDel(R,'vt',vi,'Verteiler entfernen'):''}</div></div>`;
+    return kmp()?akk('mpv-'+v.id,'Verteiler '+esc(v.bez||vi+1),inh,{offen:!vi,zusatz:`${(v.stk||[]).length} Stromkreise`}):inh}).join('');
+  const erd=`<div class="card">${kmp()?'':'<h2>Erder, Potentialausgleich</h2>'}<div class="row"><label class="w05">Erdungswiderstand R<sub>E</sub> Ω${fnl(R,'re',m.re,'100%')}</label>
+    <label>Haupt-Potentialausgleich${fsel(R,'hpa',m.hpa||'',[['','–'],['ja','vorhanden'],['nein','fehlt'],['nz','n. z.']])}</label><label class="w05">R Potentialausgleich Ω${fnl(R,'rpa',m.rpa,'100%')}</label></div>
+    ${m.netz==='TT'?`<p class="mut" style="margin:0">TT-System: R<sub>A</sub> × I<sub>Δn</sub> ≤ 50 V${mpRaMax(m)?` → R<sub>E</sub> höchstens ${fmt(mpRaMax(m))} Ω bei größtem I<sub>Δn</sub> ${fmtQ(mpIdnMax(m))} mA`:''}${m.re!==''&&mpRaMax(m)?' '+(+m.re<=mpRaMax(m)?tag('i. O.','ok'):tag('zu hoch','err')):''}.</p>`:''}</div>`;
+  const erg=`<div class="card">${kmp()?'':'<h2>Ergebnis</h2>'}<label style="display:block">Festgestellte Mängel${ft(R,'maengel',m.maengel,'je Mangel eine Zeile, mit Stromkreis bzw. Ort')}</label>
+    <div class="row" style="margin-top:8px"><label class="w2">Gesamtergebnis${fsel(R,'ergebnis',m.ergebnis||'',MP_GES)}</label><label class="w05" style="min-width:140px">Nächste Prüfung${dat('naechste',m.naechste)}</label></div>
+    <label style="display:block">Bemerkungen${ft(R,'bem',m.bem,'')}</label>
+    ${z.e||z.w?`<p class="hint" style="margin:8px 0 0">${z.e?`${z.e} Stromkreis${z.e>1?'e':''} mit Messwerten außerhalb der Grenzwerte`:''}${z.e&&z.w?', ':''}${z.w?`${z.w} mit Schleifenimpedanz über 2/3 des Grenzwerts`:''} – bitte bewerten.</p>`:''}</div>`;
+  return`<div class="bar"><a href="#/mps">← Messprotokolle</a><span class="sp"></span>${mpTag(m)}</div>
+  <div class="bar"><h1 style="margin:0">Messprotokoll ${esc(m.nr)}</h1><span class="sp"></span>${mpKnoepfe(m)}<button data-act="mpwdh" data-id="${m.id}" title="Neues Protokoll mit Anlage, Verteilern und Stromkreisen dieses Protokolls">Wiederholungsprüfung</button><button class="d" data-act="mpdel" data-id="${m.id}">Löschen</button></div>${mpFest(m)?'<fieldset class="mpfs" disabled>':''}
+  ${kmp()?akk('mp-kopf','Anlage und Prüfung',kopf,{offen:true,zusatz:esc(m.anlage||kName(m.kontaktId))}):kopf}
+  ${mpVorEd(m,R)}
+  ${kmp()?akk('mp-bes','Besichtigung',`<div class="card">${punkte('bes',MP_BES)}</div>`,{zusatz:pz('bes')}):`<div class="card"><h2>Besichtigung</h2>${punkte('bes',MP_BES)}</div>`}
+  ${kmp()?akk('mp-erp','Erprobung',`<div class="card">${punkte('erp',MP_ERP)}</div>`,{zusatz:pz('erp')}):`<div class="card"><h2>Erprobung</h2>${punkte('erp',MP_ERP)}</div>`}
+  ${kmp()?'':'<h2 style="margin:18px 0 8px">Messungen</h2>'}${vt}<div class="bar" style="margin:0 0 14px">${kbBtn(R,'vt','mpv','+ Verteiler')}</div>
+  ${kmp()?akk('mp-erd','Erder, Potentialausgleich',erd,{zusatz:m.re!==''?'R<sub>E</sub> '+fmtQ(m.re)+' Ω':''}):erd}
+  ${kmp()?akk('mp-erg','Ergebnis',erg,{offen:true,zusatz:mpTag(m)}):erg}${mpFest(m)?'</fieldset>'+mpSigAnsicht(m):''}`}
+const MP_KN=[],mpKnoepfe=m=>MP_KN.map(f=>f(m)).join(''); // Knöpfe späterer Teile (Druck, Abschluss) tragen sich in MP_KN ein
+const mpIdnMax=m=>Math.max(0,...(m.vt||[]).flatMap(v=>(v.stk||[]).map(s=>+s.idn||0)));
+const mpRaMax=m=>{const i=mpIdnMax(m);return i?50/(i/1000):null};
+// Messwert-Zelle mit Markierung (Grenzwert)
+const mpZ=(R,P,s,k,r,w='70px')=>`<td class="${r[k]?'mp'+r[k]:''}">${fnl(R,P+'.'+k,s[k],w)}</td>`;
+function mpStkTab(m,R,v,vi){
+  return`<div style="overflow-x:auto"><table class="k mpt"><thead><tr><th>Nr.</th><th>Stromkreis</th><th>Leitung</th><th>Schutz</th><th>Char.</th><th>I<sub>n</sub> A</th><th>RCD</th><th>I<sub>Δn</sub> mA</th>
+    <th>R<sub>PE</sub> Ω</th><th>R<sub>iso</sub> MΩ</th><th>U<sub>iso</sub> V</th><th>Z<sub>s</sub> Ω</th><th>I<sub>k</sub> A</th><th>t<sub>a</sub> ms</th><th>I<sub>a</sub> mA</th><th>U<sub>B</sub> V</th><th>Ergebnis</th><th></th></tr></thead><tbody>
+  ${(v.stk||[]).map((s,si)=>{const P=`vt.${vi}.stk.${si}`,r=mpPruef(m,s),zm=mpZsMax(m,s),ik=mpIk(m,s);
+    return`<tr><td>${fi(R,P+'.nr',s.nr,{w:'38px'})}</td><td>${fi(R,P+'.bez',s.bez,{w:'130px',ph:'z. B. Steckdosen Küche'})}</td><td>${fi(R,P+'.leit',s.leit,{w:'96px',ph:'NYM-J 3×2,5'})}</td>
+    <td>${fsel(R,P+'.typ',s.typ,MP_SO.map(([k])=>[k,k]),'54px')}</td><td>${fsel(R,P+'.ch',s.ch||'',[['',''],...Object.keys(MP_IA).map(x=>[x,x])],'44px')}</td><td>${fnl(R,P+'.in',s.in,'46px')}</td><td>${fsel(R,P+'.rcd',s.rcd||'',MP_RCD.map(x=>[x,x||'–']),'58px')}</td><td>${fnl(R,P+'.idn',s.idn,'46px')}</td>
+    ${mpZ(R,P,s,'rpe',r,'52px')}${mpZ(R,P,s,'riso',r,'52px')}<td>${fsel(R,P+'.uiso',String(s.uiso||500),[['250','250'],['500','500'],['1000','1000']],'62px')}</td>
+    <td class="${r.zs?'mp'+r.zs:''}" title="${zm?'Grenzwert Zs ≤ '+fmt(zm)+' Ω':''}">${fnl(R,P+'.zs',s.zs,'58px',zm?'≤ '+fmt(zm):'')}</td><td class="n mut">${ik?fmtQ(Math.round(ik)):''}</td>
+    ${mpZ(R,P,s,'ta',r,'48px')}${mpZ(R,P,s,'ia',r,'48px')}${mpZ(R,P,s,'ub',r,'48px')}<td>${fsel(R,P+'.erg',s.erg||'',MP_ERG.slice(0,3),'70px')}</td><td>${kbDel(R,`vt.${vi}.stk`,si)}</td></tr>`}).join('')}
+  </tbody></table></div>${(v.stk||[]).length?'':'<p class="mut">Noch keine Stromkreise.</p>'}`}
+function mpStkKarten(m,R,v,vi){
+  const L=(l,h,k,r)=>`<label class="w05${r?.[k]?' mp'+r[k]:''}">${l}${h}</label>`;
+  return(v.stk||[]).map((s,si)=>{const P=`vt.${vi}.stk.${si}`,r=mpPruef(m,s),zm=mpZsMax(m,s),ik=mpIk(m,s);
+    const inh=`<div class="mpk"><div class="row"><label class="w05">Nr.${fi(R,P+'.nr',s.nr)}</label><label class="w2">Stromkreis${fi(R,P+'.bez',s.bez,{ph:'z. B. Steckdosen Küche'})}</label></div>
+    <div class="row"><label>Leitung${fi(R,P+'.leit',s.leit,{ph:'NYM-J 3×2,5'})}</label></div>
+    <div class="row"><label class="w05">Schutzorgan${fsel(R,P+'.typ',s.typ,MP_SO)}</label><label class="w05">Char. / I<sub>n</sub> A<span style="display:flex;gap:4px">${fsel(R,P+'.ch',s.ch||'',[['',''],...Object.keys(MP_IA).map(x=>[x,x])])}${fnl(R,P+'.in',s.in,'100%')}</span></label></div>
+    <div class="row"><label class="w05">RCD Typ${fsel(R,P+'.rcd',s.rcd||'',MP_RCD.map(x=>[x,x||'–']))}</label><label class="w05">I<sub>Δn</sub> mA${fnl(R,P+'.idn',s.idn,'100%')}</label></div>
+    <div class="row">${L('R<sub>PE</sub> Ω',fnl(R,P+'.rpe',s.rpe,'100%'),'rpe',r)}${L('R<sub>iso</sub> MΩ',`<span style="display:flex;gap:4px">${fnl(R,P+'.riso',s.riso,'100%')}${fsel(R,P+'.uiso',String(s.uiso||500),[['250','250 V'],['500','500 V'],['1000','1000 V']])}</span>`,'riso',r)}</div>
+    <div class="row">${L(`Z<sub>s</sub> Ω${zm?` <span class="mut">≤ ${fmt(zm)}</span>`:''}`,fnl(R,P+'.zs',s.zs,'100%'),'zs',r)}<label class="w05">I<sub>k</sub> A<input disabled value="${ik?fmtQ(Math.round(ik)):''}"></label></div>
+    <div class="row">${L('t<sub>a</sub> ms',fnl(R,P+'.ta',s.ta,'100%'),'ta',r)}${L('I<sub>a</sub> mA',fnl(R,P+'.ia',s.ia,'100%'),'ia',r)}</div>
+    <div class="row">${L('U<sub>B</sub> V',fnl(R,P+'.ub',s.ub,'100%'),'ub',r)}<label class="w05">Ergebnis${fsel(R,P+'.erg',s.erg||'',MP_ERG.slice(0,3))}</label></div>
+    <div class="bar" style="margin:0"><span class="sp"></span>${kbDel(R,`vt.${vi}.stk`,si,'Stromkreis entfernen')}</div></div>`,w=Object.values(r);
+    return akk('mps-'+s.id,esc([s.nr,s.bez].filter(Boolean).join(' ')||'Stromkreis '+(si+1)),inh,{offen:!s.bez,zusatz:w.includes('err')?tag('Grenzwert','err'):w.includes('warn')?tag('prüfen','warn'):s.erg==='io'?tag('i. O.','ok'):''})}).join('')||'<p class="mut">Noch keine Stromkreise.</p>'}
+// Karte im Auftrag
+function mpAuftragKarte(aid){if(!erw('messprot'))return'';const L=(DB.messprot||[]).filter(m=>m.auftragId===aid);
+  const inh=`<div class="card">${kmp()?'':'<h2>Messprotokolle</h2>'}${L.length?`<table><tbody>${L.map(m=>`<tr class="click" onclick="nav('mps/${m.id}')"><td>${esc(m.nr)} <span class="mut">· ${dAT(m.datum)}</span></td><td>${esc(m.anlage||'')}</td><td class="n">${mpTag(m)}</td></tr>`).join('')}</tbody></table>`:'<p class="mut" style="margin:0">Noch kein Messprotokoll zu diesem Auftrag.</p>'}
+    <div class="bar" style="margin:8px 0 0"><button class="s" data-act="mpneu" data-a="${aid}">+ Messprotokoll für diesen Auftrag</button></div></div>`;
+  return kmp()?akk('a-mp','Messprotokolle',inh,{offen:!!L.length,zusatz:L.length?L.map(m=>esc(m.nr)).join(', '):'keine'}):inh}
+const mpAdr=k=>k?[k.strasse,[k.plz,k.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '):'';
+const mpAusAuftrag=aid=>{const r=beleg(aid)||DB.belege.find(b=>b.auftragId===aid);return{auftragId:aid,kontaktId:r?.kontaktId||'',anlage:r?.projekt||r?.betreff||'',adresse:mpAdr(r?kontakt(r.kontaktId):null)}};
+Object.assign(ACT,{
+  mpneu:el=>{if(!DB.messprot)DB.messprot=[];const m=mpNeu(el.dataset.a?mpAusAuftrag(el.dataset.a):{});DB.messprot.push(m);log('Messprotokoll angelegt',m.nr);persist();go('mps/'+m.id)},
+  mpwdh:el=>{const a=ROOT.mp(el.dataset.id);if(!a)return;const m=mpWiederholung(a);DB.messprot.push(m);log('Messprotokoll angelegt',`${m.nr} (Wiederholung von ${a.nr})`);persist();go('mps/'+m.id)},
+  mpdel:el=>{const m=ROOT.mp(el.dataset.id);if(!m||!confirm(`Messprotokoll ${m.nr} löschen?\n(Es bleibt im Papierkorb wiederherstellbar.)`))return;wegwerfen('messprot',[m]);go('mps')},
+  mpkd:el=>{const m=ROOT.mp(el.dataset.id);if(!m)return;m.kontaktId=el.value;if(m.auftragId&&(beleg(m.auftragId)||DB.belege.find(b=>b.auftragId===m.auftragId))?.kontaktId!==el.value)m.auftragId='';
+    if(!m.adresse)m.adresse=mpAdr(kontakt(el.value));persist();render()},
+  mpauf:el=>{const m=ROOT.mp(el.dataset.id);if(!m)return;if(!el.value)m.auftragId='';else{const o=mpAusAuftrag(el.value);m.auftragId=el.value;m.kontaktId=o.kontaktId;if(!m.anlage)m.anlage=o.anlage;if(!m.adresse)m.adresse=o.adresse}persist();render()},
+  mpger:el=>{const m=ROOT.mp(el.dataset.id);if(!m)return;const s=new Set(m.gerIds||[]);el.checked?s.add(el.dataset.g):s.delete(el.dataset.g);m.gerIds=[...s];persist()},
+  mpalle:el=>{const m=ROOT.mp(el.dataset.id),f=el.dataset.f;if(!m)return;const o=m[f]||(m[f]={});for(const[k]of f==='bes'?MP_BES:MP_ERP)if(!o[k])o[k]='io';persist();render()},
+});
+/* --- Messprotokoll (P39 Teil 2, erw.mpDruck): Druck/PDF über druckHTML() – Blatt 1 Kopf, Prüfgeräte, Besichtigung, Erprobung (A4 hoch), Blatt 2 Messwerte je Verteiler (A4 quer, @page mpq,
+   Tabellenkopf wiederholt sich), Blatt 3 Erder/Potentialausgleich, Mängel, Ergebnis, nächste Prüfung, Unterschriftsfelder; Werte außerhalb der Grenzwerte fett mit „!“ (mpPruef) --- */
+erwPlus({k:'mpDruck',std:true,p:'Messprotokoll (P39)',l:'Messprotokoll drucken (Prüfbefund, PDF)',info:'Im Messprotokoll druckt „PDF / Drucken“ den Prüfbefund mit Logo und Firmendaten: Anlage und Prüfung, Prüfgeräte, Besichtigung und Erprobung (A4 hoch), die Messwerte je Verteiler und Stromkreis (A4 quer, Werte außerhalb der Grenzwerte fett mit „!“), Erder und Potentialausgleich, Mängel, Gesamtergebnis, nächste Prüfung und Unterschriftsfelder. „Als PDF speichern“ im Druckdialog erzeugt die PDF-Datei. Wirkt nur mit eingeschalteten Messprotokollen.'});
+MP_KN.push(m=>erw('mpDruck')?`<button data-act="mpdruck" data-id="${m.id}">PDF / Drucken</button>`:'');
+const mpX=a=>a?(erw('mpVorlage')?'✓':'X'):''; // Teil 4: Häkchen
+function mpKopfF(m,titel){const f=S().firma;
+  return`<table class="mpkf"><tr><td style="width:38%"><b style="font-size:12pt">${titel}</b><br>nach OVE E 8101</td><td style="width:34%;text-align:center"><img class="kbl" src="${f.logo||KOPF_TBH}" alt=""><div class="kbfi">${esc([f.name,[f.strasse,(String(f.plz||'')+' '+(f.ort||'')).trim()].filter(Boolean).join(', ')].filter(Boolean).join(' · '))}</div></td>
+    <td>Protokoll-Nr.: <b>${esc(m.nr)}</b><br>Prüfdatum: <b>${dAT(m.datum)}</b>${m.vorgaengerId&&ROOT.mp(m.vorgaengerId)?`<br>vorige Prüfung: ${esc(ROOT.mp(m.vorgaengerId).nr)}`:''}</td></tr></table>`}
+function mpDocHTML(m){const k=kontakt(m.kontaktId),G=(S().pgeraete||[]).filter(g=>(m.gerIds||[]).includes(g.id)),r=x=>MP_ERG.find(e=>e[0]===x)?.[1]||'';
+  const pkt=(t,feld,L)=>`<table><thead><tr><th style="text-align:left">${t}</th><th style="width:13mm">i. O.</th><th style="width:13mm">Mangel</th><th style="width:13mm">n. z.</th></tr></thead><tbody>
+    ${L.map(([x,l])=>{const v=m[feld]?.[x]||'';return`<tr><td>${esc(l)}</td><td class="c">${mpX(v==='io')}</td><td class="c">${mpX(v==='m')}</td><td class="c">${mpX(v==='nz')}</td></tr>`}).join('')}</tbody></table>`;
+  const w=(s,x,rr,f=fmtQ)=>mpLeer(s[x])?'':rr[x]==='err'?`<b>${f(s[x])} !</b>`:f(s[x]);
+  const b1=`<section class="mpf">${mpKopfF(m,'PRÜFBEFUND / MESSPROTOKOLL')}
+    <table><tr><td style="width:50%">Auftraggeber:<br><b>${esc(k?.name||'')}</b>${k?`<br>${esc(mpAdr(k))}`:''}${m.auftragId?`<br>Auftrag: ${esc(auftragLabel(m.auftragId))}`:''}</td><td>Anlage / Objekt:<br><b>${esc(m.anlage)}</b><br>${esc(m.adresse)}</td></tr></table>
+    <table><tr>${MP_ART.map(([x,l])=>`<td class="c" style="width:6mm"><b>${mpX(m.art===x)}</b></td><td>${esc(l)}</td>`).join('')}</tr></table>
+    <table><tr><td>Netzform: <b>${esc(m.netz)}</b></td><td>Nennspannung: <b>${esc(m.un)} V</b></td><td>Vorsicherung: <b>${esc(m.vs)}</b></td></tr><tr><td colspan="2">Netzbetreiber: <b>${esc(m.netzbetr)}</b></td><td>Zählpunkt: <b>${esc(m.zp)}</b></td></tr></table>
+    <h4>Prüfgeräte</h4><table><thead><tr><th style="text-align:left">Gerät</th><th style="text-align:left">Hersteller / Typ</th><th>Serien-Nr.</th><th>Kalibriert bis</th></tr></thead><tbody>
+    ${G.map(g=>`<tr><td>${esc(g.bez)}</td><td>${esc(g.typ)}</td><td class="c">${esc(g.snr)}</td><td class="c">${dAT(g.kal)}</td></tr>`).join('')||'<tr><td colspan="4">&nbsp;</td></tr>'}</tbody></table>
+    <h4>Besichtigung</h4>${pkt('Prüfpunkt','bes',MP_BES)}<h4>Erprobung</h4>${pkt('Prüfpunkt','erp',MP_ERP)}${kbFuss()}</section>`;
+  const b2=(m.vt||[]).map(v=>`<section class="mpf quer">${mpKopfF(m,'MESSPROTOKOLL')}
+    <table><tr><td>Verteiler: <b>${esc(v.bez)}</b>${v.ort?` · Einbauort: ${esc(v.ort)}`:''}</td><td>Netzform: <b>${esc(m.netz)}</b> · U<sub>0</sub> = ${fmtQ(mpU0(m))} V</td><td>Anlage: ${esc(m.anlage)}</td></tr></table>
+    <table class="mpm"><thead><tr><th rowspan="2">Nr.</th><th rowspan="2" style="text-align:left">Stromkreis</th><th rowspan="2">Leitung</th><th colspan="3">Überstrom-Schutzorgan</th><th colspan="2">RCD</th><th>R<sub>PE</sub></th><th colspan="2">Isolation</th><th colspan="3">Schleifenimpedanz</th><th colspan="3">RCD-Prüfung</th><th rowspan="2">Ergebnis</th></tr>
+      <tr><th>Art</th><th>Char.</th><th>I<sub>n</sub> A</th><th>Typ</th><th>I<sub>Δn</sub> mA</th><th>Ω</th><th>R<sub>iso</sub> MΩ</th><th>U V</th><th>Z<sub>s</sub> Ω</th><th>Grenzw. Ω</th><th>I<sub>k</sub> A</th><th>t<sub>a</sub> ms</th><th>I<sub>a</sub> mA</th><th>U<sub>B</sub> V</th></tr></thead><tbody>
+    ${(v.stk||[]).map(s=>{const rr=mpPruef(m,s),zm=mpZsMax(m,s),ik=mpIk(m,s);return`<tr><td class="c">${esc(s.nr)}</td><td>${esc(s.bez)}</td><td>${esc(s.leit)}</td><td class="c">${esc(s.typ)}</td><td class="c">${esc(s.ch)}</td><td class="n">${mpLeer(s.in)?'':fmtQ(s.in)}</td>
+      <td class="c">${esc(s.rcd)}</td><td class="n">${mpLeer(s.idn)?'':fmtQ(s.idn)}</td><td class="n">${w(s,'rpe',rr)}</td><td class="n">${w(s,'riso',rr)}</td><td class="n">${s.uiso||''}</td><td class="n">${w(s,'zs',rr)}</td><td class="n">${zm?fmt(zm):''}</td><td class="n">${ik?fmtQ(Math.round(ik)):''}</td>
+      <td class="n">${w(s,'ta',rr)}</td><td class="n">${w(s,'ia',rr)}</td><td class="n">${w(s,'ub',rr)}</td><td class="c">${r(s.erg)}</td></tr>`}).join('')||'<tr><td colspan="18">&nbsp;</td></tr>'}</tbody></table>
+    <p class="mpl">Grenzwerte (Markierung „!“): R<sub>iso</sub> ≥ 1 MΩ (Prüfspannung 500 V bzw. 1000 V), ≥ 0,5 MΩ bei 250 V (SELV/PELV); Z<sub>s</sub> ≤ U<sub>0</sub> / I<sub>a</sub> mit I<sub>a</sub> = 3/5/10/14/20 × I<sub>n</sub> (LS Z/B/C/K/D);
+    RCD t<sub>a</sub> ≤ 300 ms bei I<sub>Δn</sub> (selektiv 130–500 ms), Auslösestrom 0,5–1 × I<sub>Δn</sub>; U<sub>B</sub> ≤ 50 V.</p>${kbFuss()}</section>`).join('');
+  const ges=MP_GES.slice(1).map(([x,l])=>`<tr><td class="c" style="width:6mm"><b>${mpX(m.ergebnis===x)}</b></td><td>${esc(l)}</td></tr>`).join('');
+  const b3=`<section class="mpf">${mpKopfF(m,'PRÜFBEFUND – ERGEBNIS')}
+    <h4>Erder und Potentialausgleich</h4><table><tr><td>Erdungswiderstand R<sub>E</sub>: <b>${mpLeer(m.re)?'':fmtQ(m.re)+' Ω'}</b>${m.netz==='TT'&&mpRaMax(m)?` (zulässig ≤ ${fmt(mpRaMax(m))} Ω)`:''}</td>
+      <td>Haupt-Potentialausgleich: <b>${{ja:'vorhanden',nein:'fehlt',nz:'n. z.'}[m.hpa]||''}</b></td><td>R Potentialausgleich: <b>${mpLeer(m.rpa)?'':fmtQ(m.rpa)+' Ω'}</b></td></tr></table>
+    <h4>Festgestellte Mängel</h4><table><tr><td style="height:22mm;vertical-align:top">${esc(m.maengel||'keine').replace(/\n/g,'<br>')}</td></tr></table>
+    <h4>Gesamtergebnis</h4><table>${ges}</table>
+    <table><tr><td>Nächste Prüfung empfohlen bis: <b>${dAT(m.naechste)}</b></td></tr></table>
+    ${m.bem?`<h4>Bemerkungen</h4><table><tr><td>${esc(m.bem).replace(/\n/g,'<br>')}</td></tr></table>`:''}
+    <p style="margin:4mm 0 0">Die Anlage wurde nach OVE E 8101 geprüft; die Ergebnisse der Besichtigung, Erprobung und Messung sind in diesem Prüfbefund dokumentiert.</p>
+    <div class="mpsig">${mpSigFelder(m)}</div>${kbFuss()}</section>`;
+  return mpVorDoc(m)+b1+b2+b3}
+// Unterschriftsfelder (leer zum Unterschreiben auf Papier; Teil 3 setzt die elektronische Unterschrift ein)
+const MP_SIGF=[];
+const mpSigFelder=m=>MP_SIGF.map(f=>f(m)).join('')||`<div><div class="mpsl"></div>Ort, Datum, Prüfer (${esc(m.pruefer||'')})</div><div><div class="mpsl"></div>Auftraggeber / Anlagenbetreiber</div>`;
+Object.assign(ACT,{
+  mpdruck:el=>{const m=ROOT.mp(el.dataset.id);if(!m)return;druckHTML(mpDocHTML(m),`Messprotokoll ${m.nr} ${m.anlage||kName(m.kontaktId)}`)},
+});
 // Live-Suche: Suchfelder (UI.*Q) filtern beim Tippen, Fokus und Cursor bleiben erhalten
 let suchT=null;
 document.addEventListener('input',e=>{
@@ -6115,7 +6446,7 @@ document.addEventListener('change',e=>{
   switch(d.o){
     case'ui':UI[d.f]=v;render();return;
     case'lbsel':{const s=UI.lbSel||(UI.lbSel=[]),i=s.indexOf(d.k);if(el.checked&&i<0)s.push(d.k);if(!el.checked&&i>=0)s.splice(i,1);const z=document.querySelector('.lbsel b');if(z)z.textContent=s.length;const bt=document.querySelector('[data-act=lbins]');if(bt)bt.disabled=!(s.length&&UI.lbZiel);return}
-    case'path':{const[c,id]=d.r.split('|'),o=ROOT[c](id);if(!o)return;if(c==='lv')lvBieterPreisInit(o,d.f);setP(o,d.f,d.t==='n'?num(v):d.t==='nl'?(String(v).trim()===''?'':num(v)):el.type==='checkbox'?el.checked:v);persist();renderErhalten();return} // nl = Zahl, leer erlaubt (leer = Vorgabe, P34)
+    case'path':{const[c,id]=d.r.split('|'),o=ROOT[c](id);if(!o)return;if(gesperrt(o)){alert('Unterschrieben und gesperrt – keine Änderung möglich.');render();return} /* P36 a */if(c==='lv')lvBieterPreisInit(o,d.f);setP(o,d.f,d.t==='n'?num(v):d.t==='nl'?(String(v).trim()===''?'':num(v)):el.type==='checkbox'?el.checked:v);persist();renderErhalten();return} // nl = Zahl, leer erlaubt (leer = Vorgabe, P34)
     case'k3z':{const kb=ROOT.kb(d.r.split('|')[1]),c=kb?.k3?.[+d.ci];if(!c)return;k3zSet(c,d.z,num(v));persist();renderErhalten();return} // K3-Zeile B–G bzw. I–L nach Kennbuchstabe (P34)
     case'k3kv':case'k3gr':case'kbref':kbWahlSet(d,v);return; // Auswahlfelder der K-Blätter (P34 Teil 2)
     case'k':{const k=kontakt(d.id);
@@ -6197,11 +6528,85 @@ function onPos(b,i,f,v){
   });
   document.addEventListener('focusout',e=>{setTimeout(()=>{if(!document.activeElement?.closest?.('.rte,.ed.ml'))bar.style.display='none'},0)});
 })();
+/* Unterschrift und Sperre (P36 Teil 3a, erw.unterschrift): gemeinsamer Baustein für Bautagesbericht und Messprotokoll (OVE E 8101).
+   ablegen(pfad,blob): Datei in die Ablage; ohne Netz bleibt sie in diesem Browser (IndexedDB 'img:'+pfad, Liste localStorage erp-ablage-q) und wird nachgeladen (ablageNachladen,
+   bei 'online' und jede Minute; nie in den Test-Speicher). ablOffen(präfix) = Anzahl wartender Dateien. sigPop(titel,{name,ohne,hinweis}) → {name,zeit,png} | {name,zeit,ohne} | null;
+   sigAblegen(ordner,rolle,e) → {name,zeit,pfad} bzw. {name,zeit,ohne}. Sperre: o.gesperrt (Zeitpunkt) = unveränderbar, unabhängig vom Schalter; sperren(o) setzt gesperrt und
+   o.hash = sperrWert(o) (SHA-256 über den Inhalt ohne SIG_FREI, Schlüssel sortiert); sperrTag(o) prüft ihn (gültig / verändert). Pfad-Setter, arradd/arrdel, Rückgängig (undoSperre)
+   und Abgleich (merge3 → sigMerge: gesperrt gewinnt, Unterschriften beider Geräte) achten auf die Sperre der Sammlungen in SIG_C {sammlung:{n:o=>Name}}. sigBlock(o,rollen) für Ansicht/Druck */
+erwPlus({k:'unterschrift',std:false,p:'Unterschrift (P36 a)',l:'Unterschrift am Gerät und Sperre',info:'Grundlage für Bautagesberichte und Messprotokolle: Unterschrift mit Finger, Stift oder Maus auf dem Bildschirm, gespeichert als Bild in der Ablage (OneDrive bzw. Ordner) mit Name und Zeitpunkt. Mit der ersten Pflicht-Unterschrift ist der Datensatz gesperrt: keine Änderung, kein Zurücknehmen über „Zurück“, beim Abgleich zwischen Geräten gilt der gesperrte Stand. Ein Prüfwert (SHA-256) über den Inhalt zeigt, ob die Datei nachträglich verändert wurde. Es ist eine einfache elektronische Unterschrift (wie am Tablet des Paketdienstes), keine qualifizierte Signatur. Fotos und Unterschriften, die ohne Netz entstehen, bleiben in diesem Browser und werden nachgeladen, sobald wieder eine Verbindung besteht. Aus = keine neue Unterschrift; bestehende Sperren bleiben wirksam.'});
+const SIG_C={},SIG_FREI=['sig','hash','gesperrt','status','ausgaben'],gesperrt=o=>!!o?.gesperrt;
+const ABLQ='erp-ablage-q',ablQ=()=>{try{const q=JSON.parse(lsGet(ABLQ)||'[]');return Array.isArray(q)?q:[]}catch(e){return[]}},ablOffen=pr=>ablQ().filter(p=>p.startsWith(pr)).length;
+async function ablegen(pfad,blob){await kvSet('img:'+pfad,blob).catch(()=>{});
+  try{if(navigator.onLine===false)throw new Error('offline');await STORE.putFile(pfad,blob);return true}
+  catch(e){const q=ablQ();if(!q.includes(pfad)){q.push(pfad);lsSet(ABLQ,JSON.stringify(q))}return false}}
+let ablLauf=false;
+async function ablageNachladen(){if(ablLauf||!DB||STORE===CACHESTORE||navigator.onLine===false||!ablQ().length)return;ablLauf=true;let n=0;
+  try{for(const p of ablQ()){const b=await kvGet('img:'+p).catch(()=>null);if(b){try{await STORE.putFile(p,b);n++}catch(e){break}}const r=ablQ().filter(x=>x!==p);lsSet(ABLQ,r.length?JSON.stringify(r):null)}}
+  finally{ablLauf=false}}
+addEventListener('online',()=>ablageNachladen());setInterval(ablageNachladen,60000);
+const kanon=v=>Array.isArray(v)?'['+v.map(kanon).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+kanon(v[k])).join(',')+'}':JSON.stringify(v??null);
+async function sperrWert(o){if(!globalThis.crypto?.subtle)return'';const x={};for(const k in o)if(!SIG_FREI.includes(k))x[k]=o[k];
+  const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(kanon(x)));return[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function sperren(o){o.gesperrt=new Date().toISOString();o.hash=await sperrWert(o)}
+const sperrPruef=async o=>!o?.gesperrt||!o.hash?null:(await sperrWert(o).then(h=>h?h===o.hash:null)); // true = unverändert, false = verändert, null = nicht prüfbar
+function sperrTag(o){if(!o?.gesperrt)return'';if(!o.hash)return tag('ohne Prüfwert','warn');const id='pr'+uid();
+  sperrWert(o).then(h=>{const e=document.getElementById(id);if(e)e.outerHTML=h===o.hash?tag('Prüfwert gültig','ok'):h?tag('Prüfwert ungültig – Inhalt nachträglich verändert','err'):tag('Prüfwert hier nicht prüfbar')});
+  return`<span id="${id}" class="mut">Prüfwert …</span>`}
+function sigMerge(l,r){if(!l.gesperrt)return r;if(!r.gesperrt)return l;const o=JSON.parse(JSON.stringify(r));o.sig=o.sig||{};for(const k in l.sig||{})if(!o.sig[k])o.sig[k]=l.sig[k];return o} // gesperrter Stand gewinnt, Unterschriften beider Geräte
+function sigUndo(alt){for(const c in SIG_C)for(const o of DB[c]||[])if(o.gesperrt){const a=(alt[c]||[]).find(x=>x.id===o.id);if(!a?.gesperrt||JSON.stringify(a.sig)!==JSON.stringify(o.sig))return`${SIG_C[c].n(o)} wurde inzwischen unterschrieben – Unterschriften werden nicht zurückgenommen.`}return''}
+const sigAblegen=async(ordner,rolle,e)=>{if(e.ohne)return{name:e.name,zeit:e.zeit,ohne:e.ohne};const pfad=`${ordner}/unterschrift-${rolle}-${Date.now().toString(36)}.png`;await ablegen(pfad,e.png);return{name:e.name,zeit:e.zeit,pfad}};
+function sigPop(titel,{name='',ohne=false,hinweis=''}={}){return new Promise(res=>{
+  const d=document.createElement('div');d.className='modal sigm';
+  d.innerHTML=`<div class="mbox"><h2>${esc(titel)}</h2>${hinweis?`<p class="mut" style="margin:0 0 8px">${hinweis}</p>`:''}
+    <div class="row"><label class="w2">Name *<input id="sg-n" value="${esc(name)}" autocomplete="off"></label></div>
+    <div class="sgf"><canvas id="sg-c"></canvas><span class="sgl">Unterschrift</span></div>
+    ${ohne?`<label class="chk"><input type="checkbox" id="sg-o"> <span>unterschreibt nicht</span></label><div class="row" id="sg-or" hidden style="margin-top:6px"><label class="w2">Vermerk<input id="sg-ov" placeholder="z. B. nicht anwesend, verweigert"></label></div>`:''}
+    <p class="err" id="m-err" style="margin:6px 0 0"></p>
+    <div class="bar" style="margin:12px 0 0"><button id="sg-x">Löschen</button><span class="sp"></span><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Übernehmen</button></div></div>`;
+  document.body.appendChild(d);
+  const c=d.querySelector('#sg-c'),x=c.getContext('2d'),q=s=>d.querySelector(s);let leer=true,zieh=false,lp=null,bb=null;const bbP=p=>{bb=bb?[Math.min(bb[0],p[0]),Math.min(bb[1],p[1]),Math.max(bb[2],p[0]),Math.max(bb[3],p[1])]:[p[0],p[1],p[0],p[1]]};
+  const neu=()=>{const r=c.getBoundingClientRect(),k=devicePixelRatio||1;c.width=Math.max(1,Math.round(r.width*k));c.height=Math.max(1,Math.round(r.height*k));x.setTransform(k,0,0,k,0,0);
+    x.lineWidth=2.2;x.lineCap='round';x.lineJoin='round';x.strokeStyle=x.fillStyle='#0b1f4d';leer=true;bb=null;q('.sgl').hidden=false};
+  requestAnimationFrame(neu);const rs=()=>{if(leer)neu()};addEventListener('resize',rs);
+  const pt=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  c.addEventListener('pointerdown',e=>{if(q('#sg-o')?.checked)return;e.preventDefault();c.setPointerCapture?.(e.pointerId);zieh=true;lp=pt(e);bbP(lp);x.beginPath();x.arc(lp[0],lp[1],1.1,0,7);x.fill();leer=false;q('.sgl').hidden=true});
+  c.addEventListener('pointermove',e=>{if(!zieh)return;e.preventDefault();for(const v of e.getCoalescedEvents?.()||[e]){const p=pt(v);x.beginPath();x.moveTo(lp[0],lp[1]);x.lineTo(p[0],p[1]);x.stroke();lp=p;bbP(p)}});
+  for(const t of['pointerup','pointercancel','pointerleave'])c.addEventListener(t,()=>{zieh=false});
+  q('#sg-x').onclick=neu;q('#sg-o')?.addEventListener('change',e=>{q('#sg-or').hidden=!e.target.checked;q('.sgf').classList.toggle('aus',e.target.checked)});
+  const fin=v=>{d.remove();document.removeEventListener('keydown',kd);removeEventListener('resize',rs);res(v)};
+  const ok=()=>{const n=q('#sg-n').value.trim(),zeit=new Date().toISOString();if(!n){pflichtWarnung(d,['Name'],[q('#sg-n')]);return}
+    if(q('#sg-o')?.checked){fin({name:n,zeit,ohne:q('#sg-ov').value.trim()||'unterschreibt nicht'});return}
+    if(leer){q('#m-err').textContent='Bitte im Feld unterschreiben.';return}
+    const k=devicePixelRatio||1,[x0,y0,x1,y1]=bb.map((v,i)=>Math.round((i<2?v-6:v+6)*k)),z=document.createElement('canvas'),zx=Math.max(0,x0),zy=Math.max(0,y0); // auf die Unterschrift zuschneiden
+    z.width=Math.max(1,Math.min(c.width,x1)-zx);z.height=Math.max(1,Math.min(c.height,y1)-zy);z.getContext('2d').drawImage(c,zx,zy,z.width,z.height,0,0,z.width,z.height);
+    z.toBlob(b=>{if(b)fin({name:n,zeit,png:b});else q('#m-err').textContent='Unterschrift konnte nicht gespeichert werden.'},'image/png')};
+  const kd=e=>{if(!mOben(d))return;if(e.key==='Escape')fin(null)};document.addEventListener('keydown',kd);
+  q('#m-no').onclick=()=>fin(null);q('#m-ok').onclick=ok;setTimeout(()=>{if(!name)q('#sg-n').focus()},0)})}
+const sigBlock=(o,rollen)=>`<div class="sigb">${rollen.map(([k,l])=>{const s=o.sig?.[k];return`<div class="sigz"><div class="sigbild">${s?.pfad?`<img data-bild="${esc(s.pfad)}" alt="Unterschrift ${esc(s.name||'')}">`:s?.ohne?`<span class="mut">${esc(s.ohne)}</span>`:''}</div><div class="sigl">${esc(l)}${s?`: ${esc(s.name||'')} · ${dtAT(s.zeit)}`:''}</div></div>`}).join('')}</div>${o.gesperrt?`<p class="sigp">Gesperrt seit ${dtAT(o.gesperrt)} · ${sperrTag(o)}</p>`:''}`;
 function logoUpload(el){
   const file=el.files[0];if(!file)return;
   if(file.size>300*1024){alert('Logo zu groß (max. 300 kB).');return}
   const r=new FileReader();r.onload=()=>{S().firma.logo=r.result;persist();render()};r.readAsDataURL(file);
 }
+/* Bautagesbericht Teil 2 (P36, erw.btbBild): Fotos je Bericht, am Handy direkt mit der Kamera (capture), Beschriftung, Aufnahmezeit (Datei-Zeitstempel); Dateien in der Ablage
+   Berichte/<Jahr>/<Auftrag>_BTB-<nr>/<id>_v.jpg (Vorschau ≤ 320 px) und <id>.jpg (große verkleinert), im Bericht nur Pfade bilder[{id,mini,pfad,text,zeit}]; ohne Netz über ablegen() (P36 a) */
+erwPlus({k:'btbBild',std:false,p:'Bautagesbericht (P36)',l:'Fotos im Bautagesbericht',info:'Im Bautagesbericht nimmt „📷 Foto aufnehmen“ am Handy direkt mit der Kamera auf, „Bilder wählen …“ übernimmt vorhandene Fotos (mehrere auf einmal). Je Foto Beschriftung und Aufnahmezeit; Ansicht und Druck zeigen die Fotos zu zweit nebeneinander. Die Fotos liegen als Dateien in der Ablage unter „Berichte/<Jahr>/<Auftrag>_BTB-<Nr>/“ (OneDrive bzw. Ordner), nicht in den Daten. Ohne Netz bleiben sie in diesem Browser und werden nachgeladen, sobald wieder eine Verbindung besteht. Aus = kein Abschnitt „Fotos“ im Editor, vorhandene Fotos bleiben in Ansicht und Druck.'});
+async function btbFotos(r,files){let n=0;saveState('Fotos werden gespeichert …');
+  for(const f of files){if(!/^image\//.test(f.type))continue;let mini;try{mini=await bildMini(f)}catch(e){alert(`${f.name}: Das Bild kann nicht gelesen werden.\n${e.message}`);continue}
+    const id=uid(),o=btbOrdner(r),g=await bildVerkleinern(f),pfad=`${o}/${id}.${/png$/i.test(g.type)?'png':'jpg'}`;
+    await ablegen(`${o}/${id}_v.jpg`,mini);await ablegen(pfad,g);
+    (r.bilder||(r.bilder=[])).push({id,mini:`${o}/${id}_v.jpg`,pfad,text:'',zeit:new Date(f.lastModified||Date.now()).toISOString()});n++}
+  saveState('');if(n){log('Bautagesbericht Fotos',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${n}`);commit()}render()}
+BTB_ED.push(r=>{if(!erw('btbBild'))return'';const R='btb|'+r.id,L=r.bilder||[],w=ablOffen(btbOrdner(r));
+  return bAbs('btb-bild','Fotos',`${L.length?`<div class="btbb">${L.map((b,i)=>`<div class="btbbi"><img data-bild="${esc(b.mini)}" data-act="btbbild" data-id="${r.id}" data-i="${i}" alt="Foto ${i+1}" title="Foto öffnen">
+      <button class="s d" data-act="arrdel" data-r="${R}" data-f="bilder" data-i="${i}" title="Foto entfernen">✕</button><input data-o="path" data-r="${R}" data-f="bilder.${i}.text" value="${esc(b.text)}" placeholder="Beschriftung"><span class="mut">${dtAT(b.zeit)}</span></div>`).join('')}</div>`:''}
+    <div class="bar" style="margin:8px 0 0"><label class="btn p">📷 Foto aufnehmen<input type="file" accept="image/*" capture="environment" data-btbfoto="${r.id}" hidden></label><label class="btn">🖼 Bilder wählen …<input type="file" accept="image/*" multiple data-btbfoto="${r.id}" hidden></label>
+    ${w?`<span class="mut">⏳ ${w} Datei${w>1?'en warten':' wartet'} auf Netz</span>`:''}</div>`,{offen:!!L.length,zusatz:L.length?L.length+'':'keine'})});
+BTB_DOC.push(r=>(r.bilder||[]).length?`<h3>Fotos</h3><div class="btbbd">${r.bilder.map((b,i)=>`<figure><img data-bild="${esc(b.pfad)}" alt="Foto ${i+1}"><figcaption>${i+1}. ${esc(b.text||'')}${b.text?' · ':''}${dtAT(b.zeit)}</figcaption></figure>`).join('')}</div>`:'');
+document.addEventListener('change',e=>{const id=e.target.dataset?.btbfoto;if(id==null)return;const r=ROOT.btb(id),f=[...e.target.files];e.target.value='';if(r&&!btbFest(r)&&f.length)btbFotos(r,f)});
+ACT.btbbild=el=>{const b=ROOT.btb(el.dataset.id)?.bilder?.[+el.dataset.i];if(!b)return;const d=document.createElement('div');d.className='modal btblb';d.innerHTML=`<div class="mbox"><img alt=""><p class="mut">${esc(b.text||'')} ${dtAT(b.zeit)}</p><div class="bar" style="margin:8px 0 0"><span class="sp"></span><button class="p">Schließen</button></div></div>`;
+  document.body.appendChild(d);d.onclick=e=>{if(e.target===d||e.target.tagName==='BUTTON')d.remove()};bildBlob(b.pfad).then(x=>{d.querySelector('img').src=BURL[b.pfad]??=URL.createObjectURL(x)}).catch(()=>{d.querySelector('img').replaceWith('Bild nicht verfügbar (Ablage nicht erreichbar)')})};
 function importJSON(el){
   const file=el.files[0];if(!file)return;
   const r=new FileReader();r.onload=()=>{
@@ -6211,11 +6616,193 @@ function importJSON(el){
     catch(e){alert('Import fehlgeschlagen: '+e.message)}
   };r.readAsText(file);
 }
+/* Bautagesbericht Teil 3 (P36, erw.btbSig, wirkt mit erw.unterschrift): Abschließen (Pflichtangaben, b.abgeschlossen; „Wieder öffnen“ bis zur ersten Unterschrift) →
+   Unterschrift Monteur (sperrt: sperren() aus P36 a, danach BTB_NACH, z. B. Zeiten Teil 5) → Unterschrift Kunde optional, auch später (nur sig.kunde, Inhalt bleibt);
+   Korrektur nach der Sperre nur als Nachtrag (neuer Bericht mit nachtragZu, Inhalt kopiert). Unterschriften r.sig {monteur,kunde} als PNG im Ablageordner btbOrdner(r) */
+erwPlus({k:'btbSig',std:false,p:'Bautagesbericht (P36)',l:'Bautagesbericht abschließen und unterschreiben',info:'Wirkt mit „Unterschrift am Gerät und Sperre“. „Abschließen“ prüft Datum und Tätigkeit (Hinweis, wenn keine Stunden erfasst sind) und zeigt den Bericht als Ansicht; „Wieder öffnen“ geht bis zur ersten Unterschrift. „Unterschrift Monteur“ sperrt den Bericht: Inhalt, Fotos und Zeiten sind danach unveränderbar. „Unterschrift Kunde“ ist optional und auch später möglich (z. B. am nächsten Tag), alternativ mit Vermerk „unterschreibt nicht“; sie ändert den Inhalt nicht. Korrekturen nach der Sperre nur über „Nachtrag …“ (neuer Bericht mit Verweis, Inhalt übernommen). Aus = keine Knöpfe; gesperrte Berichte bleiben gesperrt.'});
+SIG_C.berichte={n:r=>'Bautagesbericht '+r.nr};
+const BTB_NACH=[],btbSigAn=()=>erw('btbSig')&&erw('unterschrift');
+BTB_ST.unshift(r=>r.gesperrt?(r.sig?.kunde?.pfad?tag('Kunde unterschrieben','ok'):tag('unterschrieben','ok')):r.abgeschlossen?tag('abgeschlossen','acc'):'');
+BTB_KN.push(r=>!btbSigAn()?'':!btbFest(r)?`<button class="p" data-act="btbab" data-id="${r.id}">Abschließen</button>`
+  :!r.gesperrt?`<button data-act="btbauf" data-id="${r.id}">Wieder öffnen</button><button class="p" data-act="btbsig" data-id="${r.id}" data-r="monteur">✍ Unterschrift Monteur</button>`
+  :(r.sig?.kunde?'':`<button class="p" data-act="btbsig" data-id="${r.id}" data-r="kunde">✍ Unterschrift Kunde</button>`)+`<button data-act="btbnach" data-id="${r.id}">Nachtrag …</button>`);
+BTB_DOC.push(r=>{const n=DB.berichte.filter(x=>x.nachtragZu===r.id),v=ROOT.btb(r.nachtragZu);
+  return(v?`<p class="hint" style="margin-top:12px">Nachtrag zu <a href="#/bericht/${v.id}">Bautagesbericht ${v.nr}</a> vom ${dAT(v.datum)}</p>`:'')+(n.length?`<p class="mut" style="margin-top:12px">Nachtrag: ${n.map(x=>`<a href="#/bericht/${x.id}">Bautagesbericht ${x.nr}</a>`).join(', ')}</p>`:'')
+    +(r.abgeschlossen||r.gesperrt?sigBlock(r,[['monteur','Monteur'],['kunde','Auftraggeber / Kunde']]):'')});
+Object.assign(ACT,{
+  btbab:async el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r))return;document.activeElement?.blur?.();await new Promise(z=>setTimeout(z,0));
+    const f=[!r.datum&&'Datum',!(r.taet||[]).some(t=>pT(t.text))&&'Tätigkeit'].filter(Boolean);if(f.length){alert('Bitte ausfüllen: '+f.join(', '));return}
+    if(!btbSumme(r)&&!confirm('Es sind keine Stunden erfasst. Trotzdem abschließen?'))return;
+    r.abgeschlossen=new Date().toISOString();log('Bautagesbericht abgeschlossen',`BTB ${r.nr} ${auftragKurz(r.auftragId)}`);await commit();render()},
+  btbauf:async el=>{const r=ROOT.btb(el.dataset.id);if(!r||r.gesperrt)return;delete r.abgeschlossen;log('Bautagesbericht wieder geöffnet',`BTB ${r.nr}`);await commit();render()},
+  btbsig:async el=>{const r=ROOT.btb(el.dataset.id),m=el.dataset.r==='monteur';if(!r||!btbSigAn()||(m?r.gesperrt||!r.abgeschlossen:!r.gesperrt||r.sig?.kunde))return;
+    const k=kontakt(btbRoot(r)?.kontaktId),e=await sigPop(m?'Unterschrift Monteur':'Unterschrift Auftraggeber / Kunde',m?{name:r.verfasser||S().bearbeiter||'',hinweis:'Mit der Unterschrift wird der Bericht gesperrt: Inhalt, Fotos und Zeiten sind danach nicht mehr änderbar (Korrektur nur als Nachtrag).'}
+      :{name:persName(k)||'',ohne:true,hinweis:`Der Kunde bestätigt Bautagesbericht ${r.nr} vom ${dAT(r.datum)}. Der Inhalt bleibt unverändert.`});
+    if(!e||(m?r.gesperrt:r.sig?.kunde))return;const s=await sigAblegen(btbOrdner(r),m?'monteur':'kunde',e);
+    if(m){r.sig={monteur:s};await sperren(r);for(const f of BTB_NACH)f(r)}else r.sig={...r.sig,kunde:s};
+    log(m?'Bautagesbericht unterschrieben (Monteur)':'Bautagesbericht unterschrieben (Kunde)',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${s.name}${s.ohne?' – '+s.ohne:''}`);await commit();render()},
+  btbnach:el=>{const r=ROOT.btb(el.dataset.id);if(!r||!confirm(`Nachtrag zu Bautagesbericht ${r.nr} anlegen?\n\nDer neue Bericht übernimmt den Inhalt zum Korrigieren; Bericht ${r.nr} bleibt unverändert.`))return;
+    const n=btbNeu(r.auftragId),c=JSON.parse(JSON.stringify(r));for(const k of['id','nr','erstellt','abgeschlossen','gesperrt','hash','sig','nachtragZu'])delete c[k];Object.assign(n,c,{nachtragZu:r.id});
+    log('Bautagesbericht Nachtrag',`BTB ${n.nr} zu BTB ${r.nr}`);persist();go('bericht/'+n.id)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();commit()}
   if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='p'&&DB&&erw('strgP')&&curBeleg()){e.preventDefault();document.activeElement?.blur?.();belegDrucken(curBeleg())}}); // Strg+P: geöffneten Beleg drucken (offene Eingabe vorher übernehmen)
+/* Bautagesbericht Teil 5 (P36, erw.btbZeit): Stunden des Berichts beim Unterschreiben des Monteurs (BTB_NACH, Teil 3) in die Zeiterfassung (DB.zeiten mit berichtId; Nachkalkulation und
+   „Zeiten abrechnen“ wie bisher). „⏱ aus Zeiterfassung“ übernimmt offene, noch keinem Bericht zugeordnete Zeiten desselben Auftrags und Tages als Zeilen (p.zid, Eintrag bekommt berichtId);
+   beim Unterschreiben werden diese nur angepasst (Stunden, Tarif, solange nicht abgerechnet), nicht neu angelegt. Einträge unterschriebener Berichte sind in der Zeiterfassung nicht löschbar */
+erwPlus({k:'btbZeit',std:false,p:'Bautagesbericht (P36)',l:'Stunden des Bautagesberichts in die Zeiterfassung',info:'Beim Unterschreiben des Monteurs werden die Stunden je Person und Tarif als Einträge in die Zeiterfassung übernommen (Text „BTB <Nr> · Name“); Nachkalkulation, DB je Stunde und „Zeiten abrechnen“ rechnen damit wie bisher. Bereits in der Zeiterfassung erfasste, offene Stunden desselben Auftrags und Tages holt „⏱ aus Zeiterfassung“ in den Bericht (keine Doppelerfassung). Einträge eines unterschriebenen Berichts lassen sich in der Zeiterfassung nicht löschen. Aus = keine Übernahme.'});
+const btbZeitFrei=r=>DB.zeiten.filter(z=>z.auftragId===r.auftragId&&z.datum===r.datum&&!z.belegId&&!(z.berichtId&&ROOT.btb(z.berichtId)));
+BTB_KN.push(r=>erw('btbZeit')&&!btbFest(r)&&btbZeitFrei(r).length?`<button data-act="btbzeit" data-id="${r.id}" title="offene Zeiten dieses Auftrags vom ${dAT(r.datum)} übernehmen">⏱ aus Zeiterfassung (${btbZeitFrei(r).length})</button>`:'');
+BTB_NACH.push(r=>{if(!erw('btbZeit'))return;let n=0;
+  for(const p of r.personal||[]){const h=btbStd(p),z=p.zid&&DB.zeiten.find(x=>x.id===p.zid);
+    if(z){if(!z.belegId){z.stunden=h;z.tarif=p.tarif}z.berichtId=r.id;continue}
+    if(!h)continue;const t=S().tarife.find(x=>x.kz===p.tarif)||{};DB.zeiten.push({id:uid(),datum:r.datum,auftragId:r.auftragId,tarif:p.tarif,stunden:h,text:[`BTB ${r.nr}`,p.name].filter(pT).join(' · '),kosten:+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id});n++}
+  if(n)log('Zeiten aus Bautagesbericht',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${n} Eintrag/Einträge`)});
+BTB_DOC.push(r=>{if(!r.gesperrt)return'';const Z=DB.zeiten.filter(z=>z.berichtId===r.id);return Z.length?`<p class="mut btbzt">In der Zeiterfassung: ${fmtQ(sum(Z,z=>z.stunden))} h${Z.some(z=>z.belegId)?' (teilweise abgerechnet)':''}</p>`:''});
+ACT.btbzeit=el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r))return;const L=btbZeitFrei(r);if(!L.length)return;
+  r.personal=(r.personal||[]).filter(p=>pT(p.name)||btbStd(p)||p.zid);
+  for(const z of L){r.personal.push({name:'',tarif:z.tarif,von:'',bis:'',pause:'',stunden:+z.stunden||0,zid:z.id});z.berichtId=r.id;if(pT(z.text)&&!(r.taet||[]).some(t=>t.text===z.text))(r.taet||(r.taet=[])).push({text:z.text,ort:''})}
+  r.taet=r.taet.filter((t,i,a)=>pT(t.text)||pT(t.ort)||a.length===1);persist();render()};
 $('#menu').onclick=e=>{e.stopPropagation();document.body.classList.toggle('nav')};
 document.querySelector('nav').addEventListener('click',e=>{if(e.target.closest('a'))document.body.classList.remove('nav')});
 document.addEventListener('click',e=>{if(document.body.classList.contains('nav')&&!e.target.closest('nav'))document.body.classList.remove('nav')});
+
+/* Bautagesbericht Teil 4 (P36, erw.btbDruck): Druck bzw. „Als PDF speichern“ über druckHTML() – Briefkopf, btbDoc() mit Fotos und Unterschriften (Bilder vorher geladen und dekodiert) */
+erwPlus({k:'btbDruck',std:false,p:'Bautagesbericht (P36)',l:'Bautagesbericht drucken / als PDF',info:'Knopf „🖨 Drucken / PDF“ im Bautagesbericht: A4 mit Briefkopf, Kopfdaten, Witterung, Personal mit Stundensumme, Tätigkeiten, Material und Geräten, Vorkommnissen, Fotos (zu zweit nebeneinander) und den Unterschriften mit Name, Zeitpunkt und Prüfwert. PDF über „Als PDF speichern“ im Druckdialog. Aus = kein Knopf.'});
+BTB_KN.push(r=>erw('btbDruck')?`<button data-act="btbdruck" data-id="${r.id}">🖨 Drucken / PDF</button>`:'');
+ACT.btbdruck=async el=>{const r=ROOT.btb(el.dataset.id);if(!r)return;document.activeElement?.blur?.();saveState('Druck wird vorbereitet …');
+  const P=[...(r.bilder||[]).map(b=>b.pfad),...Object.values(r.sig||{}).map(s=>s?.pfad)].filter(Boolean);
+  await Promise.all(P.map(async p=>{try{BURL[p]??=URL.createObjectURL(await bildBlob(p));const i=new Image();i.src=BURL[p];await i.decode()}catch(e){}}));saveState('');
+  const a=btbRoot(r);druckHTML(`<div class="doc btbp">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">Bautagesbericht ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${btbDoc(r)}</div>`,`Bautagesbericht ${r.nr} ${a?.nr||''} ${dAT(r.datum)}`);bilderLaden()};
+/* --- Messprotokoll (P39 Teil 3, erw.mpSig, wirkt mit erw.unterschrift aus P36 a): „Abschließen“ (Prüfer und Gesamtergebnis Pflicht, Rückfrage bei „in Ordnung“ trotz Grenzwertverletzungen
+   bzw. abgelaufener Kalibrierung; m.abgeschlossen, Editor als fieldset gesperrt, „Wieder öffnen“ bis zur Unterschrift) → „Unterschrift Prüfer“ (sperrt: sperren(), Prüfwert) →
+   „Unterschrift Auftraggeber“ optional, auch später oder mit Vermerk (nur sig.kunde, Inhalt bleibt). Korrektur nach der Sperre nur als neues Protokoll (korrekturZu, Inhalt kopiert).
+   Unterschriften m.sig {pruefer,kunde} als PNG in der Ablage Messprotokolle/<Jahr>/<Nr>/ (sigAblegen), im Druck statt der leeren Unterschriftsfelder (MP_SIGF) --- */
+erwPlus({k:'mpSig',std:false,p:'Messprotokoll (P39)',l:'Messprotokoll abschließen und unterschreiben',info:'Wirkt mit „Unterschrift am Gerät und Sperre“. „Abschließen“ prüft Prüfer und Gesamtergebnis (Rückfrage, wenn „in Ordnung“ gewählt ist, obwohl Messwerte außerhalb der Grenzwerte liegen, oder ein gewähltes Prüfgerät nicht mehr kalibriert ist) und sperrt die Eingabe; „Wieder öffnen“ geht bis zur Unterschrift. „Unterschrift Prüfer“ sperrt das Protokoll endgültig (Prüfwert über den Inhalt). „Unterschrift Auftraggeber“ ist optional und auch später möglich, alternativ mit Vermerk „unterschreibt nicht“. Korrekturen danach nur über „Korrektur …“ (neues Protokoll mit Verweis). Druck und PDF zeigen die Unterschriften. Aus: Eingabe wie bisher, unterschriebene Protokolle bleiben gesperrt.'});
+SIG_C.messprot={n:m=>'Messprotokoll '+m.nr};
+const mpSigAn=()=>erw('mpSig')&&erw('unterschrift');
+const mpFest=m=>!!m?.gesperrt||mpSigAn()&&!!m?.abgeschlossen; // gesperrt gilt immer (P36 a), „abgeschlossen“ nur mit Schalter
+const mpOrdner=m=>`Messprotokolle/${String(m.datum||isoD()).slice(0,4)}/${String(m.nr).replace(/[^\w.\-]+/g,'_')}`;
+const MP_SROL=[['pruefer','Prüfer'],['kunde','Auftraggeber / Anlagenbetreiber']];
+MP_KN.unshift(m=>!mpSigAn()&&!m.gesperrt?'':(m.gesperrt?tag(m.sig?.kunde?'unterschrieben (auch Auftraggeber)':'unterschrieben','ok'):m.abgeschlossen?tag('abgeschlossen','acc'):'')
+  +(!mpSigAn()?'':!mpFest(m)?`<button class="p" data-act="mpab" data-id="${m.id}">Abschließen</button>`
+  :!m.gesperrt?`<button data-act="mpauf2" data-id="${m.id}">Wieder öffnen</button><button class="p" data-act="mpsig" data-id="${m.id}" data-r="pruefer">✍ Unterschrift Prüfer</button>`
+  :(m.sig?.kunde?'':`<button class="p" data-act="mpsig" data-id="${m.id}" data-r="kunde">✍ Unterschrift Auftraggeber</button>`)+`<button data-act="mpkorr" data-id="${m.id}">Korrektur …</button>`));
+// Ansicht unter dem gesperrten Editor: Verweise auf Korrekturen, Unterschriften mit Prüfwert
+function mpSigAnsicht(m){const k=(DB.messprot||[]).filter(x=>x.korrekturZu===m.id),v=ROOT.mp(m.korrekturZu);
+  return`<div class="card">${v?`<p class="hint" style="margin:0 0 8px">Korrektur zu <a href="#/mps/${v.id}">${esc(v.nr)}</a> vom ${dAT(v.datum)}</p>`:''}${k.length?`<p class="mut" style="margin:0 0 8px">Korrigiert durch ${k.map(x=>`<a href="#/mps/${x.id}">${esc(x.nr)}</a>`).join(', ')}</p>`:''}
+    ${sigBlock(m,MP_SROL)}</div>`}
+MP_SIGF.push(m=>m.abgeschlossen||m.gesperrt?`<div style="flex:1">${sigBlock(m,MP_SROL)}</div>`:'');
+for(const k of['mpkd','mpauf','mpger','mpalle']){const f=ACT[k];ACT[k]=(el,e)=>{if(mpFest(ROOT.mp(el.dataset.id))){render();return}f(el,e)}} // Eingaben außerhalb des Pfad-Setters
+{const del0=ACT.mpdel;ACT.mpdel=(el,e)=>{const m=ROOT.mp(el.dataset.id);if(m?.gesperrt){alert(`Messprotokoll ${m.nr} ist unterschrieben und kann nicht gelöscht werden.`);return}del0(el,e)}}
+{const dr0=ACT.mpdruck;ACT.mpdruck=async(el,e)=>{const m=ROOT.mp(el.dataset.id);if(!m)return;const P=Object.values(m.sig||{}).map(s=>s?.pfad).filter(Boolean); // Unterschriften vor dem Druck laden
+  if(P.length){saveState('Druck wird vorbereitet …');await Promise.all(P.map(async p=>{try{BURL[p]??=URL.createObjectURL(await bildBlob(p));const i=new Image();i.src=BURL[p];await i.decode()}catch(x){}}));saveState('')}
+  dr0(el,e);bilderLaden()}}
+Object.assign(ACT,{
+  mpab:async el=>{const m=ROOT.mp(el.dataset.id);if(!m||mpFest(m)||!mpSigAn())return;document.activeElement?.blur?.();await new Promise(z=>setTimeout(z,0));
+    const f=[!pT(m.pruefer)&&'Prüfer',!m.ergebnis&&'Gesamtergebnis',!m.kontaktId&&!pT(m.anlage)&&'Kunde oder Anlage'].filter(Boolean);if(f.length){alert('Bitte ausfüllen: '+f.join(', '));return}
+    const z=mpZaehl(m),alt=(S().pgeraete||[]).filter(g=>(m.gerIds||[]).includes(g.id)&&!mpGerOk(g));
+    if(m.ergebnis==='io'&&z.e&&!confirm(`${z.e} Stromkreis${z.e>1?'e liegen':' liegt'} außerhalb der Grenzwerte, das Gesamtergebnis lautet aber „in Ordnung“. Trotzdem abschließen?`))return;
+    if(alt.length&&!confirm(`Kalibrierung abgelaufen: ${alt.map(g=>g.bez||g.typ).join(', ')}. Trotzdem abschließen?`))return;
+    if(!(m.gerIds||[]).length&&!confirm('Es ist kein Prüfgerät gewählt. Trotzdem abschließen?'))return;
+    m.abgeschlossen=new Date().toISOString();log('Messprotokoll abgeschlossen',m.nr);await commit();render()},
+  mpauf2:async el=>{const m=ROOT.mp(el.dataset.id);if(!m||m.gesperrt)return;delete m.abgeschlossen;log('Messprotokoll wieder geöffnet',m.nr);await commit();render()},
+  mpsig:async el=>{const m=ROOT.mp(el.dataset.id),p=el.dataset.r==='pruefer';if(!m||!mpSigAn()||(p?m.gesperrt||!m.abgeschlossen:!m.gesperrt||m.sig?.kunde))return;
+    const k=kontakt(m.kontaktId),e=await sigPop(p?'Unterschrift Prüfer':'Unterschrift Auftraggeber / Anlagenbetreiber',p?{name:m.pruefer||'',hinweis:'Mit der Unterschrift wird das Messprotokoll gesperrt: Messwerte und Ergebnis sind danach nicht mehr änderbar (Korrektur nur als neues Protokoll).'}
+      :{name:persName(k)||'',ohne:true,hinweis:`Der Auftraggeber bestätigt den Erhalt von Messprotokoll ${m.nr} vom ${dAT(m.datum)}. Der Inhalt bleibt unverändert.`});
+    if(!e||(p?m.gesperrt:m.sig?.kunde))return;const s=await sigAblegen(mpOrdner(m),p?'pruefer':'kunde',e);
+    if(p){m.sig={pruefer:s};await sperren(m)}else m.sig={...m.sig,kunde:s};
+    log(p?'Messprotokoll unterschrieben (Prüfer)':'Messprotokoll unterschrieben (Auftraggeber)',`${m.nr}: ${s.name}${s.ohne?' – '+s.ohne:''}`);await commit();render()},
+  mpkorr:el=>{const m=ROOT.mp(el.dataset.id);if(!m||!confirm(`Korrektur zu Messprotokoll ${m.nr} anlegen?\n\nDas neue Protokoll übernimmt den Inhalt zum Korrigieren; ${m.nr} bleibt unverändert.`))return;
+    const c=JSON.parse(JSON.stringify(m));for(const x of['id','nr','erstellt','abgeschlossen','gesperrt','hash','sig','korrekturZu'])delete c[x];
+    const n=mpNeu({...c,datum:isoD(),korrekturZu:m.id});DB.messprot.push(n);log('Messprotokoll Korrektur',`${n.nr} zu ${m.nr}`);persist();go('mps/'+n.id)},
+});
+/* --- Messprotokoll (P39 Teil 4, erw.mpVorlage): Prüfbericht nach der Vorlage des Anwenders (Prüfbefund OVE E 8101:2025, Ausgabe 2026). Auswahlen zum An- und Abwählen
+   als Häkchen (Prüfgrundlage, Intervall, Kenntnisnahme, Beiblätter, Anhänge, Maßnahmen; m.pb), Umfang der Überprüfung als Matrix je Anlagenteil (m.umfang[{id,teil,z:{<bereich>:{g,t,p,z}}}],
+   Werte nach Legende J/N bzw. J/G/N; am Handy gedreht: Bereiche als Zeilen). Druck: Deckblatt „Prüfbericht“ und Blatt „Umfang der Überprüfung“ vor den bisherigen Blättern,
+   Auswahlen als Kästchen mit Häkchen (mpCb), auch in den bisherigen Blättern (mpX) --- */
+erwPlus({k:'mpVorlage',std:false,p:'Messprotokoll (P39)',l:'Prüfbericht nach Vorlage (Häkchen, Prüfumfang-Matrix)',info:'Im Messprotokoll kommen die Angaben des Prüfberichts nach der Vorlage OVE E 8101:2025 dazu: Prüfgrundlage, Intervall der wiederkehrenden Prüfung, nächste Prüfung je Anlagenteil, Planer, Errichter, Kenntnisnahme sowie Beiblätter, Anhänge und Maßnahmen, jeweils zum An- und Abwählen mit Häkchen. Der Umfang der Überprüfung wird je Anlagenteil als Matrix nach der Legende ausgewählt (Geprüft, Technische Unterlagen, Prüfbefund: J/N; Anlagenzustand: J/G/N). Der Druck beginnt mit dem Deckblatt „Prüfbericht“ und dem Blatt „Umfang der Überprüfung“; Auswahlen erscheinen als Kästchen mit Häkchen. Wirkt nur mit eingeschalteten Messprotokollen; aus: Eingabe und Druck wie bisher.'});
+const MP_UB=[['anl','Elektrotechnische Anlage, Versorgung, Schutzmaßnahmen'],['vt','Verteiler'],['bm','Betriebsmittel'],['erd','Erdungsanlage'],['blitz','Blitzschutzanlage'],
+  ['ex','Anlagen in explosionsgeschützten Bereichen (Dokumentation)'],['sich','Sicherheitsstromerzeugungs- und -beleuchtungsanlage'],['pv','PV-Anlage / Speicher'],['lade','E-Ladeeinrichtung']];
+const MP_UZ=[['g','Geprüft nach','Geprüft','JN'],['t','Technische Unterlagen','Unterl.','JN'],['p','Prüfbefund','Befund','JN'],['z','Anlagenzustand','Zustand','JGN']];
+const MP_GRUND=[['e6004','OVE E 8101 Abschnitt 600.4'],['e6005','OVE E 8101 Abschnitt 600.5'],['oe8001','ÖVE/ÖNORM E 8001-6-61'],['esv','Elektroschutzverordnung']];
+const MP_INT=[['ove','OVE E 8101'],['esv','ESV'],['bescheid','Bescheid'],['r5','OVE R 5']];
+const MP_BEIBL=[['vt','Verteiler'],['bm','Betriebsmittel'],['erp','Erprobung und Messung'],['bes','Besichtigung'],['tb','Technische Beschreibungen'],['zp','Zeichnungen, Pläne, Diagramme'],
+  ['mg','Mängelauflistung'],['sb','Sicherheitsbeleuchtung'],['ex','EX-Bereiche'],['rb','Risikobeurteilung / Prüfmittel'],['erd','Erdungsanlage'],['pv','PV-Anlage und Speicher'],['lade','E-Ladeeinrichtung']];
+const MP_ANH=[['nb','Vereinbarung mit dem Netzbetreiber'],['bap','Bestands- und Auslasspläne'],['shl','Schemata Hauptleitung'],['spa','Schemata Schutzpotentialausgleich'],['slp','Stromlaufplan Verteiler / Steuerung'],
+  ['spd','Anordnung der Überspannungsableiter'],['foto','Fotodokumentation'],['bwp','Bedienungs-, Wartungs- und Prüfanleitungen'],['bmb','Betriebsmittelbeschreibungen'],['mbes','Messungen und Unterlagen besonderer Anlagen'],
+  ['mwt','Messwerttabelle'],['rb','Risikobeurteilung gemäß ETV 2020'],['ua','Nachweis Spannungsabfall (Abschnitt 525)'],['sel','Selektivitäts- / Backup-Nachweis']];
+const MP_MASSN=[['gefahr','Es besteht Gefahr für Leben bzw. Sachwerte'],['aus','Im Einvernehmen mit dem Anlagenbetreiber (oder dessen Vertreter) wurde die Anlage spannungslos geschaltet'],['meld','Abschaltung nicht möglich => Die Meldung an die zuständige Behörde wurde erstattet']];
+const mpVorAn=()=>erw('messprot')&&erw('mpVorlage');
+TPL.mpumf=()=>({id:uid(),teil:'',z:{}});
+// Häkchen zum An- und Abwählen (Pfad-Setter, Checkbox → true/false)
+const mpCk=(R,f,v,l)=>`<label class="mpck"><input type="checkbox" data-o="path" data-r="${R}" data-f="${f}"${v?' checked':''}><span>${esc(l)}</span></label>`;
+const mpCkL=(R,f,o,L)=>`<div class="mpckl">${L.map(([k,l])=>mpCk(R,f+'.'+k,o?.[k],l)).join('')}</div>`;
+const mpCkX=(R,f,a=[])=>`<div class="row">${[0,1].map(i=>`<label>Weitere${fi(R,f+'.'+i,a[i]||'',{ph:'frei'})}</label>`).join('')}</div>`; // zwei freie Einträge wie in der Vorlage
+const mpUmfL=m=>m.umfang?.length?m.umfang:[{}];
+function mpUmfang(m,R){const lg=`<p class="mut" style="margin:0 0 8px">Legende: Geprüft nach (z. B. OVE E 8101:2025) J / nicht geprüft N · Technische Unterlagen (Unterabschnitt 514.5) vorhanden J / nicht vorhanden N · Prüfbefund vorhanden J / nicht vorhanden N · Anlagenzustand in Ordnung J / geringe Mängel G / nicht in Ordnung N</p>`;
+  const w=(o,a)=>[['',''],...[...a].map(x=>[x,x])];
+  return lg+mpUmfL(m).map((u,i)=>{const P=`umfang.${i}`,z=u.z||{},sel=(b,[k,,,a])=>fsel(R,`${P}.z.${b}.${k}`,z[b]?.[k]||'',w(0,a));
+    const tab=kmpH()?`<table class="k mpum mpumh"><thead><tr><th></th>${MP_UZ.map(x=>`<th>${x[2]}</th>`).join('')}</tr></thead><tbody>${MP_UB.map(([b,l])=>`<tr><td>${esc(l)}</td>${MP_UZ.map(x=>`<td>${sel(b,x)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+      :`<div class="mpums"><table class="k mpum"><thead><tr><th></th>${MP_UB.map(([,l])=>`<th><span>${esc(l)}</span></th>`).join('')}</tr></thead><tbody>${MP_UZ.map(x=>`<tr><td>${x[1]}</td>${MP_UB.map(([b])=>`<td>${sel(b,x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    return`<div class="mpumb"><div class="row"><label class="w2">Anlagenteil${fi(R,P+'.teil',u.teil,{ph:'z. B. Wohnhaus, Zubau, Garage'})}</label></div>${tab}
+      ${m.umfang?.length>1?`<div class="bar" style="margin:4px 0 0"><span class="sp"></span>${kbDel(R,'umfang',i,'Anlagenteil entfernen')}</div>`:''}</div>`}).join('')
+    +`<div class="bar" style="margin:8px 0 0">${kbBtn(R,'umfang','mpumf','+ Anlagenteil')}</div>`}
+function mpVorEd(m,R){if(!mpVorAn())return'';const p=m.pb||{},P='pb';
+  const dat=(f,v)=>`<input type="date" data-o="path" data-r="${R}" data-f="${f}" value="${esc(v||'')}">`;
+  const h=t=>`<h3 class="mph">${t}</h3>`;
+  const pb=`<div class="card">${kmp()?'':'<h2>Prüfbericht</h2>'}
+    <div class="row"><label class="w2">Überprüfte Anlage / Anlagenteile${fi(R,P+'.teile',p.teile)}</label><label class="w2">Nicht überprüfte Anlagenteile${fi(R,P+'.nicht',p.nicht)}</label></div>
+    <div class="row"><label>Planer${fi(R,P+'.planer',p.planer)}</label><label>Errichter${fi(R,P+'.errichter',p.errichter)}</label><label>Errichtungszeitraum${fi(R,P+'.errZeit',p.errZeit)}</label><label>Bescheidnummer${fi(R,P+'.bescheid',p.bescheid)}</label></div>
+    <div class="row"><label class="w2">Errichtungsbestimmungen${fi(R,P+'.errBest',p.errBest,{ph:'z. B. OVE E 8101:2025'})}</label><label class="w05">Mängel beheben innerhalb von Wochen${fnl(R,P+'.frist',p.frist,'100%')}</label></div>
+    ${h('Prüfbericht dient als (Grundlage)')}${mpCkL(R,P+'.grund',p.grund,MP_GRUND)}
+    ${h('Intervall für die wiederkehrende Prüfung gemäß')}${mpCkL(R,P+'.int',p.int,MP_INT)}
+    <div class="row"><label class="w05" style="min-width:140px">Nächste Überprüfung${dat('naechste',m.naechste)}</label><label class="w2">für Anlagenteil${fi(R,P+'.nT1',p.nT1)}</label></div>
+    <div class="row"><label class="w05" style="min-width:140px">Nächste Überprüfung${dat(P+'.n2',p.n2)}</label><label class="w2">für Anlagenteil${fi(R,P+'.nT2',p.nT2)}</label></div>
+    ${h('Prüfergebnis zur Kenntnis genommen vom')}${mpCkL(R,P+'.kenntnis',p.kenntnis,[['ag','Auftraggeber'],['ab','Anlagenbetreiber']])}
+    <div class="row"><label class="w2">Name${fi(R,P+'.kName',p.kName)}</label><label class="w2">Ort (Zeichnung)${fi(R,P+'.ort',p.ort,{ph:S().firma.ort||''})}</label></div></div>`;
+  const umf=`<div class="card">${kmp()?'':'<h2>Umfang der Überprüfung</h2>'}${mpUmfang(m,R)}</div>`;
+  const n=o=>Object.values(o||{}).filter(x=>x===true).length;
+  const anh=`<div class="card">${kmp()?'':'<h2>Beiblätter, Anhänge, Maßnahmen</h2>'}
+    ${h('Der Prüfbericht umfasst folgende Beiblätter')}${mpCkL(R,P+'.beibl',p.beibl,MP_BEIBL)}${mpCkX(R,P+'.beiblX',p.beiblX)}
+    ${h('Die Dokumentation enthält folgende Anhänge')}${mpCkL(R,P+'.anh',p.anh,MP_ANH)}${mpCkX(R,P+'.anhX',p.anhX)}
+    ${h('Folgende Maßnahmen wurden auf Grund des sicherheitstechnischen Zustandes festgelegt bzw. durchgeführt')}${mpCkL(R,P+'.massn',p.massn,MP_MASSN)}</div>`;
+  return kmp()?akk('mp-pb','Prüfbericht',pb,{zusatz:esc(MP_GRUND.filter(([k])=>p.grund?.[k]).map(x=>x[1]).join(', '))})+akk('mp-umf','Umfang der Überprüfung',umf,{zusatz:`${mpUmfL(m).length} Anlagenteil${mpUmfL(m).length>1?'e':''}`})
+    +akk('mp-anh','Beiblätter, Anhänge, Maßnahmen',anh,{zusatz:`${n(p.beibl)+n(p.anh)} gewählt`}):pb+umf+anh}
+// Druck: Kästchen mit Häkchen
+const mpCb=(a,l='')=>`<span class="mpcbw"><span class="mpcb">${a?'✓':''}</span>${l}</span>`;
+function mpVorDoc(m){if(!mpVorAn())return'';const f=S().firma,k=kontakt(m.kontaktId),p=m.pb||{},ck=(o,L)=>L.map(([x,l])=>mpCb(o?.[x],esc(l)));
+  const kopf=`<table class="mpkf"><tr><td style="width:30%;text-align:center"><img class="kbl" src="${f.logo||KOPF_TBH}" alt=""></td><td><b>${esc(f.name||'')}</b><br>${esc([f.strasse,(String(f.plz||'')+' '+(f.ort||'')).trim()].filter(Boolean).join(', '))}<br>${esc([f.tel,f.mail].filter(Boolean).join(' · '))}</td></tr></table>
+    <table><tr><td>Aussteller: <b>${esc(f.name||'')}</b></td><td style="width:32%">Nr.: <b>${esc(m.nr)}</b></td></tr></table>`;
+  const erst=m.art!=='wieder',tz=x=>`<td class="c" style="width:7mm">${x}</td>`;
+  const zus=[['io','Die elektrische Anlage ist sicherheitstechnisch in Ordnung'],['m',`Die elektrische Anlage ist sicherheitstechnisch in Ordnung, hat aber geringfügige Mängel (siehe Mängelauflistung), die innerhalb von <b>${p.frist!==''&&p.frist!=null?fmtQ(p.frist):'____'}</b> Wochen zu beheben sind`],['nio','Die elektrische Anlage ist sicherheitstechnisch nicht in Ordnung (siehe Mängelauflistung)']];
+  const sp=m.sig?.pruefer,sk=m.sig?.kunde,img=s=>s?.pfad?`<img class="mpsi" data-bild="${esc(s.pfad)}" alt="">`:s?.ohne?esc(s.ohne):'';
+  const s1=`<section class="mpf mpv">${kopf}<div class="mpt1"><b>Prüfbericht</b> Ortsfeste elektrische Anlage<br><span>erstellt nach OVE E 8101:2025</span></div>
+    <table><tr><td style="width:24%">Anlagenadresse</td><td><b>${esc(m.adresse||'')}</b>${m.anlage?` · ${esc(m.anlage)}`:''}</td></tr>
+      <tr><td>Auftraggeber</td><td><b>${esc(k?.name||'')}</b>${k?` · ${esc(mpAdr(k))}${k.tel?` · Tel. ${esc(k.tel)}`:''}`:''}</td></tr>
+      <tr><td>Überprüfte Anlage / Anlagenteile</td><td>${esc(p.teile||'')}</td></tr><tr><td>Nicht überprüfte Anlagenteile</td><td>${esc(p.nicht||'')}</td></tr></table>
+    <table><tr><td>Planer: ${esc(p.planer||'')}</td><td>Errichter: ${esc(p.errichter||'')}</td></tr><tr><td>Errichtungszeitraum: ${esc(p.errZeit||'')}</td><td>Bescheidnummer: ${esc(p.bescheid||'')} · Netzbetreiber: ${esc(m.netzbetr||'')}</td></tr></table>
+    <table><tr><td style="width:24%">Dieser Prüfbericht dient als</td><td>${mpCb(erst,'Erstprüfung')}<br>${mpCb(!erst,'Wiederkehrende Prüfung')}</td><td>${ck(p.grund,MP_GRUND).join('<br>')}</td></tr></table>
+    <h4>Zusammenfassung der Prüfergebnisse</h4><table>${zus.map(([x,l])=>`<tr>${tz(mpCb(m.ergebnis===x))}<td>${l}</td></tr>`).join('')}</table>
+    <table><tr><td>Datum der Überprüfung: <b>${dAT(m.datum)}</b></td><td>Errichtungsbestimmungen: ${esc(p.errBest||'')}</td></tr>
+      <tr><td>Name des Prüfers: <b>${esc(m.pruefer||'')}</b></td><td>Unterschrift: ${img(sp)}</td></tr></table>
+    <table><tr><td style="width:40%"><b>Intervall für die wiederkehrende Prüfung gemäß</b></td><td>${ck(p.int,MP_INT).join(' ')}</td></tr>
+      <tr><td>Nächste Überprüfung: <b>${dAT(m.naechste)}</b></td><td>für Anlagenteil: ${esc(p.nT1||'')}</td></tr><tr><td>Nächste Überprüfung: <b>${dAT(p.n2)}</b></td><td>für Anlagenteil: ${esc(p.nT2||'')}</td></tr></table>
+    <p class="mpvt">Dieser Prüfbericht wurde von einem befugten Elektrotechniker verfasst und basiert auf den Anforderungen des Elektrotechnikgesetzes 1992 und der jeweils zutreffenden Elektrotechnikverordnung. Der Prüfbericht beinhaltet die aus den Beiblättern ersichtlichen Ergebnisse der Besichtigung, Erprobung und Messung und wurde gemäß den Bestimmungen hinsichtlich der Erst- bzw. wiederkehrenden Prüfung sowie der Dokumentation nach OVE E 8101, Unterabschnitt 514.5, erstellt.</p>
+    <table><tr><td>${esc(p.ort||f.ort||'')}, am ${dAT(m.abgeschlossen?.slice(0,10)||m.datum)}</td><td style="width:45%;height:14mm;vertical-align:bottom">${img(sp)}<div class="mpsk">Rechtsgültige Zeichnung</div></td></tr></table>
+    <table><tr><td style="width:50%">Vorliegendes Prüfungsergebnis zur Kenntnis genommen vom</td><td>${ck(p.kenntnis,[['ag','Auftraggeber'],['ab','Anlagenbetreiber']]).join(' ')}</td></tr>
+      <tr><td>Name: ${esc(p.kName||sk?.name||'')}</td><td style="height:12mm">Unterschrift: ${img(sk)}</td></tr></table>${kbFuss()}</section>`;
+  const um=mpUmfL(m).map(u=>`<tr class="mput"><td colspan="${MP_UB.length+1}">Anlagenteil: <b>${esc(u.teil||'')}</b></td></tr>${MP_UZ.map(([x,l])=>`<tr><td>${l}</td>${MP_UB.map(([b])=>`<td class="c"><b>${esc(u.z?.[b]?.[x]||'')}</b></td>`).join('')}</tr>`).join('')}`).join('');
+  const zl=(o,L,X=[])=>[...ck(o,L),...X.filter(Boolean).map(x=>mpCb(true,esc(x)))];
+  const sp3=(a,n=3)=>`<div class="mpc3" style="grid-template-columns:repeat(${n},1fr)">${a.map(x=>`<div>${x}</div>`).join('')}</div>`;
+  const s2=`<section class="mpf mpv"><table class="mpumd"><thead><tr><th class="mplg"><b style="font-size:11pt">Umfang der Überprüfung</b><br><b>Legende:</b><br>Geprüft nach z. B. OVE E 8101 Ausgabe 2025: J; nicht geprüft: N<br>Dokumentation (Unterabschnitt 514.5): vorhanden: J; nicht vorhanden: N<br>Prüfbefund: vorhanden: J; nicht vorhanden: N<br>Anlagenzustand: In Ordnung: J; Geringe Mängel: G; Nicht in Ordnung: N</th>
+      ${MP_UB.map(([,l])=>`<th class="mpvh"><span>${esc(l)}</span></th>`).join('')}</tr></thead><tbody>${um}</tbody></table>
+    <h4>Der Prüfbericht umfasst folgende Beiblätter</h4>${sp3(zl(p.beibl,MP_BEIBL,p.beiblX))}
+    <h4>Die Dokumentation enthält folgende Anhänge</h4>${sp3(zl(p.anh,MP_ANH,p.anhX),2)}
+    <h4>Folgende Maßnahmen wurden auf Grund des sicherheitstechnischen Zustandes festgelegt bzw. durchgeführt</h4><div>${ck(p.massn,MP_MASSN).join('<br>')}</div>
+    <div style="break-inside:avoid"><h4>Anmerkungen / Mängelliste</h4><table><tr><td style="height:16mm;vertical-align:top">${esc(m.maengel||'keine').replace(/\n/g,'<br>')}</td></tr></table></div>${kbFuss()}</section>`;
+  return s1+s2}
+{const aa0=ACT.arradd;ACT.arradd=(el,e)=>{const[c,id]=el.dataset.r.split('|'),m=c==='mp'&&el.dataset.tpl==='mpumf'?ROOT.mp(id):null; // erster Klick: angezeigter leerer Anlagenteil plus ein neuer
+  if(m&&!m.umfang?.length&&!gesperrt(m)){m.umfang=[TPL.mpumf(),TPL.mpumf()];persist();render();return}aa0(el,e)}}
 
 start();
 </script>

@@ -1302,6 +1302,117 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 
 ---
 
+### P36 – Bautagesbericht mit Unterschrift
+- **Wunsch des Anwenders (16.10.2026):** „Es soll erweitert werden, auf der Baustelle Tagesberichte erstellt werden. Es soll dabei die Tätigkeit, die Zeiterfassung, Witterung, Bilder, etc. angeführt werden können. Dabei soll nach ‚Abschluss‘ des Berichtes die Möglichkeit gegeben sein, dass der Monteur als auch der Kunde (optional) unterschreiben kann. Nach Unterschrift soll keine Änderung mehr möglich sein.“
+- **Entscheidungen des Anwenders (16.10.2026, Vorschlag freigegeben):** Nummer laufend je Auftrag; Stunden beim Unterschreiben automatisch in die Zeiterfassung; Kundenunterschrift später nachholbar; Fotos und Unterschriften ohne Netz zwischenspeichern.
+
+#### 3. Umfang
+
+Ein Bautagesbericht gehört immer zu **einem Auftrag** und **einem Tag**. Mehrere Berichte je Tag und Auftrag sind erlaubt (z. B. zwei Partien).
+
+| Bereich | Inhalt |
+|---|---|
+| Kopf | Auftrag (Auswahl wie in der Zeiterfassung), Datum, Bericht-Nr., Baustelle/Ort (Vorgabe aus Lieferadresse bzw. Kunde), Verfasser (Monteur) |
+| Witterung | Auswahl je Halbtag: sonnig, bewölkt, Regen, Schnee, Frost, Sturm/Wind; Temperatur min/max (°C); Haken „Arbeit witterungsbedingt behindert/unterbrochen“ mit Stunden und Text |
+| Personal und Zeiten | Zeilen `{name, tarif, von, bis, pause, stunden}`; Stunden aus von/bis/Pause gerechnet oder direkt eingegeben; Schnellknöpfe wie in der Zeiterfassung (0,5/1/2/4/8 h) |
+| Tätigkeiten | Freie Zeilen `{text, ort}` (Bauteil, Geschoß, Raum); Textbausteine aus dem bestehenden Textbaustein-Register auswählbar |
+| Material / Geräte (optional) | Material `{artikel oder Freitext, menge, einheit}`, Geräte `{bez, stunden}`; nur Dokumentation, keine Lagerbuchung |
+| Besondere Vorkommnisse | Felder: Behinderungen/Wartezeiten, Anordnungen des Auftraggebers, Zusatz- und Regieleistungen, Mängel/Schäden, Sicherheit; jedes Feld optional |
+| Bilder | Kamera direkt am Handy (`capture`) oder Datei; Beschriftung je Bild, Aufnahmezeit; Ablage `Berichte/<Jahr>/<Nr>/…` |
+| Abschluss | Abschließen → Unterschrift Monteur → Unterschrift Kunde (optional) → gesperrt |
+
+#### 4. Ablauf und Unveränderbarkeit
+
+1. **Entwurf:** frei bearbeitbar, speichert wie jeder andere Datensatz (`persist()`/`commit()`).
+2. **Abschließen:** Prüfung der Pflichtangaben (Auftrag, Datum, mindestens eine Tätigkeit; Hinweis, wenn keine Stunden erfasst sind) über `pflichtWarnung()`. Danach Leseansicht mit Knopf „Unterschreiben“. „Wieder öffnen“ ist bis zur ersten Unterschrift möglich.
+3. **Unterschrift Monteur:** Name (Vorgabe Bearbeiter) und Unterschrift mit Finger oder Maus auf einer Fläche (Canvas, am Handy quer möglich), „Löschen“ und „Übernehmen“. Mit dem Übernehmen wird der Bericht **gesperrt**: Inhalt, Bilder und Zeiten sind nicht mehr änderbar, die Ablagedateien werden nicht mehr überschrieben.
+4. **Unterschrift Kunde (optional):** direkt danach am selben Gerät oder später (z. B. am nächsten Tag). Sie ändert nichts am Inhalt, sie wird nur hinzugefügt. Alternativ „Kunde nicht anwesend / verweigert“ mit kurzem Vermerk.
+5. **Korrektur nach der Sperre:** nur über einen **Nachtrag** (neuer Bericht mit Verweis „Nachtrag zu BTB …“), so wie Festgeschriebenes bei Belegen nur per Storno/Gutschrift korrigiert wird.
+
+Nachweis der Unveränderbarkeit: Beim Unterschreiben wird über den Berichtsinhalt (ohne Unterschriften) ein SHA-256-Prüfwert gebildet und mit Zeitpunkt gespeichert; Druck und Ansicht zeigen „Prüfwert gültig“ bzw. eine Warnung, falls der Inhalt in der Datei nachträglich verändert wurde. Rechtlich ist das eine einfache elektronische Unterschrift (frei beweiswürdigbar wie eine Unterschrift auf dem Tablet beim Paketdienst), keine qualifizierte Signatur.
+
+### 4a. Gemeinsamer Baustein „Unterschrift und Sperre“ (auch für Messprotokolle OVE E 8101)
+
+Unterschrift, Sperre und Prüfwert werden nicht nur für den Bautagesbericht gebaut, sondern als allgemeine Funktionen, die jede Sammlung nutzen kann (zuerst Bautagesbericht und Messprotokoll):
+
+- `sigPop(titel,{name,rolle})` → Pop-up mit Unterschriftsfläche (Canvas, Zeiger-Ereignisse für Maus/Finger/Stift, „Löschen“, „Übernehmen“, „ohne Unterschrift“ mit Vermerk, falls erlaubt) → `{name,zeit,png}` oder null.
+- `sigAblegen(ordner,rolle,e)` → PNG über `ablegen()` in die Ablage (ohne Netz Warteschlange), Rückgabe `{name,zeit,pfad}` bzw. `{name,zeit,ohne}`; Anzeige über `bildBlob()`.
+- `sperren(obj)` setzt `gesperrt` und `hash = sperrWert(obj)` (SHA-256 über den Inhalt ohne `SIG_FREI` = sig/hash/gesperrt/status/ausgaben, Schlüssel sortiert); `sperrTag(obj)` zeigt gültig/ungültig.
+- `gesperrt(obj)` → wahr, sobald die erste Pflicht-Unterschrift vorliegt; Pfad-Setter, `arradd`/`arrdel`, `undoSperre()` (`sigUndo()`) und `merge3()` (`sigMerge()`) achten darauf; Sammlungen mit Sperre melden sich in `SIG_C` an (z. B. `SIG_C.berichte`).
+- `sigBlock(obj,rollen)` → HTML für Ansicht und Druck (Name, Zeitpunkt, Bild, Vermerk „Prüfwert gültig“).
+- Rollen frei je Verwendung: Bautagesbericht `monteur` (Pflicht, sperrt) und `kunde` (optional, später); Messprotokoll z. B. `pruefer` (Pflicht, sperrt) und `kunde` (optional).
+
+Der Baustein kommt als eigener Commit mit dem Schalter `erw.unterschrift` vor Teil 3; Teil 3 und das Messprotokoll setzen ihn voraus (bei Rücknahme zuerst diese zurücknehmen).
+
+#### 5. Zeiterfassung
+
+- Stunden des Berichts werden beim **Unterschreiben des Monteurs** als Einträge in `DB.zeiten` übernommen (mit `berichtId`). Damit laufen Nachkalkulation, DB je Stunde und „Zeiten abrechnen“ unverändert weiter.
+- Doppelerfassung vermeiden: Beim Anlegen bietet der Bericht bereits erfasste, noch nicht verknüpfte Zeiten desselben Auftrags und Tages zur Übernahme an („aus Zeiterfassung laden“); diese werden dann nur verknüpft, nicht neu angelegt.
+- Zeiteinträge mit `berichtId` eines unterschriebenen Berichts sind in der Zeiterfassung nicht löschbar (Hinweis auf den Bericht).
+
+#### 6. Oberfläche
+
+- Seitenleiste „Bautagesberichte“ (`#/berichte`, `#/bericht/<id>`), Liste nach Datum mit Spalten Nr., Datum, Auftrag, Kunde, Stunden, Wetter, Status (Entwurf / abgeschlossen / unterschrieben / Kunde unterschrieben); Filter Auftrag und Zeitraum.
+- Im Auftrag (`V.auftrag`) Karte „Bautagesberichte“ mit „+ Bericht“; in der Zeiterfassung Verweis auf den Bericht.
+- „+ Bericht“ belegt vom letzten Bericht desselben Auftrags Personal, Baustelle und Tarife vor (Witterung, Tätigkeiten und Bilder bleiben leer).
+- Handy (390 px): Abschnitte als Aufklapper (`akk()`), Personal und Bilder als Karten, Unterschrift als Vollbild-Pop-up; Desktop als Formular wie die übrigen Editoren. Globale Suche (P20) findet Berichte.
+
+#### 7. Druck / PDF
+
+- A4 hoch im Stil der Belege: Logo und Firmendaten, Kopf (Bericht-Nr., Datum, Auftrag, Kunde, Baustelle), Witterung, Personal mit Summe Stunden, Tätigkeiten, Material/Geräte, Vorkommnisse, Bilder (2 je Zeile, mit Beschriftung), Unterschriftsfelder Monteur und Kunde mit Name und Zeitpunkt, Prüfwert in der Fußzeile.
+- Ausgabe über `druckHTML()` (Browserdruck bzw. „Als PDF speichern“). Versand per E-Mail an den Kunden mit `versenden()` ist Teil 4b (siehe offene Punkte).
+
+#### 8. Schalter (Paket „Bautagesbericht (P36)“)
+
+Nach der Regel „Standard = bisheriges Verhalten“ alle **Standard aus**; ohne Schalter bleibt jede Ansicht unverändert. Eintrag in `ERW` je Teil in einem eigenen Commit, damit jeder Teil einzeln mit `git revert` rücknehmbar ist.
+
+| Teil | Schalter | Inhalt |
+|---|---|---|
+| 1 | `erw.btb` | Datenmodell, Liste, Editor, Witterung, Personal, Tätigkeiten, Material/Geräte, Vorkommnisse, Karte im Auftrag, Suche |
+| 2 | `erw.btbBild` | Bilder (Kamera, Beschriftung, Ablage) |
+| 3a | `erw.unterschrift` | gemeinsamer Baustein Unterschrift/Sperre/Prüfwert (Abschnitt 4a), auch für Messprotokolle |
+| 3 | `erw.btbSig` | Abschließen, Unterschrift Monteur/Kunde, Sperre, Prüfwert, Nachtrag |
+| 4 | `erw.btbDruck` | Druck/PDF |
+| 5 | `erw.btbZeit` | Übernahme in die Zeiterfassung, „aus Zeiterfassung laden“ |
+
+Abhängigkeiten für die Rücknahme: 2–5 setzen Teil 1 voraus; 3 und das Messprotokoll setzen 3a voraus; 5 nutzt die Sperre aus Teil 3 (Löschschutz), also vor 3 zurücknehmen.
+
+#### 9. Datenmodell (nur ergänzend)
+
+Neue Sammlung `DB.berichte` (in `neueDB()`, von `migrate()` als leere Liste ergänzt, in `merge3()` und Papierkorb aufgenommen):
+
+```
+{id, nr, auftragId, datum, ort, verfasser,
+ wetter:{vm,nm,tMin,tMax,beh,behStd,behTxt},
+ personal:[{name,tarif,von,bis,pause,stunden}],
+ taet:[{text,ort}], material:[{artId,bez,menge,einh}], geraete:[{bez,stunden}],
+ vork:{beh,anord,zusatz,maengel,sicher},
+ bilder:[{pfad,mini,text,zeit}],
+ abgeschlossen, gesperrt, hash,   (Status wird daraus abgeleitet)
+ sig:{monteur:{name,zeit,pfad}, kunde:{name,zeit,pfad}|{ohne:text}},
+ nachtragZu, erstellt}
+```
+
+Zeiteintrag zusätzlich `berichtId`. Unterschriften als PNG in der Ablage (`Berichte/<Jahr>/<Auftrag>_BTB-<Nr>/unterschrift-monteur-….png`), im Datensatz nur der Pfad. Nummer: laufend je Auftrag („BTB 3“, gedruckt mit Auftragsnummer). Abgleich: Ist ein Bericht auf einem Gerät unterschrieben, gilt beim Abgleich dieser Stand; eine spätere Kundenunterschrift wird übernommen.
+
+- ✅ umgesetzt (Teil 1 15b8a91, Baustein 3a 2a14785, Teil 2 58212a6, Teil 3 7e58bc9, Teil 4 cc14528, Teil 5 2270ad2). Geprüft: Browsertests 390 und 1400 px ohne Konsolenfehler (Anlegen, Witterung, Personal mit Stundenrechnung, Textbaustein, Fotos, Abschließen, Unterschrift Monteur und Kunde, Sperre gegen Pfad-Setter, Rückgängig und Abgleich, Prüfwert nach Manipulation ungültig, Nachtrag, Zeiten mit Übernahme aus der Zeiterfassung und Nachkalkulation, Druck als PDF), Warteschlange ohne Netz; Regressionsvergleich mit a412d32 (alle Schalter aus): 24 Ansichten und `docHTML` gleich, nur Einstellungen → Erweiterungen zeigt die neuen Schalter. Jeder Teil einzeln mit `git revert` rücknehmbar (Teil 5 vor 3, 3 und 2 vor 3a, alle vor 1).
+- Offen: Test an echten Geräten (Kamera und Unterschrift am iPhone/Android, Druckdialog), Abgleich mit zwei Geräten über OneDrive.
+
+---
+
+### P39 – Messprotokoll nach OVE E 8101
+- **Wunsch des Anwenders (16.10.2026):** „Es sollen auch Messprotokolle lt. OVE E8101 erstellt werden können. Dazu soll es ein Formular geben, welches der österreichischen Norm entspricht.“ Vorschlag im Projekt-Thread freigegeben (16.10.2026).
+- **Schalter** (Paket „Messprotokoll (P39)“, über `erwPlus()` an der Stelle des Codes):
+  - `erw.messprot` (Standard aus) – Teil 1: Seitenleiste „Messprotokolle“ (`#/mps`, `#/mps/<id>`), Sammlung `DB.messprot`, Prüfbefund mit Kopf (Kunde, Auftrag, Anlage, Anschrift, Prüfart Erst-/Wiederkehrende/nach Änderung, Netzform, Nennspannung, Vorsicherung, Netzbetreiber, Zählpunkt, Prüfer, Prüfgeräte), Besichtigung (15 Prüfpunkte) und Erprobung (5) mit i. O./Mangel/n. z., Messwerte je Verteiler und Stromkreis (Leitung, Schutzorgan, Charakteristik, I<sub>n</sub>, RCD-Typ, I<sub>Δn</sub>, R<sub>PE</sub>, R<sub>iso</sub> mit Prüfspannung, Z<sub>s</sub> mit Grenzwert und I<sub>k</sub>, t<sub>a</sub>, I<sub>a</sub>, U<sub>B</sub>, Ergebnis), Erder/Potentialausgleich (TT: R<sub>A</sub> ≤ 50 V / I<sub>Δn</sub>), Mängel, Gesamtergebnis, nächste Prüfung; Prüfgeräte mit Kalibrierdatum (`S().pgeraete`) in der Liste; „Wiederholungsprüfung“ übernimmt Anlage, Verteiler und Stromkreise ohne Messwerte (`vorgaengerId`); Karte im Auftrag, globale Suche, Papierkorb, Abgleich `merge3()`. Am Handy Stromkreise als Aufklapper.
+  - `erw.mpDruck` (Standard ein, wirkt nur mit `erw.messprot`) – Teil 2: Druck/PDF über `druckHTML()`: Blatt Kopf/Prüfgeräte/Besichtigung/Erprobung (hoch), Messwerte je Verteiler (quer, `@page mpq`), Ergebnis mit Unterschriftsfeldern.
+  - `erw.mpSig` (Standard aus, wirkt nur mit `erw.unterschrift` aus P36 a) – Teil 3: „Abschließen“ (Prüfer, Gesamtergebnis, Kunde oder Anlage Pflicht; Rückfrage bei „in Ordnung“ trotz Grenzwertverletzung, abgelaufener Kalibrierung oder ohne Prüfgerät; `m.abgeschlossen`, Eingabe gesperrt, „Wieder öffnen“ bis zur Unterschrift) → „Unterschrift Prüfer“ (`sigPop()`/`sigAblegen()` nach `Messprotokolle/<Jahr>/<Nr>`, `sperren()` mit Prüfwert) → „Unterschrift Auftraggeber“ optional, auch später oder mit Vermerk „unterschreibt nicht“ (`m.sig.kunde`, Inhalt bleibt). Korrektur nur als neues Protokoll (`korrekturZu`, Inhalt kopiert). Druck zeigt die Unterschriften statt der leeren Felder (`MP_SIGF`). Ohne Schalter bleiben unterschriebene Protokolle gesperrt (`SIG_C.messprot`).
+- **Grenzwerte** (`mpPruef()`, nur Markierung, Bewertung durch den Prüfer): R<sub>iso</sub> ≥ 1 MΩ (500/1000 V), ≥ 0,5 MΩ (250 V); Z<sub>s</sub> ≤ U<sub>0</sub>/I<sub>a</sub> mit I<sub>a</sub> = 3/5/10/14/20 × I<sub>n</sub> (LS Z/B/C/K/D), gelb über 2/3 des Grenzwerts; RCD t<sub>a</sub> ≤ 300 ms (S: 130–500 ms), I<sub>a</sub> 0,5–1 × I<sub>Δn</sub>; U<sub>B</sub> ≤ 50 V. Schmelzsicherungen gG ohne automatische Z<sub>s</sub>-Prüfung.
+- **Datenmodell (nur ergänzend):** `DB.messprot[]` `{id,nr,datum,art,kontaktId,auftragId,anlage,adresse,netz,un,vs,netzbetr,zp,pruefer,gerIds[],bes{},erp{},vt[{id,bez,ort,stk[{id,nr,bez,leit,typ,ch,in,rcd,idn,rpe,riso,uiso,zs,ta,ia,ub,erg}]}],re,hpa,rpa,maengel,ergebnis,naechste,bem,vorgaengerId,erstellt}`; Nummer `MP-<Jahr>-<nnnn>` beim Anlegen (laufend je Jahr); `S().pgeraete[]` `{id,bez,typ,snr,kal}`.
+- ✅ Teil 1 und 2 umgesetzt (Commits 43f40d9, 22341f3). Rücknahme: 22341f3 vor 43f40d9. Geprüft: Regressionstests (Schalter aus = Ausgangsstand, Ansichten 390/1400 px ohne Fehler und Überlauf), eigener Ablauftest (Anlegen aus Auftrag, Grenzwertmarkierung, Wiederholung, Eingabe, Löschen, Suche, Schalter aus), Druck als PDF (3 Seiten, Messwerte quer).
+- ✅ Teil 3 umgesetzt (Commit 18b3960, setzt P36 Teil 3a voraus, enthalten über den Merge 86b8eaf). Rücknahme: 18b3960 vor 22341f3 vor 43f40d9. Geprüft: Regressionstests, Ablauftest Unterschrift (Abschließen, Sperre des Pfad-Setters, Löschen verweigert, Prüfwert gültig auch nach Unterschrift Auftraggeber mit Vermerk, Korrektur, Druck mit Unterschriften, Schalter aus = weiter gesperrt) am Desktop und am Handy.
+- ✅ Teil 4 `erw.mpVorlage` (Standard aus, Commit 1d5b04e, Wunsch des Anwenders 16.10.2026 mit seiner Vorlage „Prüfbefund OVE E 8101:2025, Ausgabe 2026“): Auswahlen zum An- und Abwählen als Häkchen (`m.pb`: Prüfgrundlage `grund`, Intervall `int`, Kenntnisnahme `kenntnis`, Beiblätter `beibl`/`beiblX`, Anhänge `anh`/`anhX`, Maßnahmen `massn`; dazu Planer, Errichter, Errichtungszeitraum, Bescheidnummer, Errichtungsbestimmungen, Mängelfrist in Wochen, zweite nächste Prüfung je Anlagenteil), Umfang der Überprüfung als Matrix je Anlagenteil (`m.umfang[{id,teil,z:{<bereich>:{g,t,p,z}}}]`, Werte nach Legende J/N bzw. Anlagenzustand J/G/N; am Handy Bereiche als Zeilen). Druck: Deckblatt „Prüfbericht“ und Blatt „Umfang der Überprüfung“ vor den bisherigen Blättern, Auswahlen als Kästchen mit Häkchen (auch in den bisherigen Blättern). Rücknahme: 1d5b04e vor 18b3960. Geprüft: Regressionstests (20 grün), Ablauftest Häkchen an/ab, Matrix, Druck, Schalter aus (Desktop und Handy).
+- Offen: weitere Blätter der Vorlage (Anlagendokumentation, RCD-Tabelle, Betriebsmittel, Beiblätter B/M/R/E/P/L, Bescheinigung) nach Freigabe; Prüfpunkte und Formular mit dem Muster aus dem Claude-Chat des Anwenders abgleichen, sobald es vorliegt.
+
 ### Bereits vorhanden (kein eigenes Paket)
 
 | ETU-Funktion | ERP-Lite heute (wo) | Kleine Ergänzung |
@@ -1537,6 +1648,5 @@ Jedes Paket wird erst nach Ihrem Test im Browser nach `main` übernommen. Bis da
 10. **Briefbild (P28/P29):** Wollen Sie das Logo zentriert wie bei ETU, eine Fußzeile mit Beschriftungen statt Großbuchstaben, einen Modus für vorgedrucktes Briefpapier? Brauchen Sie mehr als eine Gliederungsebene (Los/Gewerk/Titel)?
     *Vorschlag:* Logo und Fußzeile nach Ihrer Wahl in Stufe 3; die mehrstufige Gliederung nur, wenn Sie große, mehrstufige Angebote erstellen.
 11. **Weitere Screenshots:** Der Inhalt der ETU-Reiter „Angebotsdaten“ und „Erweitert…“ (Bild 11), „Weitere Einstellungen…“ (Bild 10) sowie der Reiter „Drucker“ und „Formular“ ist auf den Bildern nicht zu sehen. Können Sie diese nachreichen?
-    *Vorschlag:* Ja, dann ergänze ich den Vorschlag gezielt.
-12. **Lieferverzug und Belegstatus (P35/P32):** Sollen Auftragsbestätigungen mit Status „abgeschlossen“ (nach der ersten Ausgabe) weiter im Abschnitt „Kunden“ der Karte „Lieferverzug“ erscheinen, solange sie nicht vollständig geliefert sind?
+    *Vorschlag:* Ja, dann ergänze ich den Vorschlag gezielt.12. **Lieferverzug und Belegstatus (P35/P32):** Sollen Auftragsbestätigungen mit Status „abgeschlossen“ (nach der ersten Ausgabe) weiter im Abschnitt „Kunden“ der Karte „Lieferverzug“ erscheinen, solange sie nicht vollständig geliefert sind?
     *Entschieden:* Ja – „abgeschlossen“ bedeutet bei P32 nur „ausgegeben“; der Verzug der Lieferung an den Kunden ist davon unabhängig (umgesetzt 14.10.2026).

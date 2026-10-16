@@ -1300,6 +1300,21 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Entschieden (14.10.2026):** Auftragsbestätigungen mit Status „abgeschlossen“ (P32: nach der ersten Ausgabe) erscheinen weiter im Abschnitt „Kunden“ und zeigen „Liefertermin überschritten“, solange sie nicht vollständig geliefert sind – „abgeschlossen“ heißt nur „ausgegeben“.
 - Offen: echter Mailversand über Office 365, Test an echten Geräten.
 
+### P38 – Projekte in Verkauf und Einkauf (Belege markieren, Projektname als Überschrift)
+- **Wunsch des Anwenders (16.10.2026):** „Bei Einkauf und Verkauf sollen Dokumente markiert werden können. Diese sollen dann einen Projektnamen als Überschrift bekommen können.“
+- **Bestehend:** Projektname je Belegkette (`projektName()`, gespeichert am Ausgangsbeleg `b.projekt`, Überschrift nur bei Ketten mit Folgebelegen über 🏷), Gruppierung `belegGruppen()`.
+- **Umsetzung (Schalter `erw.bProjekt`, Paket „Projekte (P38)“, Standard ein):** Häkchen je Zeile (Handy: Modus „☑ Markieren“), Leiste mit „🏷 Projekt …“ / „Projekt entfernen“ / „Markierung aufheben“; die Zuordnung gilt für die ganze Kette der markierten Belege (Ausgangsbeleg wie bisher, keine neuen Felder); Ketten mit gleichem Projekt stehen beisammen unter einer Überschrift mit Anzahl und Balken, ✎ benennt das Projekt für alle Ketten und gleichnamige K-Blätter um; Suche und Spalte „Projekt“ über den Projektnamen der Kette.
+- **Recht:** reine Ordnungsangabe, Belegtext/Ausdruck/PDF festgeschriebener Belege unverändert (geprüft), Protokoll, Strg+Z.
+- ✅ umgesetzt (Commit 3779b57). Geprüft (Chromium, 1400 px mit/ohne kompakt, 390 px): 36 Prüfungen, Schalter aus = Listen-HTML gleich dem Stand af9335c, keine Konsolenfehler, kein Seitenüberlauf.
+
+### P39 – Übersicht nach Wunsch (Auswertungen wählen, anordnen, erstellen)
+- **Wunsch des Anwenders (16.10.2026):** „Auswertungen sollen auf der Übersichtseite flexibel dargestellt und erstellt werden können.“
+- **Bestehend:** feste Übersicht `V.dash` (7 Kennzahlen, 5 Listen, Karte „Lieferverzug“), Auswertungsseite `V.auswertung` (Jahr fest, Tabellen).
+- **Umsetzung (Schalter `erw.dashFlex`, Paket „Übersicht (P39)“, Standard ein):** Kacheln `S().dash` (fehlt = bisherige Übersicht), „⚙ Anpassen“ (verschieben, Breite, bearbeiten, duplizieren, entfernen, Standard), „+ Auswertung“ mit Vorschau: 17 Kennzahlen bzw. 6 Listen, 8 Zeiträume, bis zu 15 Aufteilungen, 5 Darstellungen, Vorjahresvergleich. Diagramme als HTML/SVG ohne Bibliothek (Farben nach fester Reihenfolge, Tooltip je Wert, Tabelle als Alternative).
+- **Datenmodell:** nur `S().dash` (optional, daher ohne Eintrag in `migrate()`/`neueDB()`).
+- ✅ umgesetzt (Commit 9144863). Geprüft (Chromium, 1400 px, 1024 px ohne kompakt, 390 px): 23 Prüfungen, Standardkacheln mit gleichen Werten wie bisher, Summen nachgerechnet (Monate = Gesamt = Umsatz laut Belegen, auch Vorjahr), Schalter aus = `V.dash` gleich dem Stand af9335c, keine Konsolenfehler, kein Seitenüberlauf.
+- Offen: Ziehen mit der Maus zum Verschieben (derzeit ◀ ▶), Auswertungen je Gerät verschieden (derzeit für alle Geräte gleich).
+
 ---
 
 ### Bereits vorhanden (kein eigenes Paket)
@@ -1377,6 +1392,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - Endkontrolle (13.10.2026, a1fc952): einzeln rücknehmbar (Rücknahme ergibt genau e16378a); vorher zurückzunehmen vor U7 Commit 2 (4e15709), U8 Commit 1 (fcfbee7) und 3 (f974f09), iOS ae69ae6 (Bausteine bzw. CSS-Klassen) und vor P34 Teil 1 (89529cb, Zeile `kbK2V()`); alle übrigen Commits wie vorher.
   - Gesamttest Stufe 2 (13.10.2026): Korrektur c4c2a6c einzeln rücknehmbar, vor U7 Commit 6 (89025f2, Zeile `lpEntf()`) und damit vor U7 Commit 2. Die vollständige, geprüfte Vorgängerliste je Code-Commit steht unten bei „Gesamttest Stufe 2“; wo sie strenger ist als die Angaben oben, gilt sie.
   - seit P35 (14.10.2026): rückwärts aa0fa63 (Teil 4) → 291c038 (Teil 3) → 9601a6c (Mengenindex) → 9f473c7 (Teil 2) → a4abc3a (Teil 1) ergibt genau den Stand davor (a412d32); einzeln rücknehmbar nur Teil 4 und 9601a6c (Teil 3 ändert die Zeilen `lfNav()` und Status-Chips aus Teil 2 und nutzt `lfOffen()`/`LF_*`, Teil 4 ändert `lfDash()` aus Teil 3, alle Teile nutzen `lfPos()` aus Teil 1). Neu erst nach P35 rücknehmbar (direkt angrenzende Zeilen): Korrektur 68e30f6 (Zeile `lfNav()` am Ende von `render()`) – vorher P35 Teil 2 samt 9601a6c, Teil 3 und 4; U7 Commit 3 (439ca23, Überschrift des Überblicks mit `lfDash()`), U7 Commit 6 (89025f2) und P8 (f385ffd) (Zeile `lfEinst()` in den Einstellungen) – vorher P35 Teil 3 samt Teil 4. Alle übrigen Commits wie vorher (Teil 1 und 4 grenzen nur an Zeilen vor ETU bzw. an eigene). Geprüft (Klon): Rücknahme konfliktfrei, Programm nach jedem Schritt ohne Konsolenfehler (alle Ansichten, 1400 und 390 px).
+  - P38 (3779b57) und P39 (9144863, 16.10.2026): jeder einzeln rücknehmbar, beide zusammen ergeben genau den Stand af9335c (geprüft mit `git revert`); P39 nutzt nichts aus P38 (eigene Funktion `awPrj()`).
 - Noch offen: Test an echten Geräten (Edge, Firefox, Android, iOS; Druck, Strg+P, Browsermenü), echter Mailversand und Abgleich über OneDrive mit zwei Geräten, Tag `vor-etu` (nicht gesetzt).
 
 **Stufe 2: Kernfunktionen nach ETU (ca. 12–13 Tage)**
@@ -1463,6 +1479,8 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   | 9601a6c | P35: Liefertermine – Mengen der Wareneingänge einmal je Liste | – |
   | 291c038 | P35: Liefertermine Teil 3 – Erinnerungen bei Lieferverzug | aa0fa63 |
   | aa0fa63 | P35: Liefertermine Teil 4 – Lieferverzug im Verkauf | – |
+  | 3779b57 | P38: Belege markieren und einem Projekt zuordnen | – |
+  | 9144863 | P39: Übersicht nach Wunsch | – |
 
 
 **Stufe 3: optional nach Bedarf (ca. 18–21 Tage)**
@@ -1512,6 +1530,7 @@ Jedes Paket wird erst nach Ihrem Test im Browser nach `main` übernommen. Bis da
 - **Stufe 2, Rest (U12, 12.10.2026):** P14 Preiseinheit vollständig, P18 Gliederung, P20 globale Suche – ✅ umgesetzt (Schalter `erw.pe`, `erw.gliederung`, `erw.suche`, Standard ein; Druckoptionen „Einzelpreis bei Preiseinheit“ je Preiseinheit, „PDF mit Lesezeichen“ aus); kompakte Darstellung am Handy (Pop-ups) wie gewünscht.
 - **12.10.2026, P34 K-Blätter nach Vorlage (U13):** Formblätter K2–K7 wie die Vorlagen, Eingabe über Auswahlfelder, Logo und Firmendaten der TBH im Ausdruck, Projektzuordnung, Zuschläge und Mittellohn in Angeboten und Rechnungen – ✅ umgesetzt (Schalter `erw.kbVorlage`, `erw.kbDruck`, `erw.kbProjekt`, `erw.kbBeleg`, Standard ein).
 - **14.10.2026, P35 Liefertermine, Teillieferungen und Erinnerungen:** Auftragsbestätigung des Lieferanten mit Terminen je Position und Teilmenge, Restmenge streichen, Liste „Offene Lieferungen“, Karte „Lieferverzug“ mit Zähler, Erinnerungs-E-Mail und Wiedervorlage, Kundenlieferungen und „Material verspätet“ in der AB – ✅ umgesetzt (Schalter `erw.lfTermin`, `erw.lfListe`, `erw.lfErinnern`, `erw.lfVerkauf`, Standard ein).
+- **16.10.2026, P38 Projekte in Verkauf und Einkauf, P39 Übersicht nach Wunsch:** Belege markieren und samt Belegkette einem Projekt zuordnen (Überschrift, Umbenennen, Suche); Übersicht mit frei wählbaren, verschiebbaren Kacheln und eigenen Auswertungen (Kennzahl, Zeitraum, Aufteilung, Darstellung, Vorjahr) – ✅ umgesetzt (Schalter `erw.bProjekt`, `erw.dashFlex`, Standard ein).
 - Noch offen: Fragen 5, 6, 7, 9, 10, 11, 12.
 
 ## 6. Offene Fragen

@@ -67,14 +67,14 @@ button.gef{background:var(--err);border-color:var(--err)}
 .lbgt{border-top:1px solid var(--line);padding:6px 0}.lbfp{display:flex;gap:10px;align-items:center;padding:3px 0;font-size:13px;cursor:pointer;color:var(--ink)}.lbfp input{width:16px;height:16px}.lbft{margin-left:26px}.lbft summary{font-size:11px}
 .lbsel{position:sticky;bottom:0;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;box-shadow:0 -4px 16px rgba(0,0,0,.08);margin-top:10px}.lbsel select{width:auto}
 /* Liefertermine (P35): „Offene Lieferungen“ in der Seitenleiste unter „Einkauf“ */
-nav a.navlf{padding-left:32px;font-size:13px}body.lfaus nav a.navlf{display:none}
+nav a.navlf{padding-left:32px;font-size:13px}body.lfaus nav a.navlf{display:none}@media(min-width:761px) and (max-width:1100px){body.kompakt table[data-tab=lieferungen] .t-wv{display:none}}
 .rte table,.doc .lt table{border-collapse:collapse;margin:3px 0}.rte td,.doc .lt td{border:1px solid #ccc;padding:2px 5px;font-size:inherit}
 @media(max-width:1000px){.lbcols{grid-template-columns:1fr}.lblist{max-height:30vh}}
 #dirtybar{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:60;background:#1d2330;color:#fff;border-radius:10px;padding:8px 10px 8px 16px;display:flex;gap:10px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.3);min-width:360px}
 #dirtybar span:first-child{color:#ffd27a}
 /* Liefertermine (P35): Zähler an „Einkauf“, Karte „Lieferverzug“ im Überblick, Erinnerung und Wiedervorlage in der Karte „Lieferung“ */
 nav .nbz{display:inline-block;min-width:18px;padding:0 6px;margin-left:4px;border-radius:9px;background:var(--err);color:#fff;font-size:11px;line-height:18px;text-align:center}.lfd{border-left:4px solid var(--err)}.lfd h2 .mut{font-weight:400;font-size:13px}
-.lfe{font-size:13px;margin:0 0 6px;flex-wrap:wrap;row-gap:4px}.lfe .sp{min-width:8px}
+.lfe{font-size:13px;margin:0 0 6px;flex-wrap:wrap;row-gap:4px}.lfe .sp{min-width:8px}.lfe .lfeb{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 #dirtybar button:not(.p){color:var(--ink)}
 @media(max-width:760px){#dirtybar{left:8px;right:8px;transform:none;min-width:0;bottom:8px}}
 .rte{border:1px solid #cdd2da;border-radius:5px;padding:5px 7px;min-height:32px;background:#fff;margin-top:2px;color:var(--ink);font-size:13px;line-height:1.4;cursor:text}
@@ -5862,15 +5862,15 @@ function lfDash(){const E=erw('lfErinnern')?lfFaellig():[],K=erw('lfVerkauf')?lf
   const L=[...G.values()].map(g=>({...g,w:lfStand(g.P)})).sort((a,c)=>a.w.termin.localeCompare(c.w.termin)),was=g=>g.P.length>1?`${g.P.length} Positionen`:esc(g.P[0].p.bez),tm=g=>dAT(g.w.termin)+(g.w.best?'':' <span class="mut">(gewünscht)</span>');
   const kopf=E.length?`<a href="javascript:void 0" onclick="${erw('lfListe')?"zuLief('bald')":"zuListe('E','BE','offen')"}">Lieferverzug →</a> <span class="mut">überfällig und in den nächsten ${lfN()} Tagen fällig</span>`:'Lieferverzug';
   const ze=!E.length?'':H?L.map(g=>karte({t:esc(bNr(g.b)),s:lfTag(g.w),u:`${esc(kName(g.b.kontaktId))} · ${was(g)}`,z:'Termin '+tm(g),a:`onclick="nav('beleg/${g.b.id}')"`})).join('')
-    :`<table>${L.map(g=>`<tr class="click" onclick="nav('beleg/${g.b.id}')"><td>${esc(bNr(g.b))}</td><td>${esc(kName(g.b.kontaktId))}</td><td>${was(g)}</td><td>${tm(g)}</td><td>${lfTag(g.w)}</td></tr>`).join('')}</table>`;
+    :`<div style="overflow-x:auto"><table>${L.map(g=>`<tr class="click" onclick="nav('beleg/${g.b.id}')"><td>${esc(bNr(g.b))}</td><td>${esc(kName(g.b.kontaktId))}</td><td>${was(g)}</td><td>${tm(g)}</td><td>${lfTag(g.w)}</td></tr>`).join('')}</table></div>`;
   const kt=x=>tag(`überfällig ${x.tage} Tag${x.tage===1?'':'e'}`,'err')+(x.m.length?' '+tag('Material verspätet','warn'):''),ku=x=>[kName(x.b.kontaktId),x.b.betreff].filter(y=>y&&y!=='–').map(esc).join(' · ');
   const zk=!K.length?'':`<h2 class="lfdk"><a href="javascript:void 0" onclick="zuListe('V','AB')" title="Alle Auftragsbestätigungen (der Filter „offen“ blendet abgeschlossene aus)">Kunden →</a> <span class="mut">Liefertermin laut Auftragsbestätigung überschritten</span></h2>${H?K.map(x=>karte({t:esc(bNr(x.b)),s:kt(x),u:ku(x),z:'Liefertermin '+dAT(x.b.liefertermin),a:`onclick="nav('beleg/${x.b.id}')"`})).join('')
-    :`<table>${K.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${esc(bNr(x.b))}</td><td>${ku(x)}</td><td>${dAT(x.b.liefertermin)}</td><td>${kt(x)}</td></tr>`).join('')}</table>`}`;
+    :`<div style="overflow-x:auto"><table>${K.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${esc(bNr(x.b))}</td><td>${ku(x)}</td><td>${dAT(x.b.liefertermin)}</td><td>${kt(x)}</td></tr>`).join('')}</table></div>`}`;
   return`<div class="card${H?' kkl':''} lfd"${H?' style="padding:0"':''}><h2>${kopf}</h2>${ze}${zk}</div>`}
 // in der Karte „Lieferung“: Erinnerungen, Wiedervorlage und die beiden Knöpfe
 function lfErinInfo(b,w){if(!erw('lfErinnern'))return'';const L=b.lief||{},E=L.erinnert||[],z=E[E.length-1],wv=lfWv(b);if(!w&&!E.length)return'';
   return`<div class="bar lfe">${E.length?`<span>✉ erinnert ${E.length>1?E.length+'×, zuletzt ':''}${dtAT(z.ts)} an ${esc(z.an)}${z.weg==='mailto'?' <span class="mut">(E-Mail-Programm)</span>':''}</span>`:''}${wv?`<span>💤 Wiedervorlage am <b>${dAT(L.wv)}</b>${L.wvNotiz?' – '+esc(L.wvNotiz):''}</span>`:''}<span class="sp"></span>
-    ${w?`<button class="s" data-act="lfmail" title="E-Mail an den Lieferanten mit den fälligen bzw. offenen Positionen">✉ Erinnerung …</button><button class="s" data-act="lfwv" title="Bestellung bis zu einem Datum nicht in „Lieferverzug“ und im Zähler zeigen">💤 Wiedervorlage …</button>`:''}</div>`}
+    ${w?`<span class="lfeb"><button class="s" data-act="lfmail" title="E-Mail an den Lieferanten mit den fälligen bzw. offenen Positionen">✉ Erinnerung …</button><button class="s" data-act="lfwv" title="Bestellung bis zu einem Datum nicht in „Lieferverzug“ und im Zähler zeigen">💤 Wiedervorlage …</button></span>`:''}</div>`}
 // E-Mail-Vorlage der Erinnerung: Platzhalter der Belegtexte (phWerte) und LF_PH
 const LF_PH=[['Positionen','fällige (sonst alle offenen) Positionen mit Menge und Termin'],['AB','„ (Ihre Auftragsbestätigung Nr. … vom …)“, leer ohne Bestätigung'],['AbNr','Nr. der Auftragsbestätigung des Lieferanten'],['AbDatum','Datum der Auftragsbestätigung'],['Termin','bestätigter Liefertermin der Bestellung'],['Unterzeichner','Unterzeichner der Firma, sonst Bearbeiter']];
 const LF_MAIL={betreff:'Erinnerung: Bestellung {Nr} vom {Datum} – {Firma}',text:'{Anrede}\n\nzu unserer Bestellung {Nr} vom {Datum}{AB} sind folgende Positionen noch offen:\n\n{Positionen}\n\nBitte liefern Sie die offenen Positionen umgehend bzw. teilen Sie uns den neuen Liefertermin mit.\n\nMit freundlichen Grüßen\n{Unterzeichner}\n{Firma}'};

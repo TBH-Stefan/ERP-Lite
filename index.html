@@ -323,6 +323,12 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .kbf td.kbt{font-weight:700;font-size:11pt}.kbf .kbn{font-weight:700;font-size:12pt;text-align:center}.kbf .kbl{max-height:15mm;max-width:40mm;display:block;margin:0 auto}.kbf .kbfi{font-size:6.5pt;text-align:center;margin-top:.5mm}
 .kbf table.kbx td{border:0;padding:.3mm 0;font-weight:700}.kbf table.kbx td.x{width:8mm;text-align:center}.kbf td.lb2{font-size:6.5pt;border-left:0}.kbf .kbs td{font-weight:700;background:#f2f2f2}.kbf .kbft{margin-top:3mm;font-size:6.5pt;text-align:center;border-top:.6pt solid #80704d;padding-top:1mm}
 .kbf thead{display:table-header-group}.kbf tr{break-inside:avoid}.kbf .an td{font-size:7pt}.kbf td.kbsub{color:#1a4f9c;font-size:7pt}
+/* Messprotokoll drucken (P37 Teil 2): Blätter .mpf, Messwerte quer (@page mpq) */
+@page mpq{size:A4 landscape;margin:10mm 12mm 17.3mm 12mm}.mpf{font:8.5pt/1.3 Arial,Helvetica,sans-serif;color:#000}.mpf+.mpf{break-before:page}.mpf.quer{page:mpq}
+.mpf table{width:100%;border-collapse:collapse;margin:0}.mpf table+table{margin-top:-.6pt}.mpf th,.mpf td{border:.6pt solid #000;padding:.8mm 1.2mm;vertical-align:middle;color:#000;background:none;font-size:8.5pt}.mpf th{font-weight:700;text-align:center}
+.mpf .c{text-align:center}.mpf .n{text-align:right;white-space:nowrap}.mpf h4{margin:3.5mm 0 1mm;font-size:9.5pt}.mpf thead{display:table-header-group}.mpf tr{break-inside:avoid}
+.mpf .kbl{max-height:15mm;max-width:40mm;display:block;margin:0 auto}.mpf .kbfi{font-size:6.5pt;text-align:center;margin-top:.5mm}.mpf .kbft{margin-top:3mm;font-size:6.5pt;text-align:center;border-top:.6pt solid #80704d;padding-top:1mm}
+.mpf table.mpm th,.mpf table.mpm td{font-size:7.5pt;padding:.6mm .8mm}.mpf .mpl{font-size:6.5pt;margin:1.5mm 0 0}.mpf .mpsig{display:flex;gap:12mm;margin-top:14mm;break-inside:avoid}.mpf .mpsig>div{flex:1;font-size:7.5pt}.mpf .mpsl{border-bottom:.6pt solid #000;height:16mm;margin-bottom:1mm}@media print{body:has(#print .mpf) #dirtybar{display:none!important}}
 #print{display:none}
 .pgw,.pgw>*>tr>td{border:0;padding:0;width:100%;border-collapse:collapse}.pgw .pgf{height:16mm}
 @media print{#app,#start,.pop{display:none!important}#print{display:block}body{background:#fff}@page{size:A4;margin:10mm 14mm 17.3mm 20mm;@top-left{content:'\00a0'}@top-center{content:'\00a0'}@top-right{content:'\00a0'}@bottom-right{content:'Seite ' counter(page) ' von ' counter(pages);white-space:nowrap;font:7.5pt Arial,sans-serif;vertical-align:top;text-align:right;padding-top:10.5mm;width:30mm;margin-right:1mm}}#print.mb .ft{display:none}#print.mb .pgf{height:0}
@@ -5993,6 +5999,51 @@ Object.assign(ACT,{
   mpauf:el=>{const m=ROOT.mp(el.dataset.id);if(!m)return;if(!el.value)m.auftragId='';else{const o=mpAusAuftrag(el.value);m.auftragId=el.value;m.kontaktId=o.kontaktId;if(!m.anlage)m.anlage=o.anlage;if(!m.adresse)m.adresse=o.adresse}persist();render()},
   mpger:el=>{const m=ROOT.mp(el.dataset.id);if(!m)return;const s=new Set(m.gerIds||[]);el.checked?s.add(el.dataset.g):s.delete(el.dataset.g);m.gerIds=[...s];persist()},
   mpalle:el=>{const m=ROOT.mp(el.dataset.id),f=el.dataset.f;if(!m)return;const o=m[f]||(m[f]={});for(const[k]of f==='bes'?MP_BES:MP_ERP)if(!o[k])o[k]='io';persist();render()},
+});
+/* --- Messprotokoll (P37 Teil 2, erw.mpDruck): Druck/PDF über druckHTML() – Blatt 1 Kopf, Prüfgeräte, Besichtigung, Erprobung (A4 hoch), Blatt 2 Messwerte je Verteiler (A4 quer, @page mpq,
+   Tabellenkopf wiederholt sich), Blatt 3 Erder/Potentialausgleich, Mängel, Ergebnis, nächste Prüfung, Unterschriftsfelder; Werte außerhalb der Grenzwerte fett mit „!“ (mpPruef) --- */
+erwPlus({k:'mpDruck',std:true,p:'Messprotokoll (P37)',l:'Messprotokoll drucken (Prüfbefund, PDF)',info:'Im Messprotokoll druckt „PDF / Drucken“ den Prüfbefund mit Logo und Firmendaten: Anlage und Prüfung, Prüfgeräte, Besichtigung und Erprobung (A4 hoch), die Messwerte je Verteiler und Stromkreis (A4 quer, Werte außerhalb der Grenzwerte fett mit „!“), Erder und Potentialausgleich, Mängel, Gesamtergebnis, nächste Prüfung und Unterschriftsfelder. „Als PDF speichern“ im Druckdialog erzeugt die PDF-Datei. Wirkt nur mit eingeschalteten Messprotokollen.'});
+MP_KN.push(m=>erw('mpDruck')?`<button data-act="mpdruck" data-id="${m.id}">PDF / Drucken</button>`:'');
+const mpX=a=>a?'X':'';
+function mpKopfF(m,titel){const f=S().firma;
+  return`<table class="mpkf"><tr><td style="width:38%"><b style="font-size:12pt">${titel}</b><br>nach OVE E 8101</td><td style="width:34%;text-align:center"><img class="kbl" src="${f.logo||KOPF_TBH}" alt=""><div class="kbfi">${esc([f.name,[f.strasse,(String(f.plz||'')+' '+(f.ort||'')).trim()].filter(Boolean).join(', ')].filter(Boolean).join(' · '))}</div></td>
+    <td>Protokoll-Nr.: <b>${esc(m.nr)}</b><br>Prüfdatum: <b>${dAT(m.datum)}</b>${m.vorgaengerId&&ROOT.mp(m.vorgaengerId)?`<br>vorige Prüfung: ${esc(ROOT.mp(m.vorgaengerId).nr)}`:''}</td></tr></table>`}
+function mpDocHTML(m){const k=kontakt(m.kontaktId),G=(S().pgeraete||[]).filter(g=>(m.gerIds||[]).includes(g.id)),r=x=>MP_ERG.find(e=>e[0]===x)?.[1]||'';
+  const pkt=(t,feld,L)=>`<table><thead><tr><th style="text-align:left">${t}</th><th style="width:13mm">i. O.</th><th style="width:13mm">Mangel</th><th style="width:13mm">n. z.</th></tr></thead><tbody>
+    ${L.map(([x,l])=>{const v=m[feld]?.[x]||'';return`<tr><td>${esc(l)}</td><td class="c">${mpX(v==='io')}</td><td class="c">${mpX(v==='m')}</td><td class="c">${mpX(v==='nz')}</td></tr>`}).join('')}</tbody></table>`;
+  const w=(s,x,rr,f=fmtQ)=>mpLeer(s[x])?'':rr[x]==='err'?`<b>${f(s[x])} !</b>`:f(s[x]);
+  const b1=`<section class="mpf">${mpKopfF(m,'PRÜFBEFUND / MESSPROTOKOLL')}
+    <table><tr><td style="width:50%">Auftraggeber:<br><b>${esc(k?.name||'')}</b>${k?`<br>${esc(mpAdr(k))}`:''}${m.auftragId?`<br>Auftrag: ${esc(auftragLabel(m.auftragId))}`:''}</td><td>Anlage / Objekt:<br><b>${esc(m.anlage)}</b><br>${esc(m.adresse)}</td></tr></table>
+    <table><tr>${MP_ART.map(([x,l])=>`<td class="c" style="width:6mm"><b>${mpX(m.art===x)}</b></td><td>${esc(l)}</td>`).join('')}</tr></table>
+    <table><tr><td>Netzform: <b>${esc(m.netz)}</b></td><td>Nennspannung: <b>${esc(m.un)} V</b></td><td>Vorsicherung: <b>${esc(m.vs)}</b></td></tr><tr><td colspan="2">Netzbetreiber: <b>${esc(m.netzbetr)}</b></td><td>Zählpunkt: <b>${esc(m.zp)}</b></td></tr></table>
+    <h4>Prüfgeräte</h4><table><thead><tr><th style="text-align:left">Gerät</th><th style="text-align:left">Hersteller / Typ</th><th>Serien-Nr.</th><th>Kalibriert bis</th></tr></thead><tbody>
+    ${G.map(g=>`<tr><td>${esc(g.bez)}</td><td>${esc(g.typ)}</td><td class="c">${esc(g.snr)}</td><td class="c">${dAT(g.kal)}</td></tr>`).join('')||'<tr><td colspan="4">&nbsp;</td></tr>'}</tbody></table>
+    <h4>Besichtigung</h4>${pkt('Prüfpunkt','bes',MP_BES)}<h4>Erprobung</h4>${pkt('Prüfpunkt','erp',MP_ERP)}${kbFuss()}</section>`;
+  const b2=(m.vt||[]).map(v=>`<section class="mpf quer">${mpKopfF(m,'MESSPROTOKOLL')}
+    <table><tr><td>Verteiler: <b>${esc(v.bez)}</b>${v.ort?` · Einbauort: ${esc(v.ort)}`:''}</td><td>Netzform: <b>${esc(m.netz)}</b> · U<sub>0</sub> = ${fmtQ(mpU0(m))} V</td><td>Anlage: ${esc(m.anlage)}</td></tr></table>
+    <table class="mpm"><thead><tr><th rowspan="2">Nr.</th><th rowspan="2" style="text-align:left">Stromkreis</th><th rowspan="2">Leitung</th><th colspan="3">Überstrom-Schutzorgan</th><th colspan="2">RCD</th><th>R<sub>PE</sub></th><th colspan="2">Isolation</th><th colspan="3">Schleifenimpedanz</th><th colspan="3">RCD-Prüfung</th><th rowspan="2">Ergebnis</th></tr>
+      <tr><th>Art</th><th>Char.</th><th>I<sub>n</sub> A</th><th>Typ</th><th>I<sub>Δn</sub> mA</th><th>Ω</th><th>R<sub>iso</sub> MΩ</th><th>U V</th><th>Z<sub>s</sub> Ω</th><th>Grenzw. Ω</th><th>I<sub>k</sub> A</th><th>t<sub>a</sub> ms</th><th>I<sub>a</sub> mA</th><th>U<sub>B</sub> V</th></tr></thead><tbody>
+    ${(v.stk||[]).map(s=>{const rr=mpPruef(m,s),zm=mpZsMax(m,s),ik=mpIk(m,s);return`<tr><td class="c">${esc(s.nr)}</td><td>${esc(s.bez)}</td><td>${esc(s.leit)}</td><td class="c">${esc(s.typ)}</td><td class="c">${esc(s.ch)}</td><td class="n">${mpLeer(s.in)?'':fmtQ(s.in)}</td>
+      <td class="c">${esc(s.rcd)}</td><td class="n">${mpLeer(s.idn)?'':fmtQ(s.idn)}</td><td class="n">${w(s,'rpe',rr)}</td><td class="n">${w(s,'riso',rr)}</td><td class="n">${s.uiso||''}</td><td class="n">${w(s,'zs',rr)}</td><td class="n">${zm?fmt(zm):''}</td><td class="n">${ik?fmtQ(Math.round(ik)):''}</td>
+      <td class="n">${w(s,'ta',rr)}</td><td class="n">${w(s,'ia',rr)}</td><td class="n">${w(s,'ub',rr)}</td><td class="c">${r(s.erg)}</td></tr>`}).join('')||'<tr><td colspan="18">&nbsp;</td></tr>'}</tbody></table>
+    <p class="mpl">Grenzwerte (Markierung „!“): R<sub>iso</sub> ≥ 1 MΩ (Prüfspannung 500 V bzw. 1000 V), ≥ 0,5 MΩ bei 250 V (SELV/PELV); Z<sub>s</sub> ≤ U<sub>0</sub> / I<sub>a</sub> mit I<sub>a</sub> = 3/5/10/14/20 × I<sub>n</sub> (LS Z/B/C/K/D);
+    RCD t<sub>a</sub> ≤ 300 ms bei I<sub>Δn</sub> (selektiv 130–500 ms), Auslösestrom 0,5–1 × I<sub>Δn</sub>; U<sub>B</sub> ≤ 50 V.</p>${kbFuss()}</section>`).join('');
+  const ges=MP_GES.slice(1).map(([x,l])=>`<tr><td class="c" style="width:6mm"><b>${mpX(m.ergebnis===x)}</b></td><td>${esc(l)}</td></tr>`).join('');
+  const b3=`<section class="mpf">${mpKopfF(m,'PRÜFBEFUND – ERGEBNIS')}
+    <h4>Erder und Potentialausgleich</h4><table><tr><td>Erdungswiderstand R<sub>E</sub>: <b>${mpLeer(m.re)?'':fmtQ(m.re)+' Ω'}</b>${m.netz==='TT'&&mpRaMax(m)?` (zulässig ≤ ${fmt(mpRaMax(m))} Ω)`:''}</td>
+      <td>Haupt-Potentialausgleich: <b>${{ja:'vorhanden',nein:'fehlt',nz:'n. z.'}[m.hpa]||''}</b></td><td>R Potentialausgleich: <b>${mpLeer(m.rpa)?'':fmtQ(m.rpa)+' Ω'}</b></td></tr></table>
+    <h4>Festgestellte Mängel</h4><table><tr><td style="height:22mm;vertical-align:top">${esc(m.maengel||'keine').replace(/\n/g,'<br>')}</td></tr></table>
+    <h4>Gesamtergebnis</h4><table>${ges}</table>
+    <table><tr><td>Nächste Prüfung empfohlen bis: <b>${dAT(m.naechste)}</b></td></tr></table>
+    ${m.bem?`<h4>Bemerkungen</h4><table><tr><td>${esc(m.bem).replace(/\n/g,'<br>')}</td></tr></table>`:''}
+    <p style="margin:4mm 0 0">Die Anlage wurde nach OVE E 8101 geprüft; die Ergebnisse der Besichtigung, Erprobung und Messung sind in diesem Prüfbefund dokumentiert.</p>
+    <div class="mpsig">${mpSigFelder(m)}</div>${kbFuss()}</section>`;
+  return b1+b2+b3}
+// Unterschriftsfelder (leer zum Unterschreiben auf Papier; Teil 3 setzt die elektronische Unterschrift ein)
+const MP_SIGF=[];
+const mpSigFelder=m=>MP_SIGF.length?MP_SIGF.map(f=>f(m)).join(''):`<div><div class="mpsl"></div>Ort, Datum, Prüfer (${esc(m.pruefer||'')})</div><div><div class="mpsl"></div>Auftraggeber / Anlagenbetreiber</div>`;
+Object.assign(ACT,{
+  mpdruck:el=>{const m=ROOT.mp(el.dataset.id);if(!m)return;druckHTML(mpDocHTML(m),`Messprotokoll ${m.nr} ${m.anlage||kName(m.kontaktId)}`)},
 });
 // Live-Suche: Suchfelder (UI.*Q) filtern beim Tippen, Fokus und Cursor bleiben erhalten
 let suchT=null;

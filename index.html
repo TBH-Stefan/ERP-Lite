@@ -729,7 +729,7 @@ function neueDB(){
   texte.RE={kopf:'Wir erlauben uns, wie folgt zu verrechnen:',fuss:'Vielen Dank für Ihren Auftrag.'};
   texte.BE={kopf:'Wir bestellen zu Ihren Bedingungen wie folgt:',fuss:'Bitte bestätigen Sie Liefertermin und Preis.'};
   return{
-    meta:{version:1,erstellt:new Date().toISOString(),app:'ERP-Lite'},
+    meta:{version:DATENVER,erstellt:new Date().toISOString(),app:'ERP-Lite'},
     settings:{
       firma:{name:'',zusatz:'',strasse:'',plz:'',ort:'',land:'Österreich',uid:'',fn:'',gericht:'',tel:'',mail:'',web:'',bank:'',iban:'',bic:'',logo:'',slogan:'',zeichner:'',zeichnerFkt:'Geschäftsführung'},
       bearbeiter:'',
@@ -755,13 +755,18 @@ function neueDB(){
 const pflichtFehlt=f=>[[f.fn,'Firmenbuch-Nr.'],[f.gericht,'Firmenbuchgericht'],[f.uid,'UID-Nr.']].filter(x=>!String(x[0]||'').trim()).map(x=>x[1]);
 const pflichtHinweis=()=>{const p=pflichtFehlt(S().firma);return`<div id="pflicht"${p.length?' class="hint" style="margin:0 0 10px"':''}>${p.length?`<b>Pflichtangaben fehlen:</b> ${p.join(', ')} – bitte hier eintragen. Firmenbuch-Nr. und Firmenbuchgericht verlangt §&nbsp;14&nbsp;UGB auf Geschäftsbriefen, Bestellscheinen und Rechnungen, die eigene UID-Nr. §&nbsp;11&nbsp;UStG auf Rechnungen; beides steht in der Fußzeile aller Belege.`:''}</div>`};
 const FIRMA_TBH={name:'TBH GmbH',strasse:'Satzäcker 25',plz:'A-2752',ort:'Wöllersdorf',mail:'office@tbh.co.at',tel:'+43 664 / 37 47 066',bank:'Raiffeisenregionalbank Wiener Neustadt',iban:'AT11 3293 7000 0067 4200',fn:'650221 h',gericht:'LG Wiener Neustadt',uid:'ATU83015425',zeichner:'Horvath Stefan, BSc.',zeichnerFkt:'Geschäftsführung'};
+/* Datenversion (P38 Teil 4): DATENVER erst erhöhen, wenn eine Änderung des Datenmodells von älteren Programmversionen nicht verstanden würde; der Schritt dazu kommt
+   nummeriert und wiederholbar in migrate() (nur ergänzen, nie löschen). Daten einer neueren Version → ZUNEU: diese Programmversion speichert nicht (saveNow), sondern bittet um Neuladen. */
+const DATENVER=1;let ZUNEU=false;
 function migrate(d){
+  if((d.meta?.version||1)>DATENVER)ZUNEU=true;
   const n=neueDB();
   for(const k in n)if(d[k]===undefined)d[k]=n[k];
   for(const k in n.settings)if(d.settings[k]===undefined)d.settings[k]=n.settings[k];
   for(const k in n.settings.firma)if(d.settings.firma[k]===undefined)d.settings.firma[k]=n.settings.firma[k];
   for(const k in FIRMA_TBH)if(!d.settings.firma[k])d.settings.firma[k]=FIRMA_TBH[k];
   for(const t in T){if(!d.settings.nk[t])d.settings.nk[t]={prefix:t,zaehler:{}};if(!d.settings.texte[t])d.settings.texte[t]={kopf:'',fuss:''}}
+  if((d.meta.version||1)<DATENVER)d.meta.version=DATENVER; // nach den Schritten der neuen Datenversion
   if(d.fibu&&(d.fibu.kv||1)<2){for(const[nr,bez,kz]of KONTEN_STD)if(!d.fibu.konten.some(k=>k.nr===nr))d.fibu.konten.push({nr,bez,kz:kz||''});d.fibu.konten.sort((a,c)=>a.nr.localeCompare(c.nr));d.fibu.kv=2} // neue Standardkonten (Nebenkosten, Abgaben) einmalig ergänzen
   return d;
 }
@@ -996,6 +1001,7 @@ async function saveNow(){
       saveAgain=false;txt=JSON.stringify(DB);
       try{localStorage.setItem('erp-lite-cache',txt)}catch(e){}
       if(STORE.art==='cache'){pending=false;saveState('Nur Browser-Cache – keine Synchronisierung!',true);return}
+      if(ZUNEU){kvSet('unsynced',{local:txt,base:STORE.lastText,ts:Date.now()}).catch(()=>{});saveState('Neuere Programmversion – bitte neu laden',true);zuNeuHinweis();return} // P38: nichts überschreiben, Änderungen bleiben im Browser
       const heute=isoD();
       if(lastBackupDay!==heute&&STORE.lastText&&await tagSicherung(STORE.lastText,heute))lastBackupDay=heute;
       await STORE.save(txt);STORE.lastText=txt;
@@ -1117,6 +1123,8 @@ const sichInfo=()=>{if(STORE.art==='cache')return'';const v=sichStand(),f=sichFe
   <div class="bar"><button data-act="sichpop">Sicherungen anzeigen / wiederherstellen …</button></div>`};
 queueMicrotask(()=>Object.assign(ACT,{sichpop:()=>sichPop(),sichzur:el=>sichZurueck(el.dataset.p),kkopie:el=>kkPop(el.dataset.p),kkueb:el=>kkUebernehmen(+el.dataset.i)}));
 
+let ZNH=false;
+function zuNeuHinweis(){if(ZNH)return;ZNH=true;setTimeout(()=>{if(confirm('Die Daten wurden inzwischen mit einer neueren Version von ERP-Lite gespeichert.\n\nDiese ältere Version speichert nicht, damit nichts verloren geht. Ihre Änderungen bleiben im Browser und werden nach dem Neuladen nachgetragen.\n\nJetzt neu laden?'))location.reload()},0)}
 /* Zusammenführen, wenn auf einem anderen Gerät zwischenzeitlich gespeichert wurde (3-Wege-Abgleich je Datensatz) */
 function merge3(base,local,remote){
   const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b),konfl=[],verdr=[],out=remote; // verdr: verdrängte eigene Versionen (Konfliktkopie, P38)
@@ -1235,6 +1243,7 @@ async function verbinde(h){
   STORE=DIRSTORE;lsSet('erp-modus','dir');await kvSet('dir',h);laden(data);pending=true;await saveNow();
 }
 function laden(d){
+  if((d.meta?.version||1)<DATENVER&&STORE.art!=='cache'){const alt=JSON.stringify(d);sichern('vor-update_v'+DATENVER,alt).catch(e=>lsSet('erp-sichf',JSON.stringify({ts:Date.now(),t:'vor Update: '+e.message})))} // Stand vor der Umstellung (P38)
   DB=migrate(d);
   $('#start').style.display='none';document.body.classList.add('loaded');
   artDatalist();
@@ -4662,7 +4671,7 @@ V.export=()=>{
   <div class="bar">Jahr <select data-o="ui" data-f="jahr">${jahre.map(x=>opt(x,x,UI.jahr)).join('')}</select></div>
   <div class="bar"><button data-act="exp" data-k="ra">Rechnungsausgangsbuch</button><button data-act="exp" data-k="re">Rechnungseingangsbuch</button><button data-act="exp" data-k="za">Zahlungen</button><button data-act="exp" data-k="op">Offene Posten</button><button data-act="exp" data-k="lg">Lagerbestand</button><button data-act="exp" data-k="au">Aufträge DB II</button></div></div>
   <div class="card"><h2>Datensicherung</h2>
-  <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>${sichInfo()}
+  <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>${sichInfo()}<p class="mut">Programmstand ${new Date(document.lastModified).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'})} · Datenversion ${DATENVER}${ZUNEU?' · <span class="err">Daten stammen von einer neueren Programmversion – bitte neu laden</span>':''}</p>
   <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}${geraetKnopf()}</div>
   <div class="bar"><button data-act="exp" data-k="json">Gesamtdaten exportieren (JSON)</button><label class="btn" style="font-size:14px;color:inherit">Daten importieren (ersetzt alles)<input type="file" id="imp" accept=".json" style="display:none"></label><button data-act="savenow">Jetzt speichern</button></div></div>
   ${archivKarte()}${kmp()&&!DB.papierkorb.length?'<div class="card mut">Papierkorb: leer</div>':`<div class="card"><h2>Papierkorb</h2>${DB.papierkorb.length?`<table><thead><tr><th>Gelöscht am</th><th>Art</th><th>Eintrag</th><th></th></tr></thead><tbody>${DB.papierkorb.slice().reverse().map(e=>`<tr><td style="white-space:nowrap">${new Date(e.ts).toLocaleString('de-AT')}</td><td>${PK[e.c]?.n||e.c}</td><td>${esc(e.info)}</td><td style="white-space:nowrap"><button class="s" data-act="pkrest" data-id="${e.id}">Wiederherstellen</button> <button class="s d" data-act="pkdel" data-id="${e.id}">Endgültig löschen</button></td></tr>`).join('')}</tbody></table>

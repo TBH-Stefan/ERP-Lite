@@ -342,6 +342,14 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .mpf .kbl{max-height:15mm;max-width:40mm;display:block;margin:0 auto}.mpf .kbfi{font-size:6.5pt;text-align:center;margin-top:.5mm}.mpf .kbft{margin-top:3mm;font-size:6.5pt;text-align:center;border-top:.6pt solid #80704d;padding-top:1mm}
 .mpf table.mpm th,.mpf table.mpm td{font-size:7.5pt;padding:.6mm .8mm}.mpf .mpl{font-size:6.5pt;margin:1.5mm 0 0}.mpf .mpsig{display:flex;gap:12mm;margin-top:14mm;break-inside:avoid}.mpf .mpsig>div{flex:1;font-size:7.5pt}.mpf .mpsl{border-bottom:.6pt solid #000;height:16mm;margin-bottom:1mm}@media print{body:has(#print .mpf) #dirtybar{display:none!important}}
 fieldset.mpfs{border:0;padding:0;margin:0;min-width:0}.mpf .sigb{margin-top:0}.mpf .sigbild{height:16mm}.mpf .sigbild img{max-height:15mm}.mpf .sigl,.mpf .sigp{font-size:7.5pt;color:#000} /* Messprotokoll Teil 3: gesperrter Editor, Unterschriften im Druck */
+/* Messprotokoll Teil 4 (P37, erw.mpVorlage): Häkchen, Prüfumfang-Matrix, Deckblatt im Druck */
+.mpckl{display:flex;flex-wrap:wrap;gap:0 20px;margin:2px 0 6px}label.mpck{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--fg,inherit);margin:3px 0;min-height:28px;cursor:pointer}label.mpck input{width:20px;height:20px;margin:0;flex:none}.mph{font-size:13px;margin:12px 0 2px}
+.mpums{overflow-x:auto}table.mpum th span{writing-mode:vertical-rl;transform:rotate(180deg);display:inline-block;max-height:140px;font-size:11px;font-weight:500;white-space:normal;text-align:left}table.mpum th{vertical-align:bottom}
+table.mpum td select{width:54px;padding:3px 2px}table.mpum td:first-child{white-space:nowrap}table.mpumh{table-layout:fixed;width:100%}table.mpumh th,table.mpumh td{padding:4px 2px}table.mpumh th:not(:first-child){width:56px;text-align:center}table.mpumh td:first-child{white-space:normal;font-size:12px;overflow-wrap:anywhere}table.mpumh th{font-size:11px}table.mpumh td select{width:100%;min-width:0;padding-left:6px!important;padding-right:0!important}.mpumb+.mpumb{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}
+.mpf .mpcbw{display:inline-block;margin-right:4mm;white-space:nowrap}.mpf .mpcb{display:inline-block;width:3.2mm;height:3.2mm;border:.6pt solid #000;text-align:center;line-height:3.2mm;font-size:8pt;font-weight:700;vertical-align:-.6mm;margin-right:1.5mm}
+.mpf .mpt1{margin:4mm 0 3mm;font-size:9pt}.mpf .mpt1 b{font-size:20pt;margin-right:2mm}.mpf .mpt1 span{font-size:7.5pt}.mpf .mpvt{font-size:7pt;font-style:italic;border:.6pt solid #000;padding:1.5mm 2mm;margin:3mm 0}.mpf .mpsk{font-size:6.5pt;text-align:right}.mpf .mpsi{max-height:11mm;max-width:50mm;vertical-align:middle}
+.mpf .mpumd th.mplg{text-align:left;font-weight:400;vertical-align:top;width:42%;font-size:7.5pt}.mpf .mpvh{height:44mm;vertical-align:bottom;padding:1mm .5mm}.mpf .mpvh span{writing-mode:vertical-rl;transform:rotate(180deg);font-weight:400;font-size:7pt;text-align:left}.mpf tr.mput td{background:#eef1fb}
+.mpf .mpc3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8mm 3mm}.mpf .mpc3 .mpcbw{white-space:normal}
 #print{display:none}
 .pgw,.pgw>*>tr>td{border:0;padding:0;width:100%;border-collapse:collapse}.pgw .pgf{height:16mm}
 @media print{#app,#start,.pop{display:none!important}#print{display:block}body{background:#fff}@page{size:A4;margin:10mm 14mm 17.3mm 20mm;@top-left{content:'\00a0'}@top-center{content:'\00a0'}@top-right{content:'\00a0'}@bottom-right{content:'Seite ' counter(page) ' von ' counter(pages);white-space:nowrap;font:7.5pt Arial,sans-serif;vertical-align:top;text-align:right;padding-top:10.5mm;width:30mm;margin-right:1mm}}#print.mb .ft{display:none}#print.mb .pgf{height:0}
@@ -6057,6 +6065,7 @@ function mpEdit(id){const m=ROOT.mp(id);if(!m)return'<p>Nicht gefunden.</p>';con
   return`<div class="bar"><a href="#/mps">← Messprotokolle</a><span class="sp"></span>${mpTag(m)}</div>
   <div class="bar"><h1 style="margin:0">Messprotokoll ${esc(m.nr)}</h1><span class="sp"></span>${mpKnoepfe(m)}<button data-act="mpwdh" data-id="${m.id}" title="Neues Protokoll mit Anlage, Verteilern und Stromkreisen dieses Protokolls">Wiederholungsprüfung</button><button class="d" data-act="mpdel" data-id="${m.id}">Löschen</button></div>${mpFest(m)?'<fieldset class="mpfs" disabled>':''}
   ${kmp()?akk('mp-kopf','Anlage und Prüfung',kopf,{offen:true,zusatz:esc(m.anlage||kName(m.kontaktId))}):kopf}
+  ${mpVorEd(m,R)}
   ${kmp()?akk('mp-bes','Besichtigung',`<div class="card">${punkte('bes',MP_BES)}</div>`,{zusatz:pz('bes')}):`<div class="card"><h2>Besichtigung</h2>${punkte('bes',MP_BES)}</div>`}
   ${kmp()?akk('mp-erp','Erprobung',`<div class="card">${punkte('erp',MP_ERP)}</div>`,{zusatz:pz('erp')}):`<div class="card"><h2>Erprobung</h2>${punkte('erp',MP_ERP)}</div>`}
   ${kmp()?'':'<h2 style="margin:18px 0 8px">Messungen</h2>'}${vt}<div class="bar" style="margin:0 0 14px">${kbBtn(R,'vt','mpv','+ Verteiler')}</div>
@@ -6111,7 +6120,7 @@ Object.assign(ACT,{
    Tabellenkopf wiederholt sich), Blatt 3 Erder/Potentialausgleich, Mängel, Ergebnis, nächste Prüfung, Unterschriftsfelder; Werte außerhalb der Grenzwerte fett mit „!“ (mpPruef) --- */
 erwPlus({k:'mpDruck',std:true,p:'Messprotokoll (P37)',l:'Messprotokoll drucken (Prüfbefund, PDF)',info:'Im Messprotokoll druckt „PDF / Drucken“ den Prüfbefund mit Logo und Firmendaten: Anlage und Prüfung, Prüfgeräte, Besichtigung und Erprobung (A4 hoch), die Messwerte je Verteiler und Stromkreis (A4 quer, Werte außerhalb der Grenzwerte fett mit „!“), Erder und Potentialausgleich, Mängel, Gesamtergebnis, nächste Prüfung und Unterschriftsfelder. „Als PDF speichern“ im Druckdialog erzeugt die PDF-Datei. Wirkt nur mit eingeschalteten Messprotokollen.'});
 MP_KN.push(m=>erw('mpDruck')?`<button data-act="mpdruck" data-id="${m.id}">PDF / Drucken</button>`:'');
-const mpX=a=>a?'X':'';
+const mpX=a=>a?(erw('mpVorlage')?'✓':'X'):''; // Teil 4: Häkchen
 function mpKopfF(m,titel){const f=S().firma;
   return`<table class="mpkf"><tr><td style="width:38%"><b style="font-size:12pt">${titel}</b><br>nach OVE E 8101</td><td style="width:34%;text-align:center"><img class="kbl" src="${f.logo||KOPF_TBH}" alt=""><div class="kbfi">${esc([f.name,[f.strasse,(String(f.plz||'')+' '+(f.ort||'')).trim()].filter(Boolean).join(', ')].filter(Boolean).join(' · '))}</div></td>
     <td>Protokoll-Nr.: <b>${esc(m.nr)}</b><br>Prüfdatum: <b>${dAT(m.datum)}</b>${m.vorgaengerId&&ROOT.mp(m.vorgaengerId)?`<br>vorige Prüfung: ${esc(ROOT.mp(m.vorgaengerId).nr)}`:''}</td></tr></table>`}
@@ -6145,7 +6154,7 @@ function mpDocHTML(m){const k=kontakt(m.kontaktId),G=(S().pgeraete||[]).filter(g
     ${m.bem?`<h4>Bemerkungen</h4><table><tr><td>${esc(m.bem).replace(/\n/g,'<br>')}</td></tr></table>`:''}
     <p style="margin:4mm 0 0">Die Anlage wurde nach OVE E 8101 geprüft; die Ergebnisse der Besichtigung, Erprobung und Messung sind in diesem Prüfbefund dokumentiert.</p>
     <div class="mpsig">${mpSigFelder(m)}</div>${kbFuss()}</section>`;
-  return b1+b2+b3}
+  return mpVorDoc(m)+b1+b2+b3}
 // Unterschriftsfelder (leer zum Unterschreiben auf Papier; Teil 3 setzt die elektronische Unterschrift ein)
 const MP_SIGF=[];
 const mpSigFelder=m=>MP_SIGF.map(f=>f(m)).join('')||`<div><div class="mpsl"></div>Ort, Datum, Prüfer (${esc(m.pruefer||'')})</div><div><div class="mpsl"></div>Auftraggeber / Anlagenbetreiber</div>`;
@@ -6457,6 +6466,94 @@ Object.assign(ACT,{
     const c=JSON.parse(JSON.stringify(m));for(const x of['id','nr','erstellt','abgeschlossen','gesperrt','hash','sig','korrekturZu'])delete c[x];
     const n=mpNeu({...c,datum:isoD(),korrekturZu:m.id});DB.messprot.push(n);log('Messprotokoll Korrektur',`${n.nr} zu ${m.nr}`);persist();go('mps/'+n.id)},
 });
+/* --- Messprotokoll (P37 Teil 4, erw.mpVorlage): Prüfbericht nach der Vorlage des Anwenders (Prüfbefund OVE E 8101:2025, Ausgabe 2026). Auswahlen zum An- und Abwählen
+   als Häkchen (Prüfgrundlage, Intervall, Kenntnisnahme, Beiblätter, Anhänge, Maßnahmen; m.pb), Umfang der Überprüfung als Matrix je Anlagenteil (m.umfang[{id,teil,z:{<bereich>:{g,t,p,z}}}],
+   Werte nach Legende J/N bzw. J/G/N; am Handy gedreht: Bereiche als Zeilen). Druck: Deckblatt „Prüfbericht“ und Blatt „Umfang der Überprüfung“ vor den bisherigen Blättern,
+   Auswahlen als Kästchen mit Häkchen (mpCb), auch in den bisherigen Blättern (mpX) --- */
+erwPlus({k:'mpVorlage',std:false,p:'Messprotokoll (P37)',l:'Prüfbericht nach Vorlage (Häkchen, Prüfumfang-Matrix)',info:'Im Messprotokoll kommen die Angaben des Prüfberichts nach der Vorlage OVE E 8101:2025 dazu: Prüfgrundlage, Intervall der wiederkehrenden Prüfung, nächste Prüfung je Anlagenteil, Planer, Errichter, Kenntnisnahme sowie Beiblätter, Anhänge und Maßnahmen, jeweils zum An- und Abwählen mit Häkchen. Der Umfang der Überprüfung wird je Anlagenteil als Matrix nach der Legende ausgewählt (Geprüft, Technische Unterlagen, Prüfbefund: J/N; Anlagenzustand: J/G/N). Der Druck beginnt mit dem Deckblatt „Prüfbericht“ und dem Blatt „Umfang der Überprüfung“; Auswahlen erscheinen als Kästchen mit Häkchen. Wirkt nur mit eingeschalteten Messprotokollen; aus: Eingabe und Druck wie bisher.'});
+const MP_UB=[['anl','Elektrotechnische Anlage, Versorgung, Schutzmaßnahmen'],['vt','Verteiler'],['bm','Betriebsmittel'],['erd','Erdungsanlage'],['blitz','Blitzschutzanlage'],
+  ['ex','Anlagen in explosionsgeschützten Bereichen (Dokumentation)'],['sich','Sicherheitsstromerzeugungs- und -beleuchtungsanlage'],['pv','PV-Anlage / Speicher'],['lade','E-Ladeeinrichtung']];
+const MP_UZ=[['g','Geprüft nach','Geprüft','JN'],['t','Technische Unterlagen','Unterl.','JN'],['p','Prüfbefund','Befund','JN'],['z','Anlagenzustand','Zustand','JGN']];
+const MP_GRUND=[['e6004','OVE E 8101 Abschnitt 600.4'],['e6005','OVE E 8101 Abschnitt 600.5'],['oe8001','ÖVE/ÖNORM E 8001-6-61'],['esv','Elektroschutzverordnung']];
+const MP_INT=[['ove','OVE E 8101'],['esv','ESV'],['bescheid','Bescheid'],['r5','OVE R 5']];
+const MP_BEIBL=[['vt','Verteiler'],['bm','Betriebsmittel'],['erp','Erprobung und Messung'],['bes','Besichtigung'],['tb','Technische Beschreibungen'],['zp','Zeichnungen, Pläne, Diagramme'],
+  ['mg','Mängelauflistung'],['sb','Sicherheitsbeleuchtung'],['ex','EX-Bereiche'],['rb','Risikobeurteilung / Prüfmittel'],['erd','Erdungsanlage'],['pv','PV-Anlage und Speicher'],['lade','E-Ladeeinrichtung']];
+const MP_ANH=[['nb','Vereinbarung mit dem Netzbetreiber'],['bap','Bestands- und Auslasspläne'],['shl','Schemata Hauptleitung'],['spa','Schemata Schutzpotentialausgleich'],['slp','Stromlaufplan Verteiler / Steuerung'],
+  ['spd','Anordnung der Überspannungsableiter'],['foto','Fotodokumentation'],['bwp','Bedienungs-, Wartungs- und Prüfanleitungen'],['bmb','Betriebsmittelbeschreibungen'],['mbes','Messungen und Unterlagen besonderer Anlagen'],
+  ['mwt','Messwerttabelle'],['rb','Risikobeurteilung gemäß ETV 2020'],['ua','Nachweis Spannungsabfall (Abschnitt 525)'],['sel','Selektivitäts- / Backup-Nachweis']];
+const MP_MASSN=[['gefahr','Es besteht Gefahr für Leben bzw. Sachwerte'],['aus','Im Einvernehmen mit dem Anlagenbetreiber (oder dessen Vertreter) wurde die Anlage spannungslos geschaltet'],['meld','Abschaltung nicht möglich => Die Meldung an die zuständige Behörde wurde erstattet']];
+const mpVorAn=()=>erw('messprot')&&erw('mpVorlage');
+TPL.mpumf=()=>({id:uid(),teil:'',z:{}});
+// Häkchen zum An- und Abwählen (Pfad-Setter, Checkbox → true/false)
+const mpCk=(R,f,v,l)=>`<label class="mpck"><input type="checkbox" data-o="path" data-r="${R}" data-f="${f}"${v?' checked':''}><span>${esc(l)}</span></label>`;
+const mpCkL=(R,f,o,L)=>`<div class="mpckl">${L.map(([k,l])=>mpCk(R,f+'.'+k,o?.[k],l)).join('')}</div>`;
+const mpCkX=(R,f,a=[])=>`<div class="row">${[0,1].map(i=>`<label>Weitere${fi(R,f+'.'+i,a[i]||'',{ph:'frei'})}</label>`).join('')}</div>`; // zwei freie Einträge wie in der Vorlage
+const mpUmfL=m=>m.umfang?.length?m.umfang:[{}];
+function mpUmfang(m,R){const lg=`<p class="mut" style="margin:0 0 8px">Legende: Geprüft nach (z. B. OVE E 8101:2025) J / nicht geprüft N · Technische Unterlagen (Unterabschnitt 514.5) vorhanden J / nicht vorhanden N · Prüfbefund vorhanden J / nicht vorhanden N · Anlagenzustand in Ordnung J / geringe Mängel G / nicht in Ordnung N</p>`;
+  const w=(o,a)=>[['',''],...[...a].map(x=>[x,x])];
+  return lg+mpUmfL(m).map((u,i)=>{const P=`umfang.${i}`,z=u.z||{},sel=(b,[k,,,a])=>fsel(R,`${P}.z.${b}.${k}`,z[b]?.[k]||'',w(0,a));
+    const tab=kmpH()?`<table class="k mpum mpumh"><thead><tr><th></th>${MP_UZ.map(x=>`<th>${x[2]}</th>`).join('')}</tr></thead><tbody>${MP_UB.map(([b,l])=>`<tr><td>${esc(l)}</td>${MP_UZ.map(x=>`<td>${sel(b,x)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+      :`<div class="mpums"><table class="k mpum"><thead><tr><th></th>${MP_UB.map(([,l])=>`<th><span>${esc(l)}</span></th>`).join('')}</tr></thead><tbody>${MP_UZ.map(x=>`<tr><td>${x[1]}</td>${MP_UB.map(([b])=>`<td>${sel(b,x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    return`<div class="mpumb"><div class="row"><label class="w2">Anlagenteil${fi(R,P+'.teil',u.teil,{ph:'z. B. Wohnhaus, Zubau, Garage'})}</label></div>${tab}
+      ${m.umfang?.length>1?`<div class="bar" style="margin:4px 0 0"><span class="sp"></span>${kbDel(R,'umfang',i,'Anlagenteil entfernen')}</div>`:''}</div>`}).join('')
+    +`<div class="bar" style="margin:8px 0 0">${kbBtn(R,'umfang','mpumf','+ Anlagenteil')}</div>`}
+function mpVorEd(m,R){if(!mpVorAn())return'';const p=m.pb||{},P='pb';
+  const dat=(f,v)=>`<input type="date" data-o="path" data-r="${R}" data-f="${f}" value="${esc(v||'')}">`;
+  const h=t=>`<h3 class="mph">${t}</h3>`;
+  const pb=`<div class="card">${kmp()?'':'<h2>Prüfbericht</h2>'}
+    <div class="row"><label class="w2">Überprüfte Anlage / Anlagenteile${fi(R,P+'.teile',p.teile)}</label><label class="w2">Nicht überprüfte Anlagenteile${fi(R,P+'.nicht',p.nicht)}</label></div>
+    <div class="row"><label>Planer${fi(R,P+'.planer',p.planer)}</label><label>Errichter${fi(R,P+'.errichter',p.errichter)}</label><label>Errichtungszeitraum${fi(R,P+'.errZeit',p.errZeit)}</label><label>Bescheidnummer${fi(R,P+'.bescheid',p.bescheid)}</label></div>
+    <div class="row"><label class="w2">Errichtungsbestimmungen${fi(R,P+'.errBest',p.errBest,{ph:'z. B. OVE E 8101:2025'})}</label><label class="w05">Mängel beheben innerhalb von Wochen${fnl(R,P+'.frist',p.frist,'100%')}</label></div>
+    ${h('Prüfbericht dient als (Grundlage)')}${mpCkL(R,P+'.grund',p.grund,MP_GRUND)}
+    ${h('Intervall für die wiederkehrende Prüfung gemäß')}${mpCkL(R,P+'.int',p.int,MP_INT)}
+    <div class="row"><label class="w05" style="min-width:140px">Nächste Überprüfung${dat('naechste',m.naechste)}</label><label class="w2">für Anlagenteil${fi(R,P+'.nT1',p.nT1)}</label></div>
+    <div class="row"><label class="w05" style="min-width:140px">Nächste Überprüfung${dat(P+'.n2',p.n2)}</label><label class="w2">für Anlagenteil${fi(R,P+'.nT2',p.nT2)}</label></div>
+    ${h('Prüfergebnis zur Kenntnis genommen vom')}${mpCkL(R,P+'.kenntnis',p.kenntnis,[['ag','Auftraggeber'],['ab','Anlagenbetreiber']])}
+    <div class="row"><label class="w2">Name${fi(R,P+'.kName',p.kName)}</label><label class="w2">Ort (Zeichnung)${fi(R,P+'.ort',p.ort,{ph:S().firma.ort||''})}</label></div></div>`;
+  const umf=`<div class="card">${kmp()?'':'<h2>Umfang der Überprüfung</h2>'}${mpUmfang(m,R)}</div>`;
+  const n=o=>Object.values(o||{}).filter(x=>x===true).length;
+  const anh=`<div class="card">${kmp()?'':'<h2>Beiblätter, Anhänge, Maßnahmen</h2>'}
+    ${h('Der Prüfbericht umfasst folgende Beiblätter')}${mpCkL(R,P+'.beibl',p.beibl,MP_BEIBL)}${mpCkX(R,P+'.beiblX',p.beiblX)}
+    ${h('Die Dokumentation enthält folgende Anhänge')}${mpCkL(R,P+'.anh',p.anh,MP_ANH)}${mpCkX(R,P+'.anhX',p.anhX)}
+    ${h('Folgende Maßnahmen wurden auf Grund des sicherheitstechnischen Zustandes festgelegt bzw. durchgeführt')}${mpCkL(R,P+'.massn',p.massn,MP_MASSN)}</div>`;
+  return kmp()?akk('mp-pb','Prüfbericht',pb,{zusatz:esc(MP_GRUND.filter(([k])=>p.grund?.[k]).map(x=>x[1]).join(', '))})+akk('mp-umf','Umfang der Überprüfung',umf,{zusatz:`${mpUmfL(m).length} Anlagenteil${mpUmfL(m).length>1?'e':''}`})
+    +akk('mp-anh','Beiblätter, Anhänge, Maßnahmen',anh,{zusatz:`${n(p.beibl)+n(p.anh)} gewählt`}):pb+umf+anh}
+// Druck: Kästchen mit Häkchen
+const mpCb=(a,l='')=>`<span class="mpcbw"><span class="mpcb">${a?'✓':''}</span>${l}</span>`;
+function mpVorDoc(m){if(!mpVorAn())return'';const f=S().firma,k=kontakt(m.kontaktId),p=m.pb||{},ck=(o,L)=>L.map(([x,l])=>mpCb(o?.[x],esc(l)));
+  const kopf=`<table class="mpkf"><tr><td style="width:30%;text-align:center"><img class="kbl" src="${f.logo||KOPF_TBH}" alt=""></td><td><b>${esc(f.name||'')}</b><br>${esc([f.strasse,(String(f.plz||'')+' '+(f.ort||'')).trim()].filter(Boolean).join(', '))}<br>${esc([f.tel,f.mail].filter(Boolean).join(' · '))}</td></tr></table>
+    <table><tr><td>Aussteller: <b>${esc(f.name||'')}</b></td><td style="width:32%">Nr.: <b>${esc(m.nr)}</b></td></tr></table>`;
+  const erst=m.art!=='wieder',tz=x=>`<td class="c" style="width:7mm">${x}</td>`;
+  const zus=[['io','Die elektrische Anlage ist sicherheitstechnisch in Ordnung'],['m',`Die elektrische Anlage ist sicherheitstechnisch in Ordnung, hat aber geringfügige Mängel (siehe Mängelauflistung), die innerhalb von <b>${p.frist!==''&&p.frist!=null?fmtQ(p.frist):'____'}</b> Wochen zu beheben sind`],['nio','Die elektrische Anlage ist sicherheitstechnisch nicht in Ordnung (siehe Mängelauflistung)']];
+  const sp=m.sig?.pruefer,sk=m.sig?.kunde,img=s=>s?.pfad?`<img class="mpsi" data-bild="${esc(s.pfad)}" alt="">`:s?.ohne?esc(s.ohne):'';
+  const s1=`<section class="mpf mpv">${kopf}<div class="mpt1"><b>Prüfbericht</b> Ortsfeste elektrische Anlage<br><span>erstellt nach OVE E 8101:2025</span></div>
+    <table><tr><td style="width:24%">Anlagenadresse</td><td><b>${esc(m.adresse||'')}</b>${m.anlage?` · ${esc(m.anlage)}`:''}</td></tr>
+      <tr><td>Auftraggeber</td><td><b>${esc(k?.name||'')}</b>${k?` · ${esc(mpAdr(k))}${k.tel?` · Tel. ${esc(k.tel)}`:''}`:''}</td></tr>
+      <tr><td>Überprüfte Anlage / Anlagenteile</td><td>${esc(p.teile||'')}</td></tr><tr><td>Nicht überprüfte Anlagenteile</td><td>${esc(p.nicht||'')}</td></tr></table>
+    <table><tr><td>Planer: ${esc(p.planer||'')}</td><td>Errichter: ${esc(p.errichter||'')}</td></tr><tr><td>Errichtungszeitraum: ${esc(p.errZeit||'')}</td><td>Bescheidnummer: ${esc(p.bescheid||'')} · Netzbetreiber: ${esc(m.netzbetr||'')}</td></tr></table>
+    <table><tr><td style="width:24%">Dieser Prüfbericht dient als</td><td>${mpCb(erst,'Erstprüfung')}<br>${mpCb(!erst,'Wiederkehrende Prüfung')}</td><td>${ck(p.grund,MP_GRUND).join('<br>')}</td></tr></table>
+    <h4>Zusammenfassung der Prüfergebnisse</h4><table>${zus.map(([x,l])=>`<tr>${tz(mpCb(m.ergebnis===x))}<td>${l}</td></tr>`).join('')}</table>
+    <table><tr><td>Datum der Überprüfung: <b>${dAT(m.datum)}</b></td><td>Errichtungsbestimmungen: ${esc(p.errBest||'')}</td></tr>
+      <tr><td>Name des Prüfers: <b>${esc(m.pruefer||'')}</b></td><td>Unterschrift: ${img(sp)}</td></tr></table>
+    <table><tr><td style="width:40%"><b>Intervall für die wiederkehrende Prüfung gemäß</b></td><td>${ck(p.int,MP_INT).join(' ')}</td></tr>
+      <tr><td>Nächste Überprüfung: <b>${dAT(m.naechste)}</b></td><td>für Anlagenteil: ${esc(p.nT1||'')}</td></tr><tr><td>Nächste Überprüfung: <b>${dAT(p.n2)}</b></td><td>für Anlagenteil: ${esc(p.nT2||'')}</td></tr></table>
+    <p class="mpvt">Dieser Prüfbericht wurde von einem befugten Elektrotechniker verfasst und basiert auf den Anforderungen des Elektrotechnikgesetzes 1992 und der jeweils zutreffenden Elektrotechnikverordnung. Der Prüfbericht beinhaltet die aus den Beiblättern ersichtlichen Ergebnisse der Besichtigung, Erprobung und Messung und wurde gemäß den Bestimmungen hinsichtlich der Erst- bzw. wiederkehrenden Prüfung sowie der Dokumentation nach OVE E 8101, Unterabschnitt 514.5, erstellt.</p>
+    <table><tr><td>${esc(p.ort||f.ort||'')}, am ${dAT(m.abgeschlossen?.slice(0,10)||m.datum)}</td><td style="width:45%;height:14mm;vertical-align:bottom">${img(sp)}<div class="mpsk">Rechtsgültige Zeichnung</div></td></tr></table>
+    <table><tr><td style="width:50%">Vorliegendes Prüfungsergebnis zur Kenntnis genommen vom</td><td>${ck(p.kenntnis,[['ag','Auftraggeber'],['ab','Anlagenbetreiber']]).join(' ')}</td></tr>
+      <tr><td>Name: ${esc(p.kName||sk?.name||'')}</td><td style="height:12mm">Unterschrift: ${img(sk)}</td></tr></table>${kbFuss()}</section>`;
+  const um=mpUmfL(m).map(u=>`<tr class="mput"><td colspan="${MP_UB.length+1}">Anlagenteil: <b>${esc(u.teil||'')}</b></td></tr>${MP_UZ.map(([x,l])=>`<tr><td>${l}</td>${MP_UB.map(([b])=>`<td class="c"><b>${esc(u.z?.[b]?.[x]||'')}</b></td>`).join('')}</tr>`).join('')}`).join('');
+  const zl=(o,L,X=[])=>[...ck(o,L),...X.filter(Boolean).map(x=>mpCb(true,esc(x)))];
+  const sp3=(a,n=3)=>`<div class="mpc3" style="grid-template-columns:repeat(${n},1fr)">${a.map(x=>`<div>${x}</div>`).join('')}</div>`;
+  const s2=`<section class="mpf mpv"><table class="mpumd"><thead><tr><th class="mplg"><b style="font-size:11pt">Umfang der Überprüfung</b><br><b>Legende:</b><br>Geprüft nach z. B. OVE E 8101 Ausgabe 2025: J; nicht geprüft: N<br>Dokumentation (Unterabschnitt 514.5): vorhanden: J; nicht vorhanden: N<br>Prüfbefund: vorhanden: J; nicht vorhanden: N<br>Anlagenzustand: In Ordnung: J; Geringe Mängel: G; Nicht in Ordnung: N</th>
+      ${MP_UB.map(([,l])=>`<th class="mpvh"><span>${esc(l)}</span></th>`).join('')}</tr></thead><tbody>${um}</tbody></table>
+    <h4>Der Prüfbericht umfasst folgende Beiblätter</h4>${sp3(zl(p.beibl,MP_BEIBL,p.beiblX))}
+    <h4>Die Dokumentation enthält folgende Anhänge</h4>${sp3(zl(p.anh,MP_ANH,p.anhX),2)}
+    <h4>Folgende Maßnahmen wurden auf Grund des sicherheitstechnischen Zustandes festgelegt bzw. durchgeführt</h4><div>${ck(p.massn,MP_MASSN).join('<br>')}</div>
+    <div style="break-inside:avoid"><h4>Anmerkungen / Mängelliste</h4><table><tr><td style="height:16mm;vertical-align:top">${esc(m.maengel||'keine').replace(/\n/g,'<br>')}</td></tr></table></div>${kbFuss()}</section>`;
+  return s1+s2}
+{const aa0=ACT.arradd;ACT.arradd=(el,e)=>{const[c,id]=el.dataset.r.split('|'),m=c==='mp'&&el.dataset.tpl==='mpumf'?ROOT.mp(id):null; // erster Klick: angezeigter leerer Anlagenteil plus ein neuer
+  if(m&&!m.umfang?.length&&!gesperrt(m)){m.umfang=[TPL.mpumf(),TPL.mpumf()];persist();render();return}aa0(el,e)}}
+
 start();
 </script>
 </body>

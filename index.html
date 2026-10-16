@@ -4664,7 +4664,8 @@ V.einstellungen=()=>{
   ${akk('e-ein','Belege einlesen',`<div class="card"><h2>Belege einlesen</h2>
   ${einlesenInfo(`Kostenlos und ohne Internetdienst werden gelesen: <b>E-Rechnungen</b> (ZUGFeRD/Factur-X, XRechnung, ebInterface) und <b>PDFs mit Textebene</b> (z. B. PDF aus der E-Mail des Lieferanten). Fotos und eingescannte Papierbelege enthalten keinen Text – Positionen dann manuell erfassen.`,
   `Optional (kostenpflichtig): KI-Erkennung für Fotos durch Claude (Anthropic) – nur wenn hier ein Schlüssel eingetragen ist. Den API-Schlüssel erhalten Sie in der Anthropic Console (console.anthropic.com → API Keys). Er wird nur in diesem Browser gespeichert, nicht in der Datenbank – auf jedem Gerät einmal eintragen. Kosten ca. 1–3 Cent je Seite; das Bild wird zur Auswertung an Anthropic übertragen.`)}
-  <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${lsGet('erp-ki-key')?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><span style="flex:2"></span></div></div>`,{zusatz:lsGet('erp-ki-key')?'KI-Schlüssel gespeichert':'PDF-Text und E-Rechnung'})}
+  <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${kiKey()?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><label class="chk" title="Der Schlüssel wird beim Schließen des Browsers vergessen – sicherer an fremden oder geteilten Geräten (P37 S6)"><input type="checkbox" id="kises"${kiSitzung()?' checked':''}> nur bis zum Schließen des Browsers merken</label><span style="flex:2"></span></div>
+  <p class="mut" style="margin:4px 0 0">Datenschutz: Mit Schlüssel gehen Belegbilder und -texte an Anthropic (USA). Vorher Auftragsverarbeitung (DSGVO Art. 28) und Datenverarbeitungs-Zusatz von Anthropic prüfen; Belege mit Gesundheits- oder Personaldaten nicht über die KI einlesen.</p></div>`,{zusatz:kiKey()?'KI-Schlüssel gespeichert':'PDF-Text und E-Rechnung'})}
   ${akk('e-kfm','Kaufmännisch',`<div class="card"><h2>Kaufmännisch</h2><div class="row">
     <label class="w05">Letzte Kunden-Nr.<input type="number" data-o="s" data-f="knr.K" value="${s.knr.K}" title="Nächster Kunde erhält diese Nummer + 1"></label><label class="w05">Letzte Lieferanten-Nr.<input type="number" data-o="s" data-f="knr.L" value="${s.knr.L}"></label>
     ${sf('zahlungsziel','Zahlungsziel Tage')}${sf('skonto','Skonto %')}${sf('skontoTage','Skonto Tage')}${sf('angebotGueltig','Angebot gültig Tage')}
@@ -5093,6 +5094,10 @@ async function belegLokal(files,typ,info,mitKI){
 
 /* ---------- Beleg-Scan: Abgleich und Übernahme (optional KI für Fotos) ---------- */
 // API-Schlüssel nur im Browser des Geräts (localStorage), nicht in erp-daten.json
+/* KI-Schlüssel (P37 S6): dauerhaft in localStorage (bisher) oder nur für die Sitzung in sessionStorage */
+const kiSitzung=()=>lsGet('erp-ki-ses')==='1'; // Wahl je Gerät, der Schlüssel selbst bleibt in sessionStorage
+const kiKey=()=>{try{const k=sessionStorage.getItem('erp-ki-key');if(k)return k}catch(e){}return lsGet('erp-ki-key')};
+function kiKeySetzen(k,sitzung){try{sitzung&&k?sessionStorage.setItem('erp-ki-key',k):sessionStorage.removeItem('erp-ki-key')}catch(e){}lsSet('erp-ki-key',sitzung?null:k);lsSet('erp-ki-ses',sitzung?'1':null)}
 const KI_URL='https://api.anthropic.com/v1/messages',KI_MODELL='claude-opus-5-5';
 const LS_SCHEMA={type:'object',additionalProperties:false,required:['lieferant','lieferscheinNr','datum','bestellNr','lieferadresse','positionen'],properties:{
   lieferant:{type:'object',additionalProperties:false,required:['name','uid','strasse','plz','ort'],properties:{name:{type:'string'},uid:{type:'string'},strasse:{type:'string'},plz:{type:'string'},ort:{type:'string'}}},
@@ -5188,7 +5193,7 @@ async function belegScan(files,typ){
   await (SCANUP[b.id]=anhaengeHochladen(b,files,true,true)); // Originalbeleg unverändert ablegen
 }
 async function scanStart(b){
-  const key=lsGet('erp-ki-key'),files=SCANFILES[b.id];if(!files)return;
+  const key=kiKey(),files=SCANFILES[b.id];if(!files)return;
   b.scan={status:'läuft'};render();
   try{
     const info=t=>{const e=document.getElementById('scaninfo');if(e)e.textContent=t};
@@ -6094,7 +6099,8 @@ document.addEventListener('change',e=>{
   if(el.id==='imp')return importJSON(el);
   if(el.id==='lbimp')return lbImport(el);
   if(['lsscan','erfoto','bescan'].includes(el.id)){const f=[...el.files];el.value='';belegScan(f,{lsscan:'WE',erfoto:'ER',bescan:'BE'}[el.id]);return}
-  if(el.id==='kikey'){lsSet('erp-ki-key',el.value.trim()||null);render();return}
+  if(el.id==='kikey'){kiKeySetzen(el.value.trim()||null,kiSitzung());render();return}
+  if(el.id==='kises'){kiKeySetzen(kiKey(),el.checked);render();return}
   if(d.sc!==undefined)return scanSet(el);
   if(d.kette!==undefined){if(d.fk)return;const a=artikel(d.aid);if(!a)return;ketteWert(el).then(v=>{if(v!==null){const B=d.kette==='lp'?LP:GR;a[B.c.feld]=v;log(B.c.name+' zugeordnet',`${a.nr} → ${B.pfad(v)||'keine'}`);persist()}render()});return}
   if(d.lpa!==undefined){const a=artikel(d.lpa);a.lagerplatz=el.value;log('Lagerplatz zugeordnet',`${a.nr} → ${LP.pfad(el.value)||'keiner'}`);commit();return}

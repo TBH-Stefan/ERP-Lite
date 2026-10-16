@@ -6162,7 +6162,7 @@ function btbDoc(r){const w=r.wetter||{},vk=r.vork||{},root=btbRoot(r),k=kontakt(
 V.bericht=id=>{const r=ROOT.btb(id);if(!r)return'<p>Bautagesbericht nicht gefunden.</p>';const root=btbRoot(r),fest=btbFest(r);
   return`<div class="bar"><h1 style="margin:0">Bautagesbericht ${r.nr}</h1>${btbStatus(r)}<span class="sp"></span>${BTB_KN.map(f=>f(r)).join('')}${fest?'':`<button class="d" data-act="btbdel" data-id="${r.id}">Löschen</button>`}</div>
   <p class="mut" style="margin:2px 0 10px"><a href="#/berichte">Bautagesberichte</a> › <a href="#/auftrag/${r.auftragId}">Auftrag ${esc(auftragLabel(r.auftragId))}</a>${root?'':' (Auftrag nicht mehr vorhanden)'}</p>
-  ${fest?`<div class="card">${btbDoc(r)}</div>`:btbEditor(r)}`};
+  ${btbAnsicht(r,fest)}`};
 V.berichte=()=>{const auf=btbAuftraege(),A=UI.btbA||'',L=DB.berichte.filter(r=>!A||r.auftragId===A).sort((a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt));
   return`<div class="bar"><h1 style="margin:0">Bautagesberichte</h1><span class="sp"></span><button class="p" data-act="btbneu"${A?` data-id="${A}"`:''}>+ Bericht</button></div>
   ${erw('btb')?'':'<p class="hint">Bautagesberichte sind ausgeschaltet (Einstellungen → Erweiterungen); vorhandene Berichte bleiben lesbar.</p>'}
@@ -6438,6 +6438,14 @@ ACT.btbzeit=el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r))return;const 
   for(const z of L){r.personal.push({name:'',tarif:z.tarif,von:'',bis:'',pause:'',stunden:+z.stunden||0,zid:z.id});z.berichtId=r.id;if(pT(z.text)&&!(r.taet||[]).some(t=>t.text===z.text))(r.taet||(r.taet=[])).push({text:z.text,ort:''})}
   r.taet=r.taet.filter((t,i,a)=>pT(t.text)||pT(t.ort)||a.length===1);persist();render()};
 $('#menu').onclick=e=>{e.stopPropagation();document.body.classList.toggle('nav')};
+/* Bautagesbericht Teil 6 (P36, erw.btbVorschau): „Eingabe | Vorschau | Beides“ wie im Verkauf (dieselbe Wahl ansicht(), ACT.ansicht); Vorschau = Druckbild btbBlatt(r)
+   (Briefkopf, btbDoc) auf dem Blatt, folgt jeder Eingabe; abgeschlossene Berichte als Blatt. btbAnsicht(r,fest) in V.bericht, ohne Schalter wie bisher */
+erwPlus({k:'btbVorschau',std:false,p:'Bautagesbericht (P36)',l:'Vorschau im Bautagesbericht',info:'Im Bautagesbericht wie im Verkauf „Eingabe | Vorschau | Beides“: Die Vorschau zeigt den Bericht so, wie er gedruckt wird (A4 mit Briefkopf); „Beides“ (großer Bildschirm) zeigt Eingabe und Vorschau nebeneinander, die Vorschau folgt jeder Eingabe. Abgeschlossene und unterschriebene Berichte erscheinen als Blatt. Die Wahl gilt gemeinsam mit den Verkaufsbelegen. Aus = wie bisher nur Eingabe bzw. Ansicht.'});
+const btbBlatt=r=>{const h=btbDoc(r),W='<div class="btbd">'; // flach im Blatt, damit vorschauSeiten() an den Abschnitten in Seiten teilt
+  return`<div class="blatt"><div class="doc btbp btbd">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">Bautagesbericht ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${h.startsWith(W)?h.slice(W.length,-6):h}</div></div>`};
+function btbAnsicht(r,fest){if(!erw('btbVorschau'))return fest?`<div class="card">${btbDoc(r)}</div>`:btbEditor(r);if(fest)return btbBlatt(r);const ans=ansicht();
+  return`<div class="bar" style="margin:0 0 10px"><span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span></div>`
+    +(ans==='beides'?`<div class="split"><div>${btbEditor(r)}</div><div class="sticky">${btbBlatt(r)}</div></div>`:ans==='vorschau'?btbBlatt(r):btbEditor(r))}
 document.querySelector('nav').addEventListener('click',e=>{if(e.target.closest('a'))document.body.classList.remove('nav')});
 document.addEventListener('click',e=>{if(document.body.classList.contains('nav')&&!e.target.closest('nav'))document.body.classList.remove('nav')});
 

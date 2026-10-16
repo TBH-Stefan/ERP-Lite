@@ -5913,7 +5913,7 @@ function lfEinst(){if(!erw('lfErinnern'))return'';const m=S().mailVorlage||{};
   <div class="row"><label class="w05">Erinnern ab … Tage vor dem Termin<input type="number" min="0" step="1" inputmode="numeric" data-o="s" data-f="lfTage" value="${lfN()}"></label><span style="flex:2"></span></div>
   <div class="row"><label class="w2">Betreff der Erinnerung<input data-o="s" data-f="mailVorlage.lfBetreff" value="${esc(m.lfBetreff||'')}" placeholder="${esc(LF_MAIL.betreff)}"></label></div>
   <div class="row"><label class="w2">Text der Erinnerung<textarea data-o="s" data-f="mailVorlage.lfText" style="height:200px" placeholder="${esc(LF_MAIL.text)}">${esc(m.lfText||'')}</textarea></label></div>
-  <div class="bar" style="margin:4px 0 0">${phKnopf()}<span class="mut" style="font-size:13px">${LF_PH.map(([n,l])=>`<span title="${esc(l)}">{${n}}</span>`).join(' ')}</span></div></div>`,{zusatz:`${lfN()} Tage · ${m.lfText||m.lfBetreff?'eigene Vorlage':'Standardtext'}`})}
+  <div class="bar" style="margin:4px 0 0">${phKnopf()}${LF_PH.map(([n,l])=>`<button class="s" data-act="phins" data-n="${n}" title="${esc(l)} – an der Schreibmarke des zuletzt bearbeiteten Felds einfügen">{${n}}</button>`).join('')}</div></div>`,{zusatz:`${lfN()} Tage · ${m.lfText||m.lfBetreff?'eigene Vorlage':'Standardtext'}`})}
 queueMicrotask(()=>Object.assign(ACT,{lfmail:()=>lfMail(curBeleg()),lfwv:()=>lfWvPop(curBeleg())}));
 /* ---------- Lieferverzug im Verkauf (P35 Teil 4, erw.lfVerkauf): Auftragsbestätigungen an Kunden mit überschrittenem Liefertermin (fest, nicht storniert, erledigung() < 1
    über Lieferscheine bzw. Rechnungen, auch „abgeschlossen“ nach P32) → eigener Abschnitt in der Karte „Lieferverzug“ (lfKunden); Bestellungen aus der Belegkette einer AB

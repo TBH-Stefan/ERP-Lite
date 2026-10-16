@@ -914,6 +914,7 @@ const geraetKnopf=()=>erw('geraetLoeschen')&&STORE.art!=='cache'?' <button data-
 async function geraetLeeren(){
   if(STORE.art==='cache')return;
   if(pending||DIRTY){alert('Es gibt noch nicht gespeicherte Änderungen – bitte zuerst speichern.');return}
+  if(ablQ().length){alert(`${ablQ().length} Foto(s) bzw. Unterschrift(en) warten noch auf das Hochladen in die Ablage und wären sonst verloren.\nBitte mit Netzverbindung warten, bis sie hochgeladen sind.`);ablageNachladen();return} // Ablage ohne Netz (P36 a)
   if(!confirm('Anmeldung, Datenkopie, Anhänge und Bilder werden aus diesem Browser entfernt.\nDie Daten '+(STORE.art==='od'?'im OneDrive':'im lokalen Ordner')+' bleiben erhalten.\n\nFortfahren?'))return;
   const halten=['erp-cid','erp-tid'];
   try{for(const k of Object.keys(localStorage))if(/^erp/.test(k)&&!halten.includes(k))localStorage.removeItem(k)}catch(e){}

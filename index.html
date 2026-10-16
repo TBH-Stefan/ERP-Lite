@@ -35,6 +35,9 @@ body.loaded #app{display:flex}
 .seg{display:inline-flex;border:1px solid #cdd2da;border-radius:6px;overflow:hidden}
 .seg button{border:0;border-radius:0;border-right:1px solid #e2e5ea}.seg button:last-child{border-right:0}
 .seg button.on{background:var(--acc2);color:var(--acc);font-weight:600}
+/* Bautagesbericht Fotos (P36 Teil 2): Editor .btbb, Ansicht/Druck .btbbd, Großansicht .btblb */
+.btbb{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.btbbi{display:flex;flex-direction:column;gap:4px;position:relative}.btbbi img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;background:#eef0f3;cursor:zoom-in}.btbbi>button{position:absolute;top:4px;right:4px}.btbbi .mut{font-size:11px}
+.btbbd{display:grid;grid-template-columns:1fr 1fr;gap:12px}.btbbd figure{margin:0;break-inside:avoid}.btbbd img{width:100%;max-height:90mm;object-fit:contain;background:#f4f5f7}.btbbd figcaption{font-size:11px;color:var(--mut)}.btblb .mbox{max-width:min(96vw,1100px)}.btblb img{max-width:100%;max-height:78vh;display:block;margin:auto}
 .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
 .split .sticky{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}
 .blatt{background:#fff;color:#000;max-width:210mm;min-height:120mm;margin:0 auto 14px;padding:10mm 14mm 12mm 20mm;box-shadow:0 2px 14px rgba(0,0,0,.12);border:1px solid var(--line)}
@@ -6108,6 +6111,24 @@ function logoUpload(el){
   if(file.size>300*1024){alert('Logo zu groß (max. 300 kB).');return}
   const r=new FileReader();r.onload=()=>{S().firma.logo=r.result;persist();render()};r.readAsDataURL(file);
 }
+/* Bautagesbericht Teil 2 (P36, erw.btbBild): Fotos je Bericht, am Handy direkt mit der Kamera (capture), Beschriftung, Aufnahmezeit (Datei-Zeitstempel); Dateien in der Ablage
+   Berichte/<Jahr>/<Auftrag>_BTB-<nr>/<id>_v.jpg (Vorschau ≤ 320 px) und <id>.jpg (große verkleinert), im Bericht nur Pfade bilder[{id,mini,pfad,text,zeit}]; ohne Netz über ablegen() (P36 a) */
+erwPlus({k:'btbBild',std:false,p:'Bautagesbericht (P36)',l:'Fotos im Bautagesbericht',info:'Im Bautagesbericht nimmt „📷 Foto aufnehmen“ am Handy direkt mit der Kamera auf, „Bilder wählen …“ übernimmt vorhandene Fotos (mehrere auf einmal). Je Foto Beschriftung und Aufnahmezeit; Ansicht und Druck zeigen die Fotos zu zweit nebeneinander. Die Fotos liegen als Dateien in der Ablage unter „Berichte/<Jahr>/<Auftrag>_BTB-<Nr>/“ (OneDrive bzw. Ordner), nicht in den Daten. Ohne Netz bleiben sie in diesem Browser und werden nachgeladen, sobald wieder eine Verbindung besteht. Aus = kein Abschnitt „Fotos“ im Editor, vorhandene Fotos bleiben in Ansicht und Druck.'});
+async function btbFotos(r,files){let n=0;saveState('Fotos werden gespeichert …');
+  for(const f of files){if(!/^image\//.test(f.type))continue;let mini;try{mini=await bildMini(f)}catch(e){alert(`${f.name}: Das Bild kann nicht gelesen werden.\n${e.message}`);continue}
+    const id=uid(),o=btbOrdner(r),g=await bildVerkleinern(f),pfad=`${o}/${id}.${/png$/i.test(g.type)?'png':'jpg'}`;
+    await ablegen(`${o}/${id}_v.jpg`,mini);await ablegen(pfad,g);
+    (r.bilder||(r.bilder=[])).push({id,mini:`${o}/${id}_v.jpg`,pfad,text:'',zeit:new Date(f.lastModified||Date.now()).toISOString()});n++}
+  saveState('');if(n){log('Bautagesbericht Fotos',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${n}`);commit()}render()}
+BTB_ED.push(r=>{if(!erw('btbBild'))return'';const R='btb|'+r.id,L=r.bilder||[],w=ablOffen(btbOrdner(r));
+  return bAbs('btb-bild','Fotos',`${L.length?`<div class="btbb">${L.map((b,i)=>`<div class="btbbi"><img data-bild="${esc(b.mini)}" data-act="btbbild" data-id="${r.id}" data-i="${i}" alt="Foto ${i+1}" title="Foto öffnen">
+      <button class="s d" data-act="arrdel" data-r="${R}" data-f="bilder" data-i="${i}" title="Foto entfernen">✕</button><input data-o="path" data-r="${R}" data-f="bilder.${i}.text" value="${esc(b.text)}" placeholder="Beschriftung"><span class="mut">${dtAT(b.zeit)}</span></div>`).join('')}</div>`:''}
+    <div class="bar" style="margin:8px 0 0"><label class="btn p">📷 Foto aufnehmen<input type="file" accept="image/*" capture="environment" data-btbfoto="${r.id}" hidden></label><label class="btn">🖼 Bilder wählen …<input type="file" accept="image/*" multiple data-btbfoto="${r.id}" hidden></label>
+    ${w?`<span class="mut">⏳ ${w} Datei${w>1?'en warten':' wartet'} auf Netz</span>`:''}</div>`,{offen:!!L.length,zusatz:L.length?L.length+'':'keine'})});
+BTB_DOC.push(r=>(r.bilder||[]).length?`<h3>Fotos</h3><div class="btbbd">${r.bilder.map((b,i)=>`<figure><img data-bild="${esc(b.pfad)}" alt="Foto ${i+1}"><figcaption>${i+1}. ${esc(b.text||'')}${b.text?' · ':''}${dtAT(b.zeit)}</figcaption></figure>`).join('')}</div>`:'');
+document.addEventListener('change',e=>{const id=e.target.dataset?.btbfoto;if(id==null)return;const r=ROOT.btb(id),f=[...e.target.files];e.target.value='';if(r&&!btbFest(r)&&f.length)btbFotos(r,f)});
+ACT.btbbild=el=>{const b=ROOT.btb(el.dataset.id)?.bilder?.[+el.dataset.i];if(!b)return;const d=document.createElement('div');d.className='modal btblb';d.innerHTML=`<div class="mbox"><img alt=""><p class="mut">${esc(b.text||'')} ${dtAT(b.zeit)}</p><div class="bar" style="margin:8px 0 0"><span class="sp"></span><button class="p">Schließen</button></div></div>`;
+  document.body.appendChild(d);d.onclick=e=>{if(e.target===d||e.target.tagName==='BUTTON')d.remove()};bildBlob(b.pfad).then(x=>{d.querySelector('img').src=BURL[b.pfad]??=URL.createObjectURL(x)}).catch(()=>{d.querySelector('img').replaceWith('Bild nicht verfügbar (Ablage nicht erreichbar)')})};
 function importJSON(el){
   const file=el.files[0];if(!file)return;
   const r=new FileReader();r.onload=()=>{

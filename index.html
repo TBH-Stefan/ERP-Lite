@@ -938,10 +938,16 @@ const DIRSTORE={
   async backup(old,tag){const bd=await this.h.getDirectoryHandle('backup',{create:true});try{await bd.getFileHandle(`erp-daten_${tag}.json`);return}catch(e){}const w=await (await bd.getFileHandle(`erp-daten_${tag}.json`,{create:true})).createWritable();await w.write(old);await w.close()},
   async dir(parts,create){let d=this.h;for(const p of parts)d=await d.getDirectoryHandle(p,{create});return d},
   async putFile(path,blob){const parts=path.split('/'),fn=parts.pop(),d=await this.dir(parts,true);const w=await (await d.getFileHandle(fn,{create:true})).createWritable();await w.write(blob);await w.close();return{name:fn,path,id:'',url:''}},
-  async openFile(a){const parts=a.path.split('/'),fn=parts.pop(),f=await (await (await this.dir(parts,false)).getFileHandle(fn)).getFile();window.open(URL.createObjectURL(f),'_blank')}
+  async openFile(a){const parts=a.path.split('/'),fn=parts.pop(),f=await (await (await this.dir(parts,false)).getFileHandle(fn)).getFile();blobOeffnen(f,fn)}
 };
 const CACHESTORE={art:'cache',lastText:null,name:'nur dieser Browser (Test)',async save(){},async backup(){},async putFile(path,blob){await kvSet('att:'+path,blob);return{name:path.split('/').pop(),path,id:'',url:''}},
-  async openFile(a){const b=await kvGet('att:'+a.path);if(!b)throw new Error('Datei nicht mehr im Browser vorhanden.');window.open(URL.createObjectURL(b),'_blank')}};
+  async openFile(a){const b=await kvGet('att:'+a.path);if(!b)throw new Error('Datei nicht mehr im Browser vorhanden.');blobOeffnen(b,a.path.split('/').pop())}};
+/* Anhänge sicher öffnen (P37 S1): blob:-Adressen laufen in der Herkunft des Programms – SVG, HTML oder XML könnten dort Code ausführen und Anmeldung/Daten lesen.
+   Nur PDF und Rasterbilder werden angezeigt (Typ aus der Dateiendung, nicht aus der Datei), alles andere wird heruntergeladen */
+const BLOB_TYP={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',bmp:'image/bmp',txt:'text/plain'};
+function blobOeffnen(b,name){const t=BLOB_TYP[(String(name).match(/\.(\w+)$/)||[])[1]?.toLowerCase()];
+  if(!t){dl(b,name);return}
+  const u=URL.createObjectURL(new Blob([b],{type:t}));window.open(u,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(u),60000)}
 let STORE=CACHESTORE,saving=false,saveAgain=false,retryT=null;
 
 async function saveNow(){

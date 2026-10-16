@@ -23,11 +23,21 @@ body.loaded #app{display:flex}
 .bka{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto}
 @media(max-width:760px){.bka{width:100%;margin-left:0;gap:6px}.bka>.seg{flex:none;margin-right:auto}.bka .seg button{padding:6px 8px}}
 .quick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+/* Unterschrift (P36 a): Feld im Pop-up sigPop(), Block sigBlock() */
+.sgf{position:relative;border:1px solid var(--line);border-radius:8px;background:#fff;height:220px}.sgf canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}.sgf.aus{opacity:.35;pointer-events:none}
+.sgl{position:absolute;left:14px;right:14px;bottom:12px;border-top:1px solid #c9ced6;padding-top:2px;font-size:12px;color:#9aa1ad;pointer-events:none}@media(max-width:760px){.sgf{height:min(240px,42vh)}}
+.sigb{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:16px}.sigz{flex:1 1 220px}.sigbild{height:72px;border-bottom:1px solid #555;display:flex;align-items:flex-end}.sigbild img{max-height:70px;max-width:100%}.sigl,.sigp{font-size:12px;color:var(--mut);margin:3px 0 0}
 .quick>*{flex:1 1 140px;text-align:center;padding:12px 10px;font-weight:600}
 .att{display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid #eef0f3}
+/* Bautagesbericht (P36 Teil 1): Zeilen im Editor, Ansicht btbDoc() */
+.btbz{padding-bottom:6px;border-bottom:1px dashed var(--line)}.btbz>button.d{align-self:flex-end;margin-bottom:2px}.btbz label:has(>input[type=time]){min-width:96px}
+.btbd h3{font-size:15px;margin:14px 0 6px}.btbd table{width:100%;border-collapse:collapse}.btbd th,.btbd td{text-align:left;vertical-align:top;padding:4px 6px;border-bottom:1px solid var(--line)}.btbd .n{text-align:right}.btbk th{width:30%;font-weight:600;color:var(--mut)}
 .seg{display:inline-flex;border:1px solid #cdd2da;border-radius:6px;overflow:hidden}
 .seg button{border:0;border-radius:0;border-right:1px solid #e2e5ea}.seg button:last-child{border-right:0}
 .seg button.on{background:var(--acc2);color:var(--acc);font-weight:600}
+/* Bautagesbericht Fotos (P36 Teil 2): Editor .btbb, Ansicht/Druck .btbbd, Großansicht .btblb */
+.btbb{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.btbbi{display:flex;flex-direction:column;gap:4px;position:relative}.btbbi img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;background:#eef0f3;cursor:zoom-in}.btbbi>button{position:absolute;top:4px;right:4px}.btbbi .mut{font-size:11px}
+.btbbd{display:grid;grid-template-columns:1fr 1fr;gap:12px}.btbbd figure{margin:0;break-inside:avoid}.btbbd img{width:100%;max-height:90mm;object-fit:contain;background:#f4f5f7}.btbbd figcaption{font-size:11px;color:var(--mut)}.btblb .mbox{max-width:min(96vw,1100px)}.btblb img{max-width:100%;max-height:78vh;display:block;margin:auto}
 .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
 .split .sticky{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}
 .blatt{background:#fff;color:#000;max-width:210mm;min-height:120mm;margin:0 auto 14px;padding:10mm 14mm 12mm 20mm;box-shadow:0 2px 14px rgba(0,0,0,.12);border:1px solid var(--line)}
@@ -121,7 +131,8 @@ body.kompakt td>.nw+br,body.kompakt td>.nw+br+.mut{display:none}
   body.kompakt .kk a,body.kompakt .card h2>a:not(:first-child){padding:10px 2px;margin:0 -2px}
   body.kompakt .kk :is(.kku,.kkz):has(a){padding:10px 0;margin:-10px 0}
 }
-@media(max-width:430px){body.kompakt table.kbg th,body.kompakt table.kbg td{white-space:normal;hyphens:auto}body.kompakt table.kbg input,body.kompakt table.kbg td:first-child input{width:50px!important}body.kompakt table.kbg td:first-child select{width:92px!important}}
+@media(max-width:430px){body.kompakt table.kbg th,body.kompakt table.kbg td{white-space:normal;hyphens:auto}body.kompakt table.kbg input,body.kompakt table.kbg td:first-child input{width:50px!important}body.kompakt table.kbg td:first-child select{width:92px!important}}
+
 @media(max-width:760px){ /* K2 am Handy: Bezeichnung über die volle Breite, darunter die vier Spalten (Kopfzeile = Beschriftung) */
   body.kompakt table.k2k,body.kompakt table.k2k>:is(thead,tbody,tfoot){display:block;width:100%!important}body.kompakt table.k2k tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 40px;gap:4px 6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
   body.kompakt table.k2k :is(td,th){padding:0!important;border:0;white-space:normal!important}body.kompakt table.k2k :is(td,th):first-child{grid-column:1/-1}body.kompakt table.k2k thead th:first-child{display:none}body.kompakt table.k2k.kbg td input{width:100%!important}
@@ -145,6 +156,7 @@ nav button.zl{display:block;width:100%;text-align:left;background:none;border:0;
 .zlaus .zl{display:none!important}.pop.zlpop{z-index:45;padding:8px}.zlpop .bwz{border-radius:5px} /* Zuletzt geöffnet (P19 a) */
 nav .grp{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#8792a8;padding:12px 18px 3px}
 nav a.navkl{display:none;padding-left:32px;font-size:13px}body.navkl nav a.navkl{display:block} /* Kunden / Lieferanten in der Seitenleiste (P6, erw.navKL) */
+body:not(.btb) nav a.navbtb{display:none!important} /* Bautagesberichte (P36 Teil 1, erw.btb) */
 /* Messprotokoll (P37, erw.messprot): Eintrag in der Seitenleiste, Markierung der Grenzwerte, Stromkreis-Karten am Handy */
 nav a.navmp{display:none}body.mpan nav a.navmp{display:block}
 .mpt td{padding:3px 3px;white-space:nowrap}.mpt input{padding-left:5px;padding-right:5px}.mpt th{white-space:nowrap;font-size:12px}.mpt select{min-width:0;padding-left:4px;padding-right:2px}.mppt td:first-child{white-space:normal}
@@ -367,6 +379,7 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .doc .kzl{font-size:8pt;color:#333}.doc .lt.lk{font-size:9pt;color:#000}.doc table.p tr.mlt>td{border-bottom:0;padding-bottom:1px}.doc table.p tr.ltz>td{padding-top:0}
 .doc.gf tr.grpz td:not(.n)>b{color:var(--gf,#80704d)}.doc.gu tr.grpz td:not(.n)>b{text-decoration:underline}.doc.nf table.p tbody tr:not(.grpz):not(.gsum)>td>b{font-weight:400}
 @media print{.doc table.p tr.mlt{break-after:avoid}}
+@media print{.btbp .btbd h3{break-after:avoid}.btbp .btbbd figure,.btbp .sigb,.btbp tr{break-inside:avoid}.btbp .btbbd img{max-height:85mm}} /* Bautagesbericht (P36 Teil 4) */
 .doc table.p.sp tbody td:first-child{text-align:left;white-space:normal}.doc table.p.sp tbody td.c,.doc table.p.sp tbody td.pn{text-align:center}.doc table.p.sp tbody td.pn{white-space:nowrap}.doc table.p.sp tbody td.n,.doc table.p.sp tbody tr.gsum td{text-align:right}.doc table.p td.an{font-size:8.5pt}
 .doc .lt{font-size:8.5pt;color:#333;white-space:pre-wrap}
 .doc .pe{font-size:7pt;line-height:1.2;color:#444;white-space:nowrap}.pez{font-size:11px;line-height:1.2;color:var(--mut);white-space:nowrap;text-align:right;margin-top:1px} /* Preiseinheit (P14): „je 100 m“ */
@@ -486,6 +499,7 @@ body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150p
     <a href="#/auftraege" data-n="auftraege">Aufträge &amp; DB II</a>
     <a href="#/kosten" data-n="kosten">Laufende Kosten</a>
     <a href="#/zeiten" data-n="zeiten">Zeiterfassung</a>
+    <a href="#/berichte" data-n="berichte" class="navbtb">Bautagesberichte</a>
     <a href="#/mps" data-n="mps" class="navmp">Messprotokolle</a>
     <div class="grp">Stammdaten</div>
     <a href="#/kontakte" data-n="kontakte">Kunden &amp; Lieferanten</a>
@@ -728,7 +742,7 @@ function neueDB(){
       nk,texte,knr:{K:10000,L:70000},anr:0,
       spalten:{},artgruppen:[],lagerplaetze:[],zahlungsziel:14,skonto:0,skontoTage:0,angebotGueltig:30,zielDB2:25,mgz:0,besteuerung:'soll',abwGrenze:20,papier:'A4',lvnr:0,erw:{},druckprofil:{},kvListe:[],geraete:[]
     },
-    kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],kosten:[],fibu:fibuNeu(),log:[],papierkorb:[],messprot:[]
+    kontakte:[],artikel:[],belege:[],lager:[],zeiten:[],kalk:[],lv:[],lvbib:[],kosten:[],fibu:fibuNeu(),log:[],papierkorb:[],berichte:[],messprot:[]
   };
 }
 // Firmendaten laut Briefpapier (Fußzeile der Vorlagen); füllen nur leere Felder
@@ -776,7 +790,7 @@ function undoBtn(){const e=document.getElementById('undobtn');if(e){e.disabled=!
 // Was unterscheidet zwei Stände? (für den Hinweis)
 function aenderungText(a,b){
   for(const[k,n]of[['lagerplaetze','Lagerplätze'],['artgruppen','Artikelgruppen']])if(JSON.stringify(a.settings?.[k])!==JSON.stringify(b.settings?.[k]))return n;
-  const L=[['belege','Beleg',x=>bNr(x)],['artikel','Artikel',x=>x.nr+' '+x.bez],['kontakte','Kontakt',x=>x.name],['lager','Lagerbuchung',()=>''],['zeiten','Zeiterfassung',()=>''],['kalk','K-Blatt',x=>x.bez||x.name||''],['lv','LV',x=>x.bez||x.name||''],['lvbib','Textbaustein',x=>x.bez||x.kurz||''],['kosten','Laufende Kosten',x=>x.bez||''],['papierkorb','Papierkorb',()=>'']];
+  const L=[['belege','Beleg',x=>bNr(x)],['artikel','Artikel',x=>x.nr+' '+x.bez],['kontakte','Kontakt',x=>x.name],['lager','Lagerbuchung',()=>''],['zeiten','Zeiterfassung',()=>''],['kalk','K-Blatt',x=>x.bez||x.name||''],['lv','LV',x=>x.bez||x.name||''],['lvbib','Textbaustein',x=>x.bez||x.kurz||''],['kosten','Laufende Kosten',x=>x.bez||''],['papierkorb','Papierkorb',()=>''],['berichte','Bautagesbericht',x=>'BTB '+x.nr]];
   for(const[k,n,f]of L){const A=a[k]||[],B=b[k]||[];if(JSON.stringify(A)===JSON.stringify(B))continue;
     const m=new Map(A.map(x=>[x.id,JSON.stringify(x)])),bi=new Set(B.map(x=>x.id));
     const x=B.find(x=>m.get(x.id)!==JSON.stringify(x))||A.find(x=>!bi.has(x.id));let t='';try{t=x?f(x):''}catch(e){}return(n+' '+(t||'')).trim()}
@@ -786,6 +800,7 @@ function aenderungText(a,b){
 function undoSperre(alt){const A=new Map((alt.belege||[]).map(b=>[b.id,b]));
   for(const b of DB.belege)if(b.fest){const o=A.get(b.id);if(!o||!o.fest)return`${bNr(b)} wurde inzwischen festgeschrieben – Korrektur nur per Storno/Gutschrift.`}
   if(JSON.stringify(alt.settings?.nk)!==JSON.stringify(S().nk))return'Seither wurde eine Belegnummer vergeben (Nummernkreise bleiben lückenlos).';
+  {const u=sigUndo(alt);if(u)return u} // Unterschriften und Sperren (P36 a) bleiben
   return''}
 function undoAnwenden(j,h){const az=new Map(DB.belege.map(b=>[b.id,b.ausgaben]));DB=migrate(JSON.parse(j));for(const b of DB.belege){const n=az.get(b.id);if(n>(b.ausgaben??0))b.ausgaben=n} /* Ausgabezähler (DUPLIKAT) wird nie zurückgedreht */LAST=JSON.stringify(DB);DIRTY=LAST!==SNAP;dirtyBar();artDatalist();
   if(h&&location.hash!==h){SKIP=true;location.hash=h}else render();undoBtn()}
@@ -976,7 +991,7 @@ function merge3(base,local,remote){
   const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b),konfl=[],out=remote;
   // Ausgabezähler (DUPLIKAT) allein ist keine Änderung und kein Konflikt; es gilt der höhere Stand beider Geräte
   const ohneZ=({ausgaben,...x})=>x,AZ=new Map();for(const x of [...(remote.belege||[]),...(local.belege||[])])if(x.ausgaben>(AZ.get(x.id)??0))AZ.set(x.id,x.ausgaben);
-  for(const c of ['kontakte','artikel','belege','lager','zeiten','kalk','lv','lvbib','kosten','messprot','papierkorb']){
+  for(const c of ['kontakte','artikel','belege','lager','zeiten','kalk','lv','lvbib','kosten','messprot','papierkorb','berichte']){
     out[c]=out[c]||[];const gl=c==='belege'?(a,b)=>eq(ohneZ(a),ohneZ(b)):eq;
     const B=new Map((base?.[c]||[]).map(x=>[x.id,x])),R=new Map(out[c].map(x=>[x.id,x]));
     for(const l of local[c]||[]){
@@ -990,6 +1005,7 @@ function merge3(base,local,remote){
     const L=new Set((local[c]||[]).map(x=>x.id));
     for(const [id,b] of B)if(!L.has(id)&&R.has(id)&&eq(R.get(id),b))out[c].splice(out[c].indexOf(R.get(id)),1);
   }
+  for(const c in SIG_C){const L_=new Map((local[c]||[]).map(x=>[x.id,x]));out[c]=(out[c]||[]).map(r=>{const l=L_.get(r.id);return l?sigMerge(l,r):r})} // gesperrte Datensätze (P36 a): gesperrter Stand gewinnt
   for(const r of out.belege){const n=AZ.get(r.id);if(n>(r.ausgaben??0))r.ausgaben=n} // Ausgabezähler (DUPLIKAT) nie verkleinern
   const seen=new Set((out.log||[]).map(x=>x.ts+x.aktion));
   out.log=[...(out.log||[]),...(local.log||[]).filter(x=>!seen.has(x.ts+x.aktion))].sort((a,b)=>a.ts.localeCompare(b.ts));
@@ -1463,10 +1479,11 @@ function render(){
   if(!DB)return;
   document.body.classList.toggle('suaus',!erw('suche')); // Globale Suche (P20)
   const h=location.hash.replace(/^#\/?/,'')||'dash',[view,arg]=h.split('/');
-  const nz=view==='beleg'?(beleg(arg)?'belege/'+T[beleg(arg).typ].b:''):{kontakt:'kontakte',auftrag:'auftraege'}[view]||''; // Seitenleiste: Bereich des geöffneten Datensatzes markieren (P19 d)
+  const nz=view==='beleg'?(beleg(arg)?'belege/'+T[beleg(arg).typ].b:''):{kontakt:'kontakte',auftrag:'auftraege',bericht:'berichte'}[view]||''; // Seitenleiste: Bereich des geöffneten Datensatzes markieren (P19 d)
   document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('on',a.dataset.n===h||a.dataset.n===view||(!!nz&&a.dataset.n===nz)));
   closePop();
   document.body.classList.toggle('navkl',!!(erw('navKL')&&erw('kFilter'))); // Untereinträge Kunden/Lieferanten (P6)
+  document.body.classList.toggle('btb',erw('btb')); // Bautagesberichte (P36)
   document.body.classList.toggle('mpan',!!erw('messprot')); // Messprotokolle in der Seitenleiste (P37)
   const f=V[view]||V.dash;
   document.body.classList.toggle('kompakt',kmp()); // Kompakte Ansicht (P30): CSS für bestehende Elemente nur unter body.kompakt
@@ -1474,7 +1491,7 @@ function render(){
   $('#main').innerHTML=f(arg);
   document.body.classList.toggle('zlaus',!erw('zuletzt'));if(arg&&ZL_V.includes(view))zuletztMerk(view+'/'+arg); // Zuletzt geöffnet (P19 a)
   requestAnimationFrame(vorschauSeiten);
-  if(erw('artBild'))bilderLaden(); // Bild je Artikel (P24, Teil)
+  bilderLaden(); // Bilder aus der Ablage: Artikel (P24, Teil), Fotos und Unterschriften (P36)
   document.body.classList.toggle('ihh',erw('ihHover')&&HOVER.matches);document.body.classList.toggle('ssp',erw('scrollSperre')); // Bedienung (P33)
   document.querySelectorAll('.modal').forEach(m=>{try{if(m._gilt&&!m._gilt()){(m._weg||(()=>m.remove()))();return}m._zeich?.()}catch(e){}}); // offene Bearbeiten-Pop-ups (P30) zeigen den neuen Stand; Pop-ups eines verlassenen oder ersetzten Belegs (Navigation, Abgleich, Verwerfen) schließen
 }
@@ -1532,6 +1549,7 @@ function suIndex(){const E=[],add=(g,o,...h)=>E.push({g,...o,h:h.flat().filter(x
   for(const x of DB.kalk)add('kb',{r:'kbs/'+x.id,ic:'🧮',t:x.name||'K-Blatt',u:'K-Blatt'},x.name,x.nr);
   for(const k of DB.kosten||[])add('kosten',{r:'kosten',k:k.id,ic:'💳',t:k.bez||'Kostenposition',u:[k.partner,k.vertragNr,KKAT[k.kat]?.[0]].filter(Boolean).join(' · '),b:fmt(k.betrag)+' €',betr:[+k.betrag]},k.bez,k.partner,k.vertragNr,k.notiz,KKAT[k.kat]?.[0]);
   for(const x of DB.lvbib||[])add('bib',{r:'lvbib',k:x.id,ic:'🧩',t:x.kurz||'Textbaustein',u:x.gruppe||''},x.kurz,x.gruppe,suTxt(x.lang));
+  if(erw('btb'))for(const r of DB.berichte||[])add('btb',{r:'bericht/'+r.id,ic:'📝',t:`Bautagesbericht ${r.nr} · ${dAT(r.datum)}`,u:auftragKurz(r.auftragId),s:btbStatus(r),d:r.datum},'BTB '+r.nr,dAT(r.datum),r.ort,r.verfasser,auftragLabel(r.auftragId),(r.taet||[]).map(t=>[t.text,t.ort]),(r.personal||[]).map(p=>p.name),Object.values(r.vork||{})); // Bautagesberichte (P36)
   if(erw('messprot'))mpSuche(add); // Messprotokolle (P37)
   return E}
 function suTreffer(E,q){const w=q.toLowerCase().split(/\s+/).filter(Boolean),z=/^[-\d.,\s€]+$/.test(q)&&/\d/.test(q)?zahlDE(q.replace(/\s/g,'')):null,G={};
@@ -2731,7 +2749,7 @@ V.auftrag=aid=>{
   ${zt.map(z=>`<tr><td>${dAT(z.datum)}</td><td>${esc(z.tarif)}</td><td>${esc(z.text)}</td><td class="n">${fmtQ(z.stunden)}</td><td class="n">${fmt(z.stunden*z.kosten)}</td><td>${z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn')}</td></tr>`).join('')||'<tr><td colspan="6" class="mut">keine – Erfassung unter <a href="#/zeiten">Zeiterfassung</a></td></tr>'}
   </tbody></table></div>`}
   </div><div>
-  ${kbAuftragKarte(aid)}
+  ${kbAuftragKarte(aid)}${btbAuftragKarte(aid)}
   ${mpAuftragKarte(aid)}
   <div class="card"><h2>Vor- / Nachkalkulation</h2><table><thead><tr><th></th><th class="n">Vorkalk.</th><th class="n">Ist</th></tr></thead><tbody>
   ${row('Umsatz nach Skonto',v?fmt(v.uS):'–',fmt(n.uN))}
@@ -2909,7 +2927,8 @@ V.zeiten=()=>{
     ${auf.length?'':'<p class="hint">Zuerst ein Angebot oder einen Auftrag anlegen.</p>'}</div>
   ${tabelle('zeiten',[
     {k:'datum',l:'Datum',f:z=>dAT(z.datum)},{k:'auftrag',l:'Auftrag',f:z=>kmp()?`<a href="#/auftrag/${z.auftragId}" title="${esc(auftragLabel(z.auftragId))}">${esc(auftragKurz(z.auftragId))}</a>`:`<a href="#/auftrag/${z.auftragId}">${esc(auftragLabel(z.auftragId))}</a>`},{k:'kunde',l:'Kunde',f:z=>esc(kName((beleg(z.auftragId)||{}).kontaktId)),std:false},
-    {k:'tarif',l:'Tarif',f:z=>esc(z.tarif)},{k:'text',l:'Tätigkeit',f:z=>esc(z.text)},{k:'std',l:'Std.',n:1,f:z=>fmtQ(z.stunden)},{k:'kosten',l:'Kosten/h',n:1,f:z=>fmt(z.kosten)},{k:'vk',l:'VK/h',n:1,f:z=>fmt(z.vk)},
+    {k:'tarif',l:'Tarif',f:z=>esc(z.tarif)},{k:'text',l:'Tätigkeit',f:z=>esc(z.text)},...(erw('btbZeit')?[{k:'btb',l:'Bericht',f:z=>{const r=z.berichtId&&ROOT.btb(z.berichtId);return r?`<a href="#/bericht/${r.id}">BTB ${r.nr}</a>`:''}}]:[]), // Bautagesbericht (P36 Teil 5)
+    {k:'std',l:'Std.',n:1,f:z=>fmtQ(z.stunden)},{k:'kosten',l:'Kosten/h',n:1,f:z=>fmt(z.kosten)},{k:'vk',l:'VK/h',n:1,f:z=>fmt(z.vk)},
     {k:'kges',l:'Kosten gesamt',n:1,f:z=>fmt(z.stunden*z.kosten),std:false},{k:'vges',l:'VK gesamt',n:1,f:z=>fmt(z.stunden*z.vk),std:false},
     {k:'status',l:'Status',f:z=>z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn')}],L,
     {nach:kmpH()?z=>`<td>${z.belegId?'':`<button class="mehr" data-act="menue" data-m="zeit" data-id="${z.id}" title="Weitere Aktionen">⋯</button>`}</td>`:z=>`<td>${z.belegId?'':`<button class="s d" data-act="ztdel" data-id="${z.id}">✕</button>`}</td>`,leer:'Keine Einträge.',
@@ -3903,8 +3922,8 @@ const ACT_LV=({
     const L=nr.trim()==='*'?DB.artikel.filter(a=>a.art!=='L'&&a.aktiv!==false):nr.split(',').map(x=>DB.artikel.find(a=>a.nr===x.trim())).filter(Boolean);
     for(const a of L)if(!kb.k4.some(m=>m.bez===a.bez)){const lf=(a.lieferanten||[]).find(l=>+l.lp>0);kb.k4.push({...TPL.k4(),bez:a.bez,einheit:a.einheit,lp:lf?+lf.lp:+a.ek||0,rab:lf?+lf.rabatt||0:0})}persist();render()},
   kbneuA:el=>{const aid=el.dataset.id,r=beleg(aid);const kb=neueKB({auftragId:aid,projekt:r?.projekt||'',name:'Kalkulation '+(r?.projekt||(r?bNr(r):''))});DB.kalk.push(kb);log('K-Blatt angelegt',`${kb.name} (Auftrag ${r?bNr(r):''})`);persist();go('kbs/'+kb.id)}, // K-Blatt zum Auftrag (P34 Teil 4)
-  arradd:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id);let arr=getP(o,el.dataset.f);if(!arr){setP(o,el.dataset.f,[]);arr=getP(o,el.dataset.f)}arr.push(TPL[el.dataset.tpl]());persist();render()},
-  arrdel:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id),arr=getP(o,el.dataset.f);arr.splice(+el.dataset.i,1);persist();render()},
+  arradd:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id);if(gesperrt(o))return; /* P36 a */let arr=getP(o,el.dataset.f);if(!arr){setP(o,el.dataset.f,[]);arr=getP(o,el.dataset.f)}arr.push(TPL[el.dataset.tpl]());persist();render()},
+  arrdel:el=>{const[c,id]=el.dataset.r.split('|'),o=ROOT[c](id),arr=getP(o,el.dataset.f);if(gesperrt(o))return; /* P36 a */arr.splice(+el.dataset.i,1);persist();render()},
   bibneu:()=>{DB.lvbib.unshift({id:uid(),gruppe:'',kurz:'',lang:'',einheit:'Stk',k7:null});persist();render()},
   bibdel:el=>{if(!confirm('Baustein löschen?'))return;DB.lvbib=DB.lvbib.filter(x=>x.id!==el.dataset.id);persist();render()},
   lvneu:el=>{const s=S();s.lvnr=(s.lvnr||0)+1;const kbE=DB.kalk.filter(k=>k.art==='eigen');
@@ -5767,7 +5786,7 @@ const ACT={
   ztadd:()=>{const a=$('#zt-a').value,t=$('#zt-t').value,h=num($('#zt-h').value);if(!a||!h){alert('Auftrag und Stunden angeben.');return}
     const tf=S().tarife.find(x=>x.kz===t)||{kosten:0,vk:0};lsSet('erp-lastA',a);lsSet('erp-lastT',t);
     DB.zeiten.push({id:uid(),datum:$('#zt-d').value||isoD(),auftragId:a,tarif:t,stunden:h,text:$('#zt-x').value,kosten:+tf.kosten||0,vk:+tf.vk||0,belegId:''});commit();render()},
-  ztdel:el=>{const z=DB.zeiten.find(z=>z.id===el.dataset.id);if(z&&confirm('Eintrag löschen?')){wegwerfen('zeiten',[z]);render()}},
+  ztdel:el=>{const z=DB.zeiten.find(z=>z.id===el.dataset.id),bz=z?.berichtId&&ROOT.btb?.(z.berichtId);if(bz?.gesperrt){alert(`Der Eintrag gehört zum unterschriebenen Bautagesbericht ${bz.nr} und kann nicht gelöscht werden.`);return} /* P36 Teil 5 */if(z&&confirm('Eintrag löschen?')){wegwerfen('zeiten',[z]);render()}},
   knew:async el=>{const k=await kontaktPopup(el.dataset.t);if(k){commit();go('kontakt/'+k.id)}},
   ktyp:el=>{const v=el.dataset.t||'';UI.kTyp=v;lsSet('erp-kTyp',v||null);const h='kontakte'+(v?'/'+v:'');if(location.hash==='#/'+h)render();else nav(h)}, // Kontaktfilter (P6)
   kdel:el=>{const id=el.dataset.id;if(DB.belege.some(b=>b.kontaktId===id)){alert('Kontakt hat Belege und kann nicht gelöscht werden.');return}if(!confirm('Kontakt löschen?'))return;wegwerfen('kontakte',[kontakt(id)]);go('kontakte')},
@@ -5845,6 +5864,93 @@ const ACT={
   lpop:el=>LIVE[el.dataset.lp]?.(el), // Bearbeiten-Pop-up mit Live-Feldern (P30)
 };
 Object.assign(ACT,ACT_LV,ACT_LB,ACT_FB);
+/* Bautagesbericht (P36 Teil 1, erw.btb): je Auftrag und Tag ein Bericht (mehrere je Tag erlaubt) mit Witterung, Personal und Stunden, Tätigkeiten, Material/Geräten und
+   besonderen Vorkommnissen. Sammlung DB.berichte {id,nr (laufend je Auftrag),auftragId,datum,ort,verfasser,wetter{vm,nm,tMin,tMax,beh,behStd,behTxt},
+   personal[{name,tarif,von,bis,pause,stunden}] (von/bis gesetzt = Stunden daraus, sonst stunden),taet[{text,ort}],material[{bez,menge,einh}],geraete[{bez,stunden}],
+   vork{beh,anord,zusatz,maengel,sicher},erstellt}; Eingaben über den Pfad-Setter (ROOT.btb, data-r="btb|<id>"). Erweiterungspunkte der weiteren Teile: BTB_ED (Abschnitte im Editor),
+   BTB_DOC (Abschnitte der Ansicht/des Drucks), BTB_KN (Knöpfe im Kopf), BTB_ST (Status). Abgeschlossen bzw. gesperrt (Teil 3: abgeschlossen, gesperrt) = nur Ansicht btbDoc() */
+erwPlus({k:'btb',std:false,p:'Bautagesbericht (P36)',l:'Bautagesberichte',info:'Seitenleiste „Bautagesberichte“ und im Auftrag die Karte „Bautagesberichte“: je Auftrag und Tag ein Bericht mit Baustelle, Witterung (Vormittag/Nachmittag, Temperatur, Behinderung), Personal mit Tarif, Beginn, Ende, Pause und Stunden, Tätigkeiten (auch aus Textbausteinen), Material, Geräten und besonderen Vorkommnissen (Behinderungen, Anordnungen des Auftraggebers, Zusatz- und Regieleistungen, Mängel, Sicherheit). Nummer laufend je Auftrag; ein neuer Bericht übernimmt Baustelle, Verfasser und Personal vom letzten Bericht desselben Auftrags. Aus = Seitenleiste und Karte ausgeblendet, gespeicherte Berichte bleiben erhalten.'});
+ROOT.btb=id=>DB.berichte.find(x=>x.id===id);
+PK.berichte={n:'Bautagesbericht',info:r=>`BTB ${r.nr} ${auftragKurz(r.auftragId)} ${dAT(r.datum)}`};
+const BTB_ED=[],BTB_DOC=[],BTB_KN=[],BTB_ST=[];
+const WETTER=[['','–'],['sonnig','☀ sonnig'],['heiter','🌤 heiter'],['bewoelkt','☁ bewölkt'],['nebel','🌫 Nebel'],['regen','🌧 Regen'],['schnee','🌨 Schnee'],['frost','❄ Frost'],['wind','💨 Sturm/Wind']];
+const wTxt=w=>w?(WETTER.find(x=>x[0]===w)||['',w])[1]:'';
+const VORK=[['beh','Behinderungen, Wartezeiten'],['anord','Anordnungen des Auftraggebers'],['zusatz','Zusatz- und Regieleistungen'],['maengel','Mängel, Schäden'],['sicher','Sicherheit, Unfälle']];
+Object.assign(TPL,{btbp:()=>({name:'',tarif:(S().tarife.find(t=>t.kz==='MONT')||S().tarife[0])?.kz||'',von:'',bis:'',pause:'',stunden:''}),btbt:()=>({text:'',ort:''}),btbm:()=>({bez:'',menge:'',einh:'Stk'}),btbg:()=>({bez:'',stunden:''})});
+const btbMin=t=>{const m=/^(\d{1,2}):(\d{2})/.exec(t||'');return m?+m[1]*60+ +m[2]:null};
+const btbStd=p=>{const a=btbMin(p.von),e=btbMin(p.bis);if(a==null||e==null)return+p.stunden||0;let d=e-a;if(d<0)d+=1440;return Math.max(0,r2((d-(+p.pause||0))/60))}; // über Mitternacht: + 24 h
+const btbSumme=r=>sum(r.personal||[],btbStd);
+const btbFest=r=>!!(r?.abgeschlossen||r?.gesperrt);
+const btbRoot=r=>beleg(r.auftragId)||DB.belege.find(b=>b.auftragId===r.auftragId);
+const btbOrdner=r=>{const a=btbRoot(r);return`Berichte/${(r.datum||isoD()).slice(0,4)}/${String(a?.nr||'Auftrag-'+r.auftragId).replace(/[^\w.\-]+/g,'_')}_BTB-${r.nr}`}; // Ablageordner für Fotos und Unterschriften
+const btbStatus=r=>{for(const f of BTB_ST){const t=f(r);if(t)return t}return tag('Entwurf')};
+const btbWetter=r=>{const w=r.wetter||{},t=[w.tMin,w.tMax].filter(x=>x!==''&&x!=null);return[[wTxt(w.vm),wTxt(w.nm)].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i).join(' / '),t.length?t.map(x=>fmtQ(x)).join(' bis ')+' °C':''].filter(Boolean).join(' · ')};
+const btbAuftraege=()=>auftragsListe().filter(a=>!a.docs.every(d=>d.storno));
+function btbNeu(aid){
+  const L=DB.berichte.filter(x=>x.auftragId===aid),vor=[...L].sort((a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt))[0],k=kontakt((beleg(aid)||DB.belege.find(b=>b.auftragId===aid))?.kontaktId);
+  const nr=Math.max(0,...L.map(x=>+x.nr||0),...DB.papierkorb.filter(e=>e.c==='berichte'&&e.daten?.auftragId===aid).map(e=>+e.daten.nr||0))+1; // Nummer laufend je Auftrag, auch Gelöschtes zählt
+  const r={id:uid(),nr,auftragId:aid,datum:isoD(),ort:vor?.ort||[k?.strasse,[k?.plz,k?.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '),verfasser:vor?.verfasser||S().bearbeiter||'',
+    wetter:{vm:'',nm:'',tMin:'',tMax:'',beh:false,behStd:'',behTxt:''},personal:(vor?.personal||[]).map(p=>({name:p.name,tarif:p.tarif,von:p.von,bis:p.bis,pause:p.pause,stunden:p.von&&p.bis?'':p.stunden})),
+    taet:[TPL.btbt()],material:[],geraete:[],vork:{},erstellt:new Date().toISOString()};
+  if(!r.personal.length)r.personal=[{...TPL.btbp(),name:S().bearbeiter||''}];
+  DB.berichte.push(r);log('Bautagesbericht angelegt',`BTB ${r.nr} ${auftragKurz(aid)}`);return r}
+const bIn=(R,f,v,{t='text',l='',ph='',cls='',list='',dis=false}={})=>`<label class="${cls}">${l}<input type="${t}"${t==='number'?' step="any" inputmode="decimal" data-t="nl"':''} data-o="path" data-r="${R}" data-f="${f}" value="${esc(v??'')}"${ph?` placeholder="${esc(ph)}"`:''}${list?` list="${list}"`:''}${dis?' disabled':''}></label>`;
+const bTa=(R,f,v,{l='',ph='',cls='w2'}={})=>`<label class="${cls}">${l}${ft(R,f,v,ph)}</label>`;
+const bAbs=(id,titel,inhalt,{offen=true,zusatz=''}={})=>kmp()?akk(id,titel,inhalt,{offen,zusatz}):`<div class="card"><h2>${titel}${zusatz?` <span class="mut" style="font-weight:400;font-size:13px">· ${zusatz}</span>`:''}</h2>${inhalt}</div>`;
+function btbEditor(r){const R='btb|'+r.id,w=r.wetter||{},T_=S().tarife,add=(f,tpl,l)=>`<button class="s" data-act="arradd" data-r="${R}" data-f="${f}" data-tpl="${tpl}">${l}</button>`,del=(f,i)=>`<button class="s d" data-act="arrdel" data-r="${R}" data-f="${f}" data-i="${i}" title="Zeile entfernen">✕</button>`;
+  const kopf=`<div class="row">${bIn(R,'datum',r.datum,{t:'date',l:'Datum',cls:'w05'})}${bIn(R,'ort',r.ort,{l:'Baustelle / Ort',cls:'w2'})}${bIn(R,'verfasser',r.verfasser,{l:'Verfasser (Monteur)'})}</div>`;
+  const wetter=`<div class="row"><label>Vormittag${fsel(R,'wetter.vm',w.vm,WETTER)}</label><label>Nachmittag${fsel(R,'wetter.nm',w.nm,WETTER)}</label>${bIn(R,'wetter.tMin',w.tMin,{t:'number',l:'Temp. min °C',cls:'w05'})}${bIn(R,'wetter.tMax',w.tMax,{t:'number',l:'Temp. max °C',cls:'w05'})}</div>
+    <label class="chk"><input type="checkbox" data-o="path" data-r="${R}" data-f="wetter.beh"${w.beh?' checked':''}> Arbeit witterungsbedingt behindert / unterbrochen</label>
+    ${w.beh?`<div class="row" style="margin-top:6px">${bIn(R,'wetter.behStd',w.behStd,{t:'number',l:'Ausfall Std.',cls:'w05'})}${bIn(R,'wetter.behTxt',w.behTxt,{l:'Beschreibung',cls:'w2'})}</div>`:''}`;
+  const pers=(r.personal||[]).map((p,i)=>{const P=`personal.${i}`,ber=btbMin(p.von)!=null&&btbMin(p.bis)!=null;
+    return`<div class="row btbz">${bIn(R,P+'.name',p.name,{l:'Name',cls:'w2'})}<label>Tarif${fsel(R,P+'.tarif',p.tarif,T_.map(t=>[t.kz,t.kz+' – '+t.bez]))}</label>${bIn(R,P+'.von',p.von,{t:'time',l:'Beginn',cls:'w05'})}${bIn(R,P+'.bis',p.bis,{t:'time',l:'Ende',cls:'w05'})}${bIn(R,P+'.pause',p.pause,{t:'number',l:'Pause min',cls:'w05'})}
+      ${ber?`<label class="w05">Std.<input value="${fmtQ(btbStd(p))}" disabled title="aus Beginn, Ende und Pause"></label>`:bIn(R,P+'.stunden',p.stunden,{t:'number',l:'Std.',cls:'w05'})}${del('personal',i)}</div>`}).join('')
+    +`<div class="bar" style="margin:4px 0 0">${add('personal','btbp','+ Person')}<span class="sp"></span><b>Summe ${fmtQ(btbSumme(r))} h</b></div>`;
+  const taet=(r.taet||[]).map((t,i)=>`<div class="row btbz">${bTa(R,`taet.${i}.text`,t.text,{l:'Tätigkeit',ph:'ausgeführte Arbeiten'})}${bIn(R,`taet.${i}.ort`,t.ort,{l:'Bauteil / Geschoß / Raum'})}${del('taet',i)}</div>`).join('')
+    +`<div class="bar" style="margin:4px 0 0">${add('taet','btbt','+ Tätigkeit')}${DB.lvbib?.length?`<select data-act="btbbib" data-id="${r.id}" style="width:auto"><option value="">+ aus Textbausteinen …</option>${DB.lvbib.map(x=>opt(x.id,(x.gruppe?x.gruppe+' · ':'')+(x.kurz||suTxt(x.lang).slice(0,60)),'')).join('')}</select>`:''}</div>`;
+  const mat=`<p class="mut" style="margin:0 0 4px">Material</p>${(r.material||[]).map((m,i)=>`<div class="row btbz">${bIn(R,`material.${i}.bez`,m.bez,{l:'Bezeichnung',cls:'w2',list:'dl-art'})}${bIn(R,`material.${i}.menge`,m.menge,{t:'number',l:'Menge',cls:'w05'})}<label class="w05">Einheit${fsel(R,`material.${i}.einh`,m.einh,S().einheiten.map(e=>[e,e]))}</label>${del('material',i)}</div>`).join('')}${add('material','btbm','+ Material')}
+    <p class="mut" style="margin:10px 0 4px">Geräte</p>${(r.geraete||[]).map((g,i)=>`<div class="row btbz">${bIn(R,`geraete.${i}.bez`,g.bez,{l:'Gerät',cls:'w2'})}${bIn(R,`geraete.${i}.stunden`,g.stunden,{t:'number',l:'Std.',cls:'w05'})}${del('geraete',i)}</div>`).join('')}${add('geraete','btbg','+ Gerät')}`;
+  const vk=r.vork||{},vork=VORK.map(([k,l])=>`<div class="row">${bTa(R,'vork.'+k,vk[k],{l})}</div>`).join('');
+  const nMat=(r.material||[]).length+(r.geraete||[]).length,nVork=VORK.filter(([k])=>pT(vk[k])).length;
+  return bAbs('btb-kopf','Kopfdaten',kopf,{zusatz:esc(dAT(r.datum))})+bAbs('btb-wetter','Witterung',wetter,{zusatz:esc(btbWetter(r))})+bAbs('btb-pers','Personal und Zeiten',pers,{zusatz:fmtQ(btbSumme(r))+' h'})
+    +bAbs('btb-taet','Tätigkeiten',taet,{zusatz:(r.taet||[]).filter(t=>pT(t.text)).length+''})+bAbs('btb-mat','Material und Geräte',mat,{offen:!!nMat,zusatz:nMat?nMat+'':'keine'})
+    +bAbs('btb-vork','Besondere Vorkommnisse',vork,{offen:!!nVork,zusatz:nVork?nVork+'':'keine'})+BTB_ED.map(f=>f(r)).join('')}
+// Ansicht (abgeschlossen) und Grundlage des Drucks (Teil 4): nur Lesen
+function btbDoc(r){const w=r.wetter||{},vk=r.vork||{},root=btbRoot(r),k=kontakt(root?.kontaktId),zl=(l,v)=>v?`<tr><th>${l}</th><td>${v}</td></tr>`:'',nl=s=>esc(s).replace(/\n/g,'<br>');
+  const P=(r.personal||[]).filter(p=>pT(p.name)||btbStd(p)),Tt=(r.taet||[]).filter(t=>pT(t.text)),M=(r.material||[]).filter(m=>pT(m.bez)),G=(r.geraete||[]).filter(g=>pT(g.bez));
+  return`<div class="btbd"><table class="btbk"><tbody>${zl('Bericht-Nr.',`${r.nr}${root?' · Auftrag '+esc(bNr(root)):''}`)}${zl('Datum',dAT(r.datum))}${zl('Auftraggeber',esc(k?.name||''))}${zl('Betreff',esc(root?.betreff||root?.projekt||''))}${zl('Baustelle',esc(r.ort))}${zl('Verfasser',esc(r.verfasser))}
+    ${zl('Witterung',esc(btbWetter(r))+(w.beh?`<br><b>Behinderung:</b> ${w.behStd!==''&&w.behStd!=null?fmtQ(w.behStd)+' h ':''}${esc(w.behTxt||'')}`:''))}</tbody></table>
+  <h3>Personal und Zeiten</h3>${P.length?`<table class="btbt"><thead><tr><th>Name</th><th>Tarif</th><th>Beginn</th><th>Ende</th><th class="n">Pause</th><th class="n">Std.</th></tr></thead><tbody>${P.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.tarif)}</td><td>${esc(p.von||'')}</td><td>${esc(p.bis||'')}</td><td class="n">${p.pause!==''&&p.pause!=null?fmtQ(p.pause)+' min':''}</td><td class="n">${fmtQ(btbStd(p))}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="5"><b>Summe</b></td><td class="n"><b>${fmtQ(btbSumme(r))}</b></td></tr></tfoot></table>`:'<p class="mut">keine Angaben</p>'}
+  <h3>Tätigkeiten</h3>${Tt.length?`<table class="btbt"><tbody>${Tt.map(t=>`<tr><td>${nl(t.text)}</td><td>${esc(t.ort||'')}</td></tr>`).join('')}</tbody></table>`:'<p class="mut">keine Angaben</p>'}
+  ${M.length||G.length?`<h3>Material und Geräte</h3><table class="btbt"><tbody>${M.map(m=>`<tr><td>${esc(m.bez)}</td><td class="n">${m.menge!==''&&m.menge!=null?fmtQ(m.menge)+' '+esc(m.einh||''):''}</td></tr>`).join('')}${G.map(g=>`<tr><td>Gerät: ${esc(g.bez)}</td><td class="n">${g.stunden!==''&&g.stunden!=null?fmtQ(g.stunden)+' h':''}</td></tr>`).join('')}</tbody></table>`:''}
+  ${VORK.some(([x])=>pT(vk[x]))?`<h3>Besondere Vorkommnisse</h3><table class="btbk"><tbody>${VORK.map(([x,l])=>zl(l,pT(vk[x])?nl(vk[x]):'')).join('')}</tbody></table>`:''}
+  ${BTB_DOC.map(f=>f(r)).join('')}</div>`}
+V.bericht=id=>{const r=ROOT.btb(id);if(!r)return'<p>Bautagesbericht nicht gefunden.</p>';const root=btbRoot(r),fest=btbFest(r);
+  return`<div class="bar"><h1 style="margin:0">Bautagesbericht ${r.nr}</h1>${btbStatus(r)}<span class="sp"></span>${BTB_KN.map(f=>f(r)).join('')}${fest?'':`<button class="d" data-act="btbdel" data-id="${r.id}">Löschen</button>`}</div>
+  <p class="mut" style="margin:2px 0 10px"><a href="#/berichte">Bautagesberichte</a> › <a href="#/auftrag/${r.auftragId}">Auftrag ${esc(auftragLabel(r.auftragId))}</a>${root?'':' (Auftrag nicht mehr vorhanden)'}</p>
+  ${fest?`<div class="card">${btbDoc(r)}</div>`:btbEditor(r)}`};
+V.berichte=()=>{const auf=btbAuftraege(),A=UI.btbA||'',L=DB.berichte.filter(r=>!A||r.auftragId===A).sort((a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt));
+  return`<div class="bar"><h1 style="margin:0">Bautagesberichte</h1><span class="sp"></span><button class="p" data-act="btbneu"${A?` data-id="${A}"`:''}>+ Bericht</button></div>
+  ${erw('btb')?'':'<p class="hint">Bautagesberichte sind ausgeschaltet (Einstellungen → Erweiterungen); vorhandene Berichte bleiben lesbar.</p>'}
+  <div class="row" style="max-width:520px"><label class="w2">Auftrag<select data-o="ui" data-f="btbA"><option value="">alle Aufträge</option>${auf.map(a=>opt(a.id,auftragLabel(a.id),A)).join('')}</select></label></div>
+  ${tabelle('berichte',[{k:'nr',l:'Nr.',f:r=>'BTB '+r.nr},{k:'datum',l:'Datum',f:r=>dAT(r.datum)},{k:'auftrag',l:'Auftrag',f:r=>esc(auftragKurz(r.auftragId))},{k:'kunde',l:'Kunde',f:r=>esc(kName(btbRoot(r)?.kontaktId)),std:false},
+    {k:'ort',l:'Baustelle',f:r=>esc(r.ort),std:false},{k:'taet',l:'Tätigkeit',f:r=>esc(suTxt((r.taet||[]).map(t=>t.text).filter(Boolean).join('; ')).slice(0,80))},{k:'wetter',l:'Witterung',f:r=>esc(btbWetter(r)),std:false},
+    {k:'std',l:'Std.',n:1,f:r=>fmtQ(btbSumme(r))},{k:'status',l:'Status',f:btbStatus}],L,
+    {zeile:r=>`class="click" onclick="nav('bericht/${r.id}')"`,leer:'Noch keine Bautagesberichte.',
+     mf:r=>karte({t:`BTB ${r.nr} · ${dAT(r.datum)}`,s:btbStatus(r),u:esc(suTxt((r.taet||[]).map(t=>t.text).filter(Boolean).join('; ')).slice(0,80)),z:esc(auftragKurz(r.auftragId)),b:fmtQ(btbSumme(r))+' h'})})}`};
+function btbAuftragKarte(aid){if(!erw('btb'))return'';const L=DB.berichte.filter(r=>r.auftragId===aid).sort((a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt));
+  const inh=`<div class="card">${kmp()?'':'<h2>Bautagesberichte</h2>'}${L.length?`<table><tbody>${L.map(r=>`<tr class="click" onclick="nav('bericht/${r.id}')"><td>BTB ${r.nr} · ${dAT(r.datum)}</td><td class="n">${fmtQ(btbSumme(r))} h</td><td>${btbStatus(r)}</td></tr>`).join('')}</tbody></table>`:'<p class="mut" style="margin:0">Noch kein Bautagesbericht zu diesem Auftrag.</p>'}
+    <div class="bar" style="margin:8px 0 0"><button class="s" data-act="btbneu" data-id="${aid}">+ Bautagesbericht</button></div></div>`;
+  return kmp()?akk('a-btb','Bautagesberichte',inh,{offen:!!L.length,zusatz:L.length+''}):inh}
+Object.assign(ACT,{
+  btbneu:async el=>{let aid=el.dataset.id;const A=btbAuftraege();if(!aid){if(!A.length){alert('Zuerst ein Angebot oder einen Auftrag anlegen.');return}
+      const o=await formDialog({titel:'Neuer Bautagesbericht',ok:'Anlegen',felder:[{k:'a',l:'Auftrag',wert:A[0].id,opts:A.map(a=>[a.id,auftragLabel(a.id)]),cls:'w2',pflicht:true}]});if(!o)return;aid=o.a}
+    const r=btbNeu(aid);persist();go('bericht/'+r.id)},
+  btbdel:el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r)||!confirm(`Bautagesbericht ${r.nr} löschen?`))return;wegwerfen('berichte',[r]);go('berichte')},
+  btbbib:el=>{const r=ROOT.btb(el.dataset.id),x=DB.lvbib.find(y=>y.id===el.value);el.value='';if(!r||!x||btbFest(r))return;
+    const t=[x.kurz,suTxt(x.lang).replace(/[ \t]+/g,' ').trim()].filter(Boolean).filter((s,i,a)=>a.indexOf(s)===i).join('\n'),L=r.taet||(r.taet=[]),leer=L.findIndex(y=>!pT(y.text)&&!pT(y.ort));
+    if(leer>=0)L[leer].text=t;else L.push({text:t,ort:''});persist();render()}});
+SU_G.push(['btb','Bautagesberichte']); // Globale Suche (P20)
 /* ---------- Messprotokoll nach OVE E 8101 (P37 Teil 1, erw.messprot) ----------
    Prüfbefund einer elektrischen Anlage nach OVE E 8101 Teil 6: Kopf (Kunde, Auftrag, Anlage, Prüfart, Netzform, Nennspannung, Prüfer, Prüfgeräte), Besichtigung und Erprobung als Prüfpunkte
    (i. O. / Mangel / n. z.), Messwerte je Verteiler und Stromkreis, Erder/Potentialausgleich, Mängel, Ergebnis und nächste Prüfung. Sammlung DB.messprot (neueDB/migrate, merge3, Papierkorb PK),
@@ -6080,7 +6186,7 @@ document.addEventListener('change',e=>{
   switch(d.o){
     case'ui':UI[d.f]=v;render();return;
     case'lbsel':{const s=UI.lbSel||(UI.lbSel=[]),i=s.indexOf(d.k);if(el.checked&&i<0)s.push(d.k);if(!el.checked&&i>=0)s.splice(i,1);const z=document.querySelector('.lbsel b');if(z)z.textContent=s.length;const bt=document.querySelector('[data-act=lbins]');if(bt)bt.disabled=!(s.length&&UI.lbZiel);return}
-    case'path':{const[c,id]=d.r.split('|'),o=ROOT[c](id);if(!o)return;if(c==='lv')lvBieterPreisInit(o,d.f);setP(o,d.f,d.t==='n'?num(v):d.t==='nl'?(String(v).trim()===''?'':num(v)):el.type==='checkbox'?el.checked:v);persist();renderErhalten();return} // nl = Zahl, leer erlaubt (leer = Vorgabe, P34)
+    case'path':{const[c,id]=d.r.split('|'),o=ROOT[c](id);if(!o)return;if(gesperrt(o)){alert('Unterschrieben und gesperrt – keine Änderung möglich.');render();return} /* P36 a */if(c==='lv')lvBieterPreisInit(o,d.f);setP(o,d.f,d.t==='n'?num(v):d.t==='nl'?(String(v).trim()===''?'':num(v)):el.type==='checkbox'?el.checked:v);persist();renderErhalten();return} // nl = Zahl, leer erlaubt (leer = Vorgabe, P34)
     case'k3z':{const kb=ROOT.kb(d.r.split('|')[1]),c=kb?.k3?.[+d.ci];if(!c)return;k3zSet(c,d.z,num(v));persist();renderErhalten();return} // K3-Zeile B–G bzw. I–L nach Kennbuchstabe (P34)
     case'k3kv':case'k3gr':case'kbref':kbWahlSet(d,v);return; // Auswahlfelder der K-Blätter (P34 Teil 2)
     case'k':{const k=kontakt(d.id);
@@ -6162,11 +6268,85 @@ function onPos(b,i,f,v){
   });
   document.addEventListener('focusout',e=>{setTimeout(()=>{if(!document.activeElement?.closest?.('.rte,.ed.ml'))bar.style.display='none'},0)});
 })();
+/* Unterschrift und Sperre (P36 Teil 3a, erw.unterschrift): gemeinsamer Baustein für Bautagesbericht und Messprotokoll (OVE E 8101).
+   ablegen(pfad,blob): Datei in die Ablage; ohne Netz bleibt sie in diesem Browser (IndexedDB 'img:'+pfad, Liste localStorage erp-ablage-q) und wird nachgeladen (ablageNachladen,
+   bei 'online' und jede Minute; nie in den Test-Speicher). ablOffen(präfix) = Anzahl wartender Dateien. sigPop(titel,{name,ohne,hinweis}) → {name,zeit,png} | {name,zeit,ohne} | null;
+   sigAblegen(ordner,rolle,e) → {name,zeit,pfad} bzw. {name,zeit,ohne}. Sperre: o.gesperrt (Zeitpunkt) = unveränderbar, unabhängig vom Schalter; sperren(o) setzt gesperrt und
+   o.hash = sperrWert(o) (SHA-256 über den Inhalt ohne SIG_FREI, Schlüssel sortiert); sperrTag(o) prüft ihn (gültig / verändert). Pfad-Setter, arradd/arrdel, Rückgängig (undoSperre)
+   und Abgleich (merge3 → sigMerge: gesperrt gewinnt, Unterschriften beider Geräte) achten auf die Sperre der Sammlungen in SIG_C {sammlung:{n:o=>Name}}. sigBlock(o,rollen) für Ansicht/Druck */
+erwPlus({k:'unterschrift',std:false,p:'Unterschrift (P36 a)',l:'Unterschrift am Gerät und Sperre',info:'Grundlage für Bautagesberichte und Messprotokolle: Unterschrift mit Finger, Stift oder Maus auf dem Bildschirm, gespeichert als Bild in der Ablage (OneDrive bzw. Ordner) mit Name und Zeitpunkt. Mit der ersten Pflicht-Unterschrift ist der Datensatz gesperrt: keine Änderung, kein Zurücknehmen über „Zurück“, beim Abgleich zwischen Geräten gilt der gesperrte Stand. Ein Prüfwert (SHA-256) über den Inhalt zeigt, ob die Datei nachträglich verändert wurde. Es ist eine einfache elektronische Unterschrift (wie am Tablet des Paketdienstes), keine qualifizierte Signatur. Fotos und Unterschriften, die ohne Netz entstehen, bleiben in diesem Browser und werden nachgeladen, sobald wieder eine Verbindung besteht. Aus = keine neue Unterschrift; bestehende Sperren bleiben wirksam.'});
+const SIG_C={},SIG_FREI=['sig','hash','gesperrt','status','ausgaben'],gesperrt=o=>!!o?.gesperrt;
+const ABLQ='erp-ablage-q',ablQ=()=>{try{const q=JSON.parse(lsGet(ABLQ)||'[]');return Array.isArray(q)?q:[]}catch(e){return[]}},ablOffen=pr=>ablQ().filter(p=>p.startsWith(pr)).length;
+async function ablegen(pfad,blob){await kvSet('img:'+pfad,blob).catch(()=>{});
+  try{if(navigator.onLine===false)throw new Error('offline');await STORE.putFile(pfad,blob);return true}
+  catch(e){const q=ablQ();if(!q.includes(pfad)){q.push(pfad);lsSet(ABLQ,JSON.stringify(q))}return false}}
+let ablLauf=false;
+async function ablageNachladen(){if(ablLauf||!DB||STORE===CACHESTORE||navigator.onLine===false||!ablQ().length)return;ablLauf=true;let n=0;
+  try{for(const p of ablQ()){const b=await kvGet('img:'+p).catch(()=>null);if(b){try{await STORE.putFile(p,b);n++}catch(e){break}}const r=ablQ().filter(x=>x!==p);lsSet(ABLQ,r.length?JSON.stringify(r):null)}}
+  finally{ablLauf=false}}
+addEventListener('online',()=>ablageNachladen());setInterval(ablageNachladen,60000);
+const kanon=v=>Array.isArray(v)?'['+v.map(kanon).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+kanon(v[k])).join(',')+'}':JSON.stringify(v??null);
+async function sperrWert(o){if(!globalThis.crypto?.subtle)return'';const x={};for(const k in o)if(!SIG_FREI.includes(k))x[k]=o[k];
+  const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(kanon(x)));return[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function sperren(o){o.gesperrt=new Date().toISOString();o.hash=await sperrWert(o)}
+const sperrPruef=async o=>!o?.gesperrt||!o.hash?null:(await sperrWert(o).then(h=>h?h===o.hash:null)); // true = unverändert, false = verändert, null = nicht prüfbar
+function sperrTag(o){if(!o?.gesperrt)return'';if(!o.hash)return tag('ohne Prüfwert','warn');const id='pr'+uid();
+  sperrWert(o).then(h=>{const e=document.getElementById(id);if(e)e.outerHTML=h===o.hash?tag('Prüfwert gültig','ok'):h?tag('Prüfwert ungültig – Inhalt nachträglich verändert','err'):tag('Prüfwert hier nicht prüfbar')});
+  return`<span id="${id}" class="mut">Prüfwert …</span>`}
+function sigMerge(l,r){if(!l.gesperrt)return r;if(!r.gesperrt)return l;const o=JSON.parse(JSON.stringify(r));o.sig=o.sig||{};for(const k in l.sig||{})if(!o.sig[k])o.sig[k]=l.sig[k];return o} // gesperrter Stand gewinnt, Unterschriften beider Geräte
+function sigUndo(alt){for(const c in SIG_C)for(const o of DB[c]||[])if(o.gesperrt){const a=(alt[c]||[]).find(x=>x.id===o.id);if(!a?.gesperrt||JSON.stringify(a.sig)!==JSON.stringify(o.sig))return`${SIG_C[c].n(o)} wurde inzwischen unterschrieben – Unterschriften werden nicht zurückgenommen.`}return''}
+const sigAblegen=async(ordner,rolle,e)=>{if(e.ohne)return{name:e.name,zeit:e.zeit,ohne:e.ohne};const pfad=`${ordner}/unterschrift-${rolle}-${Date.now().toString(36)}.png`;await ablegen(pfad,e.png);return{name:e.name,zeit:e.zeit,pfad}};
+function sigPop(titel,{name='',ohne=false,hinweis=''}={}){return new Promise(res=>{
+  const d=document.createElement('div');d.className='modal sigm';
+  d.innerHTML=`<div class="mbox"><h2>${esc(titel)}</h2>${hinweis?`<p class="mut" style="margin:0 0 8px">${hinweis}</p>`:''}
+    <div class="row"><label class="w2">Name *<input id="sg-n" value="${esc(name)}" autocomplete="off"></label></div>
+    <div class="sgf"><canvas id="sg-c"></canvas><span class="sgl">Unterschrift</span></div>
+    ${ohne?`<label class="chk"><input type="checkbox" id="sg-o"> <span>unterschreibt nicht</span></label><div class="row" id="sg-or" hidden style="margin-top:6px"><label class="w2">Vermerk<input id="sg-ov" placeholder="z. B. nicht anwesend, verweigert"></label></div>`:''}
+    <p class="err" id="m-err" style="margin:6px 0 0"></p>
+    <div class="bar" style="margin:12px 0 0"><button id="sg-x">Löschen</button><span class="sp"></span><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Übernehmen</button></div></div>`;
+  document.body.appendChild(d);
+  const c=d.querySelector('#sg-c'),x=c.getContext('2d'),q=s=>d.querySelector(s);let leer=true,zieh=false,lp=null,bb=null;const bbP=p=>{bb=bb?[Math.min(bb[0],p[0]),Math.min(bb[1],p[1]),Math.max(bb[2],p[0]),Math.max(bb[3],p[1])]:[p[0],p[1],p[0],p[1]]};
+  const neu=()=>{const r=c.getBoundingClientRect(),k=devicePixelRatio||1;c.width=Math.max(1,Math.round(r.width*k));c.height=Math.max(1,Math.round(r.height*k));x.setTransform(k,0,0,k,0,0);
+    x.lineWidth=2.2;x.lineCap='round';x.lineJoin='round';x.strokeStyle=x.fillStyle='#0b1f4d';leer=true;bb=null;q('.sgl').hidden=false};
+  requestAnimationFrame(neu);const rs=()=>{if(leer)neu()};addEventListener('resize',rs);
+  const pt=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  c.addEventListener('pointerdown',e=>{if(q('#sg-o')?.checked)return;e.preventDefault();c.setPointerCapture?.(e.pointerId);zieh=true;lp=pt(e);bbP(lp);x.beginPath();x.arc(lp[0],lp[1],1.1,0,7);x.fill();leer=false;q('.sgl').hidden=true});
+  c.addEventListener('pointermove',e=>{if(!zieh)return;e.preventDefault();for(const v of e.getCoalescedEvents?.()||[e]){const p=pt(v);x.beginPath();x.moveTo(lp[0],lp[1]);x.lineTo(p[0],p[1]);x.stroke();lp=p;bbP(p)}});
+  for(const t of['pointerup','pointercancel','pointerleave'])c.addEventListener(t,()=>{zieh=false});
+  q('#sg-x').onclick=neu;q('#sg-o')?.addEventListener('change',e=>{q('#sg-or').hidden=!e.target.checked;q('.sgf').classList.toggle('aus',e.target.checked)});
+  const fin=v=>{d.remove();document.removeEventListener('keydown',kd);removeEventListener('resize',rs);res(v)};
+  const ok=()=>{const n=q('#sg-n').value.trim(),zeit=new Date().toISOString();if(!n){pflichtWarnung(d,['Name'],[q('#sg-n')]);return}
+    if(q('#sg-o')?.checked){fin({name:n,zeit,ohne:q('#sg-ov').value.trim()||'unterschreibt nicht'});return}
+    if(leer){q('#m-err').textContent='Bitte im Feld unterschreiben.';return}
+    const k=devicePixelRatio||1,[x0,y0,x1,y1]=bb.map((v,i)=>Math.round((i<2?v-6:v+6)*k)),z=document.createElement('canvas'),zx=Math.max(0,x0),zy=Math.max(0,y0); // auf die Unterschrift zuschneiden
+    z.width=Math.max(1,Math.min(c.width,x1)-zx);z.height=Math.max(1,Math.min(c.height,y1)-zy);z.getContext('2d').drawImage(c,zx,zy,z.width,z.height,0,0,z.width,z.height);
+    z.toBlob(b=>{if(b)fin({name:n,zeit,png:b});else q('#m-err').textContent='Unterschrift konnte nicht gespeichert werden.'},'image/png')};
+  const kd=e=>{if(!mOben(d))return;if(e.key==='Escape')fin(null)};document.addEventListener('keydown',kd);
+  q('#m-no').onclick=()=>fin(null);q('#m-ok').onclick=ok;setTimeout(()=>{if(!name)q('#sg-n').focus()},0)})}
+const sigBlock=(o,rollen)=>`<div class="sigb">${rollen.map(([k,l])=>{const s=o.sig?.[k];return`<div class="sigz"><div class="sigbild">${s?.pfad?`<img data-bild="${esc(s.pfad)}" alt="Unterschrift ${esc(s.name||'')}">`:s?.ohne?`<span class="mut">${esc(s.ohne)}</span>`:''}</div><div class="sigl">${esc(l)}${s?`: ${esc(s.name||'')} · ${dtAT(s.zeit)}`:''}</div></div>`}).join('')}</div>${o.gesperrt?`<p class="sigp">Gesperrt seit ${dtAT(o.gesperrt)} · ${sperrTag(o)}</p>`:''}`;
 function logoUpload(el){
   const file=el.files[0];if(!file)return;
   if(file.size>300*1024){alert('Logo zu groß (max. 300 kB).');return}
   const r=new FileReader();r.onload=()=>{S().firma.logo=r.result;persist();render()};r.readAsDataURL(file);
 }
+/* Bautagesbericht Teil 2 (P36, erw.btbBild): Fotos je Bericht, am Handy direkt mit der Kamera (capture), Beschriftung, Aufnahmezeit (Datei-Zeitstempel); Dateien in der Ablage
+   Berichte/<Jahr>/<Auftrag>_BTB-<nr>/<id>_v.jpg (Vorschau ≤ 320 px) und <id>.jpg (große verkleinert), im Bericht nur Pfade bilder[{id,mini,pfad,text,zeit}]; ohne Netz über ablegen() (P36 a) */
+erwPlus({k:'btbBild',std:false,p:'Bautagesbericht (P36)',l:'Fotos im Bautagesbericht',info:'Im Bautagesbericht nimmt „📷 Foto aufnehmen“ am Handy direkt mit der Kamera auf, „Bilder wählen …“ übernimmt vorhandene Fotos (mehrere auf einmal). Je Foto Beschriftung und Aufnahmezeit; Ansicht und Druck zeigen die Fotos zu zweit nebeneinander. Die Fotos liegen als Dateien in der Ablage unter „Berichte/<Jahr>/<Auftrag>_BTB-<Nr>/“ (OneDrive bzw. Ordner), nicht in den Daten. Ohne Netz bleiben sie in diesem Browser und werden nachgeladen, sobald wieder eine Verbindung besteht. Aus = kein Abschnitt „Fotos“ im Editor, vorhandene Fotos bleiben in Ansicht und Druck.'});
+async function btbFotos(r,files){let n=0;saveState('Fotos werden gespeichert …');
+  for(const f of files){if(!/^image\//.test(f.type))continue;let mini;try{mini=await bildMini(f)}catch(e){alert(`${f.name}: Das Bild kann nicht gelesen werden.\n${e.message}`);continue}
+    const id=uid(),o=btbOrdner(r),g=await bildVerkleinern(f),pfad=`${o}/${id}.${/png$/i.test(g.type)?'png':'jpg'}`;
+    await ablegen(`${o}/${id}_v.jpg`,mini);await ablegen(pfad,g);
+    (r.bilder||(r.bilder=[])).push({id,mini:`${o}/${id}_v.jpg`,pfad,text:'',zeit:new Date(f.lastModified||Date.now()).toISOString()});n++}
+  saveState('');if(n){log('Bautagesbericht Fotos',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${n}`);commit()}render()}
+BTB_ED.push(r=>{if(!erw('btbBild'))return'';const R='btb|'+r.id,L=r.bilder||[],w=ablOffen(btbOrdner(r));
+  return bAbs('btb-bild','Fotos',`${L.length?`<div class="btbb">${L.map((b,i)=>`<div class="btbbi"><img data-bild="${esc(b.mini)}" data-act="btbbild" data-id="${r.id}" data-i="${i}" alt="Foto ${i+1}" title="Foto öffnen">
+      <button class="s d" data-act="arrdel" data-r="${R}" data-f="bilder" data-i="${i}" title="Foto entfernen">✕</button><input data-o="path" data-r="${R}" data-f="bilder.${i}.text" value="${esc(b.text)}" placeholder="Beschriftung"><span class="mut">${dtAT(b.zeit)}</span></div>`).join('')}</div>`:''}
+    <div class="bar" style="margin:8px 0 0"><label class="btn p">📷 Foto aufnehmen<input type="file" accept="image/*" capture="environment" data-btbfoto="${r.id}" hidden></label><label class="btn">🖼 Bilder wählen …<input type="file" accept="image/*" multiple data-btbfoto="${r.id}" hidden></label>
+    ${w?`<span class="mut">⏳ ${w} Datei${w>1?'en warten':' wartet'} auf Netz</span>`:''}</div>`,{offen:!!L.length,zusatz:L.length?L.length+'':'keine'})});
+BTB_DOC.push(r=>(r.bilder||[]).length?`<h3>Fotos</h3><div class="btbbd">${r.bilder.map((b,i)=>`<figure><img data-bild="${esc(b.pfad)}" alt="Foto ${i+1}"><figcaption>${i+1}. ${esc(b.text||'')}${b.text?' · ':''}${dtAT(b.zeit)}</figcaption></figure>`).join('')}</div>`:'');
+document.addEventListener('change',e=>{const id=e.target.dataset?.btbfoto;if(id==null)return;const r=ROOT.btb(id),f=[...e.target.files];e.target.value='';if(r&&!btbFest(r)&&f.length)btbFotos(r,f)});
+ACT.btbbild=el=>{const b=ROOT.btb(el.dataset.id)?.bilder?.[+el.dataset.i];if(!b)return;const d=document.createElement('div');d.className='modal btblb';d.innerHTML=`<div class="mbox"><img alt=""><p class="mut">${esc(b.text||'')} ${dtAT(b.zeit)}</p><div class="bar" style="margin:8px 0 0"><span class="sp"></span><button class="p">Schließen</button></div></div>`;
+  document.body.appendChild(d);d.onclick=e=>{if(e.target===d||e.target.tagName==='BUTTON')d.remove()};bildBlob(b.pfad).then(x=>{d.querySelector('img').src=BURL[b.pfad]??=URL.createObjectURL(x)}).catch(()=>{d.querySelector('img').replaceWith('Bild nicht verfügbar (Ablage nicht erreichbar)')})};
 function importJSON(el){
   const file=el.files[0];if(!file)return;
   const r=new FileReader();r.onload=()=>{
@@ -6176,12 +6356,63 @@ function importJSON(el){
     catch(e){alert('Import fehlgeschlagen: '+e.message)}
   };r.readAsText(file);
 }
+/* Bautagesbericht Teil 3 (P36, erw.btbSig, wirkt mit erw.unterschrift): Abschließen (Pflichtangaben, b.abgeschlossen; „Wieder öffnen“ bis zur ersten Unterschrift) →
+   Unterschrift Monteur (sperrt: sperren() aus P36 a, danach BTB_NACH, z. B. Zeiten Teil 5) → Unterschrift Kunde optional, auch später (nur sig.kunde, Inhalt bleibt);
+   Korrektur nach der Sperre nur als Nachtrag (neuer Bericht mit nachtragZu, Inhalt kopiert). Unterschriften r.sig {monteur,kunde} als PNG im Ablageordner btbOrdner(r) */
+erwPlus({k:'btbSig',std:false,p:'Bautagesbericht (P36)',l:'Bautagesbericht abschließen und unterschreiben',info:'Wirkt mit „Unterschrift am Gerät und Sperre“. „Abschließen“ prüft Datum und Tätigkeit (Hinweis, wenn keine Stunden erfasst sind) und zeigt den Bericht als Ansicht; „Wieder öffnen“ geht bis zur ersten Unterschrift. „Unterschrift Monteur“ sperrt den Bericht: Inhalt, Fotos und Zeiten sind danach unveränderbar. „Unterschrift Kunde“ ist optional und auch später möglich (z. B. am nächsten Tag), alternativ mit Vermerk „unterschreibt nicht“; sie ändert den Inhalt nicht. Korrekturen nach der Sperre nur über „Nachtrag …“ (neuer Bericht mit Verweis, Inhalt übernommen). Aus = keine Knöpfe; gesperrte Berichte bleiben gesperrt.'});
+SIG_C.berichte={n:r=>'Bautagesbericht '+r.nr};
+const BTB_NACH=[],btbSigAn=()=>erw('btbSig')&&erw('unterschrift');
+BTB_ST.unshift(r=>r.gesperrt?(r.sig?.kunde?.pfad?tag('Kunde unterschrieben','ok'):tag('unterschrieben','ok')):r.abgeschlossen?tag('abgeschlossen','acc'):'');
+BTB_KN.push(r=>!btbSigAn()?'':!btbFest(r)?`<button class="p" data-act="btbab" data-id="${r.id}">Abschließen</button>`
+  :!r.gesperrt?`<button data-act="btbauf" data-id="${r.id}">Wieder öffnen</button><button class="p" data-act="btbsig" data-id="${r.id}" data-r="monteur">✍ Unterschrift Monteur</button>`
+  :(r.sig?.kunde?'':`<button class="p" data-act="btbsig" data-id="${r.id}" data-r="kunde">✍ Unterschrift Kunde</button>`)+`<button data-act="btbnach" data-id="${r.id}">Nachtrag …</button>`);
+BTB_DOC.push(r=>{const n=DB.berichte.filter(x=>x.nachtragZu===r.id),v=ROOT.btb(r.nachtragZu);
+  return(v?`<p class="hint" style="margin-top:12px">Nachtrag zu <a href="#/bericht/${v.id}">Bautagesbericht ${v.nr}</a> vom ${dAT(v.datum)}</p>`:'')+(n.length?`<p class="mut" style="margin-top:12px">Nachtrag: ${n.map(x=>`<a href="#/bericht/${x.id}">Bautagesbericht ${x.nr}</a>`).join(', ')}</p>`:'')
+    +(r.abgeschlossen||r.gesperrt?sigBlock(r,[['monteur','Monteur'],['kunde','Auftraggeber / Kunde']]):'')});
+Object.assign(ACT,{
+  btbab:async el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r))return;document.activeElement?.blur?.();await new Promise(z=>setTimeout(z,0));
+    const f=[!r.datum&&'Datum',!(r.taet||[]).some(t=>pT(t.text))&&'Tätigkeit'].filter(Boolean);if(f.length){alert('Bitte ausfüllen: '+f.join(', '));return}
+    if(!btbSumme(r)&&!confirm('Es sind keine Stunden erfasst. Trotzdem abschließen?'))return;
+    r.abgeschlossen=new Date().toISOString();log('Bautagesbericht abgeschlossen',`BTB ${r.nr} ${auftragKurz(r.auftragId)}`);await commit();render()},
+  btbauf:async el=>{const r=ROOT.btb(el.dataset.id);if(!r||r.gesperrt)return;delete r.abgeschlossen;log('Bautagesbericht wieder geöffnet',`BTB ${r.nr}`);await commit();render()},
+  btbsig:async el=>{const r=ROOT.btb(el.dataset.id),m=el.dataset.r==='monteur';if(!r||!btbSigAn()||(m?r.gesperrt||!r.abgeschlossen:!r.gesperrt||r.sig?.kunde))return;
+    const k=kontakt(btbRoot(r)?.kontaktId),e=await sigPop(m?'Unterschrift Monteur':'Unterschrift Auftraggeber / Kunde',m?{name:r.verfasser||S().bearbeiter||'',hinweis:'Mit der Unterschrift wird der Bericht gesperrt: Inhalt, Fotos und Zeiten sind danach nicht mehr änderbar (Korrektur nur als Nachtrag).'}
+      :{name:persName(k)||'',ohne:true,hinweis:`Der Kunde bestätigt Bautagesbericht ${r.nr} vom ${dAT(r.datum)}. Der Inhalt bleibt unverändert.`});
+    if(!e||(m?r.gesperrt:r.sig?.kunde))return;const s=await sigAblegen(btbOrdner(r),m?'monteur':'kunde',e);
+    if(m){r.sig={monteur:s};await sperren(r);for(const f of BTB_NACH)f(r)}else r.sig={...r.sig,kunde:s};
+    log(m?'Bautagesbericht unterschrieben (Monteur)':'Bautagesbericht unterschrieben (Kunde)',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${s.name}${s.ohne?' – '+s.ohne:''}`);await commit();render()},
+  btbnach:el=>{const r=ROOT.btb(el.dataset.id);if(!r||!confirm(`Nachtrag zu Bautagesbericht ${r.nr} anlegen?\n\nDer neue Bericht übernimmt den Inhalt zum Korrigieren; Bericht ${r.nr} bleibt unverändert.`))return;
+    const n=btbNeu(r.auftragId),c=JSON.parse(JSON.stringify(r));for(const k of['id','nr','erstellt','abgeschlossen','gesperrt','hash','sig','nachtragZu'])delete c[k];Object.assign(n,c,{nachtragZu:r.id});
+    log('Bautagesbericht Nachtrag',`BTB ${n.nr} zu BTB ${r.nr}`);persist();go('bericht/'+n.id)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();commit()}
   if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='p'&&DB&&erw('strgP')&&curBeleg()){e.preventDefault();document.activeElement?.blur?.();belegDrucken(curBeleg())}}); // Strg+P: geöffneten Beleg drucken (offene Eingabe vorher übernehmen)
+/* Bautagesbericht Teil 5 (P36, erw.btbZeit): Stunden des Berichts beim Unterschreiben des Monteurs (BTB_NACH, Teil 3) in die Zeiterfassung (DB.zeiten mit berichtId; Nachkalkulation und
+   „Zeiten abrechnen“ wie bisher). „⏱ aus Zeiterfassung“ übernimmt offene, noch keinem Bericht zugeordnete Zeiten desselben Auftrags und Tages als Zeilen (p.zid, Eintrag bekommt berichtId);
+   beim Unterschreiben werden diese nur angepasst (Stunden, Tarif, solange nicht abgerechnet), nicht neu angelegt. Einträge unterschriebener Berichte sind in der Zeiterfassung nicht löschbar */
+erwPlus({k:'btbZeit',std:false,p:'Bautagesbericht (P36)',l:'Stunden des Bautagesberichts in die Zeiterfassung',info:'Beim Unterschreiben des Monteurs werden die Stunden je Person und Tarif als Einträge in die Zeiterfassung übernommen (Text „BTB <Nr> · Name“); Nachkalkulation, DB je Stunde und „Zeiten abrechnen“ rechnen damit wie bisher. Bereits in der Zeiterfassung erfasste, offene Stunden desselben Auftrags und Tages holt „⏱ aus Zeiterfassung“ in den Bericht (keine Doppelerfassung). Einträge eines unterschriebenen Berichts lassen sich in der Zeiterfassung nicht löschen. Aus = keine Übernahme.'});
+const btbZeitFrei=r=>DB.zeiten.filter(z=>z.auftragId===r.auftragId&&z.datum===r.datum&&!z.belegId&&!(z.berichtId&&ROOT.btb(z.berichtId)));
+BTB_KN.push(r=>erw('btbZeit')&&!btbFest(r)&&btbZeitFrei(r).length?`<button data-act="btbzeit" data-id="${r.id}" title="offene Zeiten dieses Auftrags vom ${dAT(r.datum)} übernehmen">⏱ aus Zeiterfassung (${btbZeitFrei(r).length})</button>`:'');
+BTB_NACH.push(r=>{if(!erw('btbZeit'))return;let n=0;
+  for(const p of r.personal||[]){const h=btbStd(p),z=p.zid&&DB.zeiten.find(x=>x.id===p.zid);
+    if(z){if(!z.belegId){z.stunden=h;z.tarif=p.tarif}z.berichtId=r.id;continue}
+    if(!h)continue;const t=S().tarife.find(x=>x.kz===p.tarif)||{};DB.zeiten.push({id:uid(),datum:r.datum,auftragId:r.auftragId,tarif:p.tarif,stunden:h,text:[`BTB ${r.nr}`,p.name].filter(pT).join(' · '),kosten:+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id});n++}
+  if(n)log('Zeiten aus Bautagesbericht',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${n} Eintrag/Einträge`)});
+BTB_DOC.push(r=>{if(!r.gesperrt)return'';const Z=DB.zeiten.filter(z=>z.berichtId===r.id);return Z.length?`<p class="mut btbzt">In der Zeiterfassung: ${fmtQ(sum(Z,z=>z.stunden))} h${Z.some(z=>z.belegId)?' (teilweise abgerechnet)':''}</p>`:''});
+ACT.btbzeit=el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r))return;const L=btbZeitFrei(r);if(!L.length)return;
+  r.personal=(r.personal||[]).filter(p=>pT(p.name)||btbStd(p)||p.zid);
+  for(const z of L){r.personal.push({name:'',tarif:z.tarif,von:'',bis:'',pause:'',stunden:+z.stunden||0,zid:z.id});z.berichtId=r.id;if(pT(z.text)&&!(r.taet||[]).some(t=>t.text===z.text))(r.taet||(r.taet=[])).push({text:z.text,ort:''})}
+  r.taet=r.taet.filter((t,i,a)=>pT(t.text)||pT(t.ort)||a.length===1);persist();render()};
 $('#menu').onclick=e=>{e.stopPropagation();document.body.classList.toggle('nav')};
 document.querySelector('nav').addEventListener('click',e=>{if(e.target.closest('a'))document.body.classList.remove('nav')});
 document.addEventListener('click',e=>{if(document.body.classList.contains('nav')&&!e.target.closest('nav'))document.body.classList.remove('nav')});
 
+/* Bautagesbericht Teil 4 (P36, erw.btbDruck): Druck bzw. „Als PDF speichern“ über druckHTML() – Briefkopf, btbDoc() mit Fotos und Unterschriften (Bilder vorher geladen und dekodiert) */
+erwPlus({k:'btbDruck',std:false,p:'Bautagesbericht (P36)',l:'Bautagesbericht drucken / als PDF',info:'Knopf „🖨 Drucken / PDF“ im Bautagesbericht: A4 mit Briefkopf, Kopfdaten, Witterung, Personal mit Stundensumme, Tätigkeiten, Material und Geräten, Vorkommnissen, Fotos (zu zweit nebeneinander) und den Unterschriften mit Name, Zeitpunkt und Prüfwert. PDF über „Als PDF speichern“ im Druckdialog. Aus = kein Knopf.'});
+BTB_KN.push(r=>erw('btbDruck')?`<button data-act="btbdruck" data-id="${r.id}">🖨 Drucken / PDF</button>`:'');
+ACT.btbdruck=async el=>{const r=ROOT.btb(el.dataset.id);if(!r)return;document.activeElement?.blur?.();saveState('Druck wird vorbereitet …');
+  const P=[...(r.bilder||[]).map(b=>b.pfad),...Object.values(r.sig||{}).map(s=>s?.pfad)].filter(Boolean);
+  await Promise.all(P.map(async p=>{try{BURL[p]??=URL.createObjectURL(await bildBlob(p));const i=new Image();i.src=BURL[p];await i.decode()}catch(e){}}));saveState('');
+  const a=btbRoot(r);druckHTML(`<div class="doc btbp">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">Bautagesbericht ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${btbDoc(r)}</div>`,`Bautagesbericht ${r.nr} ${a?.nr||''} ${dAT(r.datum)}`);bilderLaden()};
 start();
 </script>
 </body>

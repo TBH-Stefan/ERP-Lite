@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheit (P37 S3): erlaubte Ziele für Skripte und Verbindungen. Neue externe Verbindung → hier ergänzen. frame-ancestors wirkt per meta nicht → Prüfung im Script (P37) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: blob: https://login.microsoftonline.com https://graph.microsoft.com https://*.sharepoint.com https://*.1drv.com https://*.livefilestore.com https://api.anthropic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: blob: https://login.microsoftonline.com https://graph.microsoft.com https://*.sharepoint.com https://*.1drv.com https://*.livefilestore.com https://api.anthropic.com https://cdn.jsdelivr.net https://api.open-meteo.com; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d2330">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3395,6 +3395,37 @@ V.zeiten=()=>{
 };
 MENUE.zeit=el=>{const z=DB.zeiten.find(x=>x.id===el.dataset.id);return z?[{l:'Auftrag öffnen',ic:'📊',href:'#/auftrag/'+z.auftragId},{l:'Löschen',ic:'🗑',act:'ztdel',d:{id:z.id},gefahr:1}]:[]};
 
+/* ---------- Tagesberichte (P36 Teil 2, erw.tbWetter): „📍 Wetter ermitteln“ im Abschnitt Witterung (TBX.wetter) – Standort des Geräts (navigator.geolocation, nur auf Knopfdruck,
+   Hinweis einmal je Gerät: erp-tbGeo), Wetter von Open-Meteo (api.open-meteo.com, ohne Schlüssel; in der Content-Security-Policy freigegeben; Koordinaten auf 0,01° ≈ 1 km gerundet):
+   heute aktuelle Werte und Tageswerte, sonst Tageswerte des Berichtsdatums (bis 3 Monate zurück, 2 Wochen voraus), timezone=auto; WMO-Code → TB_WMO (Witterung + Text).
+   Gespeichert in b.wetter {art,txt,code,temp,tmin,tmax,nieder,wind,quelle:'auto',ts,ort} (Ort auf 0,1° ≈ 10 km); jede Änderung von Hand setzt quelle 'manuell' (tbSetzen) ---------- */
+erwPlus({k:'tbWetter',std:true,p:'Tagesberichte (P36)',l:'Tagesberichte: Wetter automatisch über den Standort (Open-Meteo)',info:'Im Tagesbericht ermittelt „📍 Wetter ermitteln“ den Standort des Handys bzw. Tablets (nur auf Knopfdruck, der Browser fragt nach der Erlaubnis) und holt beim Wetterdienst Open-Meteo die Witterung, die Temperatur (heute: aktuell), Tiefst- und Höchstwert, Niederschlag und Wind für das Berichtsdatum (bis drei Monate zurück). Übertragen werden nur die auf etwa 1 km gerundeten Koordinaten, im Bericht steht der Ort auf etwa 10 km gerundet. Die Werte lassen sich jederzeit von Hand ändern. Ohne Internet, ohne Standortfreigabe oder für ältere Tage: Witterung von Hand eintragen. Aus = Knopf ausgeblendet, eingetragene Werte bleiben.'});
+const TB_WMO={0:['sonnig','klar'],1:['heiter','überwiegend klar'],2:['bewoelkt','teilweise bewölkt'],3:['bewoelkt','bedeckt'],45:['nebel','Nebel'],48:['nebel','Nebel mit Reifansatz'],51:['regen','leichter Nieselregen'],53:['regen','Nieselregen'],55:['regen','starker Nieselregen'],
+  56:['frost','gefrierender Nieselregen'],57:['frost','starker gefrierender Nieselregen'],61:['regen','leichter Regen'],63:['regen','Regen'],65:['regen','starker Regen'],66:['frost','gefrierender Regen'],67:['frost','starker gefrierender Regen'],71:['schnee','leichter Schneefall'],
+  73:['schnee','Schneefall'],75:['schnee','starker Schneefall'],77:['schnee','Schneegriesel'],80:['regen','leichte Regenschauer'],81:['regen','Regenschauer'],82:['regen','heftige Regenschauer'],85:['schnee','leichte Schneeschauer'],86:['schnee','starke Schneeschauer'],
+  95:['gewitter','Gewitter'],96:['gewitter','Gewitter mit Hagel'],99:['gewitter','Gewitter mit starkem Hagel']};
+TBX.wetter=b=>erw('tbWetter')?`<div class="bar" style="margin:2px 0 0"><button class="s" data-act="tbwetter" data-id="${b.id}" title="Standort dieses Geräts bestimmen und das Wetter bei Open-Meteo abfragen">📍 Wetter ermitteln</button></div>`:'';
+const tbGeo=()=>new Promise((ja,nein)=>{if(!navigator.geolocation)return nein(new Error('Dieser Browser kann den Standort nicht bestimmen – bitte die Witterung von Hand eintragen.'));
+  navigator.geolocation.getCurrentPosition(p=>ja(p.coords),e=>nein(new Error(e.code===1?'Der Standort wurde nicht freigegeben. Bitte in den Einstellungen des Browsers bzw. Geräts den Standortzugriff für diese Seite erlauben – oder die Witterung von Hand eintragen.'
+    :e.code===3?'Zeitüberschreitung bei der Standortbestimmung – bitte noch einmal versuchen oder die Witterung von Hand eintragen.':'Der Standort konnte nicht bestimmt werden (kein GPS- bzw. Netzempfang) – bitte die Witterung von Hand eintragen.')),{enableHighAccuracy:false,timeout:15000,maximumAge:600000})});
+async function tbWetter(b,el){if(!tbFrei(b)||!erw('tbWetter'))return;const d=b.datum||isoD(),t=Math.round((new Date(isoD()+'T12:00:00')-new Date(d+'T12:00:00'))/864e5),w=b.wetter||{};
+  if(t>92||t<-14){alert(`Wetterdaten gibt es für die letzten drei Monate und die nächsten zwei Wochen – für den ${dAT(d)} bitte die Witterung von Hand eintragen.`);return}
+  if(!window.isSecureContext){alert('Der Standort ist nur über eine sichere Verbindung (https://) verfügbar – bitte die Witterung von Hand eintragen.');return}
+  if(w.quelle==='manuell'&&(w.art||pT(w.txt)||pT(String(w.temp??'')))&&!confirm('Die eingetragene Witterung durch die ermittelten Wetterdaten ersetzen?'))return;
+  if(lsGet('erp-tbGeo')!=='1'){if(!confirm('Für die Wetterdaten wird der Standort dieses Geräts abgefragt und – auf etwa 1 km gerundet – an den Wetterdienst Open-Meteo (api.open-meteo.com) übermittelt. Im Bericht wird nur der Ort auf etwa 10 km gerundet gespeichert.\n\nFortfahren?'))return;lsSet('erp-tbGeo','1')}
+  const t0=el?.textContent;if(el){el.disabled=true;el.textContent='📍 ermittle …'}
+  try{const c=await tbGeo(),la=(+c.latitude).toFixed(2),lo=(+c.longitude).toFixed(2),heute=t===0;let r;
+    try{r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&timezone=auto&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&start_date=${d}&end_date=${d}${heute?'&current=temperature_2m,weather_code,wind_speed_10m':''}`,{cache:'no-store'})}
+    catch(e){throw new Error('Der Wetterdienst ist nicht erreichbar (keine Internetverbindung?) – bitte die Witterung von Hand eintragen.')}
+    const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(`Der Wetterdienst meldet einen Fehler (${r.status}${j.reason?': '+j.reason:''}) – bitte die Witterung von Hand eintragen.`);
+    const D=j.daily||{},C=heute&&j.current||{},i=(D.time||[]).indexOf(d),v=k=>i>=0?D[k]?.[i]??null:null,code=C.weather_code??v('weather_code');
+    if(code==null&&v('temperature_2m_max')==null)throw new Error('Für dieses Datum liefert der Wetterdienst keine Daten – bitte die Witterung von Hand eintragen.');
+    const x=TB_WMO[code]||['',''],tmin=v('temperature_2m_min'),wind=v('wind_speed_10m_max')??C.wind_speed_10m??null,b2=tbB(b.id);if(!tbFrei(b2))return;
+    b2.wetter={art:x[0]||(tmin!=null&&tmin<0?'frost':''),txt:[x[1],tmin!=null&&tmin<0&&!['schnee','frost'].includes(x[0])?'Frost':'',wind>=60?'stürmisch':''].filter(Boolean).join(', '),code:code??null,temp:C.temperature_2m??'',tmin,tmax:v('temperature_2m_max'),
+      nieder:v('precipitation_sum'),wind,quelle:'auto',ts:new Date().toISOString(),ort:`${Math.abs(la).toFixed(1).replace('.',',')}° ${la<0?'S':'N'}, ${Math.abs(lo).toFixed(1).replace('.',',')}° ${lo<0?'W':'O'}`};
+    persist();render()}
+  catch(e){alert(e.message)}finally{if(el?.isConnected){el.disabled=false;el.textContent=t0}}}
+queueMicrotask(()=>Object.assign(ACT,{tbwetter:el=>tbWetter(tbB(el.dataset.id)||tbCur(),el)})); // Tagesberichte Wetter (P36 Teil 2)
 /* ---------- Kontakte ---------- */
 V.kontakte=typ=>{
   const q=UI.kQ.toLowerCase(),kf=erw('kFilter');

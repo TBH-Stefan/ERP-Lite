@@ -227,6 +227,12 @@ input:disabled,select:disabled,textarea:disabled{background:#f3f4f6;color:#37415
 button,.btn{font:inherit;padding:6px 12px;border:1px solid #cdd2da;background:#fff;border-radius:5px;cursor:pointer;color:inherit;text-decoration:none;display:inline-block;white-space:nowrap}
 button:hover{border-color:#9aa3b2}
 button.p{background:var(--acc);border-color:var(--acc);color:#fff}
+/* Tagesberichte (P36 Teil 3): Fotos im Editor (Raster mit Bildunterschrift) und im Druck (zwei je Zeile) */
+.tbfl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.tbf{position:relative;margin:0;min-width:0}.tbf figcaption{font-size:12px;margin-top:4px;overflow-wrap:anywhere}.tbf figcaption .mut{display:block;font-size:11px;margin-top:2px}
+.tbf img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:#f2f4f7;cursor:zoom-in}.tbfx{position:absolute;top:4px;right:4px;background:#fff}
+.tbd .tbfd{display:grid;grid-template-columns:1fr 1fr;gap:4mm}.tbd .tbfd figure{margin:0;break-inside:avoid}.tbd .tbfd img{display:block;width:100%;max-height:85mm;object-fit:contain;border:.5pt solid #ccc}
+.tbd .tbfd figcaption{font-size:8pt;margin-top:1mm}.tbd .tbfd figcaption span{color:#555}.tbd .tbfn{border:.5pt dashed #999;padding:6mm;text-align:center;color:#666;font-size:8pt}
+@media(max-width:760px){.tbfl{grid-template-columns:repeat(2,minmax(0,1fr))}}
 button.d{color:var(--err)}
 button.s{padding:2px 7px;font-size:12px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px}
@@ -4791,6 +4797,35 @@ const EXPORTS={
     csvDownload(`Auftraege_DB2_${isoD()}.csv`,['Auftrag','Kunde','Betreff','Umsatz n. Skonto','Material','Eigenleistung','Stunden','HK','DB II','DB II %'],rows)},
   json:()=>dl(new Blob([JSON.stringify(DB,null,1)],{type:'application/json'}),`erp-daten_export_${isoD()}.json`),
 };
+/* ---------- Tagesberichte (P36 Teil 3, erw.tbFotos): Fotos im Tagesbericht (TBX.fotos) – „📷 Foto aufnehmen“ (Kamera, capture=environment) bzw. „🖼 Bilder wählen“ (mehrere),
+   verkleinert auf höchstens 1600 px (JPEG, tbJpeg) und als Vorschau auf 320 px (bildMini), als Dateien in der Ablage berichte/<Jahr>/<Bericht-ID>/<id>.jpg bzw. <id>_m.jpg wie die
+   Artikelbilder (P24: nur Pfade im Datensatz, gelesen über bildBlob/bilderLaden). b.fotos [{id,pfad,mini,txt,sha,ts,w,h}], sha = SHA-256 der Bilddatei (Teil der Prüfsumme des Berichts).
+   Bildunterschrift und Entfernen nur im Entwurf (die Datei bleibt in der Ablage). Druck: TBX.vorDruck lädt die Bilder vorab, TBX.fotoDruck setzt zwei je Zeile mit Unterschrift ---------- */
+erwPlus({k:'tbFotos',std:true,p:'Tagesberichte (P36)',l:'Tagesberichte: Fotos (Kamera bzw. Bilder) mit Bildunterschrift',info:'Im Tagesbericht nimmt „📷 Foto aufnehmen“ am Handy bzw. Tablet direkt mit der Kamera auf, „🖼 Bilder wählen …“ übernimmt vorhandene Bilder (auch mehrere). Die Fotos werden auf höchstens 1600 Pixel verkleinert und liegen als Dateien in der Ablage unter „berichte/“ (OneDrive bzw. Ordner, im Test nur in diesem Browser); die Daten (erp-daten.json) enthalten nur Dateiname, Bildunterschrift und eine Prüfsumme der Datei. Bildunterschrift und Entfernen nur, solange der Bericht nicht abgeschlossen ist. Gedruckt werden die Fotos zu zweit je Zeile mit Bildunterschrift. Aus = keine neuen Fotos; vorhandene Fotos werden weiter angezeigt und gedruckt.'});
+async function tbJpeg(f,max=1600){const img=await createImageBitmap(f),s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*s));c.height=Math.max(1,Math.round(img.height*s));
+  const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);img.close?.();const b=await new Promise(r=>c.toBlob(r,'image/jpeg',0.82));if(!b)throw new Error('Umwandlung fehlgeschlagen');return{b,w:c.width,h:c.height}}
+async function tbFotoDazu(id,files){let b=tbB(id);if(!tbFrei(b)||!erw('tbFotos')||!files.length)return;const neu=[],err=[];saveState('lade hoch …');
+  for(const f of files){if(!/^image\//.test(f.type)){err.push(`${f.name}: keine Bilddatei`);continue}
+    try{const g=await tbJpeg(f),mini=await bildMini(f),fid=uid(),dir=`berichte/${(b.datum||isoD()).slice(0,4)}/${b.id}/`,p=dir+fid+'.jpg',pm=dir+fid+'_m.jpg',sha=await tbSha(await g.b.arrayBuffer());
+      await STORE.putFile(p,g.b);await STORE.putFile(pm,mini);kvSet('img:'+p,g.b).catch(()=>{});kvSet('img:'+pm,mini).catch(()=>{});
+      neu.push({id:fid,pfad:p,mini:pm,txt:'',sha,ts:new Date().toISOString(),w:g.w,h:g.h})}catch(e){err.push(`${f.name||'Bild'}: ${e.message}`)}}
+  b=tbB(id);if(neu.length&&tbFrei(b)){(b.fotos??=[]).push(...neu);log('Tagesbericht Fotos',`${b.nr||'Entwurf vom '+dAT(b.datum)}: ${neu.length} Foto${neu.length>1?'s':''}`);commit()}
+  else{saveState('');if(neu.length)err.push('Der Bericht ist inzwischen abgeschlossen – Fotos nicht übernommen.')}
+  if(err.length)alert('Nicht übernommen:\n'+err.join('\n'));render()}
+TBX.fotos=(b,frei)=>{const F=b.fotos||[],e=frei&&erw('tbFotos');if(!F.length&&!e)return'';if(F.length)queueMicrotask(()=>bilderLaden());
+  const inh=`${F.length?`<div class="tbfl">${F.map((f,i)=>`<figure class="tbf"><img data-bild="${esc(f.mini||f.pfad)}" alt="${esc(f.txt||'Foto '+(i+1))}" data-act="tbfoto" data-id="${b.id}" data-i="${i}" title="Foto öffnen">
+    <figcaption>${e?`<input data-o="tb" data-id="${b.id}" data-f="fotos.${i}.txt" value="${esc(f.txt||'')}" placeholder="Bildunterschrift" aria-label="Bildunterschrift Foto ${i+1}">`:esc(f.txt||'')}<span class="mut">Foto ${i+1} · ${dtAT(f.ts)}</span></figcaption>
+    ${e?`<button class="s d tbfx" data-act="tbfdel" data-id="${b.id}" data-i="${i}" title="Foto entfernen" aria-label="Foto ${i+1} entfernen">✕</button>`:''}</figure>`).join('')}</div>`:'<p class="mut" style="margin:0">Noch keine Fotos.</p>'}
+  ${e?`<div class="bar" style="margin:8px 0 0"><label class="btn">📷 Foto aufnehmen<input type="file" class="tbfin" data-id="${b.id}" accept="image/*" capture="environment" hidden></label><label class="btn">🖼 Bilder wählen …<input type="file" class="tbfin" data-id="${b.id}" accept="image/*" multiple hidden></label></div>`:''}`;
+  return tbSek('tb-fotos','Fotos',inh,{zusatz:F.length?F.length+' Foto'+(F.length>1?'s':''):''})};
+document.addEventListener('change',e=>{const el=e.target;if(!el.classList?.contains('tbfin'))return;const f=[...el.files];el.value='';tbFotoDazu(el.dataset.id,f)});
+TBX.vorDruck=async b=>{const U=[];for(const f of b.fotos||[])for(const p of [f.pfad,f.mini]){if(!p)continue;if(BURL[p]){U.push(BURL[p]);break}try{const x=await bildBlob(p);if(x){BURL[p]=URL.createObjectURL(x);U.push(BURL[p]);break}}catch(e){}}
+  await Promise.all(U.map(u=>new Promise(r=>{const i=new Image();i.onload=i.onerror=r;i.src=u})))};
+TBX.fotoDruck=b=>{const F=b.fotos||[];return F.length?`<h4>Fotos</h4><div class="tbfd">${F.map((f,i)=>{const u=BURL[f.pfad]||BURL[f.mini];return`<figure>${u?`<img src="${u}" alt="Foto ${i+1}">`:'<div class="tbfn">Bild nicht verfügbar (Ablage nicht erreichbar)</div>'}<figcaption><b>Foto ${i+1}</b>${f.txt?' – '+esc(f.txt):''} <span>(${dtAT(f.ts)})</span></figcaption></figure>`}).join('')}</div>`:''};
+queueMicrotask(()=>Object.assign(ACT,{ // Tagesberichte Fotos (P36 Teil 3)
+  tbfoto:async el=>{const f=(tbB(el.dataset.id)||tbCur())?.fotos?.[+el.dataset.i];if(f)try{await STORE.openFile({path:f.pfad})}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
+  tbfdel:el=>{const b=tbB(el.dataset.id)||tbCur(),i=+el.dataset.i,f=b?.fotos?.[i];if(!f||!tbFrei(b)||!confirm(`Foto ${i+1} aus dem Bericht entfernen?\n(Die Datei bleibt in der Ablage erhalten.)`))return;
+    b.fotos.splice(i,1);log('Tagesbericht Foto entfernt',`${b.nr||'Entwurf vom '+dAT(b.datum)}: ${f.pfad}`);commit();render()}}));
 V.export=()=>{
   const jahre=[...new Set([String(new Date().getFullYear()),...DB.belege.map(b=>b.datum.slice(0,4))])].sort().reverse();
   return`<h1>Export &amp; Sicherung</h1>

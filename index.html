@@ -2,6 +2,8 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<!-- Sicherheit (P37 S3): erlaubte Ziele für Skripte und Verbindungen. Neue externe Verbindung → hier ergänzen. frame-ancestors wirkt per meta nicht → Prüfung im Script (P37) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: blob: https://login.microsoftonline.com https://graph.microsoft.com https://*.sharepoint.com https://*.1drv.com https://*.livefilestore.com https://api.anthropic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d2330">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -65,19 +67,31 @@ tr.kind td{background:#f7f8fa;font-size:13px}tr.kind td:nth-child(2){padding-lef
 @media(max-width:760px){body.kompakt :is(.kakk,.modal.live) .rte{min-height:40px}}
 label.chk{display:flex;gap:8px;align-items:center;color:var(--ink);font-size:14px;margin-top:12px;cursor:pointer}
 label.chk input{width:18px;height:18px}
+/* Liefertermine (P35): Karte „Lieferung“ in der Bestellung (Rand nach dem Stand der Lieferung), Pop-up „Bestätigung & Termine“ */
+.lfk{border-left:4px solid var(--ok)}.lfk.lf-ueber{border-left-color:var(--err)}.lfk.lf-heute{border-left-color:var(--warn)}.lfk.lf-ok,.lfk.lf-ohne{border-left-color:var(--acc)}.lfk .bar{flex-wrap:wrap;row-gap:6px}
+table.lft{font-size:13px}table.lft td,table.lft th{padding:4px 6px;vertical-align:top}table.lft td.n{white-space:nowrap}table.lft button.s{padding:2px 8px}.lfg{font-size:12px}.lfkl{border-top:1px solid var(--line)}.lfkl :is(.kku,.kkz){white-space:normal}
+details.lfv{font-size:13px;margin-top:8px}details.lfv>summary{cursor:pointer;color:var(--mut)}details.lfv>div{padding:2px 0 0 14px}
+.lfp{border-top:1px solid var(--line);padding:8px 0 2px;margin-top:6px}.lftl{margin-left:18px}.lfb{align-self:flex-end;margin-bottom:6px}@media(max-width:760px){.lftl{margin-left:8px}}
 button.gef{background:var(--err);border-color:var(--err)}
 .lbcols{display:grid;grid-template-columns:260px 300px 1fr;gap:10px;align-items:start}.lblist{max-height:70vh;overflow:auto;padding:6px}.lblist a{display:block;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:13px}.lblist a:hover{background:var(--acc2)}.lblist a.on{background:var(--acc);color:#fff}
 .lbgt{border-top:1px solid var(--line);padding:6px 0}.lbfp{display:flex;gap:10px;align-items:center;padding:3px 0;font-size:13px;cursor:pointer;color:var(--ink)}.lbfp input{width:16px;height:16px}.lbft{margin-left:26px}.lbft summary{font-size:11px}
 .lbsel{position:sticky;bottom:0;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;box-shadow:0 -4px 16px rgba(0,0,0,.08);margin-top:10px}.lbsel select{width:auto}
+/* Liefertermine (P35): „Offene Lieferungen“ in der Seitenleiste unter „Einkauf“ */
+nav a.navlf{padding-left:32px;font-size:13px}body.lfaus nav a.navlf{display:none}
 .rte table,.doc .lt table{border-collapse:collapse;margin:3px 0}.rte td,.doc .lt td{border:1px solid #ccc;padding:2px 5px;font-size:inherit}
 @media(max-width:1000px){.lbcols{grid-template-columns:1fr}.lblist{max-height:30vh}}
 #dirtybar{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:60;background:#1d2330;color:#fff;border-radius:10px;padding:8px 10px 8px 16px;display:flex;gap:10px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.3);min-width:360px}
 #dirtybar span:first-child{color:#ffd27a}
+/* Liefertermine (P35): Zähler an „Einkauf“, Karte „Lieferverzug“ im Überblick, Erinnerung und Wiedervorlage in der Karte „Lieferung“ */
+nav .nbz{display:inline-block;min-width:18px;padding:0 6px;margin-left:4px;border-radius:9px;background:var(--err);color:#fff;font-size:11px;line-height:18px;text-align:center}.lfd{border-left:4px solid var(--err)}.lfd h2 .mut{font-weight:400;font-size:13px}
+.lfe{font-size:13px;margin:0 0 6px;flex-wrap:wrap;row-gap:4px}.lfe .sp{min-width:8px}
 #dirtybar button:not(.p){color:var(--ink)}
 @media(max-width:760px){#dirtybar{left:8px;right:8px;transform:none;min-width:0;bottom:8px}}
 .rte{border:1px solid #cdd2da;border-radius:5px;padding:5px 7px;min-height:32px;background:#fff;margin-top:2px;color:var(--ink);font-size:13px;line-height:1.4;cursor:text}
 .pos .rte{max-height:calc(5 * 1.4em + 12px);overflow-y:auto;resize:vertical} /* Langtext in der Eingabe: ca. 5 Zeilen, scrollbar */
 .rte[contenteditable]:focus{outline:2px solid var(--acc);outline-offset:-1px}
+/* Liefertermine (P35): Kundenlieferungen in der Karte „Lieferverzug“, Hinweis „Material verspätet“ in der Auftragsbestätigung */
+.lfd h2.lfdk{font-size:14px;margin:14px 0 6px}.kkl.lfd>h2.lfdk{margin:0;border-top:1px solid var(--line);padding-top:10px}.lfm a{color:var(--acc)}
 .rte:not([contenteditable]){background:#f3f4f6}
 .rte:empty:before{content:attr(data-ph);color:#9aa3b2}
 .rte ul,.rte ol,.doc ul,.doc ol{margin:2px 0;padding-left:20px}
@@ -540,6 +554,7 @@ body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150p
 /* ===================== KONFIGURATION =====================
    Nach der App-Registrierung in Microsoft Entra eintragen
    (siehe ANLEITUNG-MOBIL.md). Diese Werte sind nicht geheim. */
+if(window.top!==window.self){document.documentElement.innerHTML='';throw new Error('ERP-Lite darf nicht in fremde Seiten eingebettet werden.')} // Schutz gegen Einbetten (Clickjacking, P37 S3)
 const CONFIG={
   clientId:'',          // Anwendungs-ID (Client), z. B. '1a2b3c4d-....'
   tenantId:'',          // Verzeichnis-ID (Mandant)
@@ -911,6 +926,21 @@ const AUTH={
   },
   abmelden(){if(pending&&!confirm('Es gibt noch nicht gespeicherte Änderungen. Trotzdem abmelden?'))return;this.setTok(null);lsSet('erp-user',null);lsSet('erp-modus',null);location.hash='';location.reload()}
 };
+/* Gerät aufräumen (P37 S5, erw.geraetLoeschen): entfernt Anmeldung, Datenkopie (erp-lite-cache), Anhänge/Bilder/Ordnerzugriff (IndexedDB) und Zuletzt-Liste von diesem Gerät.
+   Nur wenn die Daten anderswo sicher liegen (OneDrive oder lokaler Ordner, alles gespeichert) – im Modus „nur Browser“ wären sie sonst verloren. Client-/Mandanten-ID bleiben */
+erwPlus({k:'geraetLoeschen',std:true,p:'Sicherheit (P37)',l:'„Abmelden und Gerät leeren“',info:'Neben „Abmelden“ bzw. „Speicherort wechseln“ entfernt ein zusätzlicher Knopf Anmeldung, Datenkopie, Anhänge und Bilder aus diesem Browser – z. B. vor der Rückgabe eines Geräts oder an einem fremden PC. Die Daten im OneDrive bzw. im lokalen Ordner bleiben unverändert. Nur möglich, wenn alles gespeichert ist; im Modus „nur Browser“ nicht angeboten.'});
+const geraetKnopf=()=>erw('geraetLoeschen')&&STORE.art!=='cache'?' <button data-act="geraetweg" class="d" title="Anmeldung, Datenkopie, Anhänge und Bilder aus diesem Browser entfernen">Abmelden und Gerät leeren</button>':'';
+async function geraetLeeren(){
+  if(STORE.art==='cache')return;
+  if(pending||DIRTY){alert('Es gibt noch nicht gespeicherte Änderungen – bitte zuerst speichern.');return}
+  if(!confirm('Anmeldung, Datenkopie, Anhänge und Bilder werden aus diesem Browser entfernt.\nDie Daten '+(STORE.art==='od'?'im OneDrive':'im lokalen Ordner')+' bleiben erhalten.\n\nFortfahren?'))return;
+  const halten=['erp-cid','erp-tid'];
+  try{for(const k of Object.keys(localStorage))if(/^erp/.test(k)&&!halten.includes(k))localStorage.removeItem(k)}catch(e){}
+  try{sessionStorage.clear()}catch(e){}
+  await new Promise(r=>{try{const q=indexedDB.deleteDatabase('erp-lite');q.onsuccess=q.onerror=q.onblocked=()=>r()}catch(e){r()}});
+  DIRTY=false;pending=false;location.hash='';location.reload();
+}
+queueMicrotask(()=>Object.assign(ACT,{geraetweg:()=>geraetLeeren()}));
 async function graph(path,opt={},nochmal=true){
   const t=await AUTH.token();
   if(!t)throw Object.assign(new Error('Anmeldung abgelaufen'),{login:true});
@@ -962,10 +992,16 @@ const DIRSTORE={
   async backup(old,tag){const bd=await this.h.getDirectoryHandle('backup',{create:true});try{await bd.getFileHandle(`erp-daten_${tag}.json`);return}catch(e){}const w=await (await bd.getFileHandle(`erp-daten_${tag}.json`,{create:true})).createWritable();await w.write(old);await w.close()},
   async dir(parts,create){let d=this.h;for(const p of parts)d=await d.getDirectoryHandle(p,{create});return d},
   async putFile(path,blob){const parts=path.split('/'),fn=parts.pop(),d=await this.dir(parts,true);const w=await (await d.getFileHandle(fn,{create:true})).createWritable();await w.write(blob);await w.close();return{name:fn,path,id:'',url:''}},
-  async openFile(a){const parts=a.path.split('/'),fn=parts.pop(),f=await (await (await this.dir(parts,false)).getFileHandle(fn)).getFile();window.open(URL.createObjectURL(f),'_blank')}
+  async openFile(a){const parts=a.path.split('/'),fn=parts.pop(),f=await (await (await this.dir(parts,false)).getFileHandle(fn)).getFile();blobOeffnen(f,fn)}
 };
 const CACHESTORE={art:'cache',lastText:null,name:'nur dieser Browser (Test)',async save(){},async backup(){},async putFile(path,blob){await kvSet('att:'+path,blob);return{name:path.split('/').pop(),path,id:'',url:''}},
-  async openFile(a){const b=await kvGet('att:'+a.path);if(!b)throw new Error('Datei nicht mehr im Browser vorhanden.');window.open(URL.createObjectURL(b),'_blank')}};
+  async openFile(a){const b=await kvGet('att:'+a.path);if(!b)throw new Error('Datei nicht mehr im Browser vorhanden.');blobOeffnen(b,a.path.split('/').pop())}};
+/* Anhänge sicher öffnen (P37 S1): blob:-Adressen laufen in der Herkunft des Programms – SVG, HTML oder XML könnten dort Code ausführen und Anmeldung/Daten lesen.
+   Nur PDF und Rasterbilder werden angezeigt (Typ aus der Dateiendung, nicht aus der Datei), alles andere wird heruntergeladen */
+const BLOB_TYP={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',bmp:'image/bmp',txt:'text/plain'};
+function blobOeffnen(b,name){const t=BLOB_TYP[(String(name).match(/\.(\w+)$/)||[])[1]?.toLowerCase()];
+  if(!t){dl(b,name);return}
+  const u=URL.createObjectURL(new Blob([b],{type:t}));window.open(u,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(u),60000)}
 let STORE=CACHESTORE,saving=false,saveAgain=false,retryT=null;
 
 async function saveNow(){
@@ -1193,7 +1229,7 @@ function offen(b){
 }
 function zaehltUmsatz(b){return RE_V.includes(b.typ)&&b.fest&&!b.storno&&!(b.typ==='GS'&&b.stornoVon)}
 function kinderMenge(posId,typen){let m=0;for(const b of DB.belege){if(b.storno||!typen.includes(b.typ))continue;for(const p of b.pos)if(p.herkunftPosId===posId)m+=(+p.menge||0)}return m}
-function erledigung(b){
+function erledigung(b){if(lfL(b))return lfErl(b); // Bestellung mit Restmenge gestrichen (P35)
   const cat=b.typ==='BE'?['WE']:['LS'],cat2=b.typ==='BE'?['ER']:['RE','TR','SR'];
   let soll=0,ist=0;const gi=gruppenInfo(b); // Options-/Alternativpositionen (auch über die Gruppe) werden nicht geliefert
   for(const p of b.pos){if(isInfo(p)||effKz(p,gi))continue;const m=+p.menge||0;soll+=m;ist+=Math.min(m,Math.max(kinderMenge(p.id,cat),kinderMenge(p.id,cat2)))}
@@ -1298,7 +1334,7 @@ function folge(src,typ,extra={}){
     if(effKz(p,gi)&&!(src.typ==='AN'&&['AB','PR'].includes(typ)))continue; // Option/Alternative auch über die Gruppe; AN → AB/PR übernimmt alles
     if(typ==='BE'&&(p.art==='L'||isInfo(p)))continue;
     let menge=+p.menge||0;
-    if(!isInfo(p)&&cat){menge=r3(menge-kinderMenge(p.id,cat));if(menge<=0)continue}
+    if(!isInfo(p)&&cat){menge=r3(menge-kinderMenge(p.id,cat)-lfGestr(src,p));if(menge<=0)continue} // gestrichene Restmenge der Bestellung (P35) nicht übernehmen
     const np=neuPos({...p,id:uid(),herkunftPosId:p.id,menge});
     if(typ==='BE'){np.ep=+p.ek||0;np.rabatt=0;np.steuer=S().stdSteuer}
     b.pos.push(np);
@@ -1310,6 +1346,106 @@ function folge(src,typ,extra={}){
   return b;
 }
 function folgeGo(src,typ){const b=folge(src,typ);if(b){log('Folgebeleg',`${T[typ].bez} aus ${src.nr}`);persist();go('beleg/'+b.id)}}
+/* ---------- Liefertermine (P35 Teil 1, erw.lfTermin): Auftragsbestätigung des Lieferanten an der Bestellung ----------
+   Statusangaben, kein Belegsinhalt – auch an festgeschriebenen Bestellungen (Nummer, Positionen, Summen, Druck und PDF bleiben unverändert), gespeichert per commit() mit log():
+   b.lief={abNr,abDatum,termin (bestätigt für die ganze Bestellung),pos:{<posId>:{termin,teil:[{menge,termin}],gestrichen,gDatum,gGrund}},verlauf:[{ts,pos,alt,neu,grund} bzw. {ts,pos,g,grund}]}.
+   lfPos(b) je Position (ohne Text/Gruppe/Option/Alternative): bestellt, geliefert (Wareneingänge bzw. Eingangsrechnung direkt aus der Bestellung, wie erledigung()), gestrichen, offen, offene Teilmengen mit Termin (bestätigt: Teilmenge → Position →
+   Bestellung, sonst gewünscht = b.liefertermin; Lieferungen decken die früheste Teilmenge, gestrichen wird die späteste), termin = frühester offener, tage = Verzug, st = Status.
+   „Restmenge streichen“: erledigung() (über lfErl) und Folgebelege BE → WE/ER rechnen mit Menge − gestrichen. Schalter aus: b.lief wird nicht gelesen (Termin = Liefertermin der Bestellung) */
+erwPlus({k:'lfTermin',std:true,p:'Liefertermine (P35)',l:'Bestellungen: Auftragsbestätigung des Lieferanten, Liefertermine je Position, Restmenge streichen',info:'Festgeschriebene Bestellungen zeigen die Karte „Lieferung“ mit je Position bestellt, geliefert (Wareneingänge), offen, Termin und Verzug in Tagen. „Bestätigung & Termine …“ erfasst Nummer und Datum der Auftragsbestätigung des Lieferanten, den bestätigten Liefertermin der ganzen Bestellung und wahlweise je Position, auch Teilmengen mit eigenem Termin (Teillieferungen); geänderte Termine kommen mit Grund in den Terminverlauf. „Restmenge streichen …“ (⋯ an der Position) für Mengen, die der Lieferant nicht mehr liefert: Die Position gilt dann als erledigt, der Wareneingang übernimmt nur den Rest. Das sind Statusangaben – Nummer, Positionen, Summen und Ausdruck der Bestellung bleiben unverändert. Aus: Die Angaben bleiben gespeichert, gelten aber nicht (Status wie bisher).'});
+const lfL=b=>erw('lfTermin')&&b?.typ==='BE'&&b.lief||null;
+const lfGestr=(b,p)=>+lfL(b)?.pos?.[p.id]?.gestrichen||0;
+const lfTage=(iso,h=isoD())=>iso?Math.round((new Date(h+'T12:00:00')-new Date(iso+'T12:00:00'))/864e5):null; // Tage seit dem Termin (> 0 = überfällig)
+const lfD=v=>/^\d{4}-\d\d-\d\d$/.test(v||'')?dAT(v):v||'–';
+function lfErl(b){let soll=0,ist=0,gs=0;const gi=gruppenInfo(b); // wie erledigung(), Menge abzüglich gestrichen; alles gestrichen = erledigt
+  for(const p of b.pos){if(isInfo(p)||effKz(p,gi))continue;const g=Math.min(lfGestr(b,p),+p.menge||0),m=(+p.menge||0)-g;gs+=g;soll+=m;ist+=Math.min(m,Math.max(kinderMenge(p.id,['WE']),kinderMenge(p.id,['ER'])))}
+  return soll?ist/soll:gs?1:0}
+const lfMengen=()=>{const M=new Map();for(const x of DB.belege)if(!x.storno&&(x.typ==='WE'||x.typ==='ER'))for(const p of x.pos)if(p.herkunftPosId){const k=p.herkunftPosId+'|'+x.typ;M.set(k,(M.get(k)||0)+(+p.menge||0))}return M}; // wie kinderMenge(), einmal für alle Bestellpositionen (Listen, Zähler)
+function lfPos(b,h=isoD(),M=null){const L=lfL(b),gi=gruppenInfo(b),pnr=posNummern(b),w=b.liefertermin||'',R=[],ord=(a,c)=>(a.termin||'9').localeCompare(c.termin||'9');
+  b.pos.forEach((p,i)=>{if(isInfo(p)||effKz(p,gi))return;
+    const x=L?.pos?.[p.id]||{},m=+p.menge||0,g=M?Math.max(M.get(p.id+'|WE')||0,M.get(p.id+'|ER')||0):Math.max(kinderMenge(p.id,['WE']),kinderMenge(p.id,['ER'])),gs=Math.min(+x.gestrichen||0,m),tb=x.termin||L?.termin||'',tl=L&&Array.isArray(x.teil)?x.teil.filter(t=>+t.menge>0):[],A=[];
+    let rest=g,frei=Math.max(0,m-g);
+    for(const t of [...tl].sort(ord)){const d=Math.min(+t.menge,rest);rest-=d;const o=Math.min(+t.menge-d,frei);frei-=o;if(o>0.0001)A.push({menge:o,termin:t.termin||tb||w,best:!!(t.termin||tb)})}
+    if(frei>0.0001)A.push({menge:frei,termin:tb||w,best:!!tb});
+    A.sort(ord);let s=gs;for(let j=A.length-1;j>=0&&s>0;j--){const d=Math.min(A[j].menge,s);A[j].menge-=d;s-=d}
+    const teile=A.filter(t=>t.menge>0.0001).map(t=>({...t,menge:r3(t.menge)})),offen=r3(Math.max(0,m-g-gs)),termin=offen>0?teile[0]?.termin||'':'',tage=termin?lfTage(termin,h):null;
+    R.push({b,p,i,nr:pnr[p.id]||'',bestellt:m,geliefert:g,gestrichen:gs,offen,teile,termin,best:!!(offen>0&&teile[0]?.best),tage,st:offen<=0?'erledigt':!termin?'ohne':tage>0?'ueber':tage===0?'heute':'ok',x})});
+  return R}
+const LF_RANG={erledigt:0,ohne:1,ok:2,heute:3,ueber:4};
+const lfStand=P=>P.filter(x=>x.offen>0).reduce((a,x)=>!a||LF_RANG[x.st]>LF_RANG[a.st]||(x.st===a.st&&(x.tage??-1e9)>(a.tage??-1e9))?x:a,null); // dringendste offene Position
+const lfTag=x=>x.st==='ueber'?tag(`überfällig ${x.tage} Tag${x.tage===1?'':'e'}`,'err'):x.st==='heute'?tag('heute fällig','warn'):x.st==='ok'?`<span title="fällig in ${-x.tage} Tag${x.tage===-1?'':'en'}">${tag('rechtzeitig','ok')}</span>`:x.st==='ohne'?tag('ohne Termin'):tag(x.gestrichen?'erledigt':'geliefert','ok');
+const lfTerminTxt=x=>{const f=t=>t.termin?dAT(t.termin)+(t.best?'':' <span class="mut">(gewünscht)</span>'):'<span class="mut">ohne Termin</span>';return x.teile.length>1?x.teile.map(t=>`${fmtQ(t.menge)} ${esc(x.p.einheit||'')} bis ${f(t)}`).join('<br>'):x.teile[0]?.termin?f(x.teile[0]):x.teile.length?'–':''};
+function lfVerlaufTxt(b,v){const p=v.pos&&b.pos.find(q=>q.id===v.pos),pz=v.pos?`Pos ${esc(posNummern(b)[v.pos]||'')} ${esc(p?.bez||'(entfernt)')}: `:'Ganze Bestellung: ';
+  return pz+(v.g!=null?(+v.g>0?`Restmenge ${fmtQ(v.g)} ${esc(p?.einheit||'')} gestrichen`:'Streichung aufgehoben'):`Termin ${esc(lfD(v.alt))} → ${esc(lfD(v.neu))}`)+(v.grund?` – ${esc(v.grund)}`:'')}
+function lfKarte(b){if(b.typ!=='BE'||!b.fest||b.storno||!erw('lfTermin'))return'';
+  const L=b.lief||{},P=lfPos(b),w=lfStand(P),H=kmpH(),e=x=>esc(x.p.einheit||''),q=fmtQ,V=(L.verlauf||[]).slice().reverse();
+  const ab=L.abNr||L.abDatum||L.termin?`Auftragsbestätigung des Lieferanten${L.abNr?' Nr. <b>'+esc(L.abNr)+'</b>':''}${L.abDatum?' vom '+dAT(L.abDatum):''}${L.termin?' · Liefertermin <b>'+dAT(L.termin)+'</b>':''}`:'<span class="mut">Noch keine Auftragsbestätigung des Lieferanten erfasst.</span>';
+  const gs=x=>x.gestrichen?`<div class="mut lfg">Rest ${q(x.gestrichen)} ${e(x)} gestrichen${x.x.gDatum?' am '+dAT(x.x.gDatum.slice(0,10)):''}${x.x.gGrund?' – '+esc(x.x.gGrund):''}</div>`:'';
+  const vz=x=>x.st==='ueber'?`<b class="err">${x.tage}</b>`:x.st==='heute'?'<span class="warnc">heute</span>':'';
+  const mn=(x,c)=>x.offen>0||x.gestrichen?`<button class="${c}" data-act="menue" data-m="lfpos" data-pid="${esc(x.p.id)}" title="Restmenge streichen …">⋯</button>`:'';
+  const rows=H?`<div class="kkl lfkl">${P.map(x=>`<div class="kkf">${karte({t:`${esc(x.nr)} ${esc(x.p.bez)}`,s:lfTag(x),u:`bestellt ${q(x.bestellt)} · geliefert ${q(x.geliefert)} · offen <b>${q(x.offen)}</b> ${e(x)}${gs(x)}`,z:x.offen>0?'Termin '+lfTerminTxt(x):'',b:x.st==='ueber'?`<span class="err">${x.tage} Tg. Verzug</span>`:''})}${mn(x,'mehr')}</div>`).join('')}</div>`
+    :`<div style="overflow-x:auto"><table class="lft"><thead><tr><th>Pos</th><th>Artikel</th><th class="n">bestellt</th><th class="n" title="Wareneingänge (bzw. Eingangsrechnungen direkt aus der Bestellung)">geliefert</th><th class="n">offen</th><th>Termin</th><th class="n" title="Tage über dem Termin">Verzug</th><th></th></tr></thead><tbody>${P.map(x=>`<tr${x.offen>0?'':' class="mut"'}><td>${esc(x.nr)}</td><td>${x.p.nr?`<span class="mut">${esc(x.p.nr)}</span> `:''}${esc(x.p.bez)}${gs(x)}</td><td class="n">${q(x.bestellt)}</td><td class="n">${q(x.geliefert)}</td><td class="n"><b>${q(x.offen)}</b> ${e(x)}</td><td>${lfTerminTxt(x)}</td><td class="n">${vz(x)}</td><td>${mn(x,'s')}</td></tr>`).join('')}</tbody></table></div>`;
+  return`<div class="card lfk${w?' lf-'+w.st:''}"><div class="bar" style="margin:0 0 6px"><h2 style="margin:0">Lieferung</h2>${w?lfTag(w):tag(P.some(x=>x.gestrichen)?'erledigt':'geliefert','ok')}<span class="sp"></span>${w||lfWEe(b)?`<button data-act="lfwe" title="${w?'Wareneingang mit den offenen Mengen anlegen':'Wareneingang im Entwurf öffnen'}">📦 ${H?'WE':'Wareneingang'} …</button>`:''}<button class="p" data-act="lfab">Bestätigung &amp; Termine …</button></div>
+  <div style="font-size:13px;margin-bottom:6px">${ab}${b.liefertermin?` <span class="mut">· gewünscht ${dAT(b.liefertermin)}</span>`:''}</div>${lfErinInfo(b,w)}${rows}
+  ${V.length?`<details class="lfv"><summary>Terminverlauf (${V.length})</summary>${V.map(v=>`<div>${dtAT(v.ts)} · ${lfVerlaufTxt(b,v)}</div>`).join('')}</details>`:''}</div>`}
+// „Bestätigung & Termine …“: AB-Nr./Datum des Lieferanten, Termin der ganzen Bestellung, je Position Termin und Teilmengen mit Termin; geänderte Termine → Verlauf mit Grund; ein commit()
+function lfAbPop(b){if(!b||b.typ!=='BE'||!b.fest||b.storno||!erw('lfTermin'))return;
+  const L=b.lief||{},P=lfPos(b),Z={};for(const x of P)Z[x.p.id]={termin:x.x.termin||'',teil:(Array.isArray(x.x.teil)?x.x.teil:[]).map(t=>({menge:t.menge,termin:t.termin||''}))};
+  const zeile=x=>{const z=Z[x.p.id],e=esc(x.p.einheit||'');return`<div class="lfp" data-pid="${esc(x.p.id)}"><div><b>${esc(x.nr)}</b> ${esc(x.p.bez)}<div class="mut" style="font-size:12px">bestellt ${fmtQ(x.bestellt)} · geliefert ${fmtQ(x.geliefert)}${x.gestrichen?' · gestrichen '+fmtQ(x.gestrichen):''} · offen ${fmtQ(x.offen)} ${e}</div></div>
+    <div class="row"><label class="w05">Termin der Position<input type="date" data-lf="t" value="${esc(z.termin)}"></label><button class="s lfb" data-lfadd="1">+ Teilmenge mit Termin</button></div>
+    ${z.teil.map((t,j)=>`<div class="row lftl"><label class="w05">Teilmenge${e?' ('+e+')':''}<input type="number" step="any" inputmode="decimal" data-lf="m" data-j="${j}" value="${esc(t.menge)}"></label><label class="w05">Termin<input type="date" data-lf="d" data-j="${j}" value="${esc(t.termin)}"></label><button class="s d lfb" data-lfdel="${j}" title="Teilmenge entfernen">✕</button></div>`).join('')}</div>`};
+  const d=document.createElement('div');d.className='modal';
+  d.innerHTML=`<div class="mbox" style="max-width:760px;max-height:88vh;overflow:auto"><h2>Auftragsbestätigung des Lieferanten – Bestellung ${esc(bNr(b))}</h2>
+    <div class="row"><label class="w05">AB-Nr. des Lieferanten<input id="lf-nr" value="${esc(L.abNr||'')}"></label><label class="w05">AB vom<input type="date" id="lf-dat" value="${esc(L.abDatum||'')}"></label><label class="w05">Liefertermin (ganze Bestellung)<input type="date" id="lf-t" value="${esc(L.termin||'')}"></label></div>
+    <p class="mut" style="margin:6px 0 4px;font-size:13px">${b.liefertermin?`Gewünscht laut Bestellung: ${dAT(b.liefertermin)}. `:''}Termin der Position leer = Termin der ganzen Bestellung. Teillieferungen: „+ Teilmenge mit Termin“ (Wareneingänge decken die früheste Teilmenge zuerst).</p>
+    <div id="lf-pl">${P.map(zeile).join('')||'<p class="mut">Keine Positionen.</p>'}</div>
+    <div class="row"><label class="w2">Grund einer Terminverschiebung (für den Terminverlauf)<input id="lf-gr" placeholder="z. B. Lieferengpass beim Hersteller"></label></div>
+    <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Übernehmen</button></div></div>`;
+  document.body.appendChild(d);const pl=d.querySelector('#lf-pl'),zeich=()=>{pl.innerHTML=P.map(zeile).join('')};
+  const ein=e=>{const t=e.target,z=Z[t.closest('.lfp')?.dataset.pid];if(!z||!t.dataset.lf)return;if(t.dataset.lf==='t')z.termin=t.value;else{const r=z.teil[+t.dataset.j];if(r)r[t.dataset.lf==='m'?'menge':'termin']=t.value}};
+  pl.addEventListener('input',ein);pl.addEventListener('change',ein);
+  pl.addEventListener('click',e=>{const a=e.target.closest('[data-lfadd],[data-lfdel]');if(!a)return;e.preventDefault();const pid=a.closest('.lfp').dataset.pid,z=Z[pid];
+    if(a.dataset.lfadd){z.teil.push({menge:'',termin:''});zeich();pl.querySelector(`.lfp[data-pid="${CSS.escape(pid)}"] [data-lf="m"][data-j="${z.teil.length-1}"]`)?.focus()}else{z.teil.splice(+a.dataset.lfdel,1);zeich()}});
+  const fin=()=>{d.remove();document.removeEventListener('keydown',kd)},kd=e=>{if(e.key==='Escape'&&mOben(d))fin()};document.addEventListener('keydown',kd);d._gilt=()=>curBeleg()===b;d._weg=fin;
+  d.querySelector('#m-no').onclick=fin;
+  d.querySelector('#m-ok').onclick=()=>{if(curBeleg()!==b||b.storno){fin();return}const err=[],NP={};
+    for(const x of P){const z=Z[x.p.id],tl=z.teil.filter(t=>String(t.menge).trim()!==''||t.termin).map(t=>({menge:r3(num(t.menge)),termin:t.termin||''})),s=tl.reduce((a,t)=>a+t.menge,0);
+      if(tl.some(t=>!(t.menge>0)))err.push(`Pos ${x.nr}: Teilmenge größer als 0 eintragen.`);else if(s>x.bestellt-x.gestrichen+0.0001)err.push(`Pos ${x.nr}: Teilmengen zusammen (${fmtQ(s)}) mehr als bestellt${x.gestrichen?' abzüglich gestrichen':''} (${fmtQ(x.bestellt-x.gestrichen)}).`);
+      NP[x.p.id]={termin:z.termin||'',teil:tl}}
+    if(err.length){d.querySelector('#m-err').textContent=err.join(' ');return}
+    const nr=d.querySelector('#lf-nr').value.trim(),dat=d.querySelector('#lf-dat').value,t=d.querySelector('#lf-t').value,gr=d.querySelector('#lf-gr').value.trim(),ts=new Date().toISOString();
+    const n=JSON.parse(JSON.stringify(L)),Vn=[],tt=l=>l.map(y=>`${fmtQ(y.menge)} bis ${y.termin?dAT(y.termin):'–'}`).join('; ');
+    if(L.termin&&L.termin!==t)Vn.push({ts,pos:'',alt:L.termin,neu:t,grund:gr});
+    n.abNr=nr;n.abDatum=dat;n.termin=t;n.pos=n.pos||{};
+    for(const x of P){const a=x.x,z=NP[x.p.id],e=n.pos[x.p.id]||{},ta=tt(Array.isArray(a.teil)?a.teil:[]),tn=tt(z.teil);
+      if(a.termin&&a.termin!==z.termin)Vn.push({ts,pos:x.p.id,alt:a.termin,neu:z.termin,grund:gr});
+      if(ta&&ta!==tn)Vn.push({ts,pos:x.p.id,alt:ta,neu:tn,grund:gr});
+      if(z.termin)e.termin=z.termin;else delete e.termin;if(z.teil.length)e.teil=z.teil;else delete e.teil;
+      if(Object.keys(e).length)n.pos[x.p.id]=e;else delete n.pos[x.p.id]}
+    if(!Object.keys(n.pos).length)delete n.pos;for(const k of ['abNr','abDatum','termin'])if(!n[k])delete n[k];
+    if(Vn.length)n.verlauf=[...(n.verlauf||[]),...Vn];
+    if(JSON.stringify(n)===JSON.stringify(L)){fin();return}
+    if(Object.keys(n).length)b.lief=n;else delete b.lief;
+    log('Lieferantenbestätigung',`${bNr(b)}: ${[nr&&'AB '+nr,dat&&'vom '+dAT(dat),t&&'Termin '+dAT(t),Vn.length&&Vn.length+' Terminänderung(en)'+(gr?' – '+gr:'')].filter(Boolean).join(', ')||'Angaben geändert'}`);
+    fin();commit();render()}}
+// „Restmenge streichen …“ (Lieferant liefert nicht mehr): gestrichene Menge gesamt mit Grund und Zeitpunkt, Verlauf und Protokoll; „Streichung aufheben“
+async function lfRest(b,pid){const x=b?.fest&&lfPos(b).find(y=>y.p.id===pid);if(!x)return;const e=x.p.einheit||'',max=r3(x.bestellt-x.geliefert);
+  const o=await formDialog({titel:`Restmenge streichen – Pos ${esc(x.nr)} ${esc(x.p.bez)}`,ok:'Streichen',felder:[
+    {typ:'hinweis',l:`bestellt ${fmtQ(x.bestellt)} · geliefert ${fmtQ(x.geliefert)} · offen ${fmtQ(x.offen)} ${esc(e)}. Der Lieferant liefert die gestrichene Menge nicht mehr: Die Position gilt dann als erledigt, der Wareneingang übernimmt nur den Rest. Die Bestellung selbst (Nummer, Positionen, Summen, Ausdruck) bleibt unverändert.`},
+    {k:'menge',l:`Gestrichene Menge gesamt${e?' ('+esc(e)+')':''}`,typ:'number',wert:r3(x.gestrichen+x.offen),neu:1,cls:'w05',im:'decimal'},{k:'grund',l:'Grund',wert:'',pflicht:true,ph:'z. B. Artikel ausgelaufen',cls:'w2'}],
+    pruef:o=>{if(!(o.menge>0)||o.menge>max+0.0001){alert(`Bitte eine Menge größer 0 und höchstens ${fmtQ(max)} eintragen (bestellt abzüglich geliefert).`);return false}}});
+  if(!o||curBeleg()!==b)return;const L=b.lief??={},z=(L.pos??={})[pid]??={},m=r3(o.menge);
+  z.gestrichen=m;z.gDatum=new Date().toISOString();z.gGrund=o.grund;(L.verlauf??=[]).push({ts:z.gDatum,pos:pid,g:m,grund:o.grund});
+  log('Restmenge gestrichen',`${bNr(b)} Pos ${x.nr} ${x.p.bez}: ${fmtQ(m)} ${e} – ${o.grund}`);commit();render()}
+function lfRestX(b,pid){const x=b&&lfPos(b).find(y=>y.p.id===pid),z=b?.lief?.pos?.[pid];if(!x||!z?.gestrichen||!confirm(`Streichung der Restmenge (${fmtQ(z.gestrichen)} ${x.p.einheit||''}) bei Pos ${x.nr} aufheben?\nDie Menge gilt dann wieder als offen.`))return;
+  delete z.gestrichen;delete z.gDatum;delete z.gGrund;if(!Object.keys(z).length)delete b.lief.pos[pid];(b.lief.verlauf??=[]).push({ts:new Date().toISOString(),pos:pid,g:0,grund:''});
+  log('Streichung aufgehoben',`${bNr(b)} Pos ${x.nr} ${x.p.bez}`);commit();render()}
+// „Wareneingang …“: vorhandener Folgebeleg BE → WE mit den offenen Mengen (ohne gestrichene); ein Entwurf zur Bestellung wird angeboten
+const lfWEe=b=>DB.belege.find(x=>x.typ==='WE'&&x.vorgaengerId===b.id&&!x.fest&&!x.storno);
+function lfWE(id){const b=beleg(id);if(!b)return;const e=lfWEe(b);
+  if(e&&confirm(`Zur Bestellung ${bNr(b)} gibt es schon einen Wareneingang im Entwurf.\nDiesen öffnen?`)){go('beleg/'+e.id);return}folgeGo(b,'WE')}
+queueMicrotask(()=>{Object.assign(ACT,{lfab:()=>lfAbPop(curBeleg()),lfwe:el=>lfWE(el.dataset.id||curBeleg()?.id),lfrest:el=>lfRest(curBeleg(),el.dataset.pid),lfrestx:el=>lfRestX(curBeleg(),el.dataset.pid)}); // nach den Definitionen von ACT und MENUE
+  MENUE.lfpos=el=>{const b=curBeleg(),x=b&&lfPos(b).find(y=>y.p.id===el.dataset.pid);return x?[x.offen>0&&{l:'Restmenge streichen …',ic:'✂',act:'lfrest',d:{pid:x.p.id},titel:'Lieferant liefert diese Menge nicht mehr'},x.gestrichen>0&&{l:'Streichung aufheben',ic:'↺',act:'lfrestx',d:{pid:x.p.id}}]:[]}});
 
 /* ---------- Festschreiben / Storno ---------- */
 function adressSnapshot(k){return k?{nr:k.nr,name:k.name,zusatz:k.zusatz,strasse:k.strasse,plz:k.plz,ort:k.ort,land:k.land,uid:k.uid,kundenart:k.kundenart||'',...(k.kdNrLief?{kdNrLief:k.kdNrLief}:{}),...Object.fromEntries(PERSF.filter(f=>pT(k[f])).map(f=>[f,k[f]]))}:{}} // kundenart immer speichern ('' = Unternehmen), sonst liest der Nachdruck den aktuellen Kontakt; Anrede, Titel, Name und Briefanrede nur, wenn eingetragen (P6)
@@ -1503,6 +1639,7 @@ function render(){
   bilderLaden(); // Bilder aus der Ablage: Artikel (P24, Teil), Fotos und Unterschriften (P36)
   document.body.classList.toggle('ihh',erw('ihHover')&&HOVER.matches);document.body.classList.toggle('ssp',erw('scrollSperre')); // Bedienung (P33)
   document.querySelectorAll('.modal').forEach(m=>{try{if(m._gilt&&!m._gilt()){(m._weg||(()=>m.remove()))();return}m._zeich?.()}catch(e){}}); // offene Bearbeiten-Pop-ups (P30) zeigen den neuen Stand; Pop-ups eines verlassenen oder ersetzten Belegs (Navigation, Abgleich, Verwerfen) schließen
+  lfNav(); // Seitenleiste: „Offene Lieferungen“ (P35)
 }
 window.addEventListener('hashchange',async()=>{
   if(!DB)return;
@@ -1695,7 +1832,7 @@ V.dash=()=>{
     [entw,`Entwürfe <a href="javascript:void 0" onclick="zuListe('V','','entwurf')" style="font-weight:400;font-size:13px">Verkauf →</a> <a href="javascript:void 0" onclick="zuListe('E','','entwurf')" style="font-weight:400;font-size:13px">Einkauf →</a>`,b=>karte({t:`${BICON[b.typ]||''} ${T[b.typ].bez}`,u:[kName(b.kontaktId),b.betreff].filter(x=>x&&x!=='–').map(esc).join(' · '),z:dAT(b.datum),a:nb(b)}),'keine Entwürfe']];
     const leer=L.filter(x=>!x[0].length).map(x=>x[3]);
     return L.filter(x=>x[0].length).map(([arr,h,f])=>`<div class="card kkl" style="padding:0"><h2>${h}</h2>${arr.map(f).join('')}</div>`).join('')+(leer.length?`<div class="card mut">${leer.join(' · ').replace(/^./,c=>c.toUpperCase())}</div>`:'')};
-  return`<h1>Überblick ${j}</h1>
+  return`<h1>Überblick ${j}</h1>${lfDash()}
   ${!S().firma.name?'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>':''}
   ${kmp()?quickK():`<div class="quick">
     <a class="btn" href="#/zeiten">⏱ Zeit erfassen</a>
@@ -1860,6 +1997,34 @@ V.belege=(bereich='V')=>{
      vor:mitGr?{kopf:`<span style="white-space:nowrap"><button class="s" onclick="grpAuf('*')" title="Alle aufklappen">+</button><button class="s" onclick="grpAuf('-')" title="Alle zuklappen">−</button></span>`,
        zelle:b=>KIND.has(b.id)?'<td class="mut" style="text-align:right;padding-right:2px">└</td>':`<td>${ANZ.get(b.id)?`<button class="s grpk" onclick="event.stopPropagation();grpAuf('${b.id}')" title="${ANZ.get(b.id)} zugehörige(r) Beleg(e) (Revisionen, Folgebelege) ${UI.auf[b.id]?'zuklappen':'aufklappen'}">${UI.auf[b.id]?'−':'+'}${ANZ.get(b.id)}</button>${beleg(PRJ.get(b.id))?.projekt?'':`<button class="s" onclick="event.stopPropagation();projektName('${PRJ.get(b.id)}')" title="Projektname als Überschrift vergeben">🏷</button>`}`:''}</td>`}:null})}`;
 };
+/* ---------- Offene Lieferungen (P35 Teil 2, erw.lfListe): je offene Position festgeschriebener Bestellungen (lfPos) Lieferant, Bestellung, Artikel, offen, Termin (bestätigt,
+   sonst gewünscht) und Status; Filter UI.lfSt (Status, LF_F), UI.lfK (Lieferant), UI.lfQ (Suche); Spalten LF_SP über tabelle() mit Spaltenauswahl, am Handy Karten;
+   Zeile → Bestellung, „📦 WE“ → lfWE() (Folgebeleg BE → WE mit den offenen Mengen). Seitenleiste „Offene Lieferungen“ unter „Einkauf“, lfNav() aus render() ---------- */
+erwPlus({k:'lfListe',std:true,p:'Liefertermine (P35)',l:'Liste „Offene Lieferungen“ (Einkauf)',info:'In der Seitenleiste unter „Einkauf“: alle noch nicht (vollständig) gelieferten Positionen festgeschriebener Bestellungen mit Lieferant, Bestellung, Artikel, offener Menge, Termin (bestätigt laut Auftragsbestätigung des Lieferanten, sonst der gewünschte Liefertermin) und Status rechtzeitig, heute fällig, überfällig (Tage) oder ohne Termin. Filter nach Status und Lieferant, Suche, Spaltenauswahl (⚙), am Handy als Karten. Antippen öffnet die Bestellung, „📦 WE“ erfasst den Wareneingang mit den offenen Mengen.'});
+const lfOffen=(h=isoD(),M=lfMengen())=>DB.belege.filter(b=>b.typ==='BE'&&b.fest&&!b.storno).flatMap(b=>lfPos(b,h,M).filter(x=>x.offen>0));
+const LF_ST={ueber:'überfällig',heute:'heute fällig',ok:'rechtzeitig',ohne:'ohne Termin'},LF_F={ueber:x=>x.st==='ueber',heute:x=>x.st==='heute',ok:x=>x.st==='ok',ohne:x=>x.st==='ohne'};
+const LF_SP=[{k:'lief',l:'Lieferant',f:x=>esc(kName(x.b.kontaktId))},{k:'be',l:'Bestellung',f:x=>`<span class="nw">${esc(bNr(x.b))}</span><br><span class="mut">${dAT(x.b.datum)}</span>`},{k:'pos',l:'Pos',f:x=>esc(x.nr),std:false},
+  {k:'nr',l:'Art.-Nr.',f:x=>esc(x.p.nr||'')+(x.p.lnr?`<br><span class="mut">Lief.: ${esc(x.p.lnr)}</span>`:'')},{k:'bez',l:'Artikel',f:x=>esc(x.p.bez)},
+  {k:'bestellt',l:'bestellt',n:1,f:x=>fmtQ(x.bestellt),std:false},{k:'geliefert',l:'geliefert',n:1,f:x=>fmtQ(x.geliefert),std:false},{k:'offen',l:'offen',n:1,f:x=>`<b>${fmtQ(x.offen)}</b> ${esc(x.p.einheit||'')}`},
+  {k:'termin',l:'Termin',f:x=>lfTerminTxt(x)},{k:'status',l:'Status',f:x=>lfTag(x)},{k:'tage',l:'Verzug Tage',n:1,f:x=>x.tage>0?x.tage:'',std:false},{k:'wunsch',l:'gewünscht',f:x=>dAT(x.b.liefertermin),std:false},
+  {k:'ab',l:'AB Lieferant',f:x=>esc(lfL(x.b)?.abNr||''),std:false},{k:'auftrag',l:'Auftrag',f:x=>x.b.auftragId?esc(auftragKurz(x.b.auftragId)):'',std:false}];
+V.lieferungen=()=>{if(!erw('lfListe'))return'<h1>Offene Lieferungen</h1><p class="mut">Die Liste ist ausgeschaltet (Einstellungen → Erweiterungen → Liefertermine).</p>';
+  const A=lfOffen(),q=(UI.lfQ||'').toLowerCase().trim(),st=LF_F[UI.lfSt]?UI.lfSt:'',kid=UI.lfK||'';
+  const lief=[...new Set(A.map(x=>x.b.kontaktId))].map(kontakt).filter(Boolean).sort((a,c)=>a.name.localeCompare(c.name));
+  const L=A.filter(x=>(!st||LF_F[st](x))&&(!kid||x.b.kontaktId===kid)&&(!q||[bNr(x.b),x.b.fremdNr,x.b.lief?.abNr,x.b.betreff,kName(x.b.kontaktId),x.p.nr,x.p.lnr,x.p.bez].join(' ').toLowerCase().includes(q)))
+    .sort((a,c)=>(a.termin||'9').localeCompare(c.termin||'9')||bNr(a.b).localeCompare(bNr(c.b))||a.i-c.i);
+  const chips=[['','Alle',A.length],...Object.entries(LF_ST).filter(e=>e[1]).map(([k,l])=>[k,l,A.filter(LF_F[k]).length])].map(([k,l,z])=>`<button class="${st===k?'on':''}" data-act="lfst" data-v="${k}">${esc(l)} (${z})</button>`).join('');
+  return`<h1>Offene Lieferungen</h1>
+  <div class="bar chips${kmp()?' ein':''}">${chips}</div>
+  <div class="bar"><select data-o="ui" data-f="lfK" title="Lieferant">${opt('','alle Lieferanten',kid)}${lief.map(k=>opt(k.id,k.name,kid)).join('')}</select><input data-o="ui" data-f="lfQ" placeholder="Suche Bestellung, Artikel, Lieferant" value="${esc(UI.lfQ||'')}"${kmpH()?'':' style="width:260px"'}></div>
+  ${tabelle('lieferungen',LF_SP,L,{zeile:x=>`class="click" onclick="nav('beleg/${x.b.id}')"`,leer:A.length?'Keine Treffer.':'Keine offenen Lieferungen.',
+    nach:x=>`<td style="white-space:nowrap;padding-right:6px"><button class="s" onclick="event.stopPropagation();lfWE('${x.b.id}')" title="Wareneingang zur Bestellung ${esc(bNr(x.b))} mit den offenen Mengen erfassen">📦 WE</button></td>`,
+    mf:x=>karte({t:esc(x.p.bez),s:lfTag(x),u:`${esc(bNr(x.b))} Pos ${esc(x.nr)} · ${esc(kName(x.b.kontaktId))}`,z:x.termin?'Termin '+lfTerminTxt(x):'',b:`${fmtQ(x.offen)} ${esc(x.p.einheit||'')}`})})}`};
+function zuLief(st=''){UI.lfSt=st;UI.lfK='';UI.lfQ='';if(location.hash==='#/lieferungen')render();else nav('lieferungen')} // Sprung in die Liste mit Statusfilter
+document.querySelector('nav a[data-n="belege/E"]')?.insertAdjacentHTML('afterend','<a href="#/lieferungen" data-n="lieferungen" class="navlf">Offene Lieferungen</a>');
+function lfNav(){document.body.classList.toggle('lfaus',!erw('lfListe'));const a=document.querySelector('nav a[data-n="belege/E"]');if(!a)return;a.querySelector('.nbz')?.remove(); // Zähler fälliger Lieferungen (Teil 3)
+  const n=erw('lfErinnern')?new Set(lfFaellig(isoD(),0).map(x=>x.b.id)).size:0;if(n)a.insertAdjacentHTML('beforeend',` <span class="nbz" title="${n} Bestellung${n>1?'en':''} mit überfälliger bzw. heute fälliger Lieferung">${n}</span>`)}
+queueMicrotask(()=>Object.assign(ACT,{lfst:el=>{UI.lfSt=el.dataset.v||'';render()}}));
 
 /* Kompakt (P30 U8): Kopfdaten des Belegs. kopfFelder(b,teil) = bisheriges Formular (ohne teil die ganze Karte, HTML wie bisher), teil 'kopf' (Kunde bis Wareneingang),
    'zahl' (Zahlungsbedingungen), 'texte' (Kopf- und Fußtext untereinander). kopfK(b) in kompakt: am Handy Zusammenfassung kopfZus(b) (Kunde · Ort, Datum, Betreff · Bezug), antippen
@@ -1949,7 +2114,7 @@ V.beleg=id=>{
       <td data-l="Kz" style="width:74px">${kzSel(i,p)}</td>${akt}
     </tr>`}).join('');
   const kette=DB.belege.filter(x=>b.auftragId?x.auftragId===b.auftragId:(x.id===b.id||x.vorgaengerId===b.id||x.id===b.vorgaengerId)).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
-  const k=kontakt(b.kontaktId),scan=['WE','ER','BE'].includes(b.typ)?scanBox(b):'';
+  const k=kontakt(b.kontaktId),scan=(['WE','ER','BE'].includes(b.typ)?scanBox(b):'')+lfKarte(b)+lfHinweis(b); // Karte „Lieferung“ der Bestellung, Hinweis in der Auftragsbestätigung (P35)
   const ans=ansicht();
   const kopfbar=kmpB()?belegKopfbarK(b,ans)+zahlKopfK(b)+aktLeiste(b):`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
@@ -4319,7 +4484,7 @@ V.export=()=>{
   <div class="bar"><button data-act="exp" data-k="ra">Rechnungsausgangsbuch</button><button data-act="exp" data-k="re">Rechnungseingangsbuch</button><button data-act="exp" data-k="za">Zahlungen</button><button data-act="exp" data-k="op">Offene Posten</button><button data-act="exp" data-k="lg">Lagerbestand</button><button data-act="exp" data-k="au">Aufträge DB II</button></div></div>
   <div class="card"><h2>Datensicherung</h2>
   <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>
-  <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}</div>
+  <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}${geraetKnopf()}</div>
   <div class="bar"><button data-act="exp" data-k="json">Gesamtdaten exportieren (JSON)</button><label class="btn" style="font-size:14px;color:inherit">Daten importieren (ersetzt alles)<input type="file" id="imp" accept=".json" style="display:none"></label><button data-act="savenow">Jetzt speichern</button></div></div>
   ${kmp()&&!DB.papierkorb.length?'<div class="card mut">Papierkorb: leer</div>':`<div class="card"><h2>Papierkorb</h2>${DB.papierkorb.length?`<table><thead><tr><th>Gelöscht am</th><th>Art</th><th>Eintrag</th><th></th></tr></thead><tbody>${DB.papierkorb.slice().reverse().map(e=>`<tr><td style="white-space:nowrap">${new Date(e.ts).toLocaleString('de-AT')}</td><td>${PK[e.c]?.n||e.c}</td><td>${esc(e.info)}</td><td style="white-space:nowrap"><button class="s" data-act="pkrest" data-id="${e.id}">Wiederherstellen</button> <button class="s d" data-act="pkdel" data-id="${e.id}">Endgültig löschen</button></td></tr>`).join('')}</tbody></table>
     <div class="bar" style="margin-top:8px"><button data-act="pkrestall">Alle wiederherstellen</button><button class="d" data-act="pkleer">Papierkorb leeren …</button></div>`:'<p class="mut" style="margin:0">leer</p>'}</div>`}
@@ -4542,7 +4707,8 @@ V.einstellungen=()=>{
   ${akk('e-ein','Belege einlesen',`<div class="card"><h2>Belege einlesen</h2>
   ${einlesenInfo(`Kostenlos und ohne Internetdienst werden gelesen: <b>E-Rechnungen</b> (ZUGFeRD/Factur-X, XRechnung, ebInterface) und <b>PDFs mit Textebene</b> (z. B. PDF aus der E-Mail des Lieferanten). Fotos und eingescannte Papierbelege enthalten keinen Text – Positionen dann manuell erfassen.`,
   `Optional (kostenpflichtig): KI-Erkennung für Fotos durch Claude (Anthropic) – nur wenn hier ein Schlüssel eingetragen ist. Den API-Schlüssel erhalten Sie in der Anthropic Console (console.anthropic.com → API Keys). Er wird nur in diesem Browser gespeichert, nicht in der Datenbank – auf jedem Gerät einmal eintragen. Kosten ca. 1–3 Cent je Seite; das Bild wird zur Auswertung an Anthropic übertragen.`)}
-  <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${lsGet('erp-ki-key')?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><span style="flex:2"></span></div></div>`,{zusatz:lsGet('erp-ki-key')?'KI-Schlüssel gespeichert':'PDF-Text und E-Rechnung'})}
+  <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${kiKey()?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><label class="chk" title="Der Schlüssel wird beim Schließen des Browsers vergessen – sicherer an fremden oder geteilten Geräten (P37 S6)"><input type="checkbox" id="kises"${kiSitzung()?' checked':''}> nur bis zum Schließen des Browsers merken</label><span style="flex:2"></span></div>
+  <p class="mut" style="margin:4px 0 0">Datenschutz: Mit Schlüssel gehen Belegbilder und -texte an Anthropic (USA). Vorher Auftragsverarbeitung (DSGVO Art. 28) und Datenverarbeitungs-Zusatz von Anthropic prüfen; Belege mit Gesundheits- oder Personaldaten nicht über die KI einlesen.</p></div>`,{zusatz:kiKey()?'KI-Schlüssel gespeichert':'PDF-Text und E-Rechnung'})}
   ${akk('e-kfm','Kaufmännisch',`<div class="card"><h2>Kaufmännisch</h2><div class="row">
     <label class="w05">Letzte Kunden-Nr.<input type="number" data-o="s" data-f="knr.K" value="${s.knr.K}" title="Nächster Kunde erhält diese Nummer + 1"></label><label class="w05">Letzte Lieferanten-Nr.<input type="number" data-o="s" data-f="knr.L" value="${s.knr.L}"></label>
     ${sf('zahlungsziel','Zahlungsziel Tage')}${sf('skonto','Skonto %')}${sf('skontoTage','Skonto Tage')}${sf('angebotGueltig','Angebot gültig Tage')}
@@ -4562,6 +4728,7 @@ V.einstellungen=()=>{
   ${Object.keys(T).map(t=>`<tr><td>${T[t].bez}</td><td style="width:80px"><input data-o="nk" data-t="${t}" data-f="prefix" value="${esc(s.nk[t].prefix)}"></td><td style="width:90px"><input type="number" data-o="nk" data-t="${t}" data-f="z" value="${s.nk[t].zaehler[j]||0}"></td><td><textarea data-o="tx" data-t="${t}" data-f="kopf">${esc(s.texte[t].kopf)}</textarea></td><td><textarea data-o="tx" data-t="${t}" data-f="fuss">${esc(s.texte[t].fuss)}</textarea></td></tr>`).join('')}
   </tbody></table></div>`,{zusatz:`Format PRÄFIX-${j}-0001`})}
   ${akk('e-mail','E-Mail-Vorlage',mailKarte(),{zusatz:S().mailVorlage?.text||S().mailVorlage?.betreff?'eigene Vorlage':'Standardtext'})}
+  ${lfEinst()}
   ${kmp()?erwAkk():erwKarte()}`;
 };
 // Karte „Erweiterungen“: alle Funktionsschalter mit Beschreibung, Abweichungen vom Standard, Zurücksetzen je Paket bzw. alle
@@ -4933,9 +5100,10 @@ function xmlBeleg(txt){
   return d;
 }
 /* Texterkennung für Scans/Fotos: Tesseract (Apache-2.0), wird nur bei Bedarf von jsDelivr geladen und läuft lokal */
-const TESS={js:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/',core:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/deu@1.0.0/4.0.0_best_int'};
+const TESS={js:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/',core:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/deu@1.0.0/4.0.0_best_int',
+  sri:'sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F'}; // Prüfsumme tesseract.min.js 5.1.1 (P37 S7): veränderte Datei wird nicht ausgeführt; bei Versionswechsel neu berechnen
 async function ocrZeilen(bilder,info=()=>{}){
-  if(!window.Tesseract)await new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=TESS.js+'tesseract.min.js';sc.onload=ok;sc.onerror=()=>err(new Error('Texterkennung konnte nicht geladen werden – Internetverbindung prüfen.'));document.head.appendChild(sc)});
+  if(!window.Tesseract)await new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=TESS.js+'tesseract.min.js';sc.integrity=TESS.sri;sc.crossOrigin='anonymous';sc.onload=ok;sc.onerror=()=>err(new Error('Texterkennung konnte nicht geladen werden – Internetverbindung prüfen.'));document.head.appendChild(sc)});
   let seite=0;info('Texterkennung wird geladen (beim ersten Mal einige MB) …');
   const w=await Tesseract.createWorker('deu',1,{workerPath:TESS.js+'worker.min.js',corePath:TESS.core,langPath:TESS.lang,
     logger:m=>{if(m.status==='recognizing text')info(`Texterkennung Seite ${seite} von ${bilder.length} – ${Math.round(m.progress*100)} %`)}});
@@ -4969,6 +5137,10 @@ async function belegLokal(files,typ,info,mitKI){
 
 /* ---------- Beleg-Scan: Abgleich und Übernahme (optional KI für Fotos) ---------- */
 // API-Schlüssel nur im Browser des Geräts (localStorage), nicht in erp-daten.json
+/* KI-Schlüssel (P37 S6): dauerhaft in localStorage (bisher) oder nur für die Sitzung in sessionStorage */
+const kiSitzung=()=>lsGet('erp-ki-ses')==='1'; // Wahl je Gerät, der Schlüssel selbst bleibt in sessionStorage
+const kiKey=()=>{try{const k=sessionStorage.getItem('erp-ki-key');if(k)return k}catch(e){}return lsGet('erp-ki-key')};
+function kiKeySetzen(k,sitzung){try{sitzung&&k?sessionStorage.setItem('erp-ki-key',k):sessionStorage.removeItem('erp-ki-key')}catch(e){}lsSet('erp-ki-key',sitzung?null:k);lsSet('erp-ki-ses',sitzung?'1':null)}
 const KI_URL='https://api.anthropic.com/v1/messages',KI_MODELL='claude-opus-5-5';
 const LS_SCHEMA={type:'object',additionalProperties:false,required:['lieferant','lieferscheinNr','datum','bestellNr','lieferadresse','positionen'],properties:{
   lieferant:{type:'object',additionalProperties:false,required:['name','uid','strasse','plz','ort'],properties:{name:{type:'string'},uid:{type:'string'},strasse:{type:'string'},plz:{type:'string'},ort:{type:'string'}}},
@@ -5064,7 +5236,7 @@ async function belegScan(files,typ){
   await (SCANUP[b.id]=anhaengeHochladen(b,files,true,true)); // Originalbeleg unverändert ablegen
 }
 async function scanStart(b){
-  const key=lsGet('erp-ki-key'),files=SCANFILES[b.id];if(!files)return;
+  const key=kiKey(),files=SCANFILES[b.id];if(!files)return;
   b.scan={status:'läuft'};render();
   try{
     const info=t=>{const e=document.getElementById('scaninfo');if(e)e.textContent=t};
@@ -5717,6 +5889,83 @@ async function versenden(b){
   saveState('');alert(`Gesendet an ${an.join(', ')}.\nDas versendete PDF liegt beim Beleg unter „Anhänge“.`);render();
 }
 
+/* ---------- Erinnerungen bei Lieferverzug (P35 Teil 3, erw.lfErinnern): Karte „Lieferverzug“ im Überblick (lfDash: überfällig bzw. in den nächsten N Tagen fällig,
+   N = S().lfTage, Standard 3), Zähler an „Einkauf“ in der Seitenleiste (lfNav: Bestellungen mit überfälligen bzw. heute fälligen Positionen), Filter „fällig bis …“ in der Liste;
+   je Bestellung „✉ Erinnerung …“ (lfMail: E-Mail mit den fälligen Positionen über Graph /me/sendMail, ohne Office 365 mailto; Vorlage S().mailVorlage.lfBetreff/lfText,
+   Platzhalter wie P8 und LF_PH) und „💤 Wiedervorlage …“ (lfWvPop: bis zum Datum nicht in Karte und Zähler). Protokoll an der Bestellung (Statusangaben wie Teil 1, per commit()):
+   b.lief.erinnert [{ts,an,weg:'mail'|'mailto'}], b.lief.wv, b.lief.wvNotiz. Keine Benachrichtigungen des Browsers ---------- */
+erwPlus({k:'lfErinnern',std:true,p:'Liefertermine (P35)',l:'Erinnerungen bei Lieferverzug (Überblick, Seitenleiste, E-Mail an den Lieferanten)',info:'Der Überblick zeigt die Karte „Lieferverzug“ mit den Bestellungen, deren Lieferung überfällig ist oder in den nächsten Tagen fällig wird (Anzahl Tage unter Einstellungen → Liefertermine & Erinnerungen, Standard 3); „Einkauf“ in der Seitenleiste zählt die Bestellungen mit überfälliger bzw. heute fälliger Lieferung. In der Bestellung schickt „✉ Erinnerung …“ dem Lieferanten eine E-Mail mit den offenen Positionen (Vorlage mit Platzhaltern in den Einstellungen; mit Office 365 direkt, sonst über das E-Mail-Programm), der Versand wird an der Bestellung vermerkt. „💤 Wiedervorlage …“ blendet die Bestellung bis zu einem Datum aus Karte und Zähler aus. Keine Benachrichtigungen des Browsers.'});
+const lfN=()=>{const v=S().lfTage;return v===''||v==null||isNaN(+v)||+v<0?3:Math.min(60,Math.round(+v))};
+const lfWv=(b,h=isoD())=>!!(erw('lfErinnern')&&b.lief?.wv&&b.lief.wv>h); // Wiedervorlage: bis dahin keine Erinnerung
+const lfFaellig=(h=isoD(),n=lfN())=>lfOffen(h).filter(x=>x.termin&&x.tage>=-n&&!lfWv(x.b,h)); // überfällig bzw. in n Tagen fällig
+Object.defineProperty(LF_ST,'bald',{enumerable:true,get:()=>erw('lfErinnern')?`fällig bis ${dAT(addDays(isoD(),lfN()))}`:''});LF_F.bald=x=>!!x.termin&&x.tage>=-lfN()&&!lfWv(x.b); // Filter der Liste wie die Karte „Lieferverzug“
+LF_SP.push({k:'wv',l:'Wiedervorlage',get std(){return!!erw('lfErinnern')},f:x=>lfWv(x.b)?'💤 '+dAT(x.b.lief.wv):''},{k:'erin',l:'Erinnert',std:false,f:x=>{const e=x.b.lief?.erinnert||[];return e.length?dAT(e[e.length-1].ts.slice(0,10))+(e.length>1?` (${e.length}×)`:''):''}});
+function lfDash(){const E=erw('lfErinnern')?lfFaellig():[],K=erw('lfVerkauf')?lfKunden():[],G=new Map(),H=kmpH();if(!E.length&&!K.length)return''; // K: Kundenlieferungen (Teil 4)
+  for(const x of E){const g=G.get(x.b.id)||{b:x.b,P:[]};g.P.push(x);G.set(x.b.id,g)}
+  const L=[...G.values()].map(g=>({...g,w:lfStand(g.P)})).sort((a,c)=>a.w.termin.localeCompare(c.w.termin)),was=g=>g.P.length>1?`${g.P.length} Positionen`:esc(g.P[0].p.bez),tm=g=>dAT(g.w.termin)+(g.w.best?'':' <span class="mut">(gewünscht)</span>');
+  const kopf=E.length?`<a href="javascript:void 0" onclick="${erw('lfListe')?"zuLief('bald')":"zuListe('E','BE','offen')"}">Lieferverzug →</a> <span class="mut">überfällig und in den nächsten ${lfN()} Tagen fällig</span>`:'Lieferverzug';
+  const ze=!E.length?'':H?L.map(g=>karte({t:esc(bNr(g.b)),s:lfTag(g.w),u:`${esc(kName(g.b.kontaktId))} · ${was(g)}`,z:'Termin '+tm(g),a:`onclick="nav('beleg/${g.b.id}')"`})).join('')
+    :`<table>${L.map(g=>`<tr class="click" onclick="nav('beleg/${g.b.id}')"><td>${esc(bNr(g.b))}</td><td>${esc(kName(g.b.kontaktId))}</td><td>${was(g)}</td><td>${tm(g)}</td><td>${lfTag(g.w)}</td></tr>`).join('')}</table>`;
+  const kt=x=>tag(`überfällig ${x.tage} Tag${x.tage===1?'':'e'}`,'err')+(x.m.length?' '+tag('Material verspätet','warn'):''),ku=x=>[kName(x.b.kontaktId),x.b.betreff].filter(y=>y&&y!=='–').map(esc).join(' · ');
+  const zk=!K.length?'':`<h2 class="lfdk"><a href="javascript:void 0" onclick="zuListe('V','AB','offen')">Kunden →</a> <span class="mut">Liefertermin laut Auftragsbestätigung überschritten</span></h2>${H?K.map(x=>karte({t:esc(bNr(x.b)),s:kt(x),u:ku(x),z:'Liefertermin '+dAT(x.b.liefertermin),a:`onclick="nav('beleg/${x.b.id}')"`})).join('')
+    :`<table>${K.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${esc(bNr(x.b))}</td><td>${ku(x)}</td><td>${dAT(x.b.liefertermin)}</td><td>${kt(x)}</td></tr>`).join('')}</table>`}`;
+  return`<div class="card${H?' kkl':''} lfd"${H?' style="padding:0"':''}><h2>${kopf}</h2>${ze}${zk}</div>`}
+// in der Karte „Lieferung“: Erinnerungen, Wiedervorlage und die beiden Knöpfe
+function lfErinInfo(b,w){if(!erw('lfErinnern'))return'';const L=b.lief||{},E=L.erinnert||[],z=E[E.length-1],wv=lfWv(b);if(!w&&!E.length)return'';
+  return`<div class="bar lfe">${E.length?`<span>✉ erinnert ${E.length>1?E.length+'×, zuletzt ':''}${dtAT(z.ts)} an ${esc(z.an)}${z.weg==='mailto'?' <span class="mut">(E-Mail-Programm)</span>':''}</span>`:''}${wv?`<span>💤 Wiedervorlage am <b>${dAT(L.wv)}</b>${L.wvNotiz?' – '+esc(L.wvNotiz):''}</span>`:''}<span class="sp"></span>
+    ${w?`<button class="s" data-act="lfmail" title="E-Mail an den Lieferanten mit den fälligen bzw. offenen Positionen">✉ Erinnerung …</button><button class="s" data-act="lfwv" title="Bestellung bis zu einem Datum nicht in „Lieferverzug“ und im Zähler zeigen">💤 Wiedervorlage …</button>`:''}</div>`}
+// E-Mail-Vorlage der Erinnerung: Platzhalter der Belegtexte (phWerte) und LF_PH
+const LF_PH=[['Positionen','fällige (sonst alle offenen) Positionen mit Menge und Termin'],['AB','„ (Ihre Auftragsbestätigung Nr. … vom …)“, leer ohne Bestätigung'],['AbNr','Nr. der Auftragsbestätigung des Lieferanten'],['AbDatum','Datum der Auftragsbestätigung'],['Termin','bestätigter Liefertermin der Bestellung'],['Unterzeichner','Unterzeichner der Firma, sonst Bearbeiter']];
+const LF_MAIL={betreff:'Erinnerung: Bestellung {Nr} vom {Datum} – {Firma}',text:'{Anrede}\n\nzu unserer Bestellung {Nr} vom {Datum}{AB} sind folgende Positionen noch offen:\n\n{Positionen}\n\nBitte liefern Sie die offenen Positionen umgehend bzw. teilen Sie uns den neuen Liefertermin mit.\n\nMit freundlichen Grüßen\n{Unterzeichner}\n{Firma}'};
+function lfMailWerte(b,P){const L=lfL(b)||{},ln=p=>p.lnr||b.fix?.lnr?.[p.id]||lnrStamm(b,p)||'';
+  const z=x=>`- Pos ${x.nr}${x.p.nr?' '+x.p.nr:''} ${x.p.bez}${ln(x.p)?` (Ihre Art.-Nr. ${ln(x.p)})`:''}: offen ${fmtQ(x.offen)} ${x.p.einheit||''}`.trimEnd()+(x.teile.length>1?` (${x.teile.map(t=>`${fmtQ(t.menge)} ${x.p.einheit||''} bis ${t.termin?dAT(t.termin):'–'}`).join(', ')})`:x.termin?`, Termin ${dAT(x.termin)}`:'')+(x.tage>0?` – ${x.tage} Tag${x.tage===1?'':'e'} überfällig`:x.tage===0?' – heute fällig':'');
+  return{...phWerte(b),Anrede:dOpt(b).briefAnrede?anrBeleg(b):'Sehr geehrte Damen und Herren,',Positionen:P.map(z).join('\n'),AB:L.abNr||L.abDatum?` (Ihre Auftragsbestätigung${L.abNr?' Nr. '+L.abNr:''}${L.abDatum?' vom '+dAT(L.abDatum):''})`:'',AbNr:L.abNr||'',AbDatum:L.abDatum?dAT(L.abDatum):'',Termin:L.termin?dAT(L.termin):'',Unterzeichner:S().firma.zeichner||S().bearbeiter||''}}
+async function lfMail(b){if(!b||b.typ!=='BE'||!b.fest||b.storno)return;const O=lfPos(b).filter(x=>x.offen>0);if(!O.length){alert('Keine offenen Positionen.');return}
+  const F=O.filter(x=>x.tage>=0),P=F.length?F:O,w=lfMailWerte(b,P),mv=S().mailVorlage||{},od=STORE.art==='od';
+  const o=await formDialog({titel:`Erinnerung an den Lieferanten – Bestellung ${esc(bNr(b))}`,ok:od?'Senden':'E-Mail öffnen',breit:true,felder:[
+    {typ:'hinweis',l:F.length?`${F.length} fällige Position${F.length>1?'en':''} (überfällig bzw. heute fällig).`:'Keine Position ist fällig – die E-Mail nennt alle offenen Positionen.'},
+    {k:'an',l:'An (mehrere mit ; trennen)',wert:kontakt(b.kontaktId)?.email||'',cls:'w2',pflicht:true,neu:1},{k:'cc',l:'Cc',wert:''},
+    {k:'betreff',l:'Betreff',wert:phT(mv.lfBetreff||LF_MAIL.betreff,w),neu:1,pflicht:true},{k:'text',l:'Nachricht',typ:'textarea',wert:phT(mv.lfText||LF_MAIL.text,w).replace(/\n{3,}/g,'\n\n'),neu:1},
+    ...(od?[{k:'kopie',l:'Kopie an mich',typ:'checkbox',wert:false,neu:1,cls:'w05'}]:[])]});
+  if(!o||curBeleg()!==b)return;const an=o.an.split(/[;,]\s*/).filter(Boolean),cc=o.cc.split(/[;,]\s*/).filter(Boolean);
+  if(an.concat(cc).some(x=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x))){alert('Bitte gültige E-Mail-Adresse(n) angeben.');return}
+  o.betreff=phT(o.betreff,w);o.text=phT(o.text,w); // im Dialog eingetragene Platzhalter
+  if(od){saveState('wird gesendet …');const tok=await mailToken();
+    if(!tok){saveState('');if(confirm('Für den E-Mail-Versand ist eine einmalige Zustimmung (Berechtigung „E-Mails senden“) bei Microsoft nötig.\nJetzt anmelden und zustimmen?\n\nDanach bitte erneut „✉ Erinnerung …“ wählen.'))AUTH.login(' Mail.Send');return}
+    const r=await fetch('https://graph.microsoft.com/v1.0/me/sendMail',{method:'POST',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+      body:JSON.stringify({message:{subject:o.betreff,body:{contentType:'HTML',content:`<div style="font-family:Arial,sans-serif;font-size:10pt">${esc(o.text).replace(/\n/g,'<br>')}</div>`},toRecipients:an.map(a=>({emailAddress:{address:a}})),
+        ccRecipients:cc.map(a=>({emailAddress:{address:a}})),bccRecipients:o.kopie&&lsGet('erp-user')?[{emailAddress:{address:lsGet('erp-user')}}]:[]},saveToSentItems:true})});
+    saveState('');if(!r.ok){const j=await r.json().catch(()=>({}));alert('Senden fehlgeschlagen:\n'+(j.error?.message||r.status));return}}
+  else location.href=`mailto:${an.join(';')}?${new URLSearchParams({...(cc.length?{cc:cc.join(';')}:{}),subject:o.betreff,body:o.text}).toString().replace(/\+/g,'%20')}`;
+  ((b.lief??={}).erinnert??=[]).push({ts:new Date().toISOString(),an:an.join('; '),weg:od?'mail':'mailto'});
+  log('Liefererinnerung',`${bNr(b)} an ${an.join(', ')}${od?'':' (E-Mail-Programm)'}: ${P.length} Position(en)`);commit();render();if(od)alert(`Erinnerung gesendet an ${an.join(', ')}.`)}
+async function lfWvPop(b){if(!b||b.typ!=='BE'||!b.fest)return;const L=b.lief||{};
+  const o=await formDialog({titel:`Wiedervorlage – Bestellung ${esc(bNr(b))}`,ok:'Speichern',extra:L.wv?'Wiedervorlage aufheben':'',felder:[
+    {typ:'hinweis',l:'Bis zu diesem Datum steht die Bestellung nicht in der Karte „Lieferverzug“ und nicht im Zähler an „Einkauf“ (z. B. weil sich der Lieferant gemeldet hat). In der Liste „Offene Lieferungen“ bleibt sie.'},
+    {k:'wv',l:'Wiedervorlage am',typ:'date',wert:L.wv||addDays(isoD(),7),neu:1,cls:'w05',pflicht:true},{k:'notiz',l:'Notiz',wert:L.wvNotiz||'',cls:'w2',ph:'z. B. Lieferant meldet sich bis Freitag'}],
+    pruef:o=>{if(o.wv<=isoD()){alert('Bitte ein Datum nach heute wählen.');return false}}});
+  if(!o||curBeleg()!==b)return;
+  if(o==='extra'){if(!b.lief?.wv)return;delete b.lief.wv;delete b.lief.wvNotiz;log('Wiedervorlage aufgehoben',bNr(b))}
+  else{const n=b.lief??={};if(n.wv===o.wv&&(n.wvNotiz||'')===o.notiz)return;n.wv=o.wv;if(o.notiz)n.wvNotiz=o.notiz;else delete n.wvNotiz;log('Wiedervorlage',`${bNr(b)} am ${dAT(o.wv)}${o.notiz?' – '+o.notiz:''}`)}
+  commit();render()}
+// Einstellungen → Liefertermine & Erinnerungen: Tage vor dem Termin, Vorlage der Erinnerung (Felder unter mailVorlage → Platzhalter-Knopf wie bei der E-Mail-Vorlage)
+function lfEinst(){if(!erw('lfErinnern'))return'';const m=S().mailVorlage||{};
+  return akk('e-lf','Liefertermine &amp; Erinnerungen',`<div class="card"><h2>Liefertermine &amp; Erinnerungen</h2>${(t=>kmp()?`<p style="margin:0 0 6px">${hilfe(t)}</p>`:`<p class="mut" style="margin-top:0">${t}</p>`)('Die Karte „Lieferverzug“ im Überblick zeigt Bestellungen, deren Lieferung überfällig ist oder in den nächsten Tagen fällig wird. „✉ Erinnerung …“ in der Bestellung schickt dem Lieferanten eine E-Mail mit Betreff und Text von unten (leer = Standardtext); Platzhalter wie in den Belegtexten, dazu {Positionen}, {AB}, {AbNr}, {AbDatum}, {Termin} und {Unterzeichner}.')}
+  <div class="row"><label class="w05">Erinnern ab … Tage vor dem Termin<input type="number" min="0" step="1" inputmode="numeric" data-o="s" data-f="lfTage" value="${lfN()}"></label><span style="flex:2"></span></div>
+  <div class="row"><label class="w2">Betreff der Erinnerung<input data-o="s" data-f="mailVorlage.lfBetreff" value="${esc(m.lfBetreff||'')}" placeholder="${esc(LF_MAIL.betreff)}"></label></div>
+  <div class="row"><label class="w2">Text der Erinnerung<textarea data-o="s" data-f="mailVorlage.lfText" style="height:200px" placeholder="${esc(LF_MAIL.text)}">${esc(m.lfText||'')}</textarea></label></div>
+  <div class="bar" style="margin:4px 0 0">${phKnopf()}<span class="mut" style="font-size:13px">${LF_PH.map(([n,l])=>`<span title="${esc(l)}">{${n}}</span>`).join(' ')}</span></div></div>`,{zusatz:`${lfN()} Tage · ${m.lfText||m.lfBetreff?'eigene Vorlage':'Standardtext'}`})}
+queueMicrotask(()=>Object.assign(ACT,{lfmail:()=>lfMail(curBeleg()),lfwv:()=>lfWvPop(curBeleg())}));
+/* ---------- Lieferverzug im Verkauf (P35 Teil 4, erw.lfVerkauf): Auftragsbestätigungen an Kunden mit überschrittenem Liefertermin (fest, nicht storniert, erledigung() < 1
+   über Lieferscheine bzw. Rechnungen, nicht abgeschlossen nach P32) → eigener Abschnitt in der Karte „Lieferverzug“ (lfKunden); Bestellungen aus der Belegkette einer AB
+   (vorgaengerId bzw. gleicher Auftrag) mit überfälligen Positionen → Hinweis „Material verspätet“ in der AB (lfMaterial, lfHinweis). Nur Anzeige ---------- */
+erwPlus({k:'lfVerkauf',std:true,p:'Liefertermine (P35)',l:'Lieferverzug im Verkauf: Kundenlieferungen und verspätetes Material',info:'Auftragsbestätigungen an Kunden, deren Liefertermin vorbei ist und die noch nicht vollständig geliefert bzw. verrechnet sind (Lieferscheine, Rechnungen), stehen in einem eigenen Abschnitt der Karte „Lieferverzug“ im Überblick; ausgenommen sind Auftragsbestätigungen mit Status „abgeschlossen“ (Belegstatus P32). In der Auftragsbestätigung erscheint der Hinweis „Material verspätet“, wenn eine Bestellung aus derselben Belegkette (bzw. demselben Auftrag) überfällige Positionen hat, mit Bestellung, Lieferant und Termin.'});
+function lfMaterial(ab,h=isoD()){if(!ab?.fest)return[];return DB.belege.filter(x=>x.typ==='BE'&&x.fest&&!x.storno&&(x.vorgaengerId===ab.id||(ab.auftragId&&x.auftragId===ab.auftragId)))
+  .map(b=>({b,w:lfStand(lfPos(b,h).filter(x=>x.st==='ueber'))})).filter(x=>x.w)} // Bestellungen der Belegkette mit überfälligen Positionen
+const lfKunden=(h=isoD())=>DB.belege.filter(b=>b.typ==='AB'&&b.fest&&!b.storno&&b.liefertermin&&b.liefertermin<h&&erledigung(b)<0.9999).map(b=>({b,tage:lfTage(b.liefertermin,h),m:lfMaterial(b,h)})).sort((a,c)=>a.b.liefertermin.localeCompare(c.b.liefertermin));
+function lfHinweis(b){if(!erw('lfVerkauf')||b.typ!=='AB'||!b.fest||b.storno)return'';const h=isoD(),M=lfMaterial(b,h),t=b.liefertermin&&b.liefertermin<h&&erledigung(b)<0.9999?lfTage(b.liefertermin,h):0;if(!M.length&&!t)return'';
+  return`<div class="hint lfm">${t?`<div>⚠ Liefertermin an den Kunden überschritten: ${dAT(b.liefertermin)} (${t} Tag${t===1?'':'e'})</div>`:''}${M.length?`<div>⚠ Material verspätet: ${M.map(m=>`<a href="#/beleg/${m.b.id}">Bestellung ${esc(bNr(m.b))}</a> (${esc(kName(m.b.kontaktId))}, Termin ${dAT(m.w.termin)}${m.w.best?'':' gewünscht'}, ${m.w.tage} Tag${m.w.tage===1?'':'e'} überfällig)`).join(' · ')}</div>`:''}</div>`}
+
 /* ---------- Rechnung aus mehreren Lieferscheinen (Sammelrechnung) ---------- */
 function offeneLS(kid){return DB.belege.filter(x=>x.typ==='LS'&&x.fest&&!x.storno&&(!kid||x.kontaktId===kid)&&(gi=>x.pos.some(p=>!isInfo(p)&&!effKz(p,gi)&&(+p.menge||0)-kinderMenge(p.id,['RE','TR','SR'])>0.0001))(gruppenInfo(x))).sort((a,c)=>a.datum.localeCompare(c.datum))}
 function sammelRechnung(kid0=''){
@@ -6181,7 +6430,8 @@ document.addEventListener('change',e=>{
   if(el.id==='imp')return importJSON(el);
   if(el.id==='lbimp')return lbImport(el);
   if(['lsscan','erfoto','bescan'].includes(el.id)){const f=[...el.files];el.value='';belegScan(f,{lsscan:'WE',erfoto:'ER',bescan:'BE'}[el.id]);return}
-  if(el.id==='kikey'){lsSet('erp-ki-key',el.value.trim()||null);render();return}
+  if(el.id==='kikey'){kiKeySetzen(el.value.trim()||null,kiSitzung());render();return}
+  if(el.id==='kises'){kiKeySetzen(kiKey(),el.checked);render();return}
   if(d.sc!==undefined)return scanSet(el);
   if(d.kette!==undefined){if(d.fk)return;const a=artikel(d.aid);if(!a)return;ketteWert(el).then(v=>{if(v!==null){const B=d.kette==='lp'?LP:GR;a[B.c.feld]=v;log(B.c.name+' zugeordnet',`${a.nr} → ${B.pfad(v)||'keine'}`);persist()}render()});return}
   if(d.lpa!==undefined){const a=artikel(d.lpa);a.lagerplatz=el.value;log('Lagerplatz zugeordnet',`${a.nr} → ${LP.pfad(el.value)||'keiner'}`);commit();return}

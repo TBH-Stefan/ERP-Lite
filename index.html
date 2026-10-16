@@ -997,7 +997,7 @@ async function saveNow(){
       try{localStorage.setItem('erp-lite-cache',txt)}catch(e){}
       if(STORE.art==='cache'){pending=false;saveState('Nur Browser-Cache – keine Synchronisierung!',true);return}
       const heute=isoD();
-      if(lastBackupDay!==heute&&STORE.lastText){try{await STORE.backup(STORE.lastText,heute)}catch(e){}lastBackupDay=heute}
+      if(lastBackupDay!==heute&&STORE.lastText&&await tagSicherung(STORE.lastText,heute))lastBackupDay=heute;
       await STORE.save(txt);STORE.lastText=txt;
     }while(saveAgain);
     pending=false;kvSet('unsynced',null).catch(()=>{});
@@ -1098,7 +1098,22 @@ function kkUebernehmen(i){const e=KKOPIE?.liste[i];if(!e)return;const L=DB[e.c];
   if(e.c==='belege'&&cur)x.ausgaben=Math.max(x.ausgaben||0,cur.ausgaben||0); // Ausgabezähler (DUPLIKAT) nie verkleinern
   if(!confirm('Aktuellen Datensatz durch die Version aus der Konfliktkopie ersetzen?'))return;
   if(j>=0)L[j]=x;else L.push(x);log('Konfliktkopie übernommen',`${e.c} ${x.nr||x.name||x.id}`);$('#sichm')?.remove();artDatalist();persist();render()}
-const sichInfo=()=>STORE.art==='cache'?'':`<div class="bar"><button data-act="sichpop">Sicherungen anzeigen / wiederherstellen …</button></div>`;
+// Tagessicherung (P38 Teil 2, erw.sicherung): Stand vor der ersten Änderung des Tages als backup/erp-daten_<Tag>.json.gz; schon vorhanden (auch von einem anderen Gerät) oder
+// unverändert seit der letzten Sicherung dieses Geräts (SHA-256) → keine neue Datei; Fehler werden gemerkt (erp-sichf) und im Überblick gemeldet
+erwPlus({k:'sicherung',std:true,p:'Datensicherung (P38)',l:'Tagessicherung komprimiert, ohne Doppelte, nach dem Schreiben geprüft',info:'Beim ersten Speichern eines Tages wird der vorige Stand unter „backup“ abgelegt – gzip-komprimiert (.json.gz, etwa ein Zehntel der Größe), nur wenn es für den Tag noch keine Sicherung gibt und sich seit der letzten etwas geändert hat. Jede Sicherung wird nach dem Schreiben zurückgelesen und geprüft; schlägt das fehl, erscheint ein Hinweis im Überblick. Sicherungen werden nie automatisch gelöscht. Aus = wie bisher (unkomprimiert, ohne Prüfung).'});
+let SICHV=0;
+const sichStand=()=>{try{return JSON.parse(lsGet('erp-sich')||'{}')}catch(e){return{}}},sichFehler=()=>{try{return JSON.parse(lsGet('erp-sichf')||'null')}catch(e){return null}};
+async function tagSicherung(txt,tag){
+  if(!erw('sicherung')){try{await STORE.backup(txt,tag)}catch(e){}return true}
+  try{const p=`backup/erp-daten_${tag}.json.gz`;
+    if(!await STORE.exists(p)&&!await STORE.exists(`backup/erp-daten_${tag}.json`)){const h=await sha(txt);
+      if(sichStand().h!==h){await sichSchreiben(p,txt);lsSet('erp-sich',JSON.stringify({h,tag,ts:Date.now(),n:txt.length}))}}
+    lsSet('erp-sichf',null);SICHV=0;return true}
+  catch(e){lsSet('erp-sichf',JSON.stringify({ts:Date.now(),t:e.message}));return++SICHV>=3}} // höchstens drei Versuche, dann erst am nächsten Tag wieder
+const sichDash=()=>{const f=erw('sicherung')&&STORE.art!=='cache'&&sichFehler();return f?`<div class="hint"><b>Tagessicherung fehlgeschlagen</b> (${new Date(f.ts).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'})}): ${esc(f.t)} – die Daten selbst sind gespeichert; bitte unter <a href="#/export">Export &amp; Sicherung</a> prüfen.</div>`:''};
+const sichInfo=()=>{if(STORE.art==='cache')return'';const v=sichStand(),f=sichFehler();
+  return`${erw('sicherung')?`<p>${v.tag?`Letzte Tagessicherung dieses Geräts: <b>${dAT(v.tag)}</b>, geprüft${v.n?` (unkomprimiert ${kbT(v.n)})`:''}.`:'Noch keine Tagessicherung von diesem Gerät.'}${f?` <span class="err">Letzter Versuch fehlgeschlagen: ${esc(f.t)}</span>`:''}</p>`:''}
+  <div class="bar"><button data-act="sichpop">Sicherungen anzeigen / wiederherstellen …</button></div>`};
 queueMicrotask(()=>Object.assign(ACT,{sichpop:()=>sichPop(),sichzur:el=>sichZurueck(el.dataset.p),kkopie:el=>kkPop(el.dataset.p),kkueb:el=>kkUebernehmen(+el.dataset.i)}));
 
 /* Zusammenführen, wenn auf einem anderen Gerät zwischenzeitlich gespeichert wurde (3-Wege-Abgleich je Datensatz) */
@@ -1919,7 +1934,7 @@ V.dash=()=>{
     const leer=L.filter(x=>!x[0].length).map(x=>x[3]);
     return L.filter(x=>x[0].length).map(([arr,h,f])=>`<div class="card kkl" style="padding:0"><h2>${h}</h2>${arr.map(f).join('')}</div>`).join('')+(leer.length?`<div class="card mut">${leer.join(' · ').replace(/^./,c=>c.toUpperCase())}</div>`:'')};
   return`<h1>Überblick ${j}</h1>${lfDash()}
-  ${!S().firma.name?'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>':''}
+  ${sichDash()}${!S().firma.name?'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>':''}
   ${kmp()?quickK():`<div class="quick">
     <a class="btn" href="#/zeiten">⏱ Zeit erfassen</a>
     <label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>

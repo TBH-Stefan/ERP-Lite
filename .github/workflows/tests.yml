@@ -1,0 +1,44 @@
+# Regressionstests (tests/): bei jedem Pull Request auf main und auf Knopfdruck (Actions → Tests → Run workflow)
+name: Tests
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      basis:
+        description: 'Ausgangsstand für „Schalter aus“ (Git-Ref oder Commit)'
+        default: 'origin/main'
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
+      - name: Abhängigkeiten
+        working-directory: tests
+        run: npm ci && npx playwright install --with-deps chromium
+      - name: Doppelte Aktionen (ACT & Co.)
+        working-directory: tests
+        run: node act-duplikate.js
+      - name: Playwright (Bildschirm 1400 px und Handy 390 px)
+        working-directory: tests
+        env:
+          # Pull Request: geprüft wird der zusammengeführte Stand gegen die Spitze von main
+          BASIS: ${{ github.event.pull_request.base.sha || inputs.basis || 'origin/main' }}
+        run: npx playwright test
+      - name: Bericht sichern
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testbericht
+          path: tests/test-results/
+          retention-days: 7

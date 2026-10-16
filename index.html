@@ -2912,7 +2912,8 @@ V.zeiten=()=>{
     ${auf.length?'':'<p class="hint">Zuerst ein Angebot oder einen Auftrag anlegen.</p>'}</div>
   ${tabelle('zeiten',[
     {k:'datum',l:'Datum',f:z=>dAT(z.datum)},{k:'auftrag',l:'Auftrag',f:z=>kmp()?`<a href="#/auftrag/${z.auftragId}" title="${esc(auftragLabel(z.auftragId))}">${esc(auftragKurz(z.auftragId))}</a>`:`<a href="#/auftrag/${z.auftragId}">${esc(auftragLabel(z.auftragId))}</a>`},{k:'kunde',l:'Kunde',f:z=>esc(kName((beleg(z.auftragId)||{}).kontaktId)),std:false},
-    {k:'tarif',l:'Tarif',f:z=>esc(z.tarif)},{k:'text',l:'Tätigkeit',f:z=>esc(z.text)},{k:'std',l:'Std.',n:1,f:z=>fmtQ(z.stunden)},{k:'kosten',l:'Kosten/h',n:1,f:z=>fmt(z.kosten)},{k:'vk',l:'VK/h',n:1,f:z=>fmt(z.vk)},
+    {k:'tarif',l:'Tarif',f:z=>esc(z.tarif)},{k:'text',l:'Tätigkeit',f:z=>esc(z.text)},...(erw('btbZeit')?[{k:'btb',l:'Bericht',f:z=>{const r=z.berichtId&&ROOT.btb(z.berichtId);return r?`<a href="#/bericht/${r.id}">BTB ${r.nr}</a>`:''}}]:[]), // Bautagesbericht (P36 Teil 5)
+    {k:'std',l:'Std.',n:1,f:z=>fmtQ(z.stunden)},{k:'kosten',l:'Kosten/h',n:1,f:z=>fmt(z.kosten)},{k:'vk',l:'VK/h',n:1,f:z=>fmt(z.vk)},
     {k:'kges',l:'Kosten gesamt',n:1,f:z=>fmt(z.stunden*z.kosten),std:false},{k:'vges',l:'VK gesamt',n:1,f:z=>fmt(z.stunden*z.vk),std:false},
     {k:'status',l:'Status',f:z=>z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn')}],L,
     {nach:kmpH()?z=>`<td>${z.belegId?'':`<button class="mehr" data-act="menue" data-m="zeit" data-id="${z.id}" title="Weitere Aktionen">⋯</button>`}</td>`:z=>`<td>${z.belegId?'':`<button class="s d" data-act="ztdel" data-id="${z.id}">✕</button>`}</td>`,leer:'Keine Einträge.',
@@ -5770,7 +5771,7 @@ const ACT={
   ztadd:()=>{const a=$('#zt-a').value,t=$('#zt-t').value,h=num($('#zt-h').value);if(!a||!h){alert('Auftrag und Stunden angeben.');return}
     const tf=S().tarife.find(x=>x.kz===t)||{kosten:0,vk:0};lsSet('erp-lastA',a);lsSet('erp-lastT',t);
     DB.zeiten.push({id:uid(),datum:$('#zt-d').value||isoD(),auftragId:a,tarif:t,stunden:h,text:$('#zt-x').value,kosten:+tf.kosten||0,vk:+tf.vk||0,belegId:''});commit();render()},
-  ztdel:el=>{const z=DB.zeiten.find(z=>z.id===el.dataset.id);if(z&&confirm('Eintrag löschen?')){wegwerfen('zeiten',[z]);render()}},
+  ztdel:el=>{const z=DB.zeiten.find(z=>z.id===el.dataset.id),bz=z?.berichtId&&ROOT.btb?.(z.berichtId);if(bz?.gesperrt){alert(`Der Eintrag gehört zum unterschriebenen Bautagesbericht ${bz.nr} und kann nicht gelöscht werden.`);return} /* P36 Teil 5 */if(z&&confirm('Eintrag löschen?')){wegwerfen('zeiten',[z]);render()}},
   knew:async el=>{const k=await kontaktPopup(el.dataset.t);if(k){commit();go('kontakt/'+k.id)}},
   ktyp:el=>{const v=el.dataset.t||'';UI.kTyp=v;lsSet('erp-kTyp',v||null);const h='kontakte'+(v?'/'+v:'');if(location.hash==='#/'+h)render();else nav(h)}, // Kontaktfilter (P6)
   kdel:el=>{const id=el.dataset.id;if(DB.belege.some(b=>b.kontaktId===id)){alert('Kontakt hat Belege und kann nicht gelöscht werden.');return}if(!confirm('Kontakt löschen?'))return;wegwerfen('kontakte',[kontakt(id)]);go('kontakte')},
@@ -6169,6 +6170,22 @@ Object.assign(ACT,{
     log('Bautagesbericht Nachtrag',`BTB ${n.nr} zu BTB ${r.nr}`);persist();go('bericht/'+n.id)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();commit()}
   if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='p'&&DB&&erw('strgP')&&curBeleg()){e.preventDefault();document.activeElement?.blur?.();belegDrucken(curBeleg())}}); // Strg+P: geöffneten Beleg drucken (offene Eingabe vorher übernehmen)
+/* Bautagesbericht Teil 5 (P36, erw.btbZeit): Stunden des Berichts beim Unterschreiben des Monteurs (BTB_NACH, Teil 3) in die Zeiterfassung (DB.zeiten mit berichtId; Nachkalkulation und
+   „Zeiten abrechnen“ wie bisher). „⏱ aus Zeiterfassung“ übernimmt offene, noch keinem Bericht zugeordnete Zeiten desselben Auftrags und Tages als Zeilen (p.zid, Eintrag bekommt berichtId);
+   beim Unterschreiben werden diese nur angepasst (Stunden, Tarif, solange nicht abgerechnet), nicht neu angelegt. Einträge unterschriebener Berichte sind in der Zeiterfassung nicht löschbar */
+erwPlus({k:'btbZeit',std:false,p:'Bautagesbericht (P36)',l:'Stunden des Bautagesberichts in die Zeiterfassung',info:'Beim Unterschreiben des Monteurs werden die Stunden je Person und Tarif als Einträge in die Zeiterfassung übernommen (Text „BTB <Nr> · Name“); Nachkalkulation, DB je Stunde und „Zeiten abrechnen“ rechnen damit wie bisher. Bereits in der Zeiterfassung erfasste, offene Stunden desselben Auftrags und Tages holt „⏱ aus Zeiterfassung“ in den Bericht (keine Doppelerfassung). Einträge eines unterschriebenen Berichts lassen sich in der Zeiterfassung nicht löschen. Aus = keine Übernahme.'});
+const btbZeitFrei=r=>DB.zeiten.filter(z=>z.auftragId===r.auftragId&&z.datum===r.datum&&!z.belegId&&!(z.berichtId&&ROOT.btb(z.berichtId)));
+BTB_KN.push(r=>erw('btbZeit')&&!btbFest(r)&&btbZeitFrei(r).length?`<button data-act="btbzeit" data-id="${r.id}" title="offene Zeiten dieses Auftrags vom ${dAT(r.datum)} übernehmen">⏱ aus Zeiterfassung (${btbZeitFrei(r).length})</button>`:'');
+BTB_NACH.push(r=>{if(!erw('btbZeit'))return;let n=0;
+  for(const p of r.personal||[]){const h=btbStd(p),z=p.zid&&DB.zeiten.find(x=>x.id===p.zid);
+    if(z){if(!z.belegId){z.stunden=h;z.tarif=p.tarif}z.berichtId=r.id;continue}
+    if(!h)continue;const t=S().tarife.find(x=>x.kz===p.tarif)||{};DB.zeiten.push({id:uid(),datum:r.datum,auftragId:r.auftragId,tarif:p.tarif,stunden:h,text:[`BTB ${r.nr}`,p.name].filter(pT).join(' · '),kosten:+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id});n++}
+  if(n)log('Zeiten aus Bautagesbericht',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${n} Eintrag/Einträge`)});
+BTB_DOC.push(r=>{if(!r.gesperrt)return'';const Z=DB.zeiten.filter(z=>z.berichtId===r.id);return Z.length?`<p class="mut btbzt">In der Zeiterfassung: ${fmtQ(sum(Z,z=>z.stunden))} h${Z.some(z=>z.belegId)?' (teilweise abgerechnet)':''}</p>`:''});
+ACT.btbzeit=el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r))return;const L=btbZeitFrei(r);if(!L.length)return;
+  r.personal=(r.personal||[]).filter(p=>pT(p.name)||btbStd(p)||p.zid);
+  for(const z of L){r.personal.push({name:'',tarif:z.tarif,von:'',bis:'',pause:'',stunden:+z.stunden||0,zid:z.id});z.berichtId=r.id;if(pT(z.text)&&!(r.taet||[]).some(t=>t.text===z.text))(r.taet||(r.taet=[])).push({text:z.text,ort:''})}
+  r.taet=r.taet.filter((t,i,a)=>pT(t.text)||pT(t.ort)||a.length===1);persist();render()};
 $('#menu').onclick=e=>{e.stopPropagation();document.body.classList.toggle('nav')};
 document.querySelector('nav').addEventListener('click',e=>{if(e.target.closest('a'))document.body.classList.remove('nav')});
 document.addEventListener('click',e=>{if(document.body.classList.contains('nav')&&!e.target.closest('nav'))document.body.classList.remove('nav')});

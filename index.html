@@ -341,6 +341,7 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .mpf .c{text-align:center}.mpf .n{text-align:right;white-space:nowrap}.mpf h4{margin:3.5mm 0 1mm;font-size:9.5pt}.mpf thead{display:table-header-group}.mpf tr{break-inside:avoid}
 .mpf .kbl{max-height:15mm;max-width:40mm;display:block;margin:0 auto}.mpf .kbfi{font-size:6.5pt;text-align:center;margin-top:.5mm}.mpf .kbft{margin-top:3mm;font-size:6.5pt;text-align:center;border-top:.6pt solid #80704d;padding-top:1mm}
 .mpf table.mpm th,.mpf table.mpm td{font-size:7.5pt;padding:.6mm .8mm}.mpf .mpl{font-size:6.5pt;margin:1.5mm 0 0}.mpf .mpsig{display:flex;gap:12mm;margin-top:14mm;break-inside:avoid}.mpf .mpsig>div{flex:1;font-size:7.5pt}.mpf .mpsl{border-bottom:.6pt solid #000;height:16mm;margin-bottom:1mm}@media print{body:has(#print .mpf) #dirtybar{display:none!important}}
+fieldset.mpfs{border:0;padding:0;margin:0;min-width:0}.mpf .sigb{margin-top:0}.mpf .sigbild{height:16mm}.mpf .sigbild img{max-height:15mm}.mpf .sigl,.mpf .sigp{font-size:7.5pt;color:#000} /* Messprotokoll Teil 3: gesperrter Editor, Unterschriften im Druck */
 #print{display:none}
 .pgw,.pgw>*>tr>td{border:0;padding:0;width:100%;border-collapse:collapse}.pgw .pgf{height:16mm}
 @media print{#app,#start,.pop{display:none!important}#print{display:block}body{background:#fff}@page{size:A4;margin:10mm 14mm 17.3mm 20mm;@top-left{content:'\00a0'}@top-center{content:'\00a0'}@top-right{content:'\00a0'}@bottom-right{content:'Seite ' counter(page) ' von ' counter(pages);white-space:nowrap;font:7.5pt Arial,sans-serif;vertical-align:top;text-align:right;padding-top:10.5mm;width:30mm;margin-right:1mm}}#print.mb .ft{display:none}#print.mb .pgf{height:0}
@@ -6054,13 +6055,13 @@ function mpEdit(id){const m=ROOT.mp(id);if(!m)return'<p>Nicht gefunden.</p>';con
     <label style="display:block">Bemerkungen${ft(R,'bem',m.bem,'')}</label>
     ${z.e||z.w?`<p class="hint" style="margin:8px 0 0">${z.e?`${z.e} Stromkreis${z.e>1?'e':''} mit Messwerten außerhalb der Grenzwerte`:''}${z.e&&z.w?', ':''}${z.w?`${z.w} mit Schleifenimpedanz über 2/3 des Grenzwerts`:''} – bitte bewerten.</p>`:''}</div>`;
   return`<div class="bar"><a href="#/mps">← Messprotokolle</a><span class="sp"></span>${mpTag(m)}</div>
-  <div class="bar"><h1 style="margin:0">Messprotokoll ${esc(m.nr)}</h1><span class="sp"></span>${mpKnoepfe(m)}<button data-act="mpwdh" data-id="${m.id}" title="Neues Protokoll mit Anlage, Verteilern und Stromkreisen dieses Protokolls">Wiederholungsprüfung</button><button class="d" data-act="mpdel" data-id="${m.id}">Löschen</button></div>
+  <div class="bar"><h1 style="margin:0">Messprotokoll ${esc(m.nr)}</h1><span class="sp"></span>${mpKnoepfe(m)}<button data-act="mpwdh" data-id="${m.id}" title="Neues Protokoll mit Anlage, Verteilern und Stromkreisen dieses Protokolls">Wiederholungsprüfung</button><button class="d" data-act="mpdel" data-id="${m.id}">Löschen</button></div>${mpFest(m)?'<fieldset class="mpfs" disabled>':''}
   ${kmp()?akk('mp-kopf','Anlage und Prüfung',kopf,{offen:true,zusatz:esc(m.anlage||kName(m.kontaktId))}):kopf}
   ${kmp()?akk('mp-bes','Besichtigung',`<div class="card">${punkte('bes',MP_BES)}</div>`,{zusatz:pz('bes')}):`<div class="card"><h2>Besichtigung</h2>${punkte('bes',MP_BES)}</div>`}
   ${kmp()?akk('mp-erp','Erprobung',`<div class="card">${punkte('erp',MP_ERP)}</div>`,{zusatz:pz('erp')}):`<div class="card"><h2>Erprobung</h2>${punkte('erp',MP_ERP)}</div>`}
   ${kmp()?'':'<h2 style="margin:18px 0 8px">Messungen</h2>'}${vt}<div class="bar" style="margin:0 0 14px">${kbBtn(R,'vt','mpv','+ Verteiler')}</div>
   ${kmp()?akk('mp-erd','Erder, Potentialausgleich',erd,{zusatz:m.re!==''?'R<sub>E</sub> '+fmtQ(m.re)+' Ω':''}):erd}
-  ${kmp()?akk('mp-erg','Ergebnis',erg,{offen:true,zusatz:mpTag(m)}):erg}`}
+  ${kmp()?akk('mp-erg','Ergebnis',erg,{offen:true,zusatz:mpTag(m)}):erg}${mpFest(m)?'</fieldset>'+mpSigAnsicht(m):''}`}
 const MP_KN=[],mpKnoepfe=m=>MP_KN.map(f=>f(m)).join(''); // Knöpfe späterer Teile (Druck, Abschluss) tragen sich in MP_KN ein
 const mpIdnMax=m=>Math.max(0,...(m.vt||[]).flatMap(v=>(v.stk||[]).map(s=>+s.idn||0)));
 const mpRaMax=m=>{const i=mpIdnMax(m);return i?50/(i/1000):null};
@@ -6147,7 +6148,7 @@ function mpDocHTML(m){const k=kontakt(m.kontaktId),G=(S().pgeraete||[]).filter(g
   return b1+b2+b3}
 // Unterschriftsfelder (leer zum Unterschreiben auf Papier; Teil 3 setzt die elektronische Unterschrift ein)
 const MP_SIGF=[];
-const mpSigFelder=m=>MP_SIGF.length?MP_SIGF.map(f=>f(m)).join(''):`<div><div class="mpsl"></div>Ort, Datum, Prüfer (${esc(m.pruefer||'')})</div><div><div class="mpsl"></div>Auftraggeber / Anlagenbetreiber</div>`;
+const mpSigFelder=m=>MP_SIGF.map(f=>f(m)).join('')||`<div><div class="mpsl"></div>Ort, Datum, Prüfer (${esc(m.pruefer||'')})</div><div><div class="mpsl"></div>Auftraggeber / Anlagenbetreiber</div>`;
 Object.assign(ACT,{
   mpdruck:el=>{const m=ROOT.mp(el.dataset.id);if(!m)return;druckHTML(mpDocHTML(m),`Messprotokoll ${m.nr} ${m.anlage||kName(m.kontaktId)}`)},
 });
@@ -6413,6 +6414,49 @@ ACT.btbdruck=async el=>{const r=ROOT.btb(el.dataset.id);if(!r)return;document.ac
   const P=[...(r.bilder||[]).map(b=>b.pfad),...Object.values(r.sig||{}).map(s=>s?.pfad)].filter(Boolean);
   await Promise.all(P.map(async p=>{try{BURL[p]??=URL.createObjectURL(await bildBlob(p));const i=new Image();i.src=BURL[p];await i.decode()}catch(e){}}));saveState('');
   const a=btbRoot(r);druckHTML(`<div class="doc btbp">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">Bautagesbericht ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${btbDoc(r)}</div>`,`Bautagesbericht ${r.nr} ${a?.nr||''} ${dAT(r.datum)}`);bilderLaden()};
+/* --- Messprotokoll (P37 Teil 3, erw.mpSig, wirkt mit erw.unterschrift aus P36 a): „Abschließen“ (Prüfer und Gesamtergebnis Pflicht, Rückfrage bei „in Ordnung“ trotz Grenzwertverletzungen
+   bzw. abgelaufener Kalibrierung; m.abgeschlossen, Editor als fieldset gesperrt, „Wieder öffnen“ bis zur Unterschrift) → „Unterschrift Prüfer“ (sperrt: sperren(), Prüfwert) →
+   „Unterschrift Auftraggeber“ optional, auch später oder mit Vermerk (nur sig.kunde, Inhalt bleibt). Korrektur nach der Sperre nur als neues Protokoll (korrekturZu, Inhalt kopiert).
+   Unterschriften m.sig {pruefer,kunde} als PNG in der Ablage Messprotokolle/<Jahr>/<Nr>/ (sigAblegen), im Druck statt der leeren Unterschriftsfelder (MP_SIGF) --- */
+erwPlus({k:'mpSig',std:false,p:'Messprotokoll (P37)',l:'Messprotokoll abschließen und unterschreiben',info:'Wirkt mit „Unterschrift am Gerät und Sperre“. „Abschließen“ prüft Prüfer und Gesamtergebnis (Rückfrage, wenn „in Ordnung“ gewählt ist, obwohl Messwerte außerhalb der Grenzwerte liegen, oder ein gewähltes Prüfgerät nicht mehr kalibriert ist) und sperrt die Eingabe; „Wieder öffnen“ geht bis zur Unterschrift. „Unterschrift Prüfer“ sperrt das Protokoll endgültig (Prüfwert über den Inhalt). „Unterschrift Auftraggeber“ ist optional und auch später möglich, alternativ mit Vermerk „unterschreibt nicht“. Korrekturen danach nur über „Korrektur …“ (neues Protokoll mit Verweis). Druck und PDF zeigen die Unterschriften. Aus: Eingabe wie bisher, unterschriebene Protokolle bleiben gesperrt.'});
+SIG_C.messprot={n:m=>'Messprotokoll '+m.nr};
+const mpSigAn=()=>erw('mpSig')&&erw('unterschrift');
+const mpFest=m=>!!m?.gesperrt||mpSigAn()&&!!m?.abgeschlossen; // gesperrt gilt immer (P36 a), „abgeschlossen“ nur mit Schalter
+const mpOrdner=m=>`Messprotokolle/${String(m.datum||isoD()).slice(0,4)}/${String(m.nr).replace(/[^\w.\-]+/g,'_')}`;
+const MP_SROL=[['pruefer','Prüfer'],['kunde','Auftraggeber / Anlagenbetreiber']];
+MP_KN.unshift(m=>!mpSigAn()&&!m.gesperrt?'':(m.gesperrt?tag(m.sig?.kunde?'unterschrieben (auch Auftraggeber)':'unterschrieben','ok'):m.abgeschlossen?tag('abgeschlossen','acc'):'')
+  +(!mpSigAn()?'':!mpFest(m)?`<button class="p" data-act="mpab" data-id="${m.id}">Abschließen</button>`
+  :!m.gesperrt?`<button data-act="mpauf2" data-id="${m.id}">Wieder öffnen</button><button class="p" data-act="mpsig" data-id="${m.id}" data-r="pruefer">✍ Unterschrift Prüfer</button>`
+  :(m.sig?.kunde?'':`<button class="p" data-act="mpsig" data-id="${m.id}" data-r="kunde">✍ Unterschrift Auftraggeber</button>`)+`<button data-act="mpkorr" data-id="${m.id}">Korrektur …</button>`));
+// Ansicht unter dem gesperrten Editor: Verweise auf Korrekturen, Unterschriften mit Prüfwert
+function mpSigAnsicht(m){const k=(DB.messprot||[]).filter(x=>x.korrekturZu===m.id),v=ROOT.mp(m.korrekturZu);
+  return`<div class="card">${v?`<p class="hint" style="margin:0 0 8px">Korrektur zu <a href="#/mps/${v.id}">${esc(v.nr)}</a> vom ${dAT(v.datum)}</p>`:''}${k.length?`<p class="mut" style="margin:0 0 8px">Korrigiert durch ${k.map(x=>`<a href="#/mps/${x.id}">${esc(x.nr)}</a>`).join(', ')}</p>`:''}
+    ${sigBlock(m,MP_SROL)}</div>`}
+MP_SIGF.push(m=>m.abgeschlossen||m.gesperrt?`<div style="flex:1">${sigBlock(m,MP_SROL)}</div>`:'');
+for(const k of['mpkd','mpauf','mpger','mpalle']){const f=ACT[k];ACT[k]=(el,e)=>{if(mpFest(ROOT.mp(el.dataset.id))){render();return}f(el,e)}} // Eingaben außerhalb des Pfad-Setters
+{const del0=ACT.mpdel;ACT.mpdel=(el,e)=>{const m=ROOT.mp(el.dataset.id);if(m?.gesperrt){alert(`Messprotokoll ${m.nr} ist unterschrieben und kann nicht gelöscht werden.`);return}del0(el,e)}}
+{const dr0=ACT.mpdruck;ACT.mpdruck=async(el,e)=>{const m=ROOT.mp(el.dataset.id);if(!m)return;const P=Object.values(m.sig||{}).map(s=>s?.pfad).filter(Boolean); // Unterschriften vor dem Druck laden
+  if(P.length){saveState('Druck wird vorbereitet …');await Promise.all(P.map(async p=>{try{BURL[p]??=URL.createObjectURL(await bildBlob(p));const i=new Image();i.src=BURL[p];await i.decode()}catch(x){}}));saveState('')}
+  dr0(el,e);bilderLaden()}}
+Object.assign(ACT,{
+  mpab:async el=>{const m=ROOT.mp(el.dataset.id);if(!m||mpFest(m)||!mpSigAn())return;document.activeElement?.blur?.();await new Promise(z=>setTimeout(z,0));
+    const f=[!pT(m.pruefer)&&'Prüfer',!m.ergebnis&&'Gesamtergebnis',!m.kontaktId&&!pT(m.anlage)&&'Kunde oder Anlage'].filter(Boolean);if(f.length){alert('Bitte ausfüllen: '+f.join(', '));return}
+    const z=mpZaehl(m),alt=(S().pgeraete||[]).filter(g=>(m.gerIds||[]).includes(g.id)&&!mpGerOk(g));
+    if(m.ergebnis==='io'&&z.e&&!confirm(`${z.e} Stromkreis${z.e>1?'e liegen':' liegt'} außerhalb der Grenzwerte, das Gesamtergebnis lautet aber „in Ordnung“. Trotzdem abschließen?`))return;
+    if(alt.length&&!confirm(`Kalibrierung abgelaufen: ${alt.map(g=>g.bez||g.typ).join(', ')}. Trotzdem abschließen?`))return;
+    if(!(m.gerIds||[]).length&&!confirm('Es ist kein Prüfgerät gewählt. Trotzdem abschließen?'))return;
+    m.abgeschlossen=new Date().toISOString();log('Messprotokoll abgeschlossen',m.nr);await commit();render()},
+  mpauf2:async el=>{const m=ROOT.mp(el.dataset.id);if(!m||m.gesperrt)return;delete m.abgeschlossen;log('Messprotokoll wieder geöffnet',m.nr);await commit();render()},
+  mpsig:async el=>{const m=ROOT.mp(el.dataset.id),p=el.dataset.r==='pruefer';if(!m||!mpSigAn()||(p?m.gesperrt||!m.abgeschlossen:!m.gesperrt||m.sig?.kunde))return;
+    const k=kontakt(m.kontaktId),e=await sigPop(p?'Unterschrift Prüfer':'Unterschrift Auftraggeber / Anlagenbetreiber',p?{name:m.pruefer||'',hinweis:'Mit der Unterschrift wird das Messprotokoll gesperrt: Messwerte und Ergebnis sind danach nicht mehr änderbar (Korrektur nur als neues Protokoll).'}
+      :{name:persName(k)||'',ohne:true,hinweis:`Der Auftraggeber bestätigt den Erhalt von Messprotokoll ${m.nr} vom ${dAT(m.datum)}. Der Inhalt bleibt unverändert.`});
+    if(!e||(p?m.gesperrt:m.sig?.kunde))return;const s=await sigAblegen(mpOrdner(m),p?'pruefer':'kunde',e);
+    if(p){m.sig={pruefer:s};await sperren(m)}else m.sig={...m.sig,kunde:s};
+    log(p?'Messprotokoll unterschrieben (Prüfer)':'Messprotokoll unterschrieben (Auftraggeber)',`${m.nr}: ${s.name}${s.ohne?' – '+s.ohne:''}`);await commit();render()},
+  mpkorr:el=>{const m=ROOT.mp(el.dataset.id);if(!m||!confirm(`Korrektur zu Messprotokoll ${m.nr} anlegen?\n\nDas neue Protokoll übernimmt den Inhalt zum Korrigieren; ${m.nr} bleibt unverändert.`))return;
+    const c=JSON.parse(JSON.stringify(m));for(const x of['id','nr','erstellt','abgeschlossen','gesperrt','hash','sig','korrekturZu'])delete c[x];
+    const n=mpNeu({...c,datum:isoD(),korrekturZu:m.id});DB.messprot.push(n);log('Messprotokoll Korrektur',`${n.nr} zu ${m.nr}`);persist();go('mps/'+n.id)},
+});
 start();
 </script>
 </body>

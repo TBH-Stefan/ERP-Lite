@@ -202,6 +202,24 @@ label>input,label>select,label>textarea{margin-top:2px;color:var(--ink);font-siz
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:14px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
 .kpi b{display:block;font-size:20px;margin-top:2px}
+/* Übersicht nach Wunsch (P39): Kachelraster .awg (2 Spalten: mittel = halbe, breit = ganze Zeile; schmale Kacheln hintereinander als Reihe .grid.awgr wie bisher), Diagramme ohne Bibliothek (.awb Säulen/Linie, .awhb Balken, .awr Ring, .awtab), Anpassen .awx/.awed/.awneu */
+.awg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:14px;align-items:start}.awg>*,.awgr>*{min-width:0;margin:0!important;position:relative}.awg>.w3,.awg>.awgr{grid-column:1/-1}
+@media(max-width:760px){.awg{grid-template-columns:minmax(0,1fr);gap:10px}}
+.kpi.awk .awvz{display:block}.awhd{display:flex;gap:2px 10px;align-items:baseline;flex-wrap:wrap;margin-bottom:8px}.awhd>b{font-size:15px}.awhd .awt{margin-left:auto;font-size:17px;font-weight:600;white-space:nowrap}
+.awlg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--mut);margin:-2px 0 8px}.awlg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.awb{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 6px}.awba{display:flex;flex-direction:column;justify-content:space-between;height:140px;font-size:11px;color:var(--mut);text-align:right;margin:-6px 0}
+.awbc{position:relative;height:140px;display:flex;gap:2px;border-bottom:1px solid var(--line);border-top:1px dashed var(--line)}
+.awbs{flex:1 1 0;position:relative;min-width:0}.awbs:hover{background:rgba(42,120,214,.08)}.awbs>i{position:absolute;left:14%;right:14%;background:#2a78d6;border-radius:4px 4px 0 0}.awbs>i.neg{border-radius:0 0 4px 4px;opacity:.7}
+.awbs.m2>i{left:52%;right:6%}.awbs.m2>i.vj{left:6%;right:52%;background:#a3a9b2}.aw0{position:absolute;left:0;right:0;border-top:1px solid #8a9099}
+.awbc svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}.awbc polyline{fill:none;stroke:#2a78d6;stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}.awbc polyline.vj{stroke:#a3a9b2;stroke-dasharray:4 3}
+.awbl{display:flex;gap:2px;font-size:11px;color:var(--mut)}.awbl>span{flex:1 1 0;min-width:0;text-align:center;white-space:nowrap}
+.awhb{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(50px,1.5fr) auto;gap:6px 8px;align-items:center;font-size:13px}.awhb>.l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.awhb>.t{position:relative;height:13px}
+.awhb>.t>i{position:absolute;left:0;top:0;height:9px;background:#2a78d6;border-radius:0 4px 4px 0}.awhb>.t>i.vj{top:10px;height:3px;background:#a3a9b2}.awhb>.t>i.rest{background:#a3a9b2}.awhb>.t>i.neg{opacity:.6}.awhb>.v{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.awr{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.awr svg{width:120px;height:120px;flex:none}.awlr{flex-direction:column;gap:4px;margin:0;flex:1;min-width:230px;font-size:13px;color:inherit}.awlr>span{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:6px;align-items:center}.awlr .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.awtab{width:100%;font-size:13px}.awtab tfoot td{font-weight:600}
+.awx{display:flex;gap:4px;justify-content:flex-end;margin:-4px -4px 8px}.kkl>.awx{margin:0;padding:8px 8px 0}.awx .s{padding:2px 9px;background:var(--card)}
+.awed .awk{outline:2px dashed #b9c8e6;outline-offset:-2px}
+.awneu{border:2px dashed var(--line);background:none;color:var(--acc);min-height:76px;border-radius:8px;font-weight:600;cursor:pointer}.awvor{margin-top:6px;color:var(--ink);font-size:14px}.awvor .kpi{max-width:280px}
 .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;background:#eef0f3;color:#374151;white-space:nowrap}
 .tag.ok{background:#e3f4ea;color:var(--ok)}
 /* Kompakt (P30) Stammdaten: Visitenkarte des Kontakts (.vk), Kennzeilen; Knopfzeile unter dem Titel */
@@ -1748,7 +1766,7 @@ function livePop(titel,inhalt,{verwerfen=null,breit=false}={}){
 /* ---------- Überblick ---------- */
 // Überblick → zugehörige Liste mit gesetztem Filter (Verkauf/Einkauf)
 function zuListe(bereich,typ='',st=''){const k=bereich==='V'?'v':'e';UI[k+'Typ']=typ;UI[k+'St']=st;UI[k+'Q']='';if(location.hash==='#/belege/'+bereich)render();else nav('belege/'+bereich)}
-V.dash=()=>{
+V.dash=()=>{if(erw('dashFlex'))return awDash(); // Übersicht nach Wunsch (P39)
   const heute=isoD(),j=heute.slice(0,4);
   const reV=DB.belege.filter(b=>RE_V.includes(b.typ)&&b.fest&&!b.storno);
   const ford=sum(reV,offen),ueber=reV.filter(b=>offen(b)>0.005&&faellig(b)<heute);
@@ -1795,6 +1813,167 @@ V.dash=()=>{
     <div class="card"><h2>Entwürfe <a href="javascript:void 0" onclick="zuListe('V','','entwurf')" style="font-weight:400;font-size:13px">Verkauf →</a> <a href="javascript:void 0" onclick="zuListe('E','','entwurf')" style="font-weight:400;font-size:13px">Einkauf →</a></h2>${liste(entw,b=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${T[b.typ].bez}</td><td>${esc(kName(b.kontaktId))}</td><td>${esc(b.betreff)}</td><td>${dAT(b.datum)}</td></tr>`)}</div>
   </div>`}`;
 };
+
+/* --- Übersicht nach Wunsch (P39, erw.dashFlex): Kacheln frei wählen, anordnen und eigene Auswertungen erstellen. V.dash → awDash(). Liste S().dash (fehlt = AW_STD() = bisherige Übersicht)
+   mit {id,t:'kpi'|'liste',m (Kennzahl AW_M),z (Zeitraum AW_Z),von,bis,g (Aufteilung AW_G),d (Darstellung AW_D),vj (Vergleich Vorjahr),n (Anzahl Einträge),w (Breite 1–3),titel,l (Liste AW_L)}.
+   Kennzahl: f(von,bis,g) → Fakten [{d,w,u?,k:{kd,pr,ty,art,ag,tf,au,st,fl,lp,kat}}], st = Stand heute (ohne Zeitraum), q = Quote Σw/Σu; awReihe(c) fasst zusammen (Zeitachse lückenlos über
+   awTakte(), sonst nach Wert, ab n Einträgen „Übrige“). Darstellung ohne Bibliothek: awSaeulen() (Säulen/Linie, Tooltip je Spalte), awBalken(), awRing(), awTabelle(), Zahl als .kpi.
+   „⚙ Anpassen“ (UI.dashEdit): ◀ ▶, ⋯ (MENUE.awk: Bearbeiten, Breite, Duplizieren, Entfernen), „+ Auswertung“ → awDialog() mit Vorschau, „Standard“; Änderungen über awSet() (commit) --- */
+erwPlus({k:'dashFlex',std:true,p:'Übersicht (P39)',l:'Übersicht anpassen: Auswertungen frei wählen, anordnen und erstellen',info:'„⚙ Anpassen“ im Überblick: Kacheln verschieben (◀ ▶), Breite wählen, bearbeiten, duplizieren und entfernen; „+ Auswertung“ legt eigene Auswertungen an – Kennzahl (Umsatz, DB II, Einkauf, Angebote und Trefferquote, Zahlungen, offene Posten, Stunden und Lohnkosten, Lagerwert, laufende Kosten …) oder Liste, Zeitraum, Aufteilung (Monat, Quartal, Jahr, Kunde/Lieferant, Projekt, Belegart, Artikel, Artikelgruppe, Tarif, Fälligkeit …), Darstellung (Zahl, Säulen/Balken, Linie, Ring, Tabelle) und Vergleich mit dem Vorjahr, mit Vorschau. Gilt für alle Geräte; „Standard“ stellt die bisherige Übersicht wieder her. Aus: Übersicht wie bisher.'});
+const awPrj=b=>{let x=b,n=0;while(x&&n++<60){const v=beleg(x.vorgaengerId)||beleg(x.stornoVon);if(!v||v===x)break;x=v}return x?.projekt||''}; // Projekt der Belegkette (am Ausgangsbeleg)
+const AW_MN=['Jän','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'],AW_FARBE=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#6250d6','#e34948'],AW_GRAU='#a3a9b2';
+const AW_FL={0:'nicht fällig',1:'1–30 Tage überfällig',2:'31–60 Tage überfällig',3:'61–90 Tage überfällig',4:'über 90 Tage überfällig'};
+const awFl=f=>{const t=(Date.parse(isoD())-Date.parse(f))/864e5;return!(t>0)?'0':t<=30?'1':t<=60?'2':t<=90?'3':'4'};
+const awAng=(v,b)=>DB.belege.filter(x=>x.typ==='AN'&&x.fest&&!x.storno&&x.status!=='ersetzt'&&x.datum>=v&&x.datum<=b);
+const awZahl=(B,v,b)=>DB.belege.filter(x=>T[x.typ].re&&x.fest&&T[x.typ].b===B).flatMap(x=>(x.zahlungen||[]).filter(z=>z.datum>=v&&z.datum<=b).map(z=>({d:z.datum,w:(B==='V'?sgn(x):1)*(+z.betrag||0),k:{kd:x.kontaktId,pr:awPrj(x)}})));
+const awZeit=(v,b,f)=>DB.zeiten.filter(z=>z.datum>=v&&z.datum<=b).map(z=>{const r=beleg(z.auftragId);return{d:z.datum,w:f(z),k:{tf:z.tarif||'',kd:r?.kontaktId||'',pr:r?awPrj(r):'',au:z.auftragId||''}}});
+const awOP=L=>L.map(x=>({d:x.datum,w:offen(x),k:{kd:x.kontaktId,pr:awPrj(x),fl:awFl(faellig(x))}})).filter(x=>Math.abs(x.w)>0.005);
+const awUe=(F,ziel)=>{const n=F.filter(x=>x.w>0.005&&x.k.fl!=='0').length;return`<span class="${n?'err':'mut'}"${n?` onclick="event.stopPropagation();${ziel}" style="text-decoration:underline" title="Überfällige anzeigen"`:''}>${n} überfällig</span>`};
+const AW_ZG=['monat','quartal','jahr'];
+const AW_M={
+  ums:{l:'Umsatz netto',e:'€',g:[...AW_ZG,'kunde','projekt','typ','artikel','agruppe'],ziel:"nav('auswertung')",f:(v,b,g)=>{const B=DB.belege.filter(x=>zaehltUmsatz(x)&&x.datum>=v&&x.datum<=b);
+    return g==='artikel'||g==='agruppe'?B.flatMap(x=>{const s=sgn(x),sb=summen(x);return x.pos.filter(p=>!isInfo(p)&&!effKz(p,sb.gi)).map(p=>{const a=artikel(p.artikelId);return{d:x.datum,w:s*posGP(p),k:{art:a?`${a.nr} ${a.bez}`:p.bez||'–',ag:a?.gruppe||''}}})})
+      :B.map(x=>({d:x.datum,w:sgn(x)*summen(x).nettoEff,k:{kd:x.kontaktId,pr:awPrj(x),ty:x.typ}}))}},
+  db2:{l:'DB II Aufträge',e:'€',g:[...AW_ZG,'kunde','projekt'],ziel:"nav('auftraege')",bz:F=>{const u=sum(F,x=>x.u);return u?' '+dbTag(sum(F,x=>x.w)/u):''},
+    f:(v,b)=>auftragsListe().map(a=>{const D=a.docs.filter(d=>zaehltUmsatz(d)&&d.datum>=v&&d.datum<=b).map(d=>d.datum).sort();if(!D.length)return null;const n=nachkalk(a.id);return{d:D[D.length-1],w:n.db2,u:n.uN,k:{kd:a.root.kontaktId,pr:awPrj(a.root)}}}).filter(Boolean)},
+  db2p:{l:'DB II % Aufträge',e:'%',q:1,g:[...AW_ZG,'kunde','projekt'],ziel:"nav('auftraege')",f:(v,b)=>AW_M.db2.f(v,b)},
+  ein:{l:'Einkauf netto (Eingangsrechnungen)',e:'€',g:[...AW_ZG,'kunde','projekt'],ziel:"zuListe('E','ER','')",f:(v,b)=>DB.belege.filter(x=>x.typ==='ER'&&x.fest&&!x.storno&&x.datum>=v&&x.datum<=b).map(x=>({d:x.datum,w:summen(x).netto,k:{kd:x.kontaktId,pr:awPrj(x)}}))},
+  ang:{l:'Angebote netto',e:'€',g:[...AW_ZG,'kunde','projekt','status'],ziel:"zuListe('V','AN','')",f:(v,b)=>awAng(v,b).map(x=>({d:x.datum,w:summen(x).netto,k:{kd:x.kontaktId,pr:awPrj(x),st:x.status||'offen'}}))},
+  angN:{l:'Anzahl Angebote',e:'',g:[...AW_ZG,'kunde','projekt','status'],ziel:"zuListe('V','AN','')",f:(v,b)=>awAng(v,b).map(x=>({d:x.datum,w:1,k:{kd:x.kontaktId,pr:awPrj(x),st:x.status||'offen'}}))},
+  angQ:{l:'Trefferquote Angebote',e:'%',q:1,g:[...AW_ZG,'kunde','projekt'],ziel:"zuListe('V','AN','')",f:(v,b)=>awAng(v,b).map(x=>({d:x.datum,w:x.status==='angenommen'?1:0,u:1,k:{kd:x.kontaktId,pr:awPrj(x)}}))},
+  angOffen:{l:'Offene Angebote',e:'€',st:1,g:['kunde','projekt'],ziel:"zuListe('V','AN','offen')",sub:F=>`<span class="mut">${F.length} Stück</span>`,
+    f:()=>{const h=isoD();return DB.belege.filter(x=>x.typ==='AN'&&x.fest&&!x.storno&&!x.status&&(!x.gueltigBis||x.gueltigBis>=h)).map(x=>({d:x.datum,w:summen(x).netto,k:{kd:x.kontaktId,pr:awPrj(x)}}))}},
+  ford:{l:'Offene Forderungen',e:'€',st:1,g:['kunde','projekt','faellig'],ziel:"zuListe('V','','offenRe')",sub:F=>awUe(F,"zuListe('V','','ueber')"),f:()=>awOP(DB.belege.filter(x=>RE_V.includes(x.typ)&&x.fest&&!x.storno))},
+  verb:{l:'Offene Verbindlichkeiten',e:'€',st:1,g:['kunde','projekt','faellig'],ziel:"zuListe('E','','offenRe')",f:()=>awOP(DB.belege.filter(x=>x.typ==='ER'&&x.fest&&!x.storno))},
+  zein:{l:'Zahlungseingänge',e:'€',g:[...AW_ZG,'kunde','projekt'],ziel:"nav('auswertung')",f:(v,b)=>awZahl('V',v,b)},
+  zaus:{l:'Zahlungsausgänge (Eingangsrechnungen)',e:'€',g:[...AW_ZG,'kunde','projekt'],ziel:"nav('auswertung')",f:(v,b)=>awZahl('E',v,b)},
+  std:{l:'Stunden (Zeiterfassung)',e:'h',g:[...AW_ZG,'tarif','auftrag','kunde','projekt'],ziel:"nav('zeiten')",f:(v,b)=>awZeit(v,b,z=>+z.stunden||0)},
+  lohnK:{l:'Lohnkosten (Zeiterfassung)',e:'€',g:[...AW_ZG,'tarif','auftrag','kunde','projekt'],ziel:"nav('zeiten')",f:(v,b)=>awZeit(v,b,z=>(+z.stunden||0)*(+z.kosten||0))},
+  lager:{l:'Lagerwert',e:'€',st:1,g:['agruppe','lplatz','artikel'],ziel:"nav('lager')",f:()=>DB.artikel.filter(a=>a.lager).map(a=>({d:'',w:bestand(a.id).wert,k:{ag:a.gruppe||'',lp:a.lagerplatz||'',art:`${a.nr} ${a.bez}`}}))},
+  kosten:{l:'Laufende Kosten / Monat',e:'€',st:1,g:['kat'],ziel:"nav('kosten')",f:()=>(DB.kosten||[]).filter(k=>k.aktiv!==false).map(k=>({d:'',w:kMonat(k),k:{kat:k.kat||'sonst'}})),
+    sub:()=>{const x=kostenStand();return`<span class="${x.ueber.length?'err':'mut'}">${x.ueber.length?x.ueber.length+' fällig zu buchen ('+fmt(sum(x.ueber,y=>y.k.betrag))+' €)':'nichts fällig'}</span>`}},
+  wv:{l:'Noch zu verrechnen (EK)',e:'€',st:1,g:['kunde'],ziel:"nav('verrechnung')",sub:F=>`<span class="mut">${new Set(F.map(x=>x.k.wb)).size} Wareneingänge</span>`,
+    f:()=>zuVerrechnen().filter(x=>x.offen>0).map(x=>({d:x.b.datum,w:x.offen*(+x.p.ep||+x.p.ek||0),k:{kd:x.b.kontaktId,wb:x.b.id}}))}};
+const AW_G={keine:{l:'keine (Gesamtwert)'},
+  monat:{l:'Monat',zeit:1,key:x=>x.d.slice(0,7),lbl:k=>AW_MN[+k.slice(5,7)-1]+' '+k.slice(0,4),kurz:(k,i)=>AW_MN[+k.slice(5,7)-1]+(!i||k.endsWith('-01')?' '+k.slice(2,4):'')},
+  quartal:{l:'Quartal',zeit:1,key:x=>x.d.slice(0,4)+'-Q'+Math.ceil(+x.d.slice(5,7)/3),lbl:k=>k.slice(5)+' '+k.slice(0,4),kurz:(k,i)=>k.slice(5)+(!i||k.endsWith('Q1')?' '+k.slice(2,4):'')},
+  jahr:{l:'Jahr',zeit:1,key:x=>x.d.slice(0,4),lbl:k=>k,kurz:k=>k},
+  kunde:{l:'Kunde / Lieferant',key:x=>x.k.kd,lbl:k=>k?kName(k):'(ohne)'},projekt:{l:'Projekt',key:x=>x.k.pr,lbl:k=>k||'(ohne Projekt)'},typ:{l:'Belegart',key:x=>x.k.ty,lbl:k=>T[k]?.bez||k},
+  artikel:{l:'Artikel / Leistung',key:x=>x.k.art,lbl:k=>k},agruppe:{l:'Artikelgruppe',key:x=>x.k.ag,lbl:k=>k&&grBez(k)||'(ohne Gruppe)'},
+  tarif:{l:'Stundentarif',key:x=>x.k.tf,lbl:k=>{const t=(S().tarife||[]).find(y=>y.kz===k);return k?(t?.bez?`${k} · ${t.bez}`:k):'(ohne Tarif)'}},
+  auftrag:{l:'Auftrag',key:x=>x.k.au,lbl:k=>k?auftragKurz(k):'(ohne Auftrag)'},status:{l:'Status',key:x=>x.k.st,lbl:k=>k},faellig:{l:'Fälligkeit',ord:1,key:x=>x.k.fl,lbl:k=>AW_FL[k]||k},
+  lplatz:{l:'Lagerplatz',key:x=>x.k.lp,lbl:k=>k&&LP.pfad(k)||'(ohne Lagerplatz)'},kat:{l:'Kategorie',key:x=>x.k.kat,lbl:k=>KKAT[k]?.[0]||k}};
+const AW_Z={j:'dieses Jahr',vj:'Vorjahr',q:'dieses Quartal',m:'dieser Monat',vm:'Vormonat',l12:'letzte 12 Monate',alle:'gesamter Zeitraum',frei:'von – bis …'};
+const AW_D={zahl:'Zahl',balken:'Säulen / Balken',linie:'Linie (Verlauf)',ring:'Ring (Anteile)',tabelle:'Tabelle'};
+function awZr(c){const h=isoD(),y=+h.slice(0,4),mo=+h.slice(5,7),p=n=>String(n).padStart(2,'0'),me=(yy,mm)=>addDays(addMon(`${yy}-${p(mm)}-01`,1),-1);
+  switch(c.z){case'vj':return{von:`${y-1}-01-01`,bis:`${y-1}-12-31`,l:String(y-1)};
+    case'q':{const q=Math.ceil(mo/3);return{von:`${y}-${p(q*3-2)}-01`,bis:me(y,q*3),l:`Q${q} ${y}`}}
+    case'm':return{von:`${y}-${p(mo)}-01`,bis:me(y,mo),l:`${MONATE[mo-1]} ${y}`};
+    case'vm':{const v=addMon(`${y}-${p(mo)}-01`,-1);return{von:v,bis:me(+v.slice(0,4),+v.slice(5,7)),l:`${MONATE[+v.slice(5,7)-1]} ${v.slice(0,4)}`}}
+    case'l12':return{von:addMon(`${y}-${p(mo)}-01`,-11),bis:me(y,mo),l:'letzte 12 Monate'};
+    case'alle':return{von:'0000-01-01',bis:'9999-12-31',l:'gesamt'};
+    case'frei':{const v=c.von||`${y}-01-01`,b=c.bis||h;return{von:v<=b?v:b,bis:v<=b?b:v,l:`${dAT(v<=b?v:b)} – ${dAT(v<=b?b:v)}`}}
+    default:return{von:`${y}-01-01`,bis:`${y}-12-31`,l:String(y)}}}
+// Zeitachse lückenlos (Monate einzeln durchlaufen, damit kein Quartal fehlt); „gesamt“/Stand: von der ersten bis zur letzten Buchung, höchstens 60 Werte
+function awTakte(G,r,F){let v=r.von,b=r.bis;if(v<'1000'||b>'9000'){const D=F.map(x=>x.d).filter(Boolean).sort();if(!D.length)return[];if(v<'1000')v=D[0];if(b>'9000')b=D[D.length-1]}
+  const g=AW_G[G],K=[];for(let d=v.slice(0,7)+'-01',i=0;d<=b&&i<1200;d=addMon(d,1),i++){const k=g.key({d});if(K[K.length-1]!==k)K.push(k)}return K.slice(-60)}
+function awReihe(c,nMax){const M=AW_M[c.m]||AW_M.ums,G=M.g.includes(c.g)?c.g:'keine',g=AW_G[G],r=M.st?{von:'0000-01-01',bis:'9999-12-31',l:'Stand heute'}:awZr(c);
+  const F=M.f(r.von,r.bis,G),vj=!!c.vj&&!M.st&&c.z!=='alle',FV=vj?M.f(addMon(r.von,-12),addMon(r.bis,-12),G):null;
+  const acc=(L,sh)=>{const A=new Map();for(const x of L){const k=g.key(sh?{...x,d:addMon(x.d,12)}:x)||'',o=A.get(k)||{w:0,u:0};o.w+=x.w;o.u+=x.u||0;A.set(k,o)}return A};
+  const val=o=>!o?(M.q?NaN:0):M.q?(o.u?o.w/o.u:NaN):o.w,tot=val({w:sum(F,x=>x.w),u:sum(F,x=>x.u||0)}),totv=FV?val({w:sum(FV,x=>x.w),u:sum(FV,x=>x.u||0)}):null;
+  let rows=[];
+  if(G!=='keine'){const A=acc(F),B=FV?acc(FV,g.zeit):null,leer={w:0,u:0};
+    const K=g.zeit?awTakte(G,r,F):[...A.keys()].sort(g.ord?(a,b)=>a.localeCompare(b):(a,b)=>(val(A.get(b))||0)-(val(A.get(a))||0));
+    rows=K.map(k=>({k,l:g.lbl(k),w:val(A.get(k)),wv:B?val(B.get(k)):null,o:A.get(k)||leer,ov:B?.get(k)||leer}));
+    const n=Math.max(2,Math.min(nMax||99,+c.n||8));if(!g.zeit&&!g.ord&&rows.length>n){const R=rows.slice(n-1),o={w:sum(R,x=>x.o.w),u:sum(R,x=>x.o.u)},ov={w:sum(R,x=>x.ov.w),u:sum(R,x=>x.ov.u)};
+      rows=[...rows.slice(0,n-1),{k:'',l:`Übrige (${R.length})`,w:val(o),wv:B?val(ov):null,rest:1}]}}
+  return{M,G,g,r,F,rows,tot,totv,vj}}
+const awF=(x,e)=>e==='%'?pct(x):!isFinite(x)?'–':e==='€'?fmt(x)+' €':fmtQ(r2(x))+(e==='h'?' h':'');
+const awK=(x,e)=>{if(!isFinite(x))return'';if(e==='%')return Math.round(x*100)+' %';const a=Math.abs(x);return a>=1e6?(x/1e6).toLocaleString('de-AT',{maximumFractionDigits:1})+' Mio':a>=1e4?Math.round(x/1e3).toLocaleString('de-AT')+' T':Math.round(x).toLocaleString('de-AT')};
+const awDelta=(a,b,e)=>{if(!isFinite(a)||!isFinite(b))return'';const z=x=>Math.abs(x).toLocaleString('de-AT',{maximumFractionDigits:1});if(e==='%'){const p=(a-b)*100;return`${p<0?'−':'+'}${z(p)} %-Pkt.`}if(!b)return'';const p=(a-b)/Math.abs(b)*100;return`${p<0?'−':'+'}${z(p)} %`};
+// Säulen (bzw. Linie) über der Zeitachse: Nulllinie bei negativen Werten, Tooltip je Spalte (größer als die Säule), Beschriftung je nach Breite ausgedünnt
+function awSaeulen(R,lin,w){const W=R.rows,e=R.M.e,vs=W.flatMap(x=>R.vj?[x.w,x.wv]:[x.w]).filter(x=>isFinite(x)),mx=Math.max(0,...vs),mn=Math.min(0,...vs),sp=mx-mn||1,base=-mn/sp*100,st=Math.ceil(W.length/(kmpH()?6:w>=3?24:w===2?12:6));
+  const bar=(v,cl)=>!isFinite(v)||!v?'':`<i class="${cl}${v<0?' neg':''}" style="bottom:${(v<0?base+v/sp*100:base).toFixed(2)}%;height:${Math.max(Math.abs(v)/sp*100,.8).toFixed(2)}%"></i>`;
+  const pts=f=>W.map((x,i)=>isFinite(f(x))?`${(i+.5)*10},${(100-base-f(x)/sp*100).toFixed(2)}`:'').filter(Boolean).join(' ');
+  return`<div class="awb"><div class="awba"><span>${awK(mx,e)}</span><span>${mn<0?awK(mn,e):'0'}</span></div><div class="awbc">${mn<0?`<div class="aw0" style="bottom:${base.toFixed(2)}%"></div>`:''}${lin?`<svg viewBox="0 0 ${W.length*10} 100" preserveAspectRatio="none" aria-hidden="true">${R.vj?`<polyline class="vj" points="${pts(x=>x.wv)}"/>`:''}<polyline points="${pts(x=>x.w)}"/></svg>`:''}
+    ${W.map(x=>`<div class="awbs${R.vj?' m2':''}" title="${esc(`${x.l}: ${awF(x.w,e)}${R.vj?` · Vorjahr ${awF(x.wv,e)}`:''}`)}">${lin?'':(R.vj?bar(x.wv,'vj'):'')+bar(x.w,'')}</div>`).join('')}</div><span></span><div class="awbl">${W.map((x,i)=>`<span>${i%st?'':esc(R.g.kurz(x.k,i))}</span>`).join('')}</div></div>`}
+function awBalken(R){const W=R.rows,e=R.M.e,mx=Math.max(0,...W.flatMap(x=>[Math.abs(x.w)||0,R.vj?Math.abs(x.wv)||0:0]))||1,pc=v=>(Math.abs(v||0)/mx*100).toFixed(1);
+  return`<div class="awhb">${W.map(x=>`<span class="l" title="${esc(x.l)}">${esc(x.l)}</span><span class="t" title="${esc(`${x.l}: ${awF(x.w,e)}${R.vj?` · Vorjahr ${awF(x.wv,e)}`:''}`)}"><i class="${x.w<0?'neg':''}${x.rest?' rest':''}" style="width:${pc(x.w)}%"></i>${R.vj?`<i class="vj" style="width:${pc(x.wv)}%"></i>`:''}</span><span class="v">${awF(x.w,e)}</span>`).join('')}</div>`}
+function awRing(R){const W=R.rows.filter(x=>x.w>0),e=R.M.e,s=sum(W,x=>x.w);if(!s||R.M.q)return awBalken(R);let a=0;const f=(x,i)=>x.rest?AW_GRAU:AW_FARBE[i];
+  const seg=W.map((x,i)=>{const p=x.w/s*100,q=Math.max(p-.6,.2),o=`<circle r="15.915" cx="21" cy="21" fill="none" stroke="${f(x,i)}" stroke-width="6" stroke-dasharray="${q.toFixed(2)} ${(100-q).toFixed(2)}" stroke-dashoffset="${(25-a).toFixed(2)}"><title>${esc(`${x.l}: ${awF(x.w,e)} (${pct(x.w/s)})`)}</title></circle>`;a+=p;return o});
+  return`<div class="awr"><svg viewBox="0 0 42 42" role="img" aria-label="Anteile">${seg.join('')}</svg><div class="awlg awlr">${W.map((x,i)=>`<span><i style="background:${f(x,i)}"></i><span class="l">${esc(x.l)}</span><b>${awF(x.w,e)}</b><span class="mut">${pct(x.w/s)}</span></span>`).join('')}</div></div>`}
+function awTabelle(R){const e=R.M.e,vj=R.vj;
+  return`<table class="awtab">${vj?`<thead><tr><th></th><th class="n">${esc(R.r.l)}</th><th class="n">Vorjahr</th><th class="n">Änderung</th></tr></thead>`:''}<tbody>${R.rows.map(x=>`<tr><td>${esc(x.l)}</td><td class="n">${awF(x.w,e)}</td>${vj?`<td class="n mut">${awF(x.wv,e)}</td><td class="n">${awDelta(x.w,x.wv,e)}</td>`:''}</tr>`).join('')}</tbody>
+    <tfoot><tr><td>Gesamt</td><td class="n">${awF(R.tot,e)}</td>${vj?`<td class="n mut">${awF(R.totv,e)}</td><td class="n">${awDelta(R.tot,R.totv,e)}</td>`:''}</tr></tfoot></table>`}
+const awW=c=>+c.w||(c.t!=='liste'&&(!c.g||c.g==='keine'||c.d==='zahl')?1:2); // Breite: 1 schmal (Reihe), 2 halbe, 3 ganze Zeile
+const awKnoepfe=i=>i<0?'':`<span class="awx"><button class="s" data-act="awmv" data-i="${i}" data-d="-1" title="nach vorne">◀</button><button class="s" data-act="awmv" data-i="${i}" data-d="1" title="nach hinten">▶</button><button class="s" data-act="menue" data-m="awk" data-i="${i}" title="Bearbeiten, Breite, Duplizieren, Entfernen">⋯</button></span>`;
+function awKachel(c,i,o={}){if(c.t==='liste')return awListe(c,i,o);
+  const d0=c.g&&c.g!=='keine'?c.d||'balken':'zahl',R=awReihe(c,d0==='ring'?8:0),M=R.M,e=M.e,zl=!o.edit&&!o.vor&&M.ziel?` onclick="${M.ziel}"`:'',x=o.edit?awKnoepfe(i):'';
+  let d=R.G==='keine'?'zahl':d0;if(d==='linie'&&(!R.g.zeit||R.rows.length<2))d='balken';if(d==='ring'&&R.g.zeit)d='balken';
+  const tt=esc(c.titel||M.l+(d==='zahl'&&!M.st?' '+R.r.l:'')),dl=R.vj&&R.totv!=null?awDelta(R.tot,R.totv,e):'';
+  if(d==='zahl')return`<div class="kpi awk w${awW(c)}${zl?' click':''}"${zl} data-awi="${i}">${x}${tt}<b>${awF(R.tot,e)}${M.bz?M.bz(R.F):''}</b>${M.sub?M.sub(R.F):''}${R.vj&&R.totv!=null?`<span class="mut awvz">Vorjahr ${awF(R.totv,e)}${dl?` · ${dl}`:''}</span>`:''}</div>`;
+  const kopf=`<div class="awhd"><b${zl?` class="click"${zl}`:''}>${tt}</b><span class="mut">nach ${esc(R.g.l)} · ${esc(R.r.l)}</span><span class="awt">${awF(R.tot,e)}</span></div>${R.vj&&d!=='ring'?`<div class="awlg"><span><i style="background:${AW_FARBE[0]}"></i>${esc(R.r.l)}</span><span><i style="background:${AW_GRAU}"></i>Vorjahr ${awF(R.totv,e)}${dl?` · ${dl}`:''}</span></div>`:''}`;
+  const inh=!R.rows.length?'<p class="mut">keine Daten im Zeitraum</p>':d==='tabelle'?awTabelle(R):d==='ring'?awRing(R):R.g.zeit?awSaeulen(R,d==='linie',awW(c)):awBalken(R);
+  return`<div class="card awk w${awW(c)}" data-awi="${i}">${x}${kopf}${inh}</div>`}
+const AW_L={
+  ueber:{l:'Überfällige Ausgangsrechnungen',ziel:"zuListe('V','','ueber')",leer:'nichts überfällig',L:()=>{const h=isoD();return DB.belege.filter(b=>RE_V.includes(b.typ)&&b.fest&&!b.storno&&offen(b)>0.005&&faellig(b)<h)},
+    z:b=>`<td>${esc(b.nr)}</td><td>${esc(kName(b.kontaktId))}</td><td>fällig ${dAT(faellig(b))}</td><td class="n">${fmt(offen(b))}</td>`,k:b=>({t:esc(b.nr),u:esc(kName(b.kontaktId)),z:'fällig '+dAT(faellig(b)),b:fmt(offen(b))+' €'}),nav:b=>'beleg/'+b.id},
+  erUe:{l:'Eingangsrechnungen fällig (7 Tage)',ziel:"zuListe('E','ER','offenRe')",leer:'keine fälligen Eingangsrechnungen',L:()=>{const h=addDays(isoD(),7);return DB.belege.filter(b=>b.typ==='ER'&&b.fest&&!b.storno&&offen(b)>0.005&&faellig(b)<=h)},
+    z:b=>`<td>${esc(b.fremdNr)}</td><td>${esc(kName(b.kontaktId))}</td><td>${dAT(faellig(b))}</td><td class="n">${fmt(offen(b))}</td>`,k:b=>({t:esc(b.fremdNr||bNr(b)),u:esc(kName(b.kontaktId)),z:'fällig '+dAT(faellig(b)),b:fmt(offen(b))+' €'}),nav:b=>'beleg/'+b.id},
+  min:{l:'Unter Mindestbestand',ziel:"nav('lager')",leer:'nichts unter Mindestbestand',L:()=>DB.artikel.filter(a=>a.lager&&a.aktiv!==false&&+a.minBestand>0&&bestand(a.id).menge<+a.minBestand),
+    z:a=>`<td>${esc(a.nr)}</td><td>${esc(a.bez)}</td><td class="n">${fmtQ(bestand(a.id).menge)} / ${fmtQ(a.minBestand)} ${esc(a.einheit)}</td>`,k:a=>({t:`${esc(a.nr)} ${esc(a.bez)}`,b:`${fmtQ(bestand(a.id).menge)} / ${fmtQ(a.minBestand)} ${esc(a.einheit)}`}),nav:a=>'artikel/'+a.id},
+  beOffen:{l:'Offene Bestellungen',ziel:"zuListe('E','BE','offen')",leer:'keine offenen Bestellungen',L:()=>DB.belege.filter(b=>b.typ==='BE'&&b.fest&&!b.storno&&erledigung(b)<0.9999),
+    z:b=>`<td>${esc(b.nr)}</td><td>${esc(kName(b.kontaktId))}</td><td>${b.liefertermin?dAT(b.liefertermin):''}</td><td>${statusTag(b)}</td>`,k:b=>({t:esc(b.nr),s:statusTag(b),u:esc(kName(b.kontaktId)),z:b.liefertermin?'Liefertermin '+dAT(b.liefertermin):''}),nav:b=>'beleg/'+b.id},
+  angOffen:{l:'Offene Angebote',ziel:"zuListe('V','AN','offen')",leer:'keine offenen Angebote',L:()=>{const h=isoD();return DB.belege.filter(b=>b.typ==='AN'&&b.fest&&!b.storno&&!b.status&&(!b.gueltigBis||b.gueltigBis>=h))},
+    z:b=>`<td>${esc(bNr(b))}</td><td>${esc(kName(b.kontaktId))}</td><td>${esc(b.betreff||'')}</td><td class="n">${fmt(summen(b).netto)}</td>`,k:b=>({t:esc(bNr(b)),u:[kName(b.kontaktId),b.betreff].filter(Boolean).map(esc).join(' · '),z:b.gueltigBis?'gültig bis '+dAT(b.gueltigBis):'',b:fmt(summen(b).netto)+' €'}),nav:b=>'beleg/'+b.id},
+  entw:{l:'Entwürfe',h:`Entwürfe <a href="javascript:void 0" onclick="zuListe('V','','entwurf')" style="font-weight:400;font-size:13px">Verkauf →</a> <a href="javascript:void 0" onclick="zuListe('E','','entwurf')" style="font-weight:400;font-size:13px">Einkauf →</a>`,ziel:"zuListe('V','','entwurf')",leer:'keine Entwürfe',L:()=>DB.belege.filter(b=>!b.fest&&!b.storno),
+    z:b=>`<td>${T[b.typ].bez}</td><td>${esc(kName(b.kontaktId))}</td><td>${esc(b.betreff)}</td><td>${dAT(b.datum)}</td>`,k:b=>({t:`${BICON[b.typ]||''} ${T[b.typ].bez}`,u:[kName(b.kontaktId),b.betreff].filter(x=>x&&x!=='–').map(esc).join(' · '),z:dAT(b.datum)}),nav:b=>'beleg/'+b.id}};
+function awListe(c,i,o={}){const D=AW_L[c.l]||AW_L.ueber,A=D.L(),n=Math.max(1,+c.n||10),x=o.edit?awKnoepfe(i):'',lk=t=>o.vor?t:`<a href="javascript:void 0" onclick="${D.ziel}" title="Alle anzeigen">${t} →</a>`;
+  const t=c.titel?lk(esc(c.titel)):D.h||lk(D.l),mehr=A.length>n?`<p style="margin:6px 0 0"><a href="javascript:void 0" onclick="${D.ziel}">… ${A.length-n} weitere →</a></p>`:'',cl=A.slice(0,n),na=y=>o.vor?'':`onclick="nav('${D.nav(y)}')"`;
+  if(kmpH())return`<div class="card kkl awk w${awW(c)}" style="padding:0" data-awi="${i}">${x}<h2>${t}</h2>${cl.length?cl.map(y=>karte({...D.k(y),a:na(y)})).join(''):`<p class="mut" style="padding:0 12px 10px;margin:0">${D.leer}</p>`}${mehr?`<div style="padding:0 12px 10px">${mehr}</div>`:''}</div>`;
+  return`<div class="card awk w${awW(c)}" data-awi="${i}">${x}<h2>${t}</h2>${cl.length?`<table>${cl.map(y=>`<tr class="click" ${na(y)}>${D.z(y)}</tr>`).join('')}</table>`:'<p class="mut">keine</p>'}${mehr}</div>`}
+// Standard = bisherige Übersicht: sieben Kennzahlen, fünf Listen (je halbe Zeile)
+const AW_STD=()=>[...['ums','db2','ford','verb','kosten','wv','angOffen'].map(m=>({t:'kpi',m,z:'j',g:'keine',d:'zahl',w:1})),...['ueber','erUe','min','beOffen','entw'].map(l=>({t:'liste',l,w:2,n:50}))].map(x=>({id:uid(),...x}));
+const awSet=f=>{const L=(S().dash||AW_STD()).map(x=>({...x}));f(L);S().dash=L;commit();render()};
+function awDash(){const j=isoD().slice(0,4),ed=!!UI.dashEdit,H=kmpH(),L=S().dash||AW_STD(),out=[],leer=[];let lp=-1;
+  L.forEach((c,i)=>{const D=c.t==='liste'&&(AW_L[c.l]||AW_L.ueber);if(H&&!ed&&D&&!D.L().length){if(lp<0){lp=out.length;out.push(null)}leer.push(D.leer);return} // Handy: leere Listen in einer Zeile wie bisher
+    let h;try{h=awKachel(c,i,{edit:ed})}catch(e){h=`<div class="card awk w${awW(c)}" data-awi="${i}">${ed?awKnoepfe(i):''}<p class="err">Auswertung nicht darstellbar: ${esc(e.message)}</p></div>`}out.push({w:awW(c),h})});
+  if(lp>=0)out[lp]={w:3,h:`<div class="card mut awk w3">${leer.join(' · ').replace(/^./,x=>x.toUpperCase())}</div>`};
+  if(ed)out.push({w:1,h:'<button class="awneu w1" data-act="awneu">+ Auswertung</button>'});
+  const G=[];for(const x of out)if(x.w===1&&G.length&&Array.isArray(G[G.length-1]))G[G.length-1].push(x.h);else G.push(x.w===1?[x.h]:x.h); // schmale Kacheln hintereinander = eine Reihe (.grid wie bisher)
+  return`<div class="bar awkopf"><h1 style="margin:0">Überblick ${j}</h1><span class="sp"></span>${ed?`<button data-act="awneu">+ Auswertung</button><button data-act="awstd" title="Übersicht auf die bisherigen Kacheln zurücksetzen"${S().dash?'':' disabled'}>Standard</button><button class="p" data-act="awedit">Fertig</button>`:`<button data-act="awedit" title="Kacheln wählen, anordnen und eigene Auswertungen erstellen">⚙ Anpassen</button>`}</div>${lfDash()}
+  ${!S().firma.name?'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>':''}
+  ${ed?'<p class="mut" style="margin:0 0 10px">◀ ▶ verschieben · ⋯ bearbeiten, Breite, duplizieren, entfernen · „+ Auswertung“ legt eine neue Kachel an. Gilt für alle Geräte.</p>':kmp()?quickK():`<div class="quick">
+    <a class="btn" href="#/zeiten">⏱ Zeit erfassen</a>
+    <label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>
+    <button data-act="qneu" data-t="AN">+ Angebot</button>
+    <button data-act="qneu" data-t="LS">+ Lieferschein</button>
+    <button data-act="qneu" data-t="RE">+ Rechnung</button>
+  </div>`}
+  <div class="awg${ed?' awed':''}">${G.map(x=>Array.isArray(x)?`<div class="grid awgr">${x.join('')}</div>`:x).join('')}</div>`}
+async function awDialog(c0,i){const neu=i==null,c=c0?{...c0}:{t:'kpi',m:'ums',z:'j',g:'monat',d:'balken',w:2};
+  const gOpts=m=>[['keine',AW_G.keine.l],...(AW_M[m]?.g||[]).map(k=>[k,AW_G[k].l])];
+  const o=await formDialog({titel:neu?'+ Auswertung':'Auswertung bearbeiten',ok:neu?'Hinzufügen':'Übernehmen',breit:true,scroll:true,felder:[
+    {k:'m',l:'Kennzahl / Liste',opts:[...Object.entries(AW_M).map(([k,m])=>[k,m.l+(m.st?' (Stand heute)':'')]),...Object.entries(AW_L).map(([k,x])=>['L:'+k,'Liste: '+x.l])],wert:c.t==='liste'?'L:'+c.l:c.m},
+    {k:'z',l:'Zeitraum',opts:Object.entries(AW_Z),wert:c.z||'j'},{k:'von',l:'von',typ:'date',wert:c.von||''},{k:'bis',l:'bis',typ:'date',wert:c.bis||''},
+    {k:'g',l:'Aufteilung',opts:gOpts(c.t==='liste'?'':c.m),wert:c.g||'keine',neu:1},{k:'d',l:'Darstellung',opts:Object.entries(AW_D),wert:c.d&&c.d!=='zahl'?c.d:'balken'},{k:'vj',l:'mit Vorjahr vergleichen',typ:'checkbox',wert:!!c.vj},
+    {k:'n',l:'Anzahl Einträge',typ:'number',wert:c.n||(c.t==='liste'?10:8),neu:1},{k:'w',l:'Breite',opts:[['1','schmal (in einer Reihe)'],['2','halbe Zeile'],['3','ganze Zeile']],wert:String(awW(c))},{k:'titel',l:'Titel',ph:'automatisch',max:60,wert:c.titel||''},
+    {typ:'hinweis',l:'<b>Vorschau</b><div id="aw-vor" class="awvor"></div>'}],
+    ein:d=>{const q=k=>d.querySelector(`[data-k="${k}"]`),lies=()=>{const m=q('m').value,Li=m.startsWith('L:');return{t:Li?'liste':'kpi',...(Li?{l:m.slice(2)}:{m}),z:q('z').value,von:q('von').value,bis:q('bis').value,g:q('g').value,d:q('d').value,vj:q('vj').checked,n:num(q('n').value)||'',w:+q('w').value,titel:q('titel').value.trim()}};
+      const upd=k=>{if(k==='m'){const m=q('m').value,v=q('g').value,G=gOpts(m.startsWith('L:')?'':m);q('g').innerHTML=G.map(([a,b])=>opt(a,b,G.some(y=>y[0]===v)?v:'keine')).join('')}
+        const x=lies(),M=AW_M[x.m],Li=x.t==='liste';q('z').disabled=q('vj').disabled=Li||!!M?.st;q('g').disabled=Li;q('d').disabled=Li||x.g==='keine';
+        for(const f of['von','bis'])q(f).closest('label').style.display=!Li&&!M?.st&&x.z==='frei'?'':'none';
+        const v=d.querySelector('#aw-vor');try{v.innerHTML=awKachel(x,-1,{vor:1})}catch(e){v.textContent='Vorschau nicht möglich: '+e.message}};
+      d.addEventListener('change',e=>upd(e.target.dataset.k));upd();return upd}});
+  if(!o)return;const Li=o.m.startsWith('L:'),x={id:c0?.id||uid(),t:Li?'liste':'kpi',w:+o.w||2,n:+o.n||'',titel:o.titel};
+  if(Li)x.l=o.m.slice(2);else Object.assign(x,{m:o.m,z:o.z,von:o.z==='frei'?o.von:'',bis:o.z==='frei'?o.bis:'',g:o.g,d:o.g==='keine'?'zahl':o.d,vj:!!o.vj});
+  awSet(A=>{if(neu)A.push(x);else A[i]=x})}
+MENUE.awk=btn=>{const i=btn.dataset.i,c=(S().dash||AW_STD())[+i]||{},w=awW(c);
+  return[{l:'Bearbeiten …',ic:'✎',act:'awed',d:{i}},{l:'Breite',ic:'↔',sub:[[1,'schmal (in einer Reihe)'],[2,'halbe Zeile'],[3,'ganze Zeile']].map(([v,l])=>({l:(v===w?'✓ ':'')+l,act:'awbr',d:{i,w:v}}))},{l:'Duplizieren',ic:'⧉',act:'awdup',d:{i}},{l:'Entfernen',ic:'🗑',act:'awdel',d:{i},gefahr:1}]};
+queueMicrotask(()=>Object.assign(ACT,{awedit:()=>{UI.dashEdit=!UI.dashEdit;render()},awneu:()=>awDialog(),awed:el=>awDialog((S().dash||AW_STD())[+el.dataset.i],+el.dataset.i),
+  awmv:el=>awSet(L=>{const i=+el.dataset.i,j=i+ +el.dataset.d;if(j>=0&&j<L.length)[L[i],L[j]]=[L[j],L[i]]}),awbr:el=>awSet(L=>{if(L[+el.dataset.i])L[+el.dataset.i].w=+el.dataset.w}),
+  awdup:el=>awSet(L=>{const i=+el.dataset.i;if(L[i])L.splice(i+1,0,{...L[i],id:uid()})}),awdel:el=>awSet(L=>{L.splice(+el.dataset.i,1)}),
+  awstd:()=>{if(!S().dash||!confirm('Übersicht auf die bisherigen Kacheln zurücksetzen? Eigene Auswertungen werden entfernt.'))return;delete S().dash;commit();render()}}));
 
 /* ---------- Kompakt (P30): Neu-/Einlesen-Menüs, Filter-Pop-up und Chips, „± Bestand buchen“ als Pop-up ----------
    FILTER.<name>(el) öffnet formDialog mit den bisherigen Filtern (schreibt dieselben UI-Schlüssel), Auslöser data-act="filter" data-fl="<name>"; aktive Filter als Chips (ACT.fweg, data-f = UI-Schlüssel) */

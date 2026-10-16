@@ -6138,6 +6138,34 @@ function importJSON(el){
     catch(e){alert('Import fehlgeschlagen: '+e.message)}
   };r.readAsText(file);
 }
+/* Bautagesbericht Teil 3 (P36, erw.btbSig, wirkt mit erw.unterschrift): Abschließen (Pflichtangaben, b.abgeschlossen; „Wieder öffnen“ bis zur ersten Unterschrift) →
+   Unterschrift Monteur (sperrt: sperren() aus P36 a, danach BTB_NACH, z. B. Zeiten Teil 5) → Unterschrift Kunde optional, auch später (nur sig.kunde, Inhalt bleibt);
+   Korrektur nach der Sperre nur als Nachtrag (neuer Bericht mit nachtragZu, Inhalt kopiert). Unterschriften r.sig {monteur,kunde} als PNG im Ablageordner btbOrdner(r) */
+erwPlus({k:'btbSig',std:false,p:'Bautagesbericht (P36)',l:'Bautagesbericht abschließen und unterschreiben',info:'Wirkt mit „Unterschrift am Gerät und Sperre“. „Abschließen“ prüft Datum und Tätigkeit (Hinweis, wenn keine Stunden erfasst sind) und zeigt den Bericht als Ansicht; „Wieder öffnen“ geht bis zur ersten Unterschrift. „Unterschrift Monteur“ sperrt den Bericht: Inhalt, Fotos und Zeiten sind danach unveränderbar. „Unterschrift Kunde“ ist optional und auch später möglich (z. B. am nächsten Tag), alternativ mit Vermerk „unterschreibt nicht“; sie ändert den Inhalt nicht. Korrekturen nach der Sperre nur über „Nachtrag …“ (neuer Bericht mit Verweis, Inhalt übernommen). Aus = keine Knöpfe; gesperrte Berichte bleiben gesperrt.'});
+SIG_C.berichte={n:r=>'Bautagesbericht '+r.nr};
+const BTB_NACH=[],btbSigAn=()=>erw('btbSig')&&erw('unterschrift');
+BTB_ST.unshift(r=>r.gesperrt?(r.sig?.kunde?.pfad?tag('Kunde unterschrieben','ok'):tag('unterschrieben','ok')):r.abgeschlossen?tag('abgeschlossen','acc'):'');
+BTB_KN.push(r=>!btbSigAn()?'':!btbFest(r)?`<button class="p" data-act="btbab" data-id="${r.id}">Abschließen</button>`
+  :!r.gesperrt?`<button data-act="btbauf" data-id="${r.id}">Wieder öffnen</button><button class="p" data-act="btbsig" data-id="${r.id}" data-r="monteur">✍ Unterschrift Monteur</button>`
+  :(r.sig?.kunde?'':`<button class="p" data-act="btbsig" data-id="${r.id}" data-r="kunde">✍ Unterschrift Kunde</button>`)+`<button data-act="btbnach" data-id="${r.id}">Nachtrag …</button>`);
+BTB_DOC.push(r=>{const n=DB.berichte.filter(x=>x.nachtragZu===r.id),v=ROOT.btb(r.nachtragZu);
+  return(v?`<p class="hint" style="margin-top:12px">Nachtrag zu <a href="#/bericht/${v.id}">Bautagesbericht ${v.nr}</a> vom ${dAT(v.datum)}</p>`:'')+(n.length?`<p class="mut" style="margin-top:12px">Nachtrag: ${n.map(x=>`<a href="#/bericht/${x.id}">Bautagesbericht ${x.nr}</a>`).join(', ')}</p>`:'')
+    +(r.abgeschlossen||r.gesperrt?sigBlock(r,[['monteur','Monteur'],['kunde','Auftraggeber / Kunde']]):'')});
+Object.assign(ACT,{
+  btbab:async el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r))return;document.activeElement?.blur?.();await new Promise(z=>setTimeout(z,0));
+    const f=[!r.datum&&'Datum',!(r.taet||[]).some(t=>pT(t.text))&&'Tätigkeit'].filter(Boolean);if(f.length){alert('Bitte ausfüllen: '+f.join(', '));return}
+    if(!btbSumme(r)&&!confirm('Es sind keine Stunden erfasst. Trotzdem abschließen?'))return;
+    r.abgeschlossen=new Date().toISOString();log('Bautagesbericht abgeschlossen',`BTB ${r.nr} ${auftragKurz(r.auftragId)}`);await commit();render()},
+  btbauf:async el=>{const r=ROOT.btb(el.dataset.id);if(!r||r.gesperrt)return;delete r.abgeschlossen;log('Bautagesbericht wieder geöffnet',`BTB ${r.nr}`);await commit();render()},
+  btbsig:async el=>{const r=ROOT.btb(el.dataset.id),m=el.dataset.r==='monteur';if(!r||!btbSigAn()||(m?r.gesperrt||!r.abgeschlossen:!r.gesperrt||r.sig?.kunde))return;
+    const k=kontakt(btbRoot(r)?.kontaktId),e=await sigPop(m?'Unterschrift Monteur':'Unterschrift Auftraggeber / Kunde',m?{name:r.verfasser||S().bearbeiter||'',hinweis:'Mit der Unterschrift wird der Bericht gesperrt: Inhalt, Fotos und Zeiten sind danach nicht mehr änderbar (Korrektur nur als Nachtrag).'}
+      :{name:persName(k)||'',ohne:true,hinweis:`Der Kunde bestätigt Bautagesbericht ${r.nr} vom ${dAT(r.datum)}. Der Inhalt bleibt unverändert.`});
+    if(!e||(m?r.gesperrt:r.sig?.kunde))return;const s=await sigAblegen(btbOrdner(r),m?'monteur':'kunde',e);
+    if(m){r.sig={monteur:s};await sperren(r);for(const f of BTB_NACH)f(r)}else r.sig={...r.sig,kunde:s};
+    log(m?'Bautagesbericht unterschrieben (Monteur)':'Bautagesbericht unterschrieben (Kunde)',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${s.name}${s.ohne?' – '+s.ohne:''}`);await commit();render()},
+  btbnach:el=>{const r=ROOT.btb(el.dataset.id);if(!r||!confirm(`Nachtrag zu Bautagesbericht ${r.nr} anlegen?\n\nDer neue Bericht übernimmt den Inhalt zum Korrigieren; Bericht ${r.nr} bleibt unverändert.`))return;
+    const n=btbNeu(r.auftragId),c=JSON.parse(JSON.stringify(r));for(const k of['id','nr','erstellt','abgeschlossen','gesperrt','hash','sig','nachtragZu'])delete c[k];Object.assign(n,c,{nachtragZu:r.id});
+    log('Bautagesbericht Nachtrag',`BTB ${n.nr} zu BTB ${r.nr}`);persist();go('bericht/'+n.id)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();commit()}
   if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='p'&&DB&&erw('strgP')&&curBeleg()){e.preventDefault();document.activeElement?.blur?.();belegDrucken(curBeleg())}}); // Strg+P: geöffneten Beleg drucken (offene Eingabe vorher übernehmen)
 $('#menu').onclick=e=>{e.stopPropagation();document.body.classList.toggle('nav')};

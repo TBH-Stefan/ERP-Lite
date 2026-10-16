@@ -1013,12 +1013,101 @@ async function saveNow(){
 window.addEventListener('online',()=>{if(pending)saveNow()});
 function loginHinweis(){for(const e of [$('#savestate'),$('#sync2')])if(e){e.style.cursor='pointer';e.onclick=()=>AUTH.login()}}
 
+/* ---------- Datensicherung (P38): Sicherungen gzip-komprimiert und nach dem Schreiben geprüft, Konfliktkopien, Wiederherstellen ----------
+   Ablage im Speicherort unter backup/ (OneDrive bzw. Ordner; „nur Browser“ sichert nicht). Sicherungen werden nie automatisch gelöscht (Entscheidung Anwender 16.10.2026). */
+async function gz(txt){return new Uint8Array(await new Response(new Blob([txt]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer())}
+async function ungz(blob){return new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).text()}
+async function sha(txt){return[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt)))].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const stempel=()=>isoD()+'_'+new Date().toTimeString().slice(0,8).replace(/:/g,'-');
+const kbT=n=>n>=1048576?(n/1048576).toLocaleString('de-AT',{maximumFractionDigits:1})+' MB':Math.max(1,Math.round(n/1024))+' KB';
+// Listen mit id für den Abgleich: die bekannten und jede weitere Liste in den Daten (neue Sammlungen sind damit automatisch dabei)
+const mListen=(L,...D)=>[...L,...new Set(D.flatMap(d=>Object.keys(d||{}).filter(k=>k!=='log'&&!L.includes(k)&&Array.isArray(d[k])&&d[k].every(x=>x&&typeof x==='object'&&'id' in x))))];
+Object.assign(ODSTORE,{
+  async exists(path){const r=await graph(odPath(path)+'?$select=id');if(r.status===404)return false;if(!r.ok)throw new Error('OneDrive '+r.status);return true},
+  async getFile(path){const r=await graph(odPath(path));if(r.status===404)return null;if(!r.ok)throw new Error('OneDrive '+r.status);
+    const d=await fetch((await r.json())['@microsoft.graph.downloadUrl'],{cache:'no-store'});if(!d.ok)throw new Error('Download '+d.status);return d.blob()},
+  async list(dir){const o=[];let u=odPath(dir)+':/children?$select=name,size,lastModifiedDateTime,folder&$top=999';
+    while(u){const r=await graph(u);if(r.status===404)return o;if(!r.ok)throw new Error('OneDrive '+r.status);const j=await r.json();
+      for(const x of j.value)if(!x.folder)o.push({name:x.name,size:x.size,ts:x.lastModifiedDateTime});u=j['@odata.nextLink']?.replace('https://graph.microsoft.com/v1.0','')}
+    return o}
+});
+Object.assign(DIRSTORE,{
+  async getFile(path){const p=path.split('/'),fn=p.pop();try{return await (await (await this.dir(p,false)).getFileHandle(fn)).getFile()}catch(e){if(e.name==='NotFoundError'||e.name==='TypeMismatchError')return null;throw e}},
+  async exists(path){return!!await this.getFile(path)},
+  async list(dir){const o=[];let d;try{d=await this.dir(dir.split('/'),false)}catch(e){return o}
+    for await(const[n,h]of d.entries())if(h.kind==='file'){const f=await h.getFile();o.push({name:n,size:f.size,ts:new Date(f.lastModified).toISOString()})}return o}
+});
+Object.assign(CACHESTORE,{async getFile(path){return await kvGet('att:'+path)||null},async exists(path){return!!await this.getFile(path)},async list(){return[]}});
+async function sichLesen(p,st=STORE){const f=await st.getFile(p);if(!f)throw new Error('Datei nicht gefunden: '+p);const k=new Uint8Array(await f.slice(0,2).arrayBuffer());return k[0]===0x1f&&k[1]===0x8b?ungz(f):f.text()}
+async function sichSchreiben(p,txt){ // schreibt komprimiert, liest zurück und vergleicht die Prüfsumme
+  const h=await sha(txt);await STORE.putFile(p,new Blob([await gz(txt)],{type:'application/gzip'}));
+  if(await sha(await sichLesen(p))!==h)throw new Error('Prüfung nach dem Schreiben fehlgeschlagen ('+p+')');return h}
+async function sichern(art,txt){if(STORE.art==='cache')return'';const p=`backup/${art}_${stempel()}.json.gz`;await sichSchreiben(p,txt??JSON.stringify(DB));return p} // Sicherung vor riskanten Schritten
+async function vorSichern(art){try{await sichern(art);return true}catch(e){return confirm('Sicherung des aktuellen Stands fehlgeschlagen:\n'+e.message+'\n\nTrotzdem fortfahren?')}}
+// Konfliktkopie: eigene Versionen, die beim Abgleich der Version des anderen Geräts weichen mussten → backup/konflikte/ (sonst als Download)
+async function konfliktKopie(verdr){if(!verdr?.length)return'';const txt=JSON.stringify({ts:new Date().toISOString(),liste:verdr});
+  try{const p=await sichern('konflikte/konflikt',txt);if(p)return p}catch(e){}
+  dl(new Blob([txt],{type:'application/json'}),`konflikt_${stempel()}.json`);return'Download'}
+const kkHinweis=p=>p?`\n\nIhre Version ist gesichert${p==='Download'?' (Datei wurde heruntergeladen)':': Export & Sicherung → Sicherungen'} und kann dort je Datensatz übernommen werden.`:'';
+// Start: erp-daten.json beschädigt oder fehlend → jüngste lesbare Tagessicherung anbieten (die beschädigte Datei bleibt unter backup/)
+let SICH_AUS='';
+async function startDaten(st,txt){
+  let fehler=null;if(txt){try{return JSON.parse(txt)}catch(e){fehler=e}}
+  let L=[];try{L=(await st.list('backup')).filter(f=>/^erp-daten_\d{4}-\d\d-\d\d\.json(\.gz)?$/.test(f.name)).sort((a,b)=>b.name.localeCompare(a.name))}catch(e){}
+  for(const f of L){let d;try{d=JSON.parse(await sichLesen('backup/'+f.name,st))}catch(e){continue}if(!d?.settings||!Array.isArray(d.belege))continue;
+    if(confirm(`${FILE} ${fehler?'ist beschädigt und kann nicht gelesen werden ('+fehler.message+')':'fehlt im Speicherort'}.\n\nJüngste lesbare Sicherung laden?\n${f.name} · ${d.belege.length} Belege${fehler?'\n\nDie beschädigte Datei wird unter backup/ aufbewahrt.':''}`)){
+      if(fehler)try{await st.putFile(`backup/defekt_${stempel()}.json`,new Blob([txt],{type:'application/json'}))}catch(e){}
+      st.lastText=null;SICH_AUS=f.name;return d}
+    break}
+  if(fehler)throw fehler;return null}
+function sichModal(titel,html){$('#sichm')?.remove();const d=document.createElement('div');d.className='modal';d.id='sichm';
+  d.innerHTML=`<div class="mbox" style="max-width:760px"><h2>${titel}</h2><div style="max-height:60vh;overflow:auto">${html}</div><div class="bar" style="justify-content:flex-end;margin:16px 0 0"><button id="m-zu">Schließen</button></div></div>`;
+  document.body.appendChild(d);const fin=()=>{d.remove();document.removeEventListener('keydown',kd,true)},kd=e=>{if(e.key==='Escape'&&mOben(d)){e.stopPropagation();fin()}};
+  document.addEventListener('keydown',kd,true);d.querySelector('#m-zu').onclick=fin;return d}
+const SICH_ART=n=>/^erp-daten_/.test(n)?'Tagessicherung':/^konflikt_/.test(n)?'Konfliktkopie':/^vor-import/.test(n)?'vor Import':/^vor-update/.test(n)?'vor Update':/^vor-wieder/.test(n)?'vor Wiederherstellen':/^vor-papier/.test(n)?'vor Papierkorb leeren':/^defekt_/.test(n)?'beschädigte Datei':'Sicherung';
+async function sichPop(){
+  if(STORE.art==='cache'){alert('Im Modus „nur Browser“ gibt es keine Sicherungen.');return}
+  let L;try{L=[...(await STORE.list('backup')).map(f=>({...f,p:'backup/'+f.name})),...(await STORE.list('backup/konflikte')).map(f=>({...f,p:'backup/konflikte/'+f.name}))]}catch(e){alert('Sicherungen konnten nicht gelesen werden:\n'+e.message);return}
+  L.sort((a,b)=>b.ts.localeCompare(a.ts));const sum=L.reduce((a,f)=>a+f.size,0);
+  sichModal('Sicherungen',`<p class="mut" style="margin-top:0">${L.length} Datei(en), zusammen ${kbT(sum)} · Ordner <b>backup</b> im Speicherort. Beim Wiederherstellen bleiben festgeschriebene Belege, Nummernkreise und Buchungen des aktuellen Stands erhalten; der aktuelle Stand wird vorher gesichert.</p>
+    <table><thead><tr><th>Datei</th><th>Art</th><th>Gespeichert</th><th class="n">Größe</th><th></th></tr></thead><tbody>${L.map(f=>`<tr><td>${esc(f.name)}</td><td>${SICH_ART(f.name)}</td><td style="white-space:nowrap">${new Date(f.ts).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'})}</td><td class="n">${kbT(f.size)}</td>
+      <td style="white-space:nowrap">${/^konflikt_/.test(f.name)?`<button class="s" data-act="kkopie" data-p="${esc(f.p)}">Ansehen …</button>`:/\.json(\.gz)?$/.test(f.name)&&!/^defekt_/.test(f.name)?`<button class="s" data-act="sichzur" data-p="${esc(f.p)}">Wiederherstellen …</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" class="mut">Noch keine Sicherungen.</td></tr>'}</tbody></table>`)}
+async function sichZurueck(p){
+  let d;try{d=JSON.parse(await sichLesen(p));if(!d.settings||!Array.isArray(d.belege))throw new Error('Keine ERP-Lite-Datei.')}catch(e){alert('Sicherung kann nicht gelesen werden:\n'+e.message);return}
+  // festgeschriebene Belege (mit Zahlungen, Storno), Lagerbuchungen dazu, Buchungen und Nummernkreise des aktuellen Stands bleiben (lückenlose Nummern, § 131 BAO)
+  const fest=DB.belege.filter(b=>b.fest),fid=new Set(fest.map(b=>b.id)),neuF=fest.filter(b=>!d.belege.some(x=>x.id===b.id));
+  if(!await dialog({titel:'Sicherung wiederherstellen',html:`<p style="margin-top:0"><b>${esc(p.split('/').pop())}</b><br>${d.belege.length} Belege, ${(d.kontakte||[]).length} Kontakte, ${(d.artikel||[]).length} Artikel (aktuell ${DB.belege.length} / ${DB.kontakte.length} / ${DB.artikel.length}).</p>
+    <div class="hint">Alle anderen Daten werden auf den Stand der Sicherung zurückgesetzt. Erhalten bleiben: ${fest.length} festgeschriebene Belege (davon ${neuF.length} nach der Sicherung festgeschrieben) mit Zahlungen und Lagerbuchungen, Buchungen der Finanzbuchhaltung, Nummernkreise. Der aktuelle Stand wird vorher unter backup/ gesichert.</div>`,ok:'Wiederherstellen',gefahr:true}))return;
+  if(!await vorSichern('vor-wiederherstellen'))return;
+  for(const b of fest){const i=d.belege.findIndex(x=>x.id===b.id);if(i>=0)d.belege[i]=b;else d.belege.push(b)}
+  d.lager=d.lager||[];{const ids=new Set(d.lager.map(e=>e.id));for(const e of DB.lager)if(!ids.has(e.id)&&fid.has(e.belegId))d.lager.push(e)}
+  if(DB.fibu){if(!d.fibu)d.fibu=DB.fibu;else{const ids=new Map(d.fibu.buchungen.map(x=>[x.id,x]));for(const x of DB.fibu.buchungen){const r=ids.get(x.id);if(!r)d.fibu.buchungen.push(x);else if(x.storno)Object.assign(r,{storno:true,stornoDatum:x.stornoDatum})}if((DB.fibu.sperre||'')>(d.fibu.sperre||''))d.fibu.sperre=DB.fibu.sperre}}
+  for(const t in DB.settings.nk){const z=(d.settings.nk[t]=d.settings.nk[t]||{prefix:DB.settings.nk[t].prefix,zaehler:{}}).zaehler;for(const j in DB.settings.nk[t].zaehler)z[j]=Math.max(z[j]||0,DB.settings.nk[t].zaehler[j])}
+  d.settings.knr=d.settings.knr||{};for(const k of ['K','L'])d.settings.knr[k]=Math.max(d.settings.knr[k]||0,DB.settings.knr?.[k]||0);d.settings.anr=Math.max(d.settings.anr||0,DB.settings.anr||0);
+  {const seen=new Set((d.log||[]).map(x=>x.ts+x.aktion));d.log=[...(d.log||[]),...DB.log.filter(x=>!seen.has(x.ts+x.aktion))].sort((a,b)=>a.ts.localeCompare(b.ts))}
+  $('#sichm')?.remove();DB=migrate(d);log('Sicherung wiederhergestellt',p.split('/').pop());artDatalist();await commit();go('dash')}
+let KKOPIE=null;
+async function kkPop(p){
+  try{KKOPIE={p,...JSON.parse(await sichLesen(p))}}catch(e){alert('Konfliktkopie kann nicht gelesen werden:\n'+e.message);return}
+  const nm=e=>e.c==='belege'?`${T[e.x.typ]?.bez||'Beleg'} ${bNr(e.x)}${e.x.kontaktId?' · '+kName(e.x.kontaktId):''}`:e.c==='kontakte'?e.x.name:e.c==='artikel'?`${e.x.nr} ${e.x.bez||''}`:e.c==='settings'?'Einstellungen':(e.x.bez||e.x.name||e.x.text||e.x.id);
+  sichModal('Konfliktkopie vom '+new Date(KKOPIE.ts).toLocaleString('de-AT'),`<p class="mut" style="margin-top:0">Diese Versionen dieses Geräts mussten beim Abgleich der Version des anderen Geräts weichen. „Übernehmen“ ersetzt den aktuellen Datensatz (vorgemerkt, mit „Speichern“ bestätigen).</p>
+    <table><tbody>${KKOPIE.liste.map((e,i)=>`<tr><td>${esc(PK[e.c]?.n||e.c)}</td><td>${esc(nm(e))}</td><td style="white-space:nowrap">${e.c==='settings'?'<span class="mut">nur zur Ansicht</span>':`<button class="s" data-act="kkueb" data-i="${i}">Übernehmen</button>`}</td></tr>`).join('')}</tbody></table>`)}
+function kkUebernehmen(i){const e=KKOPIE?.liste[i];if(!e)return;const L=DB[e.c];if(!Array.isArray(L)){alert('Nicht übernehmbar.');return}
+  const x=JSON.parse(JSON.stringify(e.x)),j=L.findIndex(y=>y.id===x.id),cur=L[j];
+  if(e.c==='belege'&&cur?.fest&&!(x.fest&&x.nr===cur.nr)){alert('Der Beleg ist inzwischen festgeschrieben – diese Version kann nicht übernommen werden (§ 131 BAO).');return}
+  if(e.c==='belege'&&cur)x.ausgaben=Math.max(x.ausgaben||0,cur.ausgaben||0); // Ausgabezähler (DUPLIKAT) nie verkleinern
+  if(!confirm('Aktuellen Datensatz durch die Version aus der Konfliktkopie ersetzen?'))return;
+  if(j>=0)L[j]=x;else L.push(x);log('Konfliktkopie übernommen',`${e.c} ${x.nr||x.name||x.id}`);$('#sichm')?.remove();artDatalist();persist();render()}
+const sichInfo=()=>STORE.art==='cache'?'':`<div class="bar"><button data-act="sichpop">Sicherungen anzeigen / wiederherstellen …</button></div>`;
+queueMicrotask(()=>Object.assign(ACT,{sichpop:()=>sichPop(),sichzur:el=>sichZurueck(el.dataset.p),kkopie:el=>kkPop(el.dataset.p),kkueb:el=>kkUebernehmen(+el.dataset.i)}));
+
 /* Zusammenführen, wenn auf einem anderen Gerät zwischenzeitlich gespeichert wurde (3-Wege-Abgleich je Datensatz) */
 function merge3(base,local,remote){
-  const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b),konfl=[],out=remote;
+  const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b),konfl=[],verdr=[],out=remote; // verdr: verdrängte eigene Versionen (Konfliktkopie, P38)
   // Ausgabezähler (DUPLIKAT) allein ist keine Änderung und kein Konflikt; es gilt der höhere Stand beider Geräte
   const ohneZ=({ausgaben,...x})=>x,AZ=new Map();for(const x of [...(remote.belege||[]),...(local.belege||[])])if(x.ausgaben>(AZ.get(x.id)??0))AZ.set(x.id,x.ausgaben);
-  for(const c of ['kontakte','artikel','belege','lager','zeiten','kalk','lv','lvbib','kosten','papierkorb','berichte','mitarbeiter']){
+  const ML=mListen(['kontakte','artikel','belege','lager','zeiten','kalk','lv','lvbib','kosten','papierkorb','berichte','mitarbeiter'],local,remote);
+  for(const c of ML){
     out[c]=out[c]||[];const gl=c==='belege'?(a,b)=>eq(ohneZ(a),ohneZ(b)):eq;
     const B=new Map((base?.[c]||[]).map(x=>[x.id,x])),R=new Map(out[c].map(x=>[x.id,x]));
     for(const l of local[c]||[]){
@@ -1027,7 +1116,7 @@ function merge3(base,local,remote){
       if(gl(l,b))continue;
       if(!r){out[c].push(l);continue}
       if(gl(r,b))out[c][out[c].indexOf(r)]=l;
-      else if(!gl(r,l))konfl.push(c==='belege'?`${T[l.typ]?.bez} ${bNr(l)}`:c==='kontakte'?l.name:c==='artikel'?l.nr:c);
+      else if(!gl(r,l)){konfl.push(c==='belege'?`${T[l.typ]?.bez} ${bNr(l)}`:c==='kontakte'?l.name:c==='artikel'?l.nr:c);verdr.push({c,x:l})}
     }
     const L=new Set((local[c]||[]).map(x=>x.id));
     for(const [id,b] of B)if(!L.has(id)&&R.has(id)&&eq(R.get(id),b))out[c].splice(out[c].indexOf(R.get(id)),1);
@@ -1036,18 +1125,19 @@ function merge3(base,local,remote){
   for(const r of out.belege){const n=AZ.get(r.id);if(n>(r.ausgaben??0))r.ausgaben=n} // Ausgabezähler (DUPLIKAT) nie verkleinern
   const seen=new Set((out.log||[]).map(x=>x.ts+x.aktion));
   out.log=[...(out.log||[]),...(local.log||[]).filter(x=>!seen.has(x.ts+x.aktion))].sort((a,b)=>a.ts.localeCompare(b.ts));
-  if(!eq(local.settings,base?.settings)){if(eq(out.settings,base?.settings))out.settings=local.settings;else if(!eq(out.settings,local.settings))konfl.push('Einstellungen')} // lokal = entfernt (beide gleich geändert, z. B. durch migrate() ergänzt): kein Konflikt
+  if(!eq(local.settings,base?.settings)){if(eq(out.settings,base?.settings))out.settings=local.settings;else if(!eq(out.settings,local.settings)){konfl.push('Einstellungen');verdr.push({c:'settings',x:local.settings})}} // lokal = entfernt (beide gleich geändert, z. B. durch migrate() ergänzt): kein Konflikt
   for(const t in local.settings.nk){const z=out.settings.nk[t]?.zaehler;if(!z)continue;for(const j in local.settings.nk[t].zaehler)z[j]=Math.max(z[j]||0,local.settings.nk[t].zaehler[j])}
   {const lf=local.fibu,bf=base?.fibu,rf=out.fibu;if(lf){if(!rf)out.fibu=lf;else{const ids=new Map(rf.buchungen.map(x=>[x.id,x]));for(const x of lf.buchungen){const r=ids.get(x.id);if(!r)rf.buchungen.push(x);else if(x.storno&&!r.storno){r.storno=true;r.stornoDatum=x.stornoDatum}}if(!eq(lf.map,bf?.map)&&eq(rf.map,bf?.map))rf.map=lf.map;if(!eq(lf.konten,bf?.konten)&&eq(rf.konten,bf?.konten))rf.konten=lf.konten;if((lf.sperre||'')>(rf.sperre||''))rf.sperre=lf.sperre}}}
   for(const k of ['K','L'])out.settings.knr[k]=Math.max(out.settings.knr[k]||0,local.settings.knr?.[k]||0);
   out.settings.anr=Math.max(out.settings.anr||0,local.settings.anr||0);
-  return{db:out,konfl};
+  for(const k in local)if(!['settings','fibu','log','meta'].includes(k)&&!ML.includes(k)&&!eq(local[k],base?.[k])&&eq(out[k],base?.[k]))out[k]=local[k]; // weitere Bereiche (künftige Erweiterungen): eigene Änderung gilt, wenn das andere Gerät sie nicht geändert hat
+  return{db:out,konfl,verdr};
 }
 async function zusammenfuehren(){
   try{
     const base=STORE.lastText?JSON.parse(STORE.lastText):null,txt=await STORE.load();
-    if(txt){const{db,konfl}=merge3(base,DB,migrate(JSON.parse(txt)));DB=migrate(db);undoBasis(true);
-      if(konfl.length)alert('Diese Datensätze wurden gleichzeitig auf einem anderen Gerät geändert – es gilt die Version des anderen Geräts:\n\n• '+[...new Set(konfl)].join('\n• '))}
+    if(txt){const{db,konfl,verdr}=merge3(base,DB,migrate(JSON.parse(txt)));DB=migrate(db);undoBasis(true);
+      if(konfl.length){const kp=await konfliktKopie(verdr);alert('Diese Datensätze wurden gleichzeitig auf einem anderen Gerät geändert – es gilt die Version des anderen Geräts:\n\n• '+[...new Set(konfl)].join('\n• ')+kkHinweis(kp))}}
     artDatalist();render();pending=true;await saveNow();
   }catch(e){saveState('Abgleich fehlgeschlagen',true);alert('Abgleich mit OneDrive fehlgeschlagen:\n'+e.message)}
 }
@@ -1092,14 +1182,14 @@ function mfaSperre(){AUTH.setTok(null);lsSet('erp-tok-mail',null);lsSet('erp-mod
 async function odStart(){
   STORE=ODSTORE;saveState('lade aus OneDrive …');
   const txt=await STORE.load();
-  let data=txt?JSON.parse(txt):null;
+  let data=await startDaten(STORE,txt);
   if(data?.settings?.erw?.mfaPflicht&&!mfaOk()){mfaSperre();return}
   if(!data){const c=cacheLaden();data=(c&&c.belege?.length&&confirm('Im OneDrive liegt noch keine Datenbank.\nDaten aus diesem Browser übernehmen?\n\n(Abbrechen = neue, leere Datenbank)'))?c:neueDB()}
   laden(data);
   const u=await kvGet('unsynced').catch(()=>null);
   if(u&&u.local){
-    try{const{db,konfl}=merge3(u.base?JSON.parse(u.base):null,migrate(JSON.parse(u.local)),DB);DB=migrate(db);undoBasis(true);artDatalist();render();
-      alert('Offline erfasste Änderungen wurden nachgetragen.'+(konfl.length?'\n\nKonflikte (Version des anderen Geräts gilt):\n• '+[...new Set(konfl)].join('\n• '):''))}catch(e){}
+    try{const{db,konfl,verdr}=merge3(u.base?JSON.parse(u.base):null,migrate(JSON.parse(u.local)),DB);DB=migrate(db);undoBasis(true);artDatalist();render();const kp=konfl.length?await konfliktKopie(verdr):'';
+      alert('Offline erfasste Änderungen wurden nachgetragen.'+(konfl.length?'\n\nKonflikte (Version des anderen Geräts gilt):\n• '+[...new Set(konfl)].join('\n• ')+kkHinweis(kp):''))}catch(e){}
   }
   pending=true;await saveNow();
 }
@@ -1124,7 +1214,7 @@ async function verbinde(h){
   }catch(e){alert('Ordner nicht verfügbar: '+e.message);return}
   DIRSTORE.h=h;let txt=null;
   try{txt=await DIRSTORE.load()}catch(e){alert('Datei '+FILE+' konnte nicht gelesen werden:\n'+e.message);return}
-  let data=txt?JSON.parse(txt):null;
+  let data;try{data=await startDaten(DIRSTORE,txt)}catch(e){alert('Datei '+FILE+' ist beschädigt:\n'+e.message);return}
   if(!data){const c=cacheLaden();data=(c&&c.belege?.length&&confirm('Im Ordner liegt noch keine Datenbank.\nDaten aus dem Browser-Cache übernehmen?\n\n(Abbrechen = neue, leere Datenbank)'))?c:neueDB()}
   STORE=DIRSTORE;lsSet('erp-modus','dir');await kvSet('dir',h);laden(data);pending=true;await saveNow();
 }
@@ -1132,6 +1222,7 @@ function laden(d){
   DB=migrate(d);
   $('#start').style.display='none';document.body.classList.add('loaded');
   artDatalist();
+  if(SICH_AUS){log('Sicherung geladen',SICH_AUS+' (Datei beschädigt oder fehlend)');SICH_AUS=''}
   snap();undoBasis(true);CURHASH=location.hash;if(!location.hash||location.hash==='#')go(S().firma.name?'dash':'einstellungen');else render();
 }
 
@@ -4478,7 +4569,7 @@ V.export=()=>{
   <div class="bar">Jahr <select data-o="ui" data-f="jahr">${jahre.map(x=>opt(x,x,UI.jahr)).join('')}</select></div>
   <div class="bar"><button data-act="exp" data-k="ra">Rechnungsausgangsbuch</button><button data-act="exp" data-k="re">Rechnungseingangsbuch</button><button data-act="exp" data-k="za">Zahlungen</button><button data-act="exp" data-k="op">Offene Posten</button><button data-act="exp" data-k="lg">Lagerbestand</button><button data-act="exp" data-k="au">Aufträge DB II</button></div></div>
   <div class="card"><h2>Datensicherung</h2>
-  <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>
+  <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>${sichInfo()}
   <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}${geraetKnopf()}</div>
   <div class="bar"><button data-act="exp" data-k="json">Gesamtdaten exportieren (JSON)</button><label class="btn" style="font-size:14px;color:inherit">Daten importieren (ersetzt alles)<input type="file" id="imp" accept=".json" style="display:none"></label><button data-act="savenow">Jetzt speichern</button></div></div>
   ${kmp()&&!DB.papierkorb.length?'<div class="card mut">Papierkorb: leer</div>':`<div class="card"><h2>Papierkorb</h2>${DB.papierkorb.length?`<table><thead><tr><th>Gelöscht am</th><th>Art</th><th>Eintrag</th><th></th></tr></thead><tbody>${DB.papierkorb.slice().reverse().map(e=>`<tr><td style="white-space:nowrap">${new Date(e.ts).toLocaleString('de-AT')}</td><td>${PK[e.c]?.n||e.c}</td><td>${esc(e.info)}</td><td style="white-space:nowrap"><button class="s" data-act="pkrest" data-id="${e.id}">Wiederherstellen</button> <button class="s d" data-act="pkdel" data-id="${e.id}">Endgültig löschen</button></td></tr>`).join('')}</tbody></table>
@@ -6071,7 +6162,7 @@ const ACT={
   aladd:el=>{const a=artikel(el.dataset.id);(a.lieferanten=a.lieferanten||[]).push({kontaktId:'',artNr:''});persist();render()},
   pkrest:el=>wiederherstellen([el.dataset.id]),pkrestall:()=>wiederherstellen(DB.papierkorb.map(e=>e.id)),
   pkdel:el=>{const e=DB.papierkorb.find(x=>x.id===el.dataset.id);if(!e||!confirm(`„${e.info}“ endgültig löschen? Das kann nicht rückgängig gemacht werden.`))return;DB.papierkorb=DB.papierkorb.filter(x=>x!==e);log(PK[e.c].n+' endgültig gelöscht',e.info);commit();render()},
-  pkleer:()=>{const n=DB.papierkorb.length;if(!n||!confirm(`Papierkorb mit ${n} Einträgen endgültig leeren? Das kann nicht rückgängig gemacht werden.`))return;for(const e of DB.papierkorb)log(PK[e.c].n+' endgültig gelöscht',e.info);DB.papierkorb=[];commit();render()},
+  pkleer:async()=>{const n=DB.papierkorb.length;if(!n||!confirm(`Papierkorb mit ${n} Einträgen endgültig leeren? Das kann nicht rückgängig gemacht werden.`)||!await vorSichern('vor-papierkorb-leeren'))return;for(const e of DB.papierkorb)log(PK[e.c].n+' endgültig gelöscht',e.info);DB.papierkorb=[];commit();render()},
   spalten:el=>spaltenDialog(el.dataset.id),
   kedit:async()=>{const b=curBeleg(),k=kontakt(b.kontaktId);if(!k)return;const va=briefAnrede(k),r=await kontaktPopup(k.typ==='L'||(k.typ==='KL'&&T[b.typ].b==='E')?'L':'K',{},k);if(r){konditionenUebernehmen(b,r,true);anrNeu(b,va,r);persist()}render()},
   anrk:()=>{const b=curBeleg();if(!b||b.fest||b.anrede==null)return;delete b.anrede;persist();render()}, // Briefanrede wieder aus dem Kontakt (P6)
@@ -6414,9 +6505,9 @@ ACT.btbbild=el=>{const b=ROOT.btb(el.dataset.id)?.bilder?.[+el.dataset.i];if(!b)
   document.body.appendChild(d);d.onclick=e=>{if(e.target===d||e.target.tagName==='BUTTON')d.remove()};bildBlob(b.pfad).then(x=>{d.querySelector('img').src=BURL[b.pfad]??=URL.createObjectURL(x)}).catch(()=>{d.querySelector('img').replaceWith('Bild nicht verfügbar (Ablage nicht erreichbar)')})};
 function importJSON(el){
   const file=el.files[0];if(!file)return;
-  const r=new FileReader();r.onload=()=>{
+  const r=new FileReader();r.onload=async()=>{
     try{const d=JSON.parse(r.result);if(!d.settings||!Array.isArray(d.belege))throw new Error('Keine ERP-Lite-Datei.');
-      if(!confirm(`Import ersetzt ALLE aktuellen Daten (${DB.belege.length} Belege) durch die Datei (${d.belege.length} Belege). Fortfahren?`))return;
+      if(!confirm(`Import ersetzt ALLE aktuellen Daten (${DB.belege.length} Belege) durch die Datei (${d.belege.length} Belege). Fortfahren?${STORE.art==='cache'?'':'\n\nDer aktuelle Stand wird vorher unter backup/ gesichert.'}`)||!await vorSichern('vor-import'))return;
       DB=migrate(d);log('Import',file.name);artDatalist();commit();go('dash')}
     catch(e){alert('Import fehlgeschlagen: '+e.message)}
   };r.readAsText(file);

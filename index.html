@@ -5893,7 +5893,9 @@ async function lfMail(b){if(!b||b.typ!=='BE'||!b.fest||b.storno)return;const O=l
       body:JSON.stringify({message:{subject:o.betreff,body:{contentType:'HTML',content:`<div style="font-family:Arial,sans-serif;font-size:10pt">${esc(o.text).replace(/\n/g,'<br>')}</div>`},toRecipients:an.map(a=>({emailAddress:{address:a}})),
         ccRecipients:cc.map(a=>({emailAddress:{address:a}})),bccRecipients:o.kopie&&lsGet('erp-user')?[{emailAddress:{address:lsGet('erp-user')}}]:[]},saveToSentItems:true})});
     saveState('');if(!r.ok){const j=await r.json().catch(()=>({}));alert('Senden fehlgeschlagen:\n'+(j.error?.message||r.status));return}}
-  else location.href=`mailto:${an.join(';')}?${new URLSearchParams({...(cc.length?{cc:cc.join(';')}:{}),subject:o.betreff,body:o.text}).toString().replace(/\+/g,'%20')}`;
+  else{const u=t=>`mailto:${an.join(';')}?${new URLSearchParams({...(cc.length?{cc:cc.join(';')}:{}),subject:o.betreff,body:t}).toString().replace(/\+/g,'%20')}`; // E-Mail-Programme (z. B. Outlook unter Windows) übernehmen nur ca. 2000 Zeichen: längere Nachricht über die Zwischenablage
+    let url=u(o.text),zw=false;if(url.length>1900)try{await navigator.clipboard.writeText(o.text);url=u('(Text der Erinnerung in der Zwischenablage – bitte hier einfügen)');zw=true}catch(e){}
+    location.href=url;if(zw)alert('Die Nachricht ist für die Übergabe an das E-Mail-Programm zu lang.\nSie liegt in der Zwischenablage – bitte in die E-Mail einfügen (Strg+V).')}
   ((b.lief??={}).erinnert??=[]).push({ts:new Date().toISOString(),an:an.join('; '),weg:od?'mail':'mailto'});
   log('Liefererinnerung',`${bNr(b)} an ${an.join(', ')}${od?'':' (E-Mail-Programm)'}: ${P.length} Position(en)`);commit();render();if(od)alert(`Erinnerung gesendet an ${an.join(', ')}.`)}
 async function lfWvPop(b){if(!b||b.typ!=='BE'||!b.fest)return;const L=b.lief||{};

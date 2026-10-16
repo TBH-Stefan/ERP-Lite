@@ -890,6 +890,21 @@ const AUTH={
   },
   abmelden(){if(pending&&!confirm('Es gibt noch nicht gespeicherte Änderungen. Trotzdem abmelden?'))return;this.setTok(null);lsSet('erp-user',null);lsSet('erp-modus',null);location.hash='';location.reload()}
 };
+/* Gerät aufräumen (P37 S5, erw.geraetLoeschen): entfernt Anmeldung, Datenkopie (erp-lite-cache), Anhänge/Bilder/Ordnerzugriff (IndexedDB) und Zuletzt-Liste von diesem Gerät.
+   Nur wenn die Daten anderswo sicher liegen (OneDrive oder lokaler Ordner, alles gespeichert) – im Modus „nur Browser“ wären sie sonst verloren. Client-/Mandanten-ID bleiben */
+erwPlus({k:'geraetLoeschen',std:true,p:'Sicherheit (P37)',l:'„Abmelden und Gerät leeren“',info:'Neben „Abmelden“ bzw. „Speicherort wechseln“ entfernt ein zusätzlicher Knopf Anmeldung, Datenkopie, Anhänge und Bilder aus diesem Browser – z. B. vor der Rückgabe eines Geräts oder an einem fremden PC. Die Daten im OneDrive bzw. im lokalen Ordner bleiben unverändert. Nur möglich, wenn alles gespeichert ist; im Modus „nur Browser“ nicht angeboten.'});
+const geraetKnopf=()=>erw('geraetLoeschen')&&STORE.art!=='cache'?' <button data-act="geraetweg" class="d" title="Anmeldung, Datenkopie, Anhänge und Bilder aus diesem Browser entfernen">Abmelden und Gerät leeren</button>':'';
+async function geraetLeeren(){
+  if(STORE.art==='cache')return;
+  if(pending||DIRTY){alert('Es gibt noch nicht gespeicherte Änderungen – bitte zuerst speichern.');return}
+  if(!confirm('Anmeldung, Datenkopie, Anhänge und Bilder werden aus diesem Browser entfernt.\nDie Daten '+(STORE.art==='od'?'im OneDrive':'im lokalen Ordner')+' bleiben erhalten.\n\nFortfahren?'))return;
+  const halten=['erp-cid','erp-tid'];
+  try{for(const k of Object.keys(localStorage))if(/^erp/.test(k)&&!halten.includes(k))localStorage.removeItem(k)}catch(e){}
+  try{sessionStorage.clear()}catch(e){}
+  await new Promise(r=>{try{const q=indexedDB.deleteDatabase('erp-lite');q.onsuccess=q.onerror=q.onblocked=()=>r()}catch(e){r()}});
+  DIRTY=false;pending=false;location.hash='';location.reload();
+}
+queueMicrotask(()=>Object.assign(ACT,{geraetweg:()=>geraetLeeren()}));
 async function graph(path,opt={},nochmal=true){
   const t=await AUTH.token();
   if(!t)throw Object.assign(new Error('Anmeldung abgelaufen'),{login:true});
@@ -4426,7 +4441,7 @@ V.export=()=>{
   <div class="bar"><button data-act="exp" data-k="ra">Rechnungsausgangsbuch</button><button data-act="exp" data-k="re">Rechnungseingangsbuch</button><button data-act="exp" data-k="za">Zahlungen</button><button data-act="exp" data-k="op">Offene Posten</button><button data-act="exp" data-k="lg">Lagerbestand</button><button data-act="exp" data-k="au">Aufträge DB II</button></div></div>
   <div class="card"><h2>Datensicherung</h2>
   <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>
-  <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}</div>
+  <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}${geraetKnopf()}</div>
   <div class="bar"><button data-act="exp" data-k="json">Gesamtdaten exportieren (JSON)</button><label class="btn" style="font-size:14px;color:inherit">Daten importieren (ersetzt alles)<input type="file" id="imp" accept=".json" style="display:none"></label><button data-act="savenow">Jetzt speichern</button></div></div>
   ${kmp()&&!DB.papierkorb.length?'<div class="card mut">Papierkorb: leer</div>':`<div class="card"><h2>Papierkorb</h2>${DB.papierkorb.length?`<table><thead><tr><th>Gelöscht am</th><th>Art</th><th>Eintrag</th><th></th></tr></thead><tbody>${DB.papierkorb.slice().reverse().map(e=>`<tr><td style="white-space:nowrap">${new Date(e.ts).toLocaleString('de-AT')}</td><td>${PK[e.c]?.n||e.c}</td><td>${esc(e.info)}</td><td style="white-space:nowrap"><button class="s" data-act="pkrest" data-id="${e.id}">Wiederherstellen</button> <button class="s d" data-act="pkdel" data-id="${e.id}">Endgültig löschen</button></td></tr>`).join('')}</tbody></table>
     <div class="bar" style="margin-top:8px"><button data-act="pkrestall">Alle wiederherstellen</button><button class="d" data-act="pkleer">Papierkorb leeren …</button></div>`:'<p class="mut" style="margin:0">leer</p>'}</div>`}

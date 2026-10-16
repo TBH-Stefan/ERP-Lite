@@ -382,6 +382,7 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .doc .kzl{font-size:8pt;color:#333}.doc .lt.lk{font-size:9pt;color:#000}.doc table.p tr.mlt>td{border-bottom:0;padding-bottom:1px}.doc table.p tr.ltz>td{padding-top:0}
 .doc.gf tr.grpz td:not(.n)>b{color:var(--gf,#80704d)}.doc.gu tr.grpz td:not(.n)>b{text-decoration:underline}.doc.nf table.p tbody tr:not(.grpz):not(.gsum)>td>b{font-weight:400}
 @media print{.doc table.p tr.mlt{break-after:avoid}}
+@media print{.btbp .btbd h3{break-after:avoid}.btbp .btbbd figure,.btbp .sigb,.btbp tr{break-inside:avoid}.btbp .btbbd img{max-height:85mm}} /* Bautagesbericht (P36 Teil 4) */
 .doc table.p.sp tbody td:first-child{text-align:left;white-space:normal}.doc table.p.sp tbody td.c,.doc table.p.sp tbody td.pn{text-align:center}.doc table.p.sp tbody td.pn{white-space:nowrap}.doc table.p.sp tbody td.n,.doc table.p.sp tbody tr.gsum td{text-align:right}.doc table.p td.an{font-size:8.5pt}
 .doc .lt{font-size:8.5pt;color:#333;white-space:pre-wrap}
 .doc .pe{font-size:7pt;line-height:1.2;color:#444;white-space:nowrap}.pez{font-size:11px;line-height:1.2;color:var(--mut);white-space:nowrap;text-align:right;margin-top:1px} /* Preiseinheit (P14): „je 100 m“ */
@@ -6422,6 +6423,13 @@ $('#menu').onclick=e=>{e.stopPropagation();document.body.classList.toggle('nav')
 document.querySelector('nav').addEventListener('click',e=>{if(e.target.closest('a'))document.body.classList.remove('nav')});
 document.addEventListener('click',e=>{if(document.body.classList.contains('nav')&&!e.target.closest('nav'))document.body.classList.remove('nav')});
 
+/* Bautagesbericht Teil 4 (P36, erw.btbDruck): Druck bzw. „Als PDF speichern“ über druckHTML() – Briefkopf, btbDoc() mit Fotos und Unterschriften (Bilder vorher geladen und dekodiert) */
+erwPlus({k:'btbDruck',std:false,p:'Bautagesbericht (P36)',l:'Bautagesbericht drucken / als PDF',info:'Knopf „🖨 Drucken / PDF“ im Bautagesbericht: A4 mit Briefkopf, Kopfdaten, Witterung, Personal mit Stundensumme, Tätigkeiten, Material und Geräten, Vorkommnissen, Fotos (zu zweit nebeneinander) und den Unterschriften mit Name, Zeitpunkt und Prüfwert. PDF über „Als PDF speichern“ im Druckdialog. Aus = kein Knopf.'});
+BTB_KN.push(r=>erw('btbDruck')?`<button data-act="btbdruck" data-id="${r.id}">🖨 Drucken / PDF</button>`:'');
+ACT.btbdruck=async el=>{const r=ROOT.btb(el.dataset.id);if(!r)return;document.activeElement?.blur?.();saveState('Druck wird vorbereitet …');
+  const P=[...(r.bilder||[]).map(b=>b.pfad),...Object.values(r.sig||{}).map(s=>s?.pfad)].filter(Boolean);
+  await Promise.all(P.map(async p=>{try{BURL[p]??=URL.createObjectURL(await bildBlob(p));const i=new Image();i.src=BURL[p];await i.decode()}catch(e){}}));saveState('');
+  const a=btbRoot(r);druckHTML(`<div class="doc btbp">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">Bautagesbericht ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${btbDoc(r)}</div>`,`Bautagesbericht ${r.nr} ${a?.nr||''} ${dAT(r.datum)}`);bilderLaden()};
 start();
 </script>
 </body>

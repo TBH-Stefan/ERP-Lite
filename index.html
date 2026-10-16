@@ -101,6 +101,42 @@ tr.nd>td:not(:last-child),.kkf.nd>.kk{opacity:.55}.ndh{display:none}.nd .ndh{dis
 .doc tr.gsum td.n{text-align:right}
 al{display:inline-block;min-width:60px;border-bottom:1px dotted #888;background:#fff7d6}
 al:empty::before{content:'……'}
+/* Tagesberichte (P36 Teil 1): Seitenleiste, Editor (Personal- und Materialzeilen, Status und Unterschriften), Unterschriftsfeld (am Handy ganzer Bildschirm), Druck .tbd */
+body.tbaus nav a.navtb{display:none}nav a.navtb{padding-left:32px;font-size:13px}
+.tbed{max-width:1000px}.tbpf{margin:4px 0 12px;font-size:13px}.tbz2{font-weight:400;font-size:13px}.tbbar select{max-width:100%}
+.tbp,.tbm{display:grid;grid-template-columns:minmax(120px,2fr) repeat(4,minmax(64px,1fr)) minmax(72px,1fr) 34px;gap:6px 8px;align-items:end;padding:8px 0;border-bottom:1px solid var(--line)}
+.tbm{grid-template-columns:minmax(160px,3fr) minmax(70px,1fr) minmax(70px,1fr) 34px}.tbp.tbz{grid-template-columns:minmax(120px,2fr) minmax(0,5fr) 34px}
+.tbp>label,.tbm>label{min-width:0}.tbzi{font-size:13px;padding-bottom:6px;min-width:0;overflow-wrap:anywhere}.tbx{margin-bottom:3px}.tbzg{grid-column:1/-1;justify-self:start}
+.tbst{border-left:4px solid #9aa3b2}.tbst.tb-a{border-left-color:var(--warn)}.tbst.tb-u{border-left-color:var(--ok)}.tbsx{flex:1 1 240px;min-width:0}
+.tbsgs{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}.tbsg{flex:1 1 220px;min-width:0;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px}
+.tbsvg{display:block;width:100%;max-width:320px;height:64px}.tbh{font-size:12px;margin-top:8px;overflow-wrap:anywhere}.tbok{color:var(--ok)}
+.tbkv{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 14px}.tbkv>div>div{overflow-wrap:anywhere}.tbtx{white-space:normal;overflow-wrap:anywhere}
+.tbtab{width:100%}.tbtab td,.tbtab th{white-space:nowrap}.tbtab td:first-child{white-space:normal}.tbwq{font-size:12px;margin-top:2px}
+.modal.tbsm .mbox{max-width:760px}.tbsc{position:relative;margin-top:10px;border:1px dashed #9aa3b2;border-radius:8px;background:#fff;height:240px}
+.tbsc canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair;-webkit-user-select:none;user-select:none}
+.tbsl{position:absolute;left:14px;right:14px;bottom:26%;border-bottom:1px solid #c5ccd6;font-size:11px;color:var(--mut);pointer-events:none}.tbsq{font-size:12px;margin:6px 0 0}
+@media(max-width:760px){
+  .tbp,.tbm,.tbp.tbz{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-areas:"n n n x" "v v b b" "p s t t"}.tbp.tbz{grid-template-areas:"n n n x" "i i i i"}.tbm{grid-template-areas:"n n n x" "m m e e"}
+  .tbp>.tbn,.tbm>.tbn{grid-area:n}.tbv{grid-area:v}.tbb{grid-area:b}.tbpa{grid-area:p}.tbsd{grid-area:s}.tbtf{grid-area:t}.tbzi{grid-area:i}.tbmm{grid-area:m}.tbme{grid-area:e}.tbp>.tbx,.tbm>.tbx{grid-area:x;justify-self:end}
+}
+@media(max-width:760px),(max-height:520px){ /* Unterschrift am Handy (auch quer): ganzer Bildschirm, Feld füllt den Rest */
+  .modal.tbsm{padding:0!important;align-items:stretch!important}
+  .modal.tbsm .mbox{max-width:none!important;width:100%;height:100vh;height:100dvh;max-height:none!important;border-radius:0!important;display:flex;flex-direction:column;padding:0 14px}
+  .modal.tbsm .tbsc{flex:1 1 auto;height:auto;min-height:150px}
+  .modal.tbsm .mbox>h2:first-child{position:static;margin:0 0 6px;padding:12px 0 4px}.modal.tbsm .mbox>.bar:last-child{position:static;margin:8px 0 0!important;padding:8px 0 calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+}
+@media(max-height:520px){.modal.tbsm .tbsh,.modal.tbsm .tbsq{display:none}.modal.tbsm .mbox>h2:first-child{font-size:15px;padding:6px 0 2px;margin-bottom:4px}
+  .modal.tbsm .mbox>label{display:flex;align-items:center;gap:8px;white-space:nowrap}.modal.tbsm .mbox>label>input{margin-top:0}.modal.tbsm .tbsc{min-height:100px;margin-top:6px}}
+@media(max-width:760px){body.kompakt .quick.tbq{flex-wrap:wrap}body.kompakt .quick.tbq>*{flex:1 1 40%}}
+.tbd h3{font-size:13pt;margin:1mm 0 2.5mm}.tbd h4{font-size:10pt;margin:4mm 0 1.5mm;color:#1d3929;break-after:avoid}.tbd .tbk{font-size:7.5pt;color:#444}
+.tbd table.tbi{width:100%;border-collapse:collapse;margin:0 0 1mm}.tbd table.tbi td{border:.5pt solid #999;padding:1.2mm 2mm;vertical-align:top;font-size:9pt}.tbd table.tbi td.l{width:26mm;color:#444;font-size:8pt}
+.tbd table.tbx{width:100%;border-collapse:collapse}.tbd table.tbx th,.tbd table.tbx td{border-bottom:.5pt solid #bbb;padding:1mm 1.5mm;font-size:9pt;text-align:left;vertical-align:top}.tbd table.tbx th{border-bottom:.8pt solid #444}
+.tbd table.tbx .n{text-align:right}.tbd table.tbx tr.tbs td{font-weight:700;border-bottom:0}.tbd table.tbx tr{break-inside:avoid}.tbd table.tbx thead{display:table-header-group}
+.tbd .tbtx{border:.5pt solid #ccc;padding:2mm;min-height:10mm;overflow-wrap:anywhere}.tbd .tbent{display:inline-block;border:1pt solid #b42318;color:#b42318;font-weight:700;padding:.6mm 3mm;margin:0 0 2mm;font-size:9pt}
+.tbd .tbsigd{display:flex;gap:10mm;margin-top:8mm;break-inside:avoid}.tbd .tbsigd>div{flex:1;min-width:0}.tbd .tbsv{height:20mm;display:flex;align-items:flex-end}.tbd .tbsv svg{height:20mm;width:100%;max-width:75mm}
+.tbd .tbsln{border-top:.8pt solid #000;padding-top:1mm;font-size:8.5pt}.tbd .tbpz{margin-top:4mm;font-size:7.5pt;color:#333;break-inside:avoid;overflow-wrap:anywhere}
+.tbd .tbft{margin-top:4mm;font-size:6.5pt;text-align:center;border-top:.6pt solid #80704d;padding-top:1mm;break-inside:avoid}
+.tbd .tbwz{position:fixed;left:0;right:0;top:42%;text-align:center;font-size:76pt;font-weight:700;letter-spacing:4mm;color:rgba(0,0,0,.07);transform:rotate(-30deg);pointer-events:none}
 table.k td{padding:3px 5px;vertical-align:middle}table.k input,table.k select{padding:3px 6px}
 /* Kompakt (P30) Beleg: einzeilige Positionszeile am Bildschirm (table.pos.pz) – passt bei 1024 und 1400 px ohne Bildlauf; „Beides“ erst ab 1280 px */
 table.pos.pz .pzn{width:46px;padding-top:7px;white-space:nowrap}.pzk{display:inline-block;margin-left:3px;padding:0 4px;border-radius:6px;background:#eef0f3;color:#374151;font-size:10px;line-height:15px;vertical-align:1px}
@@ -714,6 +750,7 @@ function neueDB(){
   texte.BE={kopf:'Wir bestellen zu Ihren Bedingungen wie folgt:',fuss:'Bitte bestätigen Sie Liefertermin und Preis.'};
   return{
     meta:{version:1,erstellt:new Date().toISOString(),app:'ERP-Lite'},
+    berichte:[], // Tagesberichte (P36)
     settings:{
       firma:{name:'',zusatz:'',strasse:'',plz:'',ort:'',land:'Österreich',uid:'',fn:'',gericht:'',tel:'',mail:'',web:'',bank:'',iban:'',bic:'',logo:'',slogan:'',zeichner:'',zeichnerFkt:'Geschäftsführung'},
       bearbeiter:'',
@@ -788,6 +825,7 @@ function aenderungText(a,b){
 // Festgeschriebene Belege und Nummernkreise dürfen nicht zurückgedreht werden
 function undoSperre(alt){const A=new Map((alt.belege||[]).map(b=>[b.id,b]));
   for(const b of DB.belege)if(b.fest){const o=A.get(b.id);if(!o||!o.fest)return`${bNr(b)} wurde inzwischen festgeschrieben – Korrektur nur per Storno/Gutschrift.`}
+  {const t=tbUndoSperre(alt);if(t)return t} // Tagesberichte (P36): Unterschriften werden nie zurückgedreht
   if(JSON.stringify(alt.settings?.nk)!==JSON.stringify(S().nk))return'Seither wurde eine Belegnummer vergeben (Nummernkreise bleiben lückenlos).';
   return''}
 function undoAnwenden(j,h){const az=new Map(DB.belege.map(b=>[b.id,b.ausgaben]));DB=migrate(JSON.parse(j));for(const b of DB.belege){const n=az.get(b.id);if(n>(b.ausgaben??0))b.ausgaben=n} /* Ausgabezähler (DUPLIKAT) wird nie zurückgedreht */LAST=JSON.stringify(DB);DIRTY=LAST!==SNAP;dirtyBar();artDatalist();
@@ -1021,6 +1059,7 @@ function merge3(base,local,remote){
   for(const t in local.settings.nk){const z=out.settings.nk[t]?.zaehler;if(!z)continue;for(const j in local.settings.nk[t].zaehler)z[j]=Math.max(z[j]||0,local.settings.nk[t].zaehler[j])}
   {const lf=local.fibu,bf=base?.fibu,rf=out.fibu;if(lf){if(!rf)out.fibu=lf;else{const ids=new Map(rf.buchungen.map(x=>[x.id,x]));for(const x of lf.buchungen){const r=ids.get(x.id);if(!r)rf.buchungen.push(x);else if(x.storno&&!r.storno){r.storno=true;r.stornoDatum=x.stornoDatum}}if(!eq(lf.map,bf?.map)&&eq(rf.map,bf?.map))rf.map=lf.map;if(!eq(lf.konten,bf?.konten)&&eq(rf.konten,bf?.konten))rf.konten=lf.konten;if((lf.sperre||'')>(rf.sperre||''))rf.sperre=lf.sperre}}}
   for(const k of ['K','L'])out.settings.knr[k]=Math.max(out.settings.knr[k]||0,local.settings.knr?.[k]||0);
+  tbMerge(base,local,out,konfl); // Tagesberichte (P36): ein unterschriebener Stand geht beim Abgleich nie verloren
   out.settings.anr=Math.max(out.settings.anr||0,local.settings.anr||0);
   return{db:out,konfl};
 }
@@ -1584,6 +1623,7 @@ function kbPreisDialog(b){if(!b)return;const kb=kbVon(b);if(!kb){alert('Kein K-B
 /* ---------- Router & Render ---------- */
 const V={};
 function render(){
+  tbNav(); // Tagesberichte (P36): Seitenleiste, Prüfsummen-Anzeige
   if(!DB)return;
   document.body.classList.toggle('suaus',!erw('suche')); // Globale Suche (P20)
   const h=location.hash.replace(/^#\/?/,'')||'dash',[view,arg]=h.split('/');
@@ -2942,6 +2982,293 @@ function zeitenInPos(b,zt){
   }
 }
 
+/* ---------- Tagesberichte (P36 Teil 1, erw.tbBericht): Baustellen-Tagesbericht je Tag in DB.berichte ----------
+   Inhalt (TB_INH): Nummer, Datum, Auftrag (Belegkette, auftragsListe()) und/oder Projekt (Name wie b.projekt), Kunde, Baustelle, Monteur (bearbeiter), Witterung b.wetter
+   {art,temp,txt,…,quelle 'manuell'|'auto'} (von Hand; automatisch mit Teil 2), Tätigkeit, Personal b.personal [{id,name,von,bis,pause,std,tarif,quelle:'zeit'|'manuell',zeitId,text}]
+   (aus der Zeiterfassung ohne Doppelübernahme oder von Hand, von/bis/Pause → Std. mit tbVB), Material [{id,artId,nr,bez,menge,einheit}], Behinderungen, Besonderes, Fotos (Teil 3).
+   Ablauf: Entwurf (frei, persist) → „Abschließen“ tbAbschluss() (Pflicht Datum + Tätigkeit; Nummer TB-JJJJ-NNN tbNr(); wahlweise von Hand erfasste Zeiten in die Zeiterfassung mit
+   z.ma, z.berichtId, ohne Doppelbuchung; Prüfsumme b.hash = SHA-256 über tbKanon(tbInhalt(b))) → „Unterschrift Monteur“ tbSigPop() (status 'unterschrieben', endgültig) → optional
+   „Unterschrift Kunde“. Unterschrift als SVG-Pfad im Datensatz sig.m/sig.k {name,ts,svg,vb,h} (kein Nachladen für Druck, Teil der Prüfkette): h = SHA-256 über Prüfsumme (Kunde: h des
+   Monteurs) | Name | Zeitpunkt | Pfad. Sperre: tbFrei() in tbSetzen() (eigener change-Handler data-o="tb") und allen Aktionen, Löschen nur ohne Unterschrift, tbUndoSperre() in
+   undoSperre(), tbMerge() in merge3() – beide unabhängig vom Schalter. Druck tbDocHTML() über druckHTML(). Erweiterungspunkte TBX für Teil 2 (wetter) und Teil 3 (fotos, fotoDruck, vorDruck) */
+erwPlus({k:'tbBericht',std:true,p:'Tagesberichte (P36)',l:'Baustellen-Tagesberichte mit Unterschrift von Monteur und Kunde',info:'Seitenleiste „Tagesberichte“ (unter „Zeiterfassung“), „📋 Tagesbericht“ im Überblick und „+ Tagesbericht“ im Auftrag: je Tag Datum, Auftrag bzw. Projekt, Kunde, Baustelle, Monteur, Witterung, ausgeführte Tätigkeiten, Personal mit Arbeitszeiten (aus der Zeiterfassung übernehmen oder von Hand weitere Mitarbeiter mit von/bis/Pause bzw. Stunden), Material, Behinderungen und Besonderes. „Abschließen“ prüft Datum und Tätigkeit, vergibt die Nummer (TB-Jahr-laufend), übernimmt auf Wunsch die von Hand erfassten Zeiten in die Zeiterfassung (Auftrag und Tarif nötig) und sperrt den Inhalt mit einer Prüfsumme (SHA-256). Danach unterschreibt der Monteur am Bildschirm (Finger, Stift oder Maus), wahlweise auch der Kunde. Nach der Unterschrift ist keine Änderung und kein Löschen mehr möglich, auch nicht über Rückgängig oder den Abgleich zwischen Geräten; „Wieder öffnen“ gibt es nur vorher. Druck bzw. PDF mit Firmenkopf, Unterschriften und Prüfsumme, Vermerk „ENTWURF“ solange nicht unterschrieben. Aus = Seitenleiste, Knöpfe und Listen ausgeblendet; gespeicherte Berichte bleiben erhalten und geschützt.'});
+const TBX={}; // Erweiterungen: wetter(b) Knopf in „Witterung“ (Teil 2); fotos(b,frei) Abschnitt, fotoDruck(b), async vorDruck(b) (Teil 3)
+PK.berichte={n:'Tagesbericht',info:b=>`${b.nr||'Entwurf'} ${dAT(b.datum)} ${b.baustelle||''}`.trim()};
+LISTE_VON.bericht=[id=>tbB(id),()=>'berichte'];
+const tbB=id=>(DB.berichte||[]).find(x=>x.id===id);
+const tbCur=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');return h[0]==='bericht'?tbB(h[1]):null};
+const tbSig=b=>!!b?.sig?.m;
+const tbFrei=b=>!!b&&(b.status||'entwurf')==='entwurf'&&!tbSig(b); // nur Entwürfe sind änderbar
+const tbStd=b=>sum(b.personal||[],p=>p.std);
+const tbTag=b=>tbSig(b)?tag(b.sig.k?'unterschrieben · Kunde':'unterschrieben','ok'):b.status==='abgeschlossen'?tag('abgeschlossen','warn'):tag('Entwurf');
+const tbTitel=b=>'Tagesbericht '+(b.nr||'(Entwurf)');
+const tbAuf=b=>b.auftragId&&DB.belege.some(x=>x.auftragId===b.auftragId)?b.auftragId:'';
+const tbPrj=b=>b.projekt||(tbAuf(b)&&beleg(b.auftragId)?.projekt)||'';
+const tbAdr=k=>k?[k.strasse,[k.plz,k.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '):'';
+const tbAus=()=>'<h1>Tagesberichte</h1><p class="mut">Die Tagesberichte sind ausgeschaltet (Einstellungen → Erweiterungen → Tagesberichte).</p>';
+const tbMin=t=>/^\d{1,2}:\d\d/.test(t||'')?+t.split(':')[0]*60+ +t.split(':')[1]:null;
+const tbVB=p=>{const v=tbMin(p.von),e=tbMin(p.bis);if(v==null||e==null)return null;return r2(Math.max(0,(e-v+1440)%1440-(+p.pause||0))/60)}; // von/bis/Pause (min) → Stunden, auch über Mitternacht
+const tbTx=s=>esc(s||'').replace(/\n/g,'<br>');
+const TB_WT=['So','Mo','Di','Mi','Do','Fr','Sa'],tbWtag=d=>d?TB_WT[new Date(d+'T12:00:00').getDay()]+', ':'';
+const TB_WART=[['sonnig','☀','sonnig'],['heiter','🌤','heiter'],['bewoelkt','☁','bewölkt'],['regen','🌧','Regen'],['schnee','❄','Schnee'],['frost','🥶','Frost'],['wind','💨','Wind / Sturm'],['nebel','🌫','Nebel'],['gewitter','⛈','Gewitter']];
+const tbWetterTxt=(w,ic)=>{if(!w)return'';const a=TB_WART.find(x=>x[0]===w.art),z=v=>v!=null&&v!=='';
+  return[a?(ic?a[1]+' ':'')+a[2]:'',w.txt&&w.txt!==a?.[2]?w.txt:'',z(w.temp)?fmtQ(w.temp)+' °C':'',z(w.tmin)&&z(w.tmax)?`Tag ${fmtQ(w.tmin)} bis ${fmtQ(w.tmax)} °C`:'',+w.nieder?'Niederschlag '+fmtQ(w.nieder)+' mm':'',+w.wind?'Wind bis '+fmtQ(w.wind)+' km/h':''].filter(Boolean).join(' · ')};
+const tbWetterQ=w=>w?.quelle==='auto'?`automatisch (Open-Meteo${w.ts?', '+dtAT(w.ts):''}${w.ort?', Ort ≈ '+w.ort:''})`:w?.quelle==='manuell'&&w.code!=null?'automatisch ermittelt, von Hand geändert':'';
+// Prüfsumme: kanonisches JSON (Schlüssel sortiert) der Inhaltsfelder; Unterschrift verkettet Prüfsumme, Name, Zeitpunkt und Pfad
+const TB_INH=['nr','datum','auftragId','projekt','kontaktId','baustelle','bearbeiter','taetigkeit','personal','material','wetter','behinderung','besonderes','fotos'];
+const tbKanon=x=>Array.isArray(x)?'['+x.map(tbKanon).join(',')+']':x&&typeof x==='object'?'{'+Object.keys(x).filter(k=>x[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+tbKanon(x[k])).join(',')+'}':JSON.stringify(x??null);
+const TB_FELD=/^(datum|auftragId|projekt|kontaktId|baustelle|bearbeiter|taetigkeit|behinderung|besonderes|wetter\.(art|temp|txt)|personal\.\d+\.(name|von|bis|pause|std|tarif)|material\.\d+\.(art|menge|einheit)|fotos\.\d+\.txt)$/; // änderbare Felder (tbSetzen)
+const tbInhalt=b=>Object.fromEntries(TB_INH.map(k=>[k,b[k]??null]));
+async function tbSha(x){if(!window.crypto?.subtle)throw new Error('Die Prüfsumme (SHA-256) braucht eine sichere Verbindung (https://).');
+  return[...new Uint8Array(await crypto.subtle.digest('SHA-256',typeof x==='string'?new TextEncoder().encode(x):x))].map(v=>v.toString(16).padStart(2,'0')).join('')}
+const tbSigH=(vor,s)=>tbSha([vor,s.name,s.ts,s.svg].join('|'));
+async function tbPruef(b){if(!b?.hash)return null;const r={inhalt:await tbSha(tbKanon(tbInhalt(b)))===b.hash};
+  if(b.sig?.m){r.m=await tbSigH(b.hash,b.sig.m)===b.sig.m.h;if(b.sig.k)r.k=await tbSigH(b.sig.m.h,b.sig.k)===b.sig.k.h}
+  r.ok=r.inhalt&&r.m!==false&&r.k!==false;return r}
+function tbPruefZeigen(){for(const e of document.querySelectorAll('.tbpr[data-id]')){const b=tbB(e.dataset.id);if(!b)continue;
+  tbPruef(b).then(r=>{if(r&&e.isConnected)e.innerHTML=r.ok?'<span class="tbok">✓ Inhalt und Unterschriften unverändert</span>':`<b class="err">⚠ ${!r.inhalt?'Der Inhalt weicht von der Prüfsumme ab':'Eine Unterschrift passt nicht zum Inhalt'}</b>`}).catch(x=>{if(e.isConnected)e.textContent=x.message})}}
+const TB_SVG=/^[Ml0-9 \-]+$/; // gespeicherter Pfad: nur M, l, Zahlen
+const tbSvgHTML=s=>s?.svg&&TB_SVG.test(s.svg)&&Array.isArray(s.vb)?`<svg class="tbsvg" viewBox="0 0 ${+s.vb[0]||400} ${+s.vb[1]||150}" preserveAspectRatio="xMinYMax meet" role="img" aria-label="Unterschrift ${esc(s.name)}"><path d="${s.svg}" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`:'';
+// Striche (Bildschirmpunkte) → kompakter SVG-Pfad (ganzzahlig, relativ, Breite ≤ 400): {svg,vb}; null = zu kurz für eine Unterschrift
+function tbSvg(S_){const P=S_.flat();if(P.length<2)return null;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,len=0;for(const[x,y]of P){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}
+  for(const s of S_)for(let i=1;i<s.length;i++)len+=Math.hypot(s[i][0]-s[i-1][0],s[i][1]-s[i-1][1]);const w=x1-x0,h=y1-y0;if(len<40||Math.max(w,h)<25)return null;
+  const k=Math.min(400/(w||1),160/(h||1),4),R=v=>Math.round(v),o=[];
+  for(const s of S_){const mx=R((s[0][0]-x0)*k)+4,my=R((s[0][1]-y0)*k)+4,l=[];let px=mx,py=my;
+    for(const q of s.slice(1)){const nx=R((q[0]-x0)*k)+4,ny=R((q[1]-y0)*k)+4,dx=nx-px,dy=ny-py;if(Math.abs(dx)+Math.abs(dy)<2)continue;l.push(dx+' '+dy);px=nx;py=ny}
+    o.push(`M${mx} ${my}l${l.length?l.join(' '):'0 0'}`)}
+  return{svg:o.join(''),vb:[R(w*k)+8,R(h*k)+8]}}
+// Nummer TB-JJJJ-NNN (fortlaufend je Jahr des Berichtsdatums, beim ersten Abschließen; kein Buchhaltungsbeleg)
+function tbNr(b){const j=(b.datum||isoD()).slice(0,4),re=new RegExp(`^TB-${j}-(\\d+)$`);let n=0;
+  for(const x of [...DB.berichte,...DB.papierkorb.filter(e=>e.c==='berichte').map(e=>e.daten)]){const m=re.exec(x.nr||'');if(m)n=Math.max(n,+m[1])}
+  return`TB-${j}-${String(n+1).padStart(3,'0')}`}
+function tbNeu(v={}){const aid=v.auftragId||'',r=aid?beleg(aid)||DB.belege.find(x=>x.auftragId===aid):null,k=kontakt(v.kontaktId||r?.kontaktId||''),
+    vor=aid?DB.berichte.filter(x=>x.auftragId===aid).sort((a,c)=>(c.datum||'').localeCompare(a.datum||''))[0]:null;
+  const b={id:uid(),nr:'',datum:isoD(),erstellt:new Date().toISOString(),status:'entwurf',auftragId:aid,projekt:r?.projekt||vor?.projekt||'',kontaktId:k?.id||'',baustelle:vor?.baustelle||tbAdr(k),
+    bearbeiter:lsGet('erp-tbMa')||S().bearbeiter||'',taetigkeit:'',personal:[],material:[],wetter:{},behinderung:'',besonderes:'',fotos:[],...(v.kopie||{})};
+  DB.berichte.push(b);return b}
+const tbNamen=()=>[...new Set([S().bearbeiter,...DB.berichte.flatMap(x=>[x.bearbeiter,...(x.personal||[]).map(p=>p.name)]),...DB.zeiten.map(z=>z.ma)].map(pT).filter(Boolean))].sort((a,c)=>a.localeCompare(c,'de'));
+const tbSuch=b=>[b.nr,dAT(b.datum),tbAuf(b)?auftragLabel(b.auftragId):'',tbPrj(b),kontakt(b.kontaktId)?.name,b.baustelle,b.bearbeiter,b.taetigkeit,b.behinderung,b.besonderes,tbWetterTxt(b.wetter),
+  (b.personal||[]).map(p=>p.name).join(' '),(b.material||[]).map(m=>m.nr+' '+m.bez).join(' '),(b.fotos||[]).map(f=>f.txt).join(' ')].filter(Boolean).join(' ').toLowerCase();
+// Eingaben (eigener change-Handler, data-o="tb" data-id data-f; data-t="n" = Zahl oder leer): nur im Entwurf und nur für Inhaltsfelder
+function tbSetzen(el){const d=el.dataset,b=tbB(d.id),f=d.f||'';if(!b)return;
+  if(!tbFrei(b)){alert(`${tbTitel(b)} ist ${tbSig(b)?'unterschrieben':'abgeschlossen'} und kann nicht mehr geändert werden.${tbSig(b)?'':'\n„Wieder öffnen“ ist möglich, solange niemand unterschrieben hat.'}`);render();return}
+  const ix=/^(personal|material|fotos)\.(\d+)\./.exec(f);if(!TB_FELD.test(f)||ix&&!b[ix[1]]?.[+ix[2]]||/^personal\./.test(f)&&b.personal[+ix[2]].quelle==='zeit'&&!/\.name$/.test(f))return; // nur Inhaltsfelder vorhandener Zeilen
+  const v0=el.type==='checkbox'?el.checked:el.value,v=d.t==='n'?(String(v0).trim()===''?'':num(v0)):v0,ma=/^material\.(\d+)\.art$/.exec(f),pe=/^personal\.(\d+)\.(von|bis|pause|std)$/.exec(f);let neu=0;
+  if(ma){const x=b.material[+ma[1]];if(!x)return;const s=String(v).trim(),a=DB.artikel.find(y=>y.aktiv!==false&&(`${y.nr} – ${y.bez}`===s||y.nr===s));
+    if(a){x.artId=a.id;x.nr=a.nr;x.bez=a.bez;if(!x.einheit)x.einheit=a.einheit||'';neu=1}else{delete x.artId;x.nr='';x.bez=s}}
+  else setP(b,f,v);
+  if(f==='auftragId'||f==='kontaktId'){const r=f==='auftragId'&&v?beleg(v)||DB.belege.find(x=>x.auftragId===v):null;if(r){if(!b.kontaktId)b.kontaktId=r.kontaktId||'';if(!b.projekt&&r.projekt)b.projekt=r.projekt}
+    if(!pT(b.baustelle))b.baustelle=tbAdr(kontakt(b.kontaktId));neu=1}
+  if(pe){const x=b.personal[+pe[1]];if(x&&pe[2]!=='std'){const s=tbVB(x);if(s!=null)x.std=s}tbSumme(b,+pe[1])}
+  if(f.startsWith('wetter.'))b.wetter.quelle='manuell';
+  if(f==='bearbeiter')lsSet('erp-tbMa',pT(v)||null);
+  persist();if(neu)tbRender()}
+document.addEventListener('change',e=>{if(e.target.dataset?.o==='tb')tbSetzen(e.target)});
+function tbSumme(b,i){const e=document.querySelector(`[data-o="tb"][data-id="${b.id}"][data-f="personal.${i}.std"]`),x=b.personal[i];if(e&&x&&document.activeElement!==e)e.value=x.std??'';const s=$('#tbsum');if(s)s.textContent=fmtQ(tbStd(b))+' h'}
+function tbRender(){const a=document.activeElement,k=a?.dataset?.o==='tb'?`[data-o="tb"][data-f="${a.dataset.f}"]`:null,y=scrollY;render();scrollTo(0,y);
+  if(k&&a.tagName!=='SELECT'){const n=document.querySelector(k);if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(x){}}}}
+// Formularteile
+const tbF=(b,f,v,{typ='',l='',cls='',ph='',lst='',n=false,im=''}={})=>`<label class="${cls}">${l}<input${typ?` type="${typ}"`:''} data-o="tb" data-id="${b.id}" data-f="${f}"${n?' data-t="n" step="any"':''}${im?` inputmode="${im}"`:''}${lst?` list="${lst}"`:''} value="${esc(v??'')}"${ph?` placeholder="${esc(ph)}"`:''}></label>`;
+const tbT=(b,f,v,l,ph,h=100)=>`<label class="w2">${l}<textarea data-o="tb" data-id="${b.id}" data-f="${f}" style="height:${h}px" placeholder="${esc(ph)}">${esc(v||'')}</textarea></label>`;
+const tbS=(b,f,v,l,opts,cls='')=>`<label class="${cls}">${l}<select data-o="tb" data-id="${b.id}" data-f="${f}">${opts.map(([x,t])=>opt(x,t,v??'')).join('')}</select></label>`;
+const tbSek=(id,titel,inh,{offen=true,zusatz=''}={})=>kmp()?akk(id,titel,inh,{offen,zusatz}):`<div class="card"><h2>${titel}${zusatz?` <span class="mut tbz2">${zusatz}</span>`:''}</h2>${inh}</div>`;
+function tbKopfForm(b){const A=auftragsListe().filter(a=>!a.docs.every(d=>d.storno)||a.id===b.auftragId),K=DB.kontakte.filter(k=>k.typ!=='L'||k.id===b.kontaktId).sort((a,c)=>a.name.localeCompare(c.name,'de'));
+  return`<div class="row">${tbF(b,'datum',b.datum,{typ:'date',l:'Datum *',cls:'w05'})}${tbF(b,'bearbeiter',b.bearbeiter,{l:'Monteur / Bauleiter',lst:'tb-namen',ph:'Name'})}</div>
+  <div class="row">${tbS(b,'auftragId',b.auftragId,'Auftrag',[['','– ohne Auftrag –'],...A.map(a=>[a.id,(beleg(a.id)?.projekt?beleg(a.id).projekt+' · ':'')+auftragLabel(a.id)])],'w2')}${tbF(b,'projekt',b.projekt,{l:'Projekt',lst:'tb-prj',ph:'Projektname'})}</div>
+  <div class="row">${tbS(b,'kontaktId',b.kontaktId,'Kunde',[['','–'],...K.map(k=>[k.id,k.name])])}${tbF(b,'baustelle',b.baustelle,{l:'Baustelle (Adresse / Ort)',cls:'w2',ph:'Straße, PLZ Ort'})}</div>`}
+function tbWetterForm(b){const w=b.wetter||{};
+  return`<div class="row">${tbS(b,'wetter.art',w.art,'Witterung',[['','–'],...TB_WART.map(([k,i,t])=>[k,i+' '+t])],'w05')}${tbF(b,'wetter.temp',w.temp,{typ:'number',l:'Temperatur °C',cls:'w05',n:true})}${tbF(b,'wetter.txt',w.txt,{l:'Beschreibung',cls:'w2',ph:'z. B. vormittags Regen, ab Mittag trocken'})}</div>
+  ${TBX.wetter?.(b)||''}${w.quelle==='auto'||w.code!=null?`<div class="mut tbwq">${esc(tbWetterTxt(w,1))}${tbWetterQ(w)?' – '+esc(tbWetterQ(w)):''}</div>`:''}`}
+function tbPersForm(b){const T_=S().tarife;
+  const z=(p,i)=>`<div class="tbp${p.quelle==='zeit'?' tbz':''}">${tbF(b,`personal.${i}.name`,p.name,{l:'Name',lst:'tb-namen',ph:'Mitarbeiter',cls:'tbn'})}
+    ${p.quelle==='zeit'?`<div class="tbzi"><span class="mut">⏱ aus der Zeiterfassung</span> ${esc(p.tarif||'')} · <b>${fmtQ(p.std)} h</b>${p.text?`<br><span class="mut">${esc(p.text)}</span>`:''}</div>`
+    :`${tbF(b,`personal.${i}.von`,p.von,{typ:'time',l:'von',cls:'tbv'})}${tbF(b,`personal.${i}.bis`,p.bis,{typ:'time',l:'bis',cls:'tbb'})}${tbF(b,`personal.${i}.pause`,p.pause,{typ:'number',l:'Pause min',n:true,im:'numeric',cls:'tbpa'})}${tbF(b,`personal.${i}.std`,p.std,{typ:'number',l:'Std.',n:true,im:'decimal',cls:'tbsd'})}${tbS(b,`personal.${i}.tarif`,p.tarif,'Tarif',[['','–'],...T_.map(t=>[t.kz,t.kz])],'tbtf')}`}
+    <button class="s d tbx" data-act="tbpdel" data-id="${b.id}" data-i="${i}" title="Zeile entfernen" aria-label="Zeile entfernen">✕</button>${p.zeitId&&p.quelle!=='zeit'?'<span class="tag acc tbzg" title="beim Abschließen in die Zeiterfassung übernommen">→ Zeiterfassung</span>':''}</div>`;
+  return`<div class="tbpl">${(b.personal||[]).map(z).join('')||'<p class="mut" style="margin:0 0 8px">Noch niemand eingetragen.</p>'}</div>
+  <div class="bar" style="margin:8px 0 0"><button data-act="tbpadd" data-id="${b.id}">+ Mitarbeiter</button><button data-act="tbzeit" data-id="${b.id}">⏱ Aus Zeiterfassung …</button><span class="sp"></span><span>Summe <b id="tbsum">${fmtQ(tbStd(b))} h</b></span></div>`}
+function tbMatForm(b){
+  return`<div class="tbml">${(b.material||[]).map((m,i)=>`<div class="tbm">${tbF(b,`material.${i}.art`,m.nr?`${m.nr} – ${m.bez}`:m.bez,{l:'Material / Artikel',lst:'dl-art',ph:'Artikel-Nr. oder Bezeichnung',cls:'tbn'})}${tbF(b,`material.${i}.menge`,m.menge,{typ:'number',l:'Menge',n:true,im:'decimal',cls:'tbmm'})}${tbF(b,`material.${i}.einheit`,m.einheit,{l:'Einheit',lst:'tb-einh',cls:'tbme'})}<button class="s d tbx" data-act="tbmdel" data-id="${b.id}" data-i="${i}" title="Zeile entfernen" aria-label="Zeile entfernen">✕</button></div>`).join('')||'<p class="mut" style="margin:0 0 8px">Kein Material eingetragen.</p>'}</div>
+  <div class="bar" style="margin:8px 0 0"><button data-act="tbmadd" data-id="${b.id}">+ Material</button></div>`}
+const tbForm=b=>tbSek('tb-kopf','Baustelle &amp; Auftrag',tbKopfForm(b),{zusatz:esc([dAT(b.datum),b.baustelle].filter(Boolean).join(' · '))})
+  +tbSek('tb-wetter','Witterung',tbWetterForm(b),{zusatz:esc(tbWetterTxt({art:b.wetter?.art,temp:b.wetter?.temp},1))})
+  +tbSek('tb-taet','Ausgeführte Tätigkeiten *',`<div class="row">${tbT(b,'taetigkeit',b.taetigkeit,'','Was wurde heute gemacht? (Bereiche, Anlagenteile, Leistungen)',150)}</div>`)
+  +tbSek('tb-pers','Personal &amp; Arbeitszeiten',tbPersForm(b),{zusatz:fmtQ(tbStd(b))+' h'})
+  +tbSek('tb-mat','Material',tbMatForm(b),{zusatz:(b.material||[]).length?(b.material.length+' Zeile'+(b.material.length>1?'n':'')):''})
+  +tbSek('tb-bes','Behinderungen &amp; Besonderes',`<div class="row">${tbT(b,'behinderung',b.behinderung,'Behinderungen / Erschwernisse','z. B. Wartezeit auf Vorgewerk, Zugang gesperrt',80)}</div><div class="row">${tbT(b,'besonderes',b.besonderes,'Besondere Vorkommnisse, Anordnungen des Kunden','z. B. Zusatzleistung auf Anordnung von …',80)}</div>`,{offen:!!(b.behinderung||b.besonderes)})
+  +(TBX.fotos?.(b,true)||'');
+// Lese-Ansicht (abgeschlossen bzw. unterschrieben): nur Text, keine Eingabefelder
+function tbLese(b){const w=b.wetter||{},P=b.personal||[],M=b.material||[],aid=tbAuf(b),zl=(l,v)=>`<div><span class="mut">${l}</span><div>${v||'–'}</div></div>`;
+  return tbSek('tb-kopf','Baustelle &amp; Auftrag',`<div class="tbkv">${zl('Datum',tbWtag(b.datum)+dAT(b.datum))}${zl('Auftrag',aid?`<a href="#/auftrag/${aid}">${esc(auftragLabel(aid))}</a>`:'')}${zl('Projekt',esc(tbPrj(b)))}${zl('Kunde',esc(kontakt(b.kontaktId)?.name||''))}${zl('Baustelle',esc(b.baustelle))}${zl('Monteur / Bauleiter',esc(b.bearbeiter))}${zl('Witterung',esc(tbWetterTxt(w,1))+(tbWetterQ(w)?` <span class="mut">(${esc(tbWetterQ(w))})</span>`:''))}</div>`)
+  +tbSek('tb-taet','Ausgeführte Tätigkeiten',`<div class="tbtx">${tbTx(b.taetigkeit)}</div>`)
+  +tbSek('tb-pers','Personal &amp; Arbeitszeiten',P.length?`<div style="overflow-x:auto"><table class="tbtab"><thead><tr><th>Name</th><th>Zeit</th><th class="n">Pause</th><th class="n">Std.</th><th>Tarif</th></tr></thead><tbody>${P.map(p=>`<tr><td>${esc(p.name||'–')}${p.quelle==='zeit'?' <span class="mut" title="aus der Zeiterfassung">⏱</span>':''}</td><td>${p.von||p.bis?esc(p.von||'')+'–'+esc(p.bis||''):''}</td><td class="n">${+p.pause?fmtQ(p.pause)+' min':''}</td><td class="n">${fmtQ(p.std)}</td><td>${esc(p.tarif||'')}</td></tr>`).join('')}<tr><td colspan="3"><b>Summe</b></td><td class="n"><b>${fmtQ(tbStd(b))}</b></td><td></td></tr></tbody></table></div>`:'<p class="mut" style="margin:0">Kein Personal eingetragen.</p>',{zusatz:fmtQ(tbStd(b))+' h'})
+  +(M.length?tbSek('tb-mat','Material',`<div style="overflow-x:auto"><table class="tbtab"><thead><tr><th>Material</th><th class="n">Menge</th><th>Einheit</th></tr></thead><tbody>${M.map(m=>`<tr><td>${m.nr?`<span class="mut">${esc(m.nr)}</span> `:''}${esc(m.bez)}</td><td class="n">${m.menge!==''&&m.menge!=null?fmtQ(m.menge):''}</td><td>${esc(m.einheit||'')}</td></tr>`).join('')}</tbody></table></div>`,{zusatz:M.length+' Zeile'+(M.length>1?'n':'')}):'')
+  +(b.behinderung||b.besonderes?tbSek('tb-bes','Behinderungen &amp; Besonderes',(b.behinderung?`<div class="mut">Behinderungen / Erschwernisse</div><div class="tbtx">${tbTx(b.behinderung)}</div>`:'')+(b.besonderes?`<div class="mut" style="margin-top:6px">Besondere Vorkommnisse</div><div class="tbtx">${tbTx(b.besonderes)}</div>`:'')):'')
+  +(TBX.fotos?.(b,false)||'')}
+function tbStatusKarte(b){const st=tbSig(b)?'u':b.status==='abgeschlossen'?'a':'e',G=b.sig||{},id=b.id;
+  const sg=(s,l)=>s?`<div class="tbsg"><div class="mut">${l}</div>${tbSvgHTML(s)}<div><b>${esc(s.name)}</b> · ${dtAT(s.ts)}</div></div>`:'';
+  return`<div class="card tbst tb-${st}"><div class="bar" style="margin:0">${st==='e'?`<span class="tbsx">Entwurf – frei bearbeitbar. Nach dem Abschließen ist der Inhalt schreibgeschützt; danach unterschreiben Monteur und wahlweise der Kunde.</span><button class="p" data-act="tbab" data-id="${id}">✔ Abschließen …</button>`
+    :st==='a'?`<span class="tbsx">Abgeschlossen am ${dtAT(b.abgeschlossen)} – Inhalt schreibgeschützt.</span><button data-act="tbauf" data-id="${id}">↺ Wieder öffnen</button><button class="p" data-act="tbsig" data-w="m" data-id="${id}">✍ Unterschrift Monteur …</button>`
+    :`<span class="tbsx"><b>Unterschrieben</b> – endgültig, keine Änderung mehr möglich.</span>${G.k?'':`<button class="p" data-act="tbsig" data-w="k" data-id="${id}">✍ Unterschrift Kunde …</button>`}`}</div>
+  ${st!=='e'?`${st==='u'?`<div class="tbsgs">${sg(G.m,'Monteur')}${sg(G.k,'Kunde')}</div>`:''}<div class="mut tbh">Prüfsumme (SHA-256) <code>${esc(String(b.hash||'').slice(0,16))}…</code> <span class="tbpr" data-id="${id}">wird geprüft …</span></div>`:''}</div>`}
+const tbListen=()=>`<datalist id="tb-namen">${tbNamen().map(n=>`<option value="${esc(n)}">`).join('')}</datalist><datalist id="tb-prj">${[...new Set([...DB.belege.map(x=>x.projekt),...DB.berichte.map(x=>x.projekt)].filter(Boolean))].sort((a,c)=>a.localeCompare(c,'de')).map(n=>`<option value="${esc(n)}">`).join('')}</datalist><datalist id="tb-einh">${S().einheiten.map(e=>`<option value="${esc(e)}">`).join('')}</datalist>`;
+V.bericht=id=>{if(!erw('tbBericht'))return tbAus();const b=tbB(id);if(!b)return'<p>Tagesbericht nicht gefunden. <a href="#/berichte">Zur Liste</a></p>';const aid=tbAuf(b),K=kmp();
+  return`<div class="tbed"><div class="bar tbkb"><h1 style="margin:0">${esc(tbTitel(b))}</h1>${tbTag(b)}<span class="sp"></span>${K?`<button data-act="tbdruck" data-id="${b.id}" title="Drucken bzw. als PDF speichern">🖨 PDF</button><button class="mehr" data-act="menue" data-m="tb" data-id="${b.id}" title="Weitere Aktionen" aria-label="Weitere Aktionen">⋯</button>`
+    :`<button data-act="tbdruck" data-id="${b.id}">🖨 PDF / Drucken</button><button data-act="tbfolge" data-id="${b.id}" title="Neuer Bericht mit Auftrag, Baustelle und Personal dieses Berichts">⧉ Folgebericht</button>${tbSig(b)?'':`<button class="d" data-act="tbdel" data-id="${b.id}">Löschen</button>`}`}</div>
+  <p class="mut tbpf"><a href="#/berichte">Tagesberichte</a> › ${tbWtag(b.datum)}${dAT(b.datum)}${aid?` · <a href="#/auftrag/${aid}">Auftrag ${esc(auftragKurz(aid))}</a>`:''}${tbPrj(b)?' · '+esc(tbPrj(b)):''}</p>
+  ${tbStatusKarte(b)}${tbFrei(b)?tbForm(b):tbLese(b)}${tbListen()}</div>`};
+MENUE.tb=el=>{const b=tbB(el.dataset.id)||tbCur();if(!b)return[];const d={id:b.id},a=b.status==='abgeschlossen'&&!tbSig(b);
+  return[{l:'PDF / Drucken',ic:'🖨',act:'tbdruck',d},tbFrei(b)&&{l:'Abschließen …',ic:'✔',act:'tbab',d},a&&{l:'Unterschrift Monteur …',ic:'✍',act:'tbsig',d:{...d,w:'m'}},a&&{l:'Wieder öffnen',ic:'↺',act:'tbauf',d},
+    tbSig(b)&&!b.sig.k&&{l:'Unterschrift Kunde …',ic:'✍',act:'tbsig',d:{...d,w:'k'}},{trenn:1},{l:'Folgebericht (nächster Tag)',ic:'⧉',act:'tbfolge',d,titel:'Neuer Bericht mit Auftrag, Baustelle und Personal dieses Berichts'},
+    tbAuf(b)&&{l:'Auftrag öffnen',ic:'📊',href:'#/auftrag/'+b.auftragId},!tbSig(b)&&{l:'Löschen …',ic:'🗑',act:'tbdel',d,gefahr:1}]};
+// Liste #/berichte: Filter Status (TB_SF), Auftrag/Projekt (UI.tbPrj 'a:<id>' | 'p:<Name>'), Zeitraum (UI.tbZ, TB_Z), Suche (UI.tbQ); Spalten TB_SP, am Handy Karten
+const TB_SF={offen:['ohne Unterschrift',b=>!tbSig(b)],entwurf:['Entwurf',b=>!tbSig(b)&&b.status!=='abgeschlossen'],abgeschlossen:['abgeschlossen',b=>!tbSig(b)&&b.status==='abgeschlossen'],unterschrieben:['unterschrieben',tbSig]};
+const tbMo=n=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+n);return isoD(d).slice(0,8)};
+const TB_Z={heute:['heute',()=>[isoD(),isoD()]],woche:['diese Woche',()=>{const d=new Date(),m=addDays(isoD(d),-((d.getDay()+6)%7));return[m,addDays(m,6)]}],monat:['dieser Monat',()=>[tbMo(0)+'01',addDays(tbMo(1)+'01',-1)]],
+  vormonat:['Vormonat',()=>[tbMo(-1)+'01',addDays(tbMo(0)+'01',-1)]],jahr:['dieses Jahr',()=>[isoD().slice(0,4)+'-01-01',isoD().slice(0,4)+'-12-31']]};
+const TB_SP=[{k:'datum',l:'Datum',f:b=>`<span class="nw">${tbWtag(b.datum)}${dAT(b.datum)}</span>`},{k:'nr',l:'Nr.',f:b=>esc(b.nr||'Entwurf')},{k:'auftrag',l:'Auftrag / Projekt',f:b=>esc([tbAuf(b)?auftragKurz(b.auftragId):'',tbPrj(b)].filter(Boolean).join(' · '))},
+  {k:'kunde',l:'Kunde',f:b=>esc(kontakt(b.kontaktId)?.name||''),std:false},{k:'baustelle',l:'Baustelle',f:b=>esc(b.baustelle||'')},{k:'monteur',l:'Monteur',f:b=>esc(b.bearbeiter||''),std:false},
+  {k:'taet',l:'Tätigkeit',f:b=>esc(String(b.taetigkeit||'').split('\n')[0].slice(0,80))},{k:'std',l:'Std.',n:1,f:b=>tbStd(b)?fmtQ(tbStd(b)):''},{k:'wetter',l:'Witterung',f:b=>esc(tbWetterTxt(b.wetter)),std:false},
+  {k:'fotos',l:'Fotos',n:1,f:b=>(b.fotos||[]).length||'',std:false},{k:'status',l:'Status',f:tbTag}];
+V.berichte=()=>{if(!erw('tbBericht'))return tbAus();
+  const A=DB.berichte,st=TB_SF[UI.tbSt]?UI.tbSt:'',pr=UI.tbPrj||'',zr=TB_Z[UI.tbZ]?UI.tbZ:'',q=(UI.tbQ||'').toLowerCase().trim(),[z0,z1]=zr?TB_Z[zr][1]():['',''];
+  const B=A.filter(b=>(!pr||(pr.startsWith('a:')?b.auftragId===pr.slice(2):tbPrj(b)===pr.slice(2)))&&(!zr||(b.datum>=z0&&b.datum<=z1))&&(!q||tbSuch(b).includes(q)));
+  const L=B.filter(b=>!st||TB_SF[st][1](b)).sort((a,c)=>(c.datum||'').localeCompare(a.datum||'')||(c.nr||'~').localeCompare(a.nr||'~'));
+  const auf=[...new Set(A.map(tbAuf).filter(Boolean))],prj=[...new Set(A.filter(b=>!tbAuf(b)).map(tbPrj).filter(Boolean))].sort((a,c)=>a.localeCompare(c,'de'));
+  const chips=[['','Alle',B.length],...Object.entries(TB_SF).map(([k,[l,f]])=>[k,l,B.filter(f).length])].map(([k,l,z])=>`<button class="${st===k?'on':''}" data-act="tbst" data-v="${k}">${esc(l)} (${z})</button>`).join('');
+  return`<div class="bar"><h1 style="margin:0">Tagesberichte</h1><span class="sp"></span><button class="p" data-act="tbneu">+ Tagesbericht</button></div>
+  <div class="bar chips${kmp()?' ein':''}">${chips}</div>
+  <div class="bar tbbar"><select data-o="ui" data-f="tbPrj" title="Auftrag / Projekt">${opt('','alle Aufträge / Projekte',pr)}${auf.length?`<optgroup label="Aufträge">${auf.map(a=>opt('a:'+a,auftragKurz(a),pr)).join('')}</optgroup>`:''}${prj.length?`<optgroup label="Projekte">${prj.map(n=>opt('p:'+n,n,pr)).join('')}</optgroup>`:''}</select><select data-o="ui" data-f="tbZ" title="Zeitraum">${opt('','alle Tage',zr)}${Object.entries(TB_Z).map(([k,[l]])=>opt(k,l,zr)).join('')}</select><input data-o="ui" data-f="tbQ" placeholder="Suche Nr., Baustelle, Tätigkeit, Name" value="${esc(UI.tbQ||'')}"${kmpH()?'':' style="width:260px"'}></div>
+  ${tabelle('berichte',TB_SP,L,{zeile:b=>`class="click" onclick="nav('bericht/${b.id}')"`,leer:A.length?'Keine Treffer.':'Noch keine Tagesberichte – „+ Tagesbericht“ legt einen an.',
+    mf:b=>karte({t:`${esc(b.nr||'Entwurf')} · ${tbWtag(b.datum)}${dAT(b.datum)}`,s:tbTag(b),u:esc([tbAuf(b)?auftragKurz(b.auftragId):tbPrj(b),b.baustelle].filter(Boolean).join(' · ')),z:esc(String(b.taetigkeit||'').split('\n')[0].slice(0,60)),b:tbStd(b)?fmtQ(tbStd(b))+' h':''})})}`};
+function tbZuListe(st=''){UI.tbSt=st;UI.tbPrj='';UI.tbZ='';UI.tbQ='';if(location.hash==='#/berichte')render();else nav('berichte')}
+document.querySelector('nav a[data-n="zeiten"]')?.insertAdjacentHTML('afterend','<a href="#/berichte" data-n="berichte" class="navtb">Tagesberichte</a>');
+function tbNav(){if(!DB)return;document.body.classList.toggle('tbaus',!erw('tbBericht'));
+  queueMicrotask(()=>{if(/^#\/bericht\//.test(location.hash))document.querySelector('nav a.navtb')?.classList.add('on');if(document.querySelector('.tbpr[data-id]'))tbPruefZeigen()})} // aus render()
+// Überblick: „📋 Tagesbericht“ in der Schnellstart-Leiste, Berichte ohne Unterschrift; Auftrag: Karte „Tagesberichte“ (beides ergänzt das HTML der bisherigen Ansicht)
+function tbDashK(){const L=DB.berichte.filter(b=>!tbSig(b)).sort((a,c)=>(c.datum||'').localeCompare(a.datum||'')).slice(0,6);if(!L.length)return'';
+  const h=`<a href="javascript:void 0" onclick="tbZuListe('offen')">Tagesberichte ohne Unterschrift →</a>`,nb=b=>`onclick="nav('bericht/${b.id}')"`,u=b=>esc([tbAuf(b)?auftragKurz(b.auftragId):tbPrj(b),b.baustelle].filter(Boolean).join(' · '));
+  return kmpH()?`<div class="card kkl" style="padding:0"><h2>${h}</h2>${L.map(b=>karte({t:`${esc(b.nr||'Entwurf')} · ${dAT(b.datum)}`,s:tbTag(b),u:u(b),b:tbStd(b)?fmtQ(tbStd(b))+' h':'',a:nb(b)})).join('')}</div>`
+    :`<div class="card"><h2>${h}</h2><table>${L.map(b=>`<tr class="click" ${nb(b)}><td>${dAT(b.datum)}</td><td>${esc(b.nr||'Entwurf')}</td><td>${u(b)}</td><td>${tbTag(b)}</td></tr>`).join('')}</table></div>`}
+{const d0=V.dash;V.dash=a=>{const h=d0(a);return erw('tbBericht')?h.replace(/<div class="quick">([\s\S]*?)(<\/div>)/,(m,x,y)=>'<div class="quick tbq">'+x+'<button data-act="tbneu">📋 Tagesbericht</button>'+y+tbDashK()):h}}
+function tbAuftragKarte(aid){const p=beleg(aid)?.projekt,L=DB.berichte.filter(b=>b.auftragId===aid||!tbAuf(b)&&p&&b.projekt===p).sort((a,c)=>(c.datum||'').localeCompare(a.datum||''));
+  const inh=`<div class="card">${kmp()?'':'<h2>Tagesberichte</h2>'}${L.length?`<div style="overflow-x:auto"><table><tbody>${L.map(b=>`<tr class="click" onclick="nav('bericht/${b.id}')"><td>${dAT(b.datum)}</td><td>${esc(b.nr||'Entwurf')}</td><td class="n">${tbStd(b)?fmtQ(tbStd(b))+' h':''}</td><td>${tbTag(b)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="mut" style="margin:0">Noch kein Tagesbericht zu diesem Auftrag.</p>'}
+    <div class="bar" style="margin:8px 0 0"><button class="s" data-act="tbneu" data-aid="${aid}">+ Tagesbericht für diesen Auftrag</button></div></div>`;
+  return kmp()?akk('a-tb','Tagesberichte',inh,{offen:!!L.length,zusatz:L.length?L.length+' Bericht'+(L.length>1?'e':''):'keine'}):inh}
+const TB_AK='<div class="card"><h2>Vor- / Nachkalkulation</h2>';
+{const a0=V.auftrag;V.auftrag=aid=>{const h=a0(aid);return erw('tbBericht')&&h.includes(TB_AK)?h.replace(TB_AK,()=>tbAuftragKarte(aid)+TB_AK):h}}
+// Globale Suche (P20): Tagesberichte als eigener Bereich
+SU_G.push(['tb','Tagesberichte']);
+suIndex=(f=>()=>{const E=f();if(erw('tbBericht'))for(const b of DB.berichte||[])E.push({g:'tb',r:'bericht/'+b.id,ic:'📋',t:tbTitel(b),u:[dAT(b.datum),tbAuf(b)?auftragKurz(b.auftragId):tbPrj(b),b.baustelle].filter(Boolean).join(' · '),s:tbTag(b),d:b.datum,h:'tagesbericht '+tbSuch(b)});return E})(suIndex);
+// Zeiterfassung → Bericht: Einträge des Berichtsdatums (und Auftrags), die noch in keinem Bericht stehen; aus Berichten gebuchte Zeiten (z.berichtId) bleiben außen vor
+function tbZeitPop(b){if(!tbFrei(b))return;const aid=tbAuf(b),inB=id=>DB.berichte.find(x=>(x.personal||[]).some(p=>p.zeitId===id));
+  const L=DB.zeiten.filter(z=>z.datum===b.datum&&(!aid||z.auftragId===aid)&&!z.berichtId).sort((a,c)=>(a.tarif||'').localeCompare(c.tarif||''));
+  const d=document.createElement('div');d.className='modal';
+  d.innerHTML=`<div class="mbox" style="max-width:640px"><h2>Aus der Zeiterfassung übernehmen</h2><p class="mut" style="margin:0 0 8px">Einträge vom ${dAT(b.datum)}${aid?' zum Auftrag '+esc(auftragKurz(aid)):''}; bereits in einem Tagesbericht übernommene sind gesperrt.</p>
+    ${L.length?`<div class="tbzl">${L.map(z=>{const x=inB(z.id);return`<label class="chk${x?' mut':''}"><input type="checkbox" data-z="${z.id}"${x?' disabled':' checked'}> <span><b>${fmtQ(z.stunden)} h</b> ${esc(z.tarif||'')}${aid?'':' · '+esc(auftragKurz(z.auftragId))}${z.text?' · '+esc(z.text):''}${x?` <i>(in ${esc(x===b?'diesem Bericht':tbTitel(x))})</i>`:''}</span></label>`}).join('')}</div>
+    <label style="margin-top:10px">Name des Mitarbeiters<input id="tbz-n" list="tb-namen" value="${esc(b.bearbeiter||'')}"></label>`
+    :`<p>Keine passenden Einträge in der Zeiterfassung.</p><p class="mut">Zeiten unter <a href="#/zeiten">Zeiterfassung</a> erfassen (gleiches Datum${aid?' und gleicher Auftrag':''}) oder hier „+ Mitarbeiter“ von Hand eintragen.</p>`}
+    <div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">${L.length?'Abbrechen':'Schließen'}</button>${L.length?'<button class="p" id="m-ok">Übernehmen</button>':''}</div></div>`;
+  document.body.appendChild(d);const fin=()=>{d.remove();document.removeEventListener('keydown',kd)},kd=e=>{if(e.key==='Escape'&&mOben(d))fin()};document.addEventListener('keydown',kd);d._gilt=()=>tbCur()===b;d._weg=fin;
+  d.querySelector('#m-no').onclick=fin;d.addEventListener('click',e=>{if(e.target.closest('a[href]'))fin()});
+  d.querySelector('#m-ok')?.addEventListener('click',()=>{const ids=[...d.querySelectorAll('[data-z]:checked:not(:disabled)')].map(e=>e.dataset.z),n=pT(d.querySelector('#tbz-n')?.value);fin();if(!ids.length||!tbFrei(tbB(b.id)))return;
+    const b2=tbB(b.id);for(const id of ids){const z=DB.zeiten.find(y=>y.id===id);if(z&&!inB(id))(b2.personal??=[]).push({id:uid(),name:n,std:+z.stunden||0,tarif:z.tarif||'',quelle:'zeit',zeitId:z.id,text:z.text||''})}persist();render()})}
+// Abschließen: Pflichtfelder, Nummer, wahlweise Zeiten in die Zeiterfassung (bereits gebuchte, noch nicht abgerechnete werden angeglichen), Prüfsumme; ein commit()
+const tbZText=b=>`${String(b.taetigkeit||'').split('\n')[0].trim().slice(0,80)||'Tagesbericht'} (${b.nr})`;
+async function tbAbschluss(b){if(!tbFrei(b))return;document.activeElement?.blur?.();await new Promise(r=>setTimeout(r,0));b=tbB(b.id);if(!tbFrei(b))return;
+  const fehlt=[[!b.datum,'Datum','datum'],[!pT(b.taetigkeit),'Ausgeführte Tätigkeiten','taetigkeit']].filter(x=>x[0]);
+  if(fehlt.length){pflichtWarnung(document.body,fehlt.map(x=>x[1]),fehlt.map(x=>document.querySelector(`[data-o="tb"][data-id="${b.id}"][data-f="${x[2]}"]`)));return}
+  if(!window.crypto?.subtle){alert('Abschließen braucht eine sichere Verbindung (https://) für die Prüfsumme.');return}
+  const aid=tbAuf(b),man=(b.personal||[]).filter(p=>p.quelle!=='zeit'&&(+p.std>0||p.zeitId)),neu=man.filter(p=>+p.std>0&&(!p.zeitId||!DB.zeiten.some(z=>z.id===p.zeitId))),oT=neu.some(p=>!p.tarif);
+  const o=await formDialog({titel:'Tagesbericht abschließen',ok:'Abschließen',felder:[
+    {typ:'hinweis',l:`${esc(tbWtag(b.datum)+dAT(b.datum))}${aid?' · '+esc(auftragKurz(aid)):''} · Personal ${fmtQ(tbStd(b))} h. Danach ist der Inhalt schreibgeschützt (Prüfsumme); anschließend unterschreibt der Monteur und wahlweise der Kunde. „Wieder öffnen“ ist nur bis zur ersten Unterschrift möglich.`},
+    ...(neu.length?[{k:'zeit',l:`Von Hand erfasste Zeiten in die Zeiterfassung übernehmen (${neu.length} Zeile${neu.length>1?'n':''}, ${fmtQ(sum(neu,p=>p.std))} h)`,typ:'checkbox',wert:!!aid,dis:!aid,neu:1,info:aid?'Für die Nachkalkulation und zum Abrechnen des Auftrags; ohne Doppelbuchung.':'Nur mit Auftrag möglich – oben einen Auftrag wählen.'},
+      ...(oT&&aid&&S().tarife.length?[{k:'tarif',l:'Tarif für Zeilen ohne Tarif',wert:S().tarife[0].kz,opts:S().tarife.map(t=>[t.kz,t.kz+' – '+t.bez]),neu:1}]:[])]:[])]});
+  if(!o)return;b=tbB(b.id);if(!tbFrei(b))return;
+  if(!b.nr)b.nr=tbNr(b);let n=0;const W=[];
+  for(const p of man){const z=p.zeitId&&DB.zeiten.find(y=>y.id===p.zeitId);
+    if(z){if(z.berichtId!==b.id)continue;const tf=p.tarif||z.tarif;
+      if(z.belegId){if(+z.stunden!==+p.std||z.tarif!==tf)W.push(`${p.name||'–'}: ${fmtQ(p.std)} h (Zeiterfassung ${fmtQ(z.stunden)} h, abgerechnet mit ${bNr(beleg(z.belegId))})`);continue}
+      if(!(+p.std>0)){DB.zeiten=DB.zeiten.filter(y=>y!==z);delete p.zeitId;continue} // Stunden entfernt: Eintrag (noch nicht abgerechnet) entfällt
+      const t=S().tarife.find(x=>x.kz===tf);Object.assign(z,{datum:b.datum,stunden:+p.std,ma:p.name||'',text:tbZText(b)},aid?{auftragId:aid}:{},tf!==z.tarif&&t?{tarif:tf,kosten:+t.kosten||0,vk:+t.vk||0}:{});continue}
+    if(!o.zeit||!aid||!(+p.std>0))continue;const tf=p.tarif||o.tarif||S().tarife[0]?.kz||'',t=S().tarife.find(x=>x.kz===tf)||{kosten:0,vk:0};
+    const zz={id:uid(),datum:b.datum,auftragId:aid,tarif:tf,stunden:+p.std,text:tbZText(b),kosten:+t.kosten||0,vk:+t.vk||0,belegId:'',ma:p.name||'',berichtId:b.id};DB.zeiten.push(zz);p.zeitId=zz.id;if(!p.tarif)p.tarif=tf;n++}
+  let h;try{h=await tbSha(tbKanon(tbInhalt(b)))}catch(e){alert(e.message);persist();render();return}
+  b.status='abgeschlossen';b.abgeschlossen=new Date().toISOString();b.hash=h;
+  log('Tagesbericht abgeschlossen',`${b.nr} vom ${dAT(b.datum)}${n?` · ${n} Zeit${n>1?'en':''} in die Zeiterfassung`:''}`);commit();render();
+  if(W.length)alert('Bereits abgerechnete Zeiten bleiben unverändert:\n'+W.join('\n'))}
+function tbOeffnen(b){if(!b||tbSig(b)||b.status!=='abgeschlossen')return;if(!confirm(`${tbTitel(b)} wieder bearbeiten?\nDie Nummer bleibt; beim erneuten Abschließen wird die Prüfsumme neu berechnet.`))return;
+  b.status='entwurf';delete b.hash;delete b.abgeschlossen;log('Tagesbericht wieder geöffnet',b.nr);commit();render()}
+function tbLoeschen(b){if(!b)return;if(tbSig(b)){alert('Unterschriebene Tagesberichte können nicht gelöscht werden (Aufbewahrung, Nachweis).');return}const z=DB.zeiten.filter(x=>x.berichtId===b.id).length;
+  if(!confirm(`${tbTitel(b)} vom ${dAT(b.datum)} löschen?${z?`\n${z} daraus übernommene Zeit${z>1?'en bleiben':' bleibt'} in der Zeiterfassung.`:''}`))return;wegwerfen('berichte',[b]);go('berichte')}
+// Unterschrift: Name + Feld (Pointer-Events: Finger, Stift, Maus; touch-action:none), am Handy ganzer Bildschirm, quer mehr Platz; gespeichert als SVG-Pfad (tbSvg) mit Prüfkette
+async function tbSigPop(b,w){if(!b)return;const k=w==='k',darf=()=>k?tbSig(b)&&!b.sig.k:b.status==='abgeschlossen'&&!tbSig(b);if(!darf())return;
+  let pr;try{pr=await tbPruef(b)}catch(e){alert(e.message);return}
+  if(!pr?.inhalt||pr.m===false){alert('Der Inhalt stimmt nicht mit der Prüfsumme überein – Unterschrift nicht möglich.'+(k?'':'\nBitte „Wieder öffnen“ und erneut abschließen.'));return}
+  const d=document.createElement('div');d.className='modal tbsm';
+  d.innerHTML=`<div class="mbox"><h2>Unterschrift ${k?'Kunde':'Monteur'} – ${esc(tbTitel(b))}</h2>
+    <p class="mut tbsh">${k?'Der Kunde bestätigt mit der Unterschrift die Angaben des Tagesberichts.':'Mit der Unterschrift bestätigen Sie den Inhalt des Tagesberichts; danach ist keine Änderung mehr möglich.'} Prüfsumme ${esc(b.hash.slice(0,16))}…</p>
+    <label>Name *<input id="tbs-n" value="${esc(k?persName(kontakt(b.kontaktId)):b.bearbeiter||S().bearbeiter||'')}" autocomplete="off"></label>
+    <div class="tbsc"><canvas id="tbs-c" aria-label="Unterschriftsfeld"></canvas><span class="tbsl">✕ Unterschrift ${k?'Kunde':'Monteur'}</span></div>
+    <p class="mut tbsq">Mit Finger, Stift oder Maus im Feld unterschreiben${HANDY.matches?' – Gerät quer halten für mehr Platz':''}.</p>
+    <div class="bar" style="margin:10px 0 0"><button id="tbs-x">Neu zeichnen</button><span class="sp"></span><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Unterschreiben</button></div></div>`;
+  document.body.appendChild(d);const c=d.querySelector('#tbs-c'),g=c.getContext('2d'),S_=[];let cur=null,W=0,H=0;
+  const zeich=()=>{g.clearRect(0,0,W,H);g.lineWidth=2.2;g.lineCap=g.lineJoin='round';g.strokeStyle='#000';for(const s of S_){g.beginPath();g.moveTo(s[0][0],s[0][1]);g.lineTo(s[0][0]+.1,s[0][1]);for(const q of s)g.lineTo(q[0],q[1]);g.stroke()}};
+  const groesse=()=>{const r=c.getBoundingClientRect(),dpr=devicePixelRatio||1;if(!r.width||!r.height)return;if(W&&H&&(r.width!==W||r.height!==H)){const f=Math.min(r.width/W,r.height/H);for(const s of S_)for(const q of s){q[0]*=f;q[1]*=f}}
+    W=r.width;H=r.height;c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);g.setTransform(dpr,0,0,dpr,0,0);zeich()};
+  const pt=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  c.addEventListener('pointerdown',e=>{if(e.button>0)return;e.preventDefault();try{c.setPointerCapture(e.pointerId)}catch(x){}cur=[pt(e)];S_.push(cur);zeich()});
+  c.addEventListener('pointermove',e=>{if(!cur)return;e.preventDefault();const ev=e.getCoalescedEvents?.();for(const q of ev?.length?ev:[e])cur.push(pt(q));zeich()});
+  for(const t of ['pointerup','pointercancel','lostpointercapture'])c.addEventListener(t,()=>{cur=null});
+  const ro=new ResizeObserver(groesse);ro.observe(c);groesse();
+  const fin=()=>{ro.disconnect();d.remove();document.removeEventListener('keydown',kd,true)},kd=e=>{if(e.key==='Escape'&&mOben(d)){e.stopPropagation();fin()}};document.addEventListener('keydown',kd,true);d._gilt=()=>tbCur()===b;d._weg=fin;
+  d.querySelector('#tbs-x').onclick=()=>{S_.length=0;zeich()};d.querySelector('#m-no').onclick=fin;
+  d.querySelector('#m-ok').onclick=async()=>{const ni=d.querySelector('#tbs-n'),n=pT(ni.value);if(!n){pflichtWarnung(d,['Name'],[ni]);return}
+    const sv=tbSvg(S_);if(!sv){alert('Bitte im Feld unterschreiben.');return}if(tbB(b.id)!==b||!darf()){fin();return}
+    const s={name:n,ts:new Date().toISOString(),svg:sv.svg,vb:sv.vb};try{s.h=await tbSigH(k?b.sig.m.h:b.hash,s)}catch(e){alert(e.message);return}if(tbB(b.id)!==b||!darf()){fin();return}
+    b.sig={...(b.sig||{}),[w]:s};if(!k)b.status='unterschrieben';log(k?'Tagesbericht vom Kunden unterschrieben':'Tagesbericht unterschrieben',`${b.nr}: ${n}`);fin();commit();render()}}
+// Druck / PDF (A4, Firmenkopf wie die Belege, alle Abschnitte, Fotos über Teil 3, Unterschriften mit Name und Zeitpunkt, Prüfsumme; „ENTWURF“ bis zur Unterschrift des Monteurs)
+function tbDocHTML(b){const f=S().firma,w=b.wetter||{},P=b.personal||[],M=b.material||[],G=b.sig||{},aid=tbAuf(b),z=(l,v,cs=1)=>`<td class="l">${l}</td><td${cs>1?` colspan="${cs}"`:''}>${v||'–'}</td>`;
+  const sb=(s,l)=>`<div><div class="tbsv">${s?tbSvgHTML(s):''}</div><div class="tbsln">${l}${s?`: <b>${esc(s.name)}</b><br>unterschrieben am ${dtAT(s.ts)}`:''}</div></div>`;
+  return`<div class="doc tbd">${tbSig(b)?'':'<div class="tbwz">ENTWURF</div>'}${briefkopf(f)}
+  <h3>Baustellen-Tagesbericht${b.nr?' '+esc(b.nr):''}</h3>${tbSig(b)?'':`<div class="tbent">ENTWURF – ${b.status==='abgeschlossen'?'abgeschlossen, noch nicht unterschrieben':'nicht abgeschlossen'}</div>`}
+  <table class="tbi"><tr>${z('Datum',`<b>${tbWtag(b.datum)}${dAT(b.datum)}</b>`)}${z('Auftrag',aid?esc(auftragLabel(aid)):'')}</tr><tr>${z('Kunde',esc(kontakt(b.kontaktId)?.name||''))}${z('Projekt',esc(tbPrj(b)))}</tr>
+  <tr>${z('Baustelle',esc(b.baustelle),3)}</tr><tr>${z('Monteur / Bauleiter',esc(b.bearbeiter))}${z('Witterung',esc(tbWetterTxt(w))+(tbWetterQ(w)?`<br><span class="tbk">${esc(tbWetterQ(w))}</span>`:''))}</tr></table>
+  <h4>Ausgeführte Tätigkeiten</h4><div class="tbtx">${tbTx(b.taetigkeit)}</div>
+  <h4>Personal und Arbeitszeiten</h4>${P.length?`<table class="tbx"><thead><tr><th>Name</th><th>von</th><th>bis</th><th class="n">Pause</th><th class="n">Stunden</th><th>Tarif</th></tr></thead><tbody>${P.map(p=>`<tr><td>${esc(p.name||'–')}</td><td>${esc(p.von||'')}</td><td>${esc(p.bis||'')}</td><td class="n">${+p.pause?fmtQ(p.pause)+' min':''}</td><td class="n">${fmtQ(p.std)}</td><td>${esc(p.tarif||'')}</td></tr>`).join('')}<tr class="tbs"><td colspan="4">Summe</td><td class="n">${fmtQ(tbStd(b))}</td><td></td></tr></tbody></table>`:'<p>–</p>'}
+  ${M.length?`<h4>Material</h4><table class="tbx"><thead><tr><th>Art.-Nr.</th><th>Bezeichnung</th><th class="n">Menge</th><th>Einheit</th></tr></thead><tbody>${M.map(m=>`<tr><td>${esc(m.nr||'')}</td><td>${esc(m.bez||'')}</td><td class="n">${m.menge!==''&&m.menge!=null?fmtQ(m.menge):''}</td><td>${esc(m.einheit||'')}</td></tr>`).join('')}</tbody></table>`:''}
+  ${b.behinderung?`<h4>Behinderungen / Erschwernisse</h4><div class="tbtx">${tbTx(b.behinderung)}</div>`:''}${b.besonderes?`<h4>Besondere Vorkommnisse</h4><div class="tbtx">${tbTx(b.besonderes)}</div>`:''}
+  ${TBX.fotoDruck?TBX.fotoDruck(b):(b.fotos||[]).length?`<h4>Fotos</h4><p>${b.fotos.length} Foto(s) in der Ablage.</p>`:''}
+  <div class="tbsigd">${sb(G.m,'Monteur')}${sb(G.k,'Kunde')}</div>
+  <div class="tbpz">${b.hash?`Prüfsumme des Inhalts (SHA-256): ${esc(b.hash.slice(0,32))}… · abgeschlossen am ${dtAT(b.abgeschlossen)}${G.m?' · Unterschrift Monteur '+esc(String(G.m.h||'').slice(0,12)):''}${G.k?' · Kunde '+esc(String(G.k.h||'').slice(0,12)):''}`:'Noch nicht abgeschlossen – ohne Prüfsumme.'}</div>
+  <div class="tbft">${fussZeilen(f).map(esc).join('<br>')}</div></div>`}
+async function tbDrucken(b){if(!b)return;document.activeElement?.blur?.();await new Promise(r=>setTimeout(r,0));b=tbB(b.id);if(!b)return;try{await TBX.vorDruck?.(b)}catch(e){}
+  druckHTML(tbDocHTML(b),`Tagesbericht ${b.nr||'Entwurf'} ${dAT(b.datum)}`)}
+queueMicrotask(()=>Object.assign(ACT,{ // Tagesberichte (P36 Teil 1), nach der Definition von ACT
+  tbneu:el=>{if(!erw('tbBericht'))return;const b=tbNeu({auftragId:el.dataset.aid||''});persist();go('bericht/'+b.id)},
+  tbst:el=>{UI.tbSt=el.dataset.v||'';render()},
+  tbdruck:el=>tbDrucken(tbB(el.dataset.id)||tbCur()),tbab:el=>tbAbschluss(tbB(el.dataset.id)||tbCur()),tbauf:el=>tbOeffnen(tbB(el.dataset.id)||tbCur()),
+  tbsig:el=>tbSigPop(tbB(el.dataset.id)||tbCur(),el.dataset.w==='k'?'k':'m'),tbdel:el=>tbLoeschen(tbB(el.dataset.id)||tbCur()),tbzeit:el=>tbZeitPop(tbB(el.dataset.id)||tbCur()),
+  tbfolge:el=>{const a=tbB(el.dataset.id)||tbCur();if(!a)return;const b=tbNeu({auftragId:tbAuf(a),kontaktId:a.kontaktId,kopie:{projekt:a.projekt||'',kontaktId:a.kontaktId||'',baustelle:a.baustelle||'',bearbeiter:a.bearbeiter||'',
+    personal:[...new Map((a.personal||[]).filter(p=>pT(p.name)).map(p=>[pT(p.name),p])).values()].map(p=>({id:uid(),name:pT(p.name),von:'',bis:'',pause:'',std:'',tarif:p.tarif||'',quelle:'manuell'}))}});if(a.datum>=b.datum)b.datum=addDays(a.datum,1);persist();go('bericht/'+b.id)},
+  tbpadd:el=>{const b=tbB(el.dataset.id)||tbCur();if(!tbFrei(b))return;const v=[...(b.personal||[])].reverse().find(p=>p.quelle!=='zeit'),p={id:uid(),name:'',von:v?.von||'',bis:v?.bis||'',pause:v?.pause??'',std:'',tarif:v?.tarif||'',quelle:'manuell'};
+    const s=tbVB(p);if(s!=null)p.std=s;(b.personal??=[]).push(p);persist();render();setTimeout(()=>document.querySelector(`[data-o="tb"][data-f="personal.${b.personal.length-1}.name"]`)?.focus(),0)},
+  tbpdel:el=>{const b=tbB(el.dataset.id)||tbCur(),i=+el.dataset.i,p=b?.personal?.[i];if(!p||!tbFrei(b))return;const z=p.quelle!=='zeit'&&p.zeitId&&DB.zeiten.find(x=>x.id===p.zeitId&&x.berichtId===b.id);
+    if(z&&!confirm(`Zeile „${p.name||'–'}“ (${fmtQ(p.std)} h) entfernen?`))return;
+    if(z&&!z.belegId&&confirm(`Auch den daraus übernommenen Eintrag in der Zeiterfassung (${dAT(z.datum)}, ${fmtQ(z.stunden)} h) löschen?`))DB.zeiten=DB.zeiten.filter(x=>x!==z);
+    b.personal.splice(i,1);persist();render()},
+  tbmadd:el=>{const b=tbB(el.dataset.id)||tbCur();if(!tbFrei(b))return;(b.material??=[]).push({id:uid(),nr:'',bez:'',menge:'',einheit:''});persist();render();setTimeout(()=>document.querySelector(`[data-o="tb"][data-f="material.${b.material.length-1}.art"]`)?.focus(),0)},
+  tbmdel:el=>{const b=tbB(el.dataset.id)||tbCur();if(!tbFrei(b)||!b.material?.[+el.dataset.i])return;b.material.splice(+el.dataset.i,1);persist();render()}}));
+// Schutz unterschriebener Berichte (unabhängig vom Schalter): Rückgängig dreht keine Unterschrift zurück; der Abgleich zwischen Geräten behält immer den unterschriebenen bzw. weiter fortgeschrittenen Stand
+function tbUndoSperre(alt){const A=new Map((alt.berichte||[]).map(x=>[x.id,x]));
+  for(const b of DB.berichte||[])if(b.sig?.m){const o=A.get(b.id);if(!o||tbKanon(o.sig||null)!==tbKanon(b.sig))return`${tbTitel(b)} wurde inzwischen unterschrieben – Unterschriften werden nicht zurückgenommen.`}return''}
+function tbMerge(base,local,out,konfl){const eq=(a,c)=>tbKanon(a)===tbKanon(c),rang=x=>x?(x.sig?.k?3:x.sig?.m?2:x.status==='abgeschlossen'?1:0):-1;
+  const B=new Map((base?.berichte||[]).map(x=>[x.id,x])),L=new Map((local.berichte||[]).map(x=>[x.id,x])),R=new Map((out.berichte||[]).map(x=>[x.id,x])),res=[];
+  for(const id of new Set([...R.keys(),...L.keys()])){const b=B.get(id),r=R.get(id),l=L.get(id);let x;
+    if(l&&r)x=eq(l,r)||(b&&eq(l,b))?r:b&&eq(r,b)?l:(konfl.push(tbTitel(r)+' vom '+dAT(r.datum)),rang(l)>rang(r)?l:r);
+    else x=l?(b&&eq(l,b)?null:l):(b&&eq(r,b)?null:r); // auf einem Gerät gelöscht: bleibt gelöscht, außer das andere Gerät hat ihn geändert
+    const s=[l,r].filter(y=>y?.sig?.m).sort((a,c)=>rang(c)-rang(a))[0];if(s&&rang(x)<rang(s))x=s; // ein unterschriebener Stand geht nie verloren
+    if(x)res.push(x)}
+  out.berichte=res}
 /* ---------- Zeiterfassung ---------- */
 /* ---------- Laufende Kosten: Nebenkosten, Versicherungen, Miete, Energie, Kfz, Beratung, Kammer, Steuern & Abgaben ----------
    Register wiederkehrender Zahlungen (DB.kosten), Fälligkeiten, Kündigungstermine, Buchung in die FiBu (manuelle Buchung mit kostenId/termin);

@@ -6324,6 +6324,7 @@ const kanon=v=>Array.isArray(v)?'['+v.map(kanon).join(',')+']':v&&typeof v==='ob
 async function sperrWert(o){if(!globalThis.crypto?.subtle)return'';const x={};for(const k in o)if(!SIG_FREI.includes(k))x[k]=o[k];
   const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(kanon(x)));return[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}
 async function sperren(o){o.gesperrt=new Date().toISOString();o.hash=await sperrWert(o)}
+const sperrPruef=async o=>!o?.gesperrt||!o.hash?null:(await sperrWert(o).then(h=>h?h===o.hash:null)); // true = unverändert, false = verändert, null = nicht prüfbar
 function sperrTag(o){if(!o?.gesperrt)return'';if(!o.hash)return tag('ohne Prüfwert','warn');const id='pr'+uid();
   sperrWert(o).then(h=>{const e=document.getElementById(id);if(e)e.outerHTML=h===o.hash?tag('Prüfwert gültig','ok'):h?tag('Prüfwert ungültig – Inhalt nachträglich verändert','err'):tag('Prüfwert hier nicht prüfbar')});
   return`<span id="${id}" class="mut">Prüfwert …</span>`}

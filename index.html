@@ -2,6 +2,8 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<!-- Sicherheit (P37 S3): erlaubte Ziele für Skripte und Verbindungen. Neue externe Verbindung → hier ergänzen. frame-ancestors wirkt per meta nicht → Prüfung im Script (P37) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: blob: https://login.microsoftonline.com https://graph.microsoft.com https://*.sharepoint.com https://*.1drv.com https://*.livefilestore.com https://api.anthropic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d2330">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -67,14 +69,14 @@ button.gef{background:var(--err);border-color:var(--err)}
 .lbgt{border-top:1px solid var(--line);padding:6px 0}.lbfp{display:flex;gap:10px;align-items:center;padding:3px 0;font-size:13px;cursor:pointer;color:var(--ink)}.lbfp input{width:16px;height:16px}.lbft{margin-left:26px}.lbft summary{font-size:11px}
 .lbsel{position:sticky;bottom:0;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;box-shadow:0 -4px 16px rgba(0,0,0,.08);margin-top:10px}.lbsel select{width:auto}
 /* Liefertermine (P35): „Offene Lieferungen“ in der Seitenleiste unter „Einkauf“ */
-nav a.navlf{padding-left:32px;font-size:13px}body.lfaus nav a.navlf{display:none}
+nav a.navlf{padding-left:32px;font-size:13px}body.lfaus nav a.navlf{display:none}@media(min-width:761px) and (max-width:1100px){body.kompakt table[data-tab=lieferungen] .t-wv{display:none}}
 .rte table,.doc .lt table{border-collapse:collapse;margin:3px 0}.rte td,.doc .lt td{border:1px solid #ccc;padding:2px 5px;font-size:inherit}
 @media(max-width:1000px){.lbcols{grid-template-columns:1fr}.lblist{max-height:30vh}}
 #dirtybar{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:60;background:#1d2330;color:#fff;border-radius:10px;padding:8px 10px 8px 16px;display:flex;gap:10px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.3);min-width:360px}
 #dirtybar span:first-child{color:#ffd27a}
 /* Liefertermine (P35): Zähler an „Einkauf“, Karte „Lieferverzug“ im Überblick, Erinnerung und Wiedervorlage in der Karte „Lieferung“ */
 nav .nbz{display:inline-block;min-width:18px;padding:0 6px;margin-left:4px;border-radius:9px;background:var(--err);color:#fff;font-size:11px;line-height:18px;text-align:center}.lfd{border-left:4px solid var(--err)}.lfd h2 .mut{font-weight:400;font-size:13px}
-.lfe{font-size:13px;margin:0 0 6px;flex-wrap:wrap;row-gap:4px}.lfe .sp{min-width:8px}
+.lfe{font-size:13px;margin:0 0 6px;flex-wrap:wrap;row-gap:4px}.lfe .sp{min-width:8px}.lfe .lfeb{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 #dirtybar button:not(.p){color:var(--ink)}
 @media(max-width:760px){#dirtybar{left:8px;right:8px;transform:none;min-width:0;bottom:8px}}
 .rte{border:1px solid #cdd2da;border-radius:5px;padding:5px 7px;min-height:32px;background:#fff;margin-top:2px;color:var(--ink);font-size:13px;line-height:1.4;cursor:text}
@@ -537,6 +539,7 @@ body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150p
 /* ===================== KONFIGURATION =====================
    Nach der App-Registrierung in Microsoft Entra eintragen
    (siehe ANLEITUNG-MOBIL.md). Diese Werte sind nicht geheim. */
+if(window.top!==window.self){document.documentElement.innerHTML='';throw new Error('ERP-Lite darf nicht in fremde Seiten eingebettet werden.')} // Schutz gegen Einbetten (Clickjacking, P37 S3)
 const CONFIG={
   clientId:'',          // Anwendungs-ID (Client), z. B. '1a2b3c4d-....'
   tenantId:'',          // Verzeichnis-ID (Mandant)
@@ -907,6 +910,21 @@ const AUTH={
   },
   abmelden(){if(pending&&!confirm('Es gibt noch nicht gespeicherte Änderungen. Trotzdem abmelden?'))return;this.setTok(null);lsSet('erp-user',null);lsSet('erp-modus',null);location.hash='';location.reload()}
 };
+/* Gerät aufräumen (P37 S5, erw.geraetLoeschen): entfernt Anmeldung, Datenkopie (erp-lite-cache), Anhänge/Bilder/Ordnerzugriff (IndexedDB) und Zuletzt-Liste von diesem Gerät.
+   Nur wenn die Daten anderswo sicher liegen (OneDrive oder lokaler Ordner, alles gespeichert) – im Modus „nur Browser“ wären sie sonst verloren. Client-/Mandanten-ID bleiben */
+erwPlus({k:'geraetLoeschen',std:true,p:'Sicherheit (P37)',l:'„Abmelden und Gerät leeren“',info:'Neben „Abmelden“ bzw. „Speicherort wechseln“ entfernt ein zusätzlicher Knopf Anmeldung, Datenkopie, Anhänge und Bilder aus diesem Browser – z. B. vor der Rückgabe eines Geräts oder an einem fremden PC. Die Daten im OneDrive bzw. im lokalen Ordner bleiben unverändert. Nur möglich, wenn alles gespeichert ist; im Modus „nur Browser“ nicht angeboten.'});
+const geraetKnopf=()=>erw('geraetLoeschen')&&STORE.art!=='cache'?' <button data-act="geraetweg" class="d" title="Anmeldung, Datenkopie, Anhänge und Bilder aus diesem Browser entfernen">Abmelden und Gerät leeren</button>':'';
+async function geraetLeeren(){
+  if(STORE.art==='cache')return;
+  if(pending||DIRTY){alert('Es gibt noch nicht gespeicherte Änderungen – bitte zuerst speichern.');return}
+  if(!confirm('Anmeldung, Datenkopie, Anhänge und Bilder werden aus diesem Browser entfernt.\nDie Daten '+(STORE.art==='od'?'im OneDrive':'im lokalen Ordner')+' bleiben erhalten.\n\nFortfahren?'))return;
+  const halten=['erp-cid','erp-tid'];
+  try{for(const k of Object.keys(localStorage))if(/^erp/.test(k)&&!halten.includes(k))localStorage.removeItem(k)}catch(e){}
+  try{sessionStorage.clear()}catch(e){}
+  await new Promise(r=>{try{const q=indexedDB.deleteDatabase('erp-lite');q.onsuccess=q.onerror=q.onblocked=()=>r()}catch(e){r()}});
+  DIRTY=false;pending=false;location.hash='';location.reload();
+}
+queueMicrotask(()=>Object.assign(ACT,{geraetweg:()=>geraetLeeren()}));
 async function graph(path,opt={},nochmal=true){
   const t=await AUTH.token();
   if(!t)throw Object.assign(new Error('Anmeldung abgelaufen'),{login:true});
@@ -958,10 +976,16 @@ const DIRSTORE={
   async backup(old,tag){const bd=await this.h.getDirectoryHandle('backup',{create:true});try{await bd.getFileHandle(`erp-daten_${tag}.json`);return}catch(e){}const w=await (await bd.getFileHandle(`erp-daten_${tag}.json`,{create:true})).createWritable();await w.write(old);await w.close()},
   async dir(parts,create){let d=this.h;for(const p of parts)d=await d.getDirectoryHandle(p,{create});return d},
   async putFile(path,blob){const parts=path.split('/'),fn=parts.pop(),d=await this.dir(parts,true);const w=await (await d.getFileHandle(fn,{create:true})).createWritable();await w.write(blob);await w.close();return{name:fn,path,id:'',url:''}},
-  async openFile(a){const parts=a.path.split('/'),fn=parts.pop(),f=await (await (await this.dir(parts,false)).getFileHandle(fn)).getFile();window.open(URL.createObjectURL(f),'_blank')}
+  async openFile(a){const parts=a.path.split('/'),fn=parts.pop(),f=await (await (await this.dir(parts,false)).getFileHandle(fn)).getFile();blobOeffnen(f,fn)}
 };
 const CACHESTORE={art:'cache',lastText:null,name:'nur dieser Browser (Test)',async save(){},async backup(){},async putFile(path,blob){await kvSet('att:'+path,blob);return{name:path.split('/').pop(),path,id:'',url:''}},
-  async openFile(a){const b=await kvGet('att:'+a.path);if(!b)throw new Error('Datei nicht mehr im Browser vorhanden.');window.open(URL.createObjectURL(b),'_blank')}};
+  async openFile(a){const b=await kvGet('att:'+a.path);if(!b)throw new Error('Datei nicht mehr im Browser vorhanden.');blobOeffnen(b,a.path.split('/').pop())}};
+/* Anhänge sicher öffnen (P37 S1): blob:-Adressen laufen in der Herkunft des Programms – SVG, HTML oder XML könnten dort Code ausführen und Anmeldung/Daten lesen.
+   Nur PDF und Rasterbilder werden angezeigt (Typ aus der Dateiendung, nicht aus der Datei), alles andere wird heruntergeladen */
+const BLOB_TYP={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',bmp:'image/bmp',txt:'text/plain'};
+function blobOeffnen(b,name){const t=BLOB_TYP[(String(name).match(/\.(\w+)$/)||[])[1]?.toLowerCase()];
+  if(!t){dl(b,name);return}
+  const u=URL.createObjectURL(new Blob([b],{type:t}));window.open(u,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(u),60000)}
 let STORE=CACHESTORE,saving=false,saveAgain=false,retryT=null;
 
 async function saveNow(){
@@ -1339,7 +1363,7 @@ function lfVerlaufTxt(b,v){const p=v.pos&&b.pos.find(q=>q.id===v.pos),pz=v.pos?`
 function lfKarte(b){if(b.typ!=='BE'||!b.fest||b.storno||!erw('lfTermin'))return'';
   const L=b.lief||{},P=lfPos(b),w=lfStand(P),H=kmpH(),e=x=>esc(x.p.einheit||''),q=fmtQ,V=(L.verlauf||[]).slice().reverse();
   const ab=L.abNr||L.abDatum||L.termin?`Auftragsbestätigung des Lieferanten${L.abNr?' Nr. <b>'+esc(L.abNr)+'</b>':''}${L.abDatum?' vom '+dAT(L.abDatum):''}${L.termin?' · Liefertermin <b>'+dAT(L.termin)+'</b>':''}`:'<span class="mut">Noch keine Auftragsbestätigung des Lieferanten erfasst.</span>';
-  const gs=x=>x.gestrichen?`<div class="mut lfg">Rest ${q(x.gestrichen)} ${e(x)} gestrichen${x.x.gDatum?' am '+dAT(x.x.gDatum.slice(0,10)):''}${x.x.gGrund?' – '+esc(x.x.gGrund):''}</div>`:'';
+  const gs=x=>x.gestrichen?`<div class="mut lfg">Rest ${q(x.gestrichen)} ${e(x)} gestrichen${x.x.gDatum?' am '+dAT(isoD(new Date(x.x.gDatum))):''}${x.x.gGrund?' – '+esc(x.x.gGrund):''}</div>`:'';
   const vz=x=>x.st==='ueber'?`<b class="err">${x.tage}</b>`:x.st==='heute'?'<span class="warnc">heute</span>':'';
   const mn=(x,c)=>x.offen>0||x.gestrichen?`<button class="${c}" data-act="menue" data-m="lfpos" data-pid="${esc(x.p.id)}" title="Restmenge streichen …">⋯</button>`:'';
   const rows=H?`<div class="kkl lfkl">${P.map(x=>`<div class="kkf">${karte({t:`${esc(x.nr)} ${esc(x.p.bez)}`,s:lfTag(x),u:`bestellt ${q(x.bestellt)} · geliefert ${q(x.geliefert)} · offen <b>${q(x.offen)}</b> ${e(x)}${gs(x)}`,z:x.offen>0?'Termin '+lfTerminTxt(x):'',b:x.st==='ueber'?`<span class="err">${x.tage} Tg. Verzug</span>`:''})}${mn(x,'mehr')}</div>`).join('')}</div>`
@@ -4637,7 +4661,7 @@ V.export=()=>{
   <div class="bar"><button data-act="exp" data-k="ra">Rechnungsausgangsbuch</button><button data-act="exp" data-k="re">Rechnungseingangsbuch</button><button data-act="exp" data-k="za">Zahlungen</button><button data-act="exp" data-k="op">Offene Posten</button><button data-act="exp" data-k="lg">Lagerbestand</button><button data-act="exp" data-k="au">Aufträge DB II</button></div></div>
   <div class="card"><h2>Datensicherung</h2>
   <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>
-  <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}</div>
+  <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}${geraetKnopf()}</div>
   <div class="bar"><button data-act="exp" data-k="json">Gesamtdaten exportieren (JSON)</button><label class="btn" style="font-size:14px;color:inherit">Daten importieren (ersetzt alles)<input type="file" id="imp" accept=".json" style="display:none"></label><button data-act="savenow">Jetzt speichern</button></div></div>
   ${kmp()&&!DB.papierkorb.length?'<div class="card mut">Papierkorb: leer</div>':`<div class="card"><h2>Papierkorb</h2>${DB.papierkorb.length?`<table><thead><tr><th>Gelöscht am</th><th>Art</th><th>Eintrag</th><th></th></tr></thead><tbody>${DB.papierkorb.slice().reverse().map(e=>`<tr><td style="white-space:nowrap">${new Date(e.ts).toLocaleString('de-AT')}</td><td>${PK[e.c]?.n||e.c}</td><td>${esc(e.info)}</td><td style="white-space:nowrap"><button class="s" data-act="pkrest" data-id="${e.id}">Wiederherstellen</button> <button class="s d" data-act="pkdel" data-id="${e.id}">Endgültig löschen</button></td></tr>`).join('')}</tbody></table>
     <div class="bar" style="margin-top:8px"><button data-act="pkrestall">Alle wiederherstellen</button><button class="d" data-act="pkleer">Papierkorb leeren …</button></div>`:'<p class="mut" style="margin:0">leer</p>'}</div>`}
@@ -4860,7 +4884,8 @@ V.einstellungen=()=>{
   ${akk('e-ein','Belege einlesen',`<div class="card"><h2>Belege einlesen</h2>
   ${einlesenInfo(`Kostenlos und ohne Internetdienst werden gelesen: <b>E-Rechnungen</b> (ZUGFeRD/Factur-X, XRechnung, ebInterface) und <b>PDFs mit Textebene</b> (z. B. PDF aus der E-Mail des Lieferanten). Fotos und eingescannte Papierbelege enthalten keinen Text – Positionen dann manuell erfassen.`,
   `Optional (kostenpflichtig): KI-Erkennung für Fotos durch Claude (Anthropic) – nur wenn hier ein Schlüssel eingetragen ist. Den API-Schlüssel erhalten Sie in der Anthropic Console (console.anthropic.com → API Keys). Er wird nur in diesem Browser gespeichert, nicht in der Datenbank – auf jedem Gerät einmal eintragen. Kosten ca. 1–3 Cent je Seite; das Bild wird zur Auswertung an Anthropic übertragen.`)}
-  <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${lsGet('erp-ki-key')?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><span style="flex:2"></span></div></div>`,{zusatz:lsGet('erp-ki-key')?'KI-Schlüssel gespeichert':'PDF-Text und E-Rechnung'})}
+  <div class="row"><label class="w2">API-Schlüssel<input type="password" id="kikey" autocomplete="off" placeholder="${kiKey()?'gespeichert – zum Ändern neu eingeben':'sk-ant-…'}"></label><label class="chk" title="Der Schlüssel wird beim Schließen des Browsers vergessen – sicherer an fremden oder geteilten Geräten (P37 S6)"><input type="checkbox" id="kises"${kiSitzung()?' checked':''}> nur bis zum Schließen des Browsers merken</label><span style="flex:2"></span></div>
+  <p class="mut" style="margin:4px 0 0">Datenschutz: Mit Schlüssel gehen Belegbilder und -texte an Anthropic (USA). Vorher Auftragsverarbeitung (DSGVO Art. 28) und Datenverarbeitungs-Zusatz von Anthropic prüfen; Belege mit Gesundheits- oder Personaldaten nicht über die KI einlesen.</p></div>`,{zusatz:kiKey()?'KI-Schlüssel gespeichert':'PDF-Text und E-Rechnung'})}
   ${akk('e-kfm','Kaufmännisch',`<div class="card"><h2>Kaufmännisch</h2><div class="row">
     <label class="w05">Letzte Kunden-Nr.<input type="number" data-o="s" data-f="knr.K" value="${s.knr.K}" title="Nächster Kunde erhält diese Nummer + 1"></label><label class="w05">Letzte Lieferanten-Nr.<input type="number" data-o="s" data-f="knr.L" value="${s.knr.L}"></label>
     ${sf('zahlungsziel','Zahlungsziel Tage')}${sf('skonto','Skonto %')}${sf('skontoTage','Skonto Tage')}${sf('angebotGueltig','Angebot gültig Tage')}
@@ -5252,9 +5277,10 @@ function xmlBeleg(txt){
   return d;
 }
 /* Texterkennung für Scans/Fotos: Tesseract (Apache-2.0), wird nur bei Bedarf von jsDelivr geladen und läuft lokal */
-const TESS={js:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/',core:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/deu@1.0.0/4.0.0_best_int'};
+const TESS={js:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/',core:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/deu@1.0.0/4.0.0_best_int',
+  sri:'sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F'}; // Prüfsumme tesseract.min.js 5.1.1 (P37 S7): veränderte Datei wird nicht ausgeführt; bei Versionswechsel neu berechnen
 async function ocrZeilen(bilder,info=()=>{}){
-  if(!window.Tesseract)await new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=TESS.js+'tesseract.min.js';sc.onload=ok;sc.onerror=()=>err(new Error('Texterkennung konnte nicht geladen werden – Internetverbindung prüfen.'));document.head.appendChild(sc)});
+  if(!window.Tesseract)await new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=TESS.js+'tesseract.min.js';sc.integrity=TESS.sri;sc.crossOrigin='anonymous';sc.onload=ok;sc.onerror=()=>err(new Error('Texterkennung konnte nicht geladen werden – Internetverbindung prüfen.'));document.head.appendChild(sc)});
   let seite=0;info('Texterkennung wird geladen (beim ersten Mal einige MB) …');
   const w=await Tesseract.createWorker('deu',1,{workerPath:TESS.js+'worker.min.js',corePath:TESS.core,langPath:TESS.lang,
     logger:m=>{if(m.status==='recognizing text')info(`Texterkennung Seite ${seite} von ${bilder.length} – ${Math.round(m.progress*100)} %`)}});
@@ -5288,6 +5314,10 @@ async function belegLokal(files,typ,info,mitKI){
 
 /* ---------- Beleg-Scan: Abgleich und Übernahme (optional KI für Fotos) ---------- */
 // API-Schlüssel nur im Browser des Geräts (localStorage), nicht in erp-daten.json
+/* KI-Schlüssel (P37 S6): dauerhaft in localStorage (bisher) oder nur für die Sitzung in sessionStorage */
+const kiSitzung=()=>lsGet('erp-ki-ses')==='1'; // Wahl je Gerät, der Schlüssel selbst bleibt in sessionStorage
+const kiKey=()=>{try{const k=sessionStorage.getItem('erp-ki-key');if(k)return k}catch(e){}return lsGet('erp-ki-key')};
+function kiKeySetzen(k,sitzung){try{sitzung&&k?sessionStorage.setItem('erp-ki-key',k):sessionStorage.removeItem('erp-ki-key')}catch(e){}lsSet('erp-ki-key',sitzung?null:k);lsSet('erp-ki-ses',sitzung?'1':null)}
 const KI_URL='https://api.anthropic.com/v1/messages',KI_MODELL='claude-opus-5-5';
 const LS_SCHEMA={type:'object',additionalProperties:false,required:['lieferant','lieferscheinNr','datum','bestellNr','lieferadresse','positionen'],properties:{
   lieferant:{type:'object',additionalProperties:false,required:['name','uid','strasse','plz','ort'],properties:{name:{type:'string'},uid:{type:'string'},strasse:{type:'string'},plz:{type:'string'},ort:{type:'string'}}},
@@ -5383,7 +5413,7 @@ async function belegScan(files,typ){
   await (SCANUP[b.id]=anhaengeHochladen(b,files,true,true)); // Originalbeleg unverändert ablegen
 }
 async function scanStart(b){
-  const key=lsGet('erp-ki-key'),files=SCANFILES[b.id];if(!files)return;
+  const key=kiKey(),files=SCANFILES[b.id];if(!files)return;
   b.scan={status:'läuft'};render();
   try{
     const info=t=>{const e=document.getElementById('scaninfo');if(e)e.textContent=t};
@@ -6046,21 +6076,21 @@ const lfN=()=>{const v=S().lfTage;return v===''||v==null||isNaN(+v)||+v<0?3:Math
 const lfWv=(b,h=isoD())=>!!(erw('lfErinnern')&&b.lief?.wv&&b.lief.wv>h); // Wiedervorlage: bis dahin keine Erinnerung
 const lfFaellig=(h=isoD(),n=lfN())=>lfOffen(h).filter(x=>x.termin&&x.tage>=-n&&!lfWv(x.b,h)); // überfällig bzw. in n Tagen fällig
 Object.defineProperty(LF_ST,'bald',{enumerable:true,get:()=>erw('lfErinnern')?`fällig bis ${dAT(addDays(isoD(),lfN()))}`:''});LF_F.bald=x=>!!x.termin&&x.tage>=-lfN()&&!lfWv(x.b); // Filter der Liste wie die Karte „Lieferverzug“
-LF_SP.push({k:'wv',l:'Wiedervorlage',get std(){return!!erw('lfErinnern')},f:x=>lfWv(x.b)?'💤 '+dAT(x.b.lief.wv):''},{k:'erin',l:'Erinnert',std:false,f:x=>{const e=x.b.lief?.erinnert||[];return e.length?dAT(e[e.length-1].ts.slice(0,10))+(e.length>1?` (${e.length}×)`:''):''}});
+LF_SP.push({k:'wv',l:'Wiedervorlage',get std(){return!!erw('lfErinnern')},f:x=>lfWv(x.b)?'💤 '+dAT(x.b.lief.wv):''},{k:'erin',l:'Erinnert',std:false,f:x=>{const e=x.b.lief?.erinnert||[];return e.length?dAT(isoD(new Date(e[e.length-1].ts)))+(e.length>1?` (${e.length}×)`:''):''}});
 function lfDash(){const E=erw('lfErinnern')?lfFaellig():[],K=erw('lfVerkauf')?lfKunden():[],G=new Map(),H=kmpH();if(!E.length&&!K.length)return''; // K: Kundenlieferungen (Teil 4)
   for(const x of E){const g=G.get(x.b.id)||{b:x.b,P:[]};g.P.push(x);G.set(x.b.id,g)}
   const L=[...G.values()].map(g=>({...g,w:lfStand(g.P)})).sort((a,c)=>a.w.termin.localeCompare(c.w.termin)),was=g=>g.P.length>1?`${g.P.length} Positionen`:esc(g.P[0].p.bez),tm=g=>dAT(g.w.termin)+(g.w.best?'':' <span class="mut">(gewünscht)</span>');
   const kopf=E.length?`<a href="javascript:void 0" onclick="${erw('lfListe')?"zuLief('bald')":"zuListe('E','BE','offen')"}">Lieferverzug →</a> <span class="mut">überfällig und in den nächsten ${lfN()} Tagen fällig</span>`:'Lieferverzug';
   const ze=!E.length?'':H?L.map(g=>karte({t:esc(bNr(g.b)),s:lfTag(g.w),u:`${esc(kName(g.b.kontaktId))} · ${was(g)}`,z:'Termin '+tm(g),a:`onclick="nav('beleg/${g.b.id}')"`})).join('')
-    :`<table>${L.map(g=>`<tr class="click" onclick="nav('beleg/${g.b.id}')"><td>${esc(bNr(g.b))}</td><td>${esc(kName(g.b.kontaktId))}</td><td>${was(g)}</td><td>${tm(g)}</td><td>${lfTag(g.w)}</td></tr>`).join('')}</table>`;
+    :`<div style="overflow-x:auto"><table>${L.map(g=>`<tr class="click" onclick="nav('beleg/${g.b.id}')"><td>${esc(bNr(g.b))}</td><td>${esc(kName(g.b.kontaktId))}</td><td>${was(g)}</td><td>${tm(g)}</td><td>${lfTag(g.w)}</td></tr>`).join('')}</table></div>`;
   const kt=x=>tag(`überfällig ${x.tage} Tag${x.tage===1?'':'e'}`,'err')+(x.m.length?' '+tag('Material verspätet','warn'):''),ku=x=>[kName(x.b.kontaktId),x.b.betreff].filter(y=>y&&y!=='–').map(esc).join(' · ');
-  const zk=!K.length?'':`<h2 class="lfdk"><a href="javascript:void 0" onclick="zuListe('V','AB','offen')">Kunden →</a> <span class="mut">Liefertermin laut Auftragsbestätigung überschritten</span></h2>${H?K.map(x=>karte({t:esc(bNr(x.b)),s:kt(x),u:ku(x),z:'Liefertermin '+dAT(x.b.liefertermin),a:`onclick="nav('beleg/${x.b.id}')"`})).join('')
-    :`<table>${K.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${esc(bNr(x.b))}</td><td>${ku(x)}</td><td>${dAT(x.b.liefertermin)}</td><td>${kt(x)}</td></tr>`).join('')}</table>`}`;
+  const zk=!K.length?'':`<h2 class="lfdk"><a href="javascript:void 0" onclick="zuListe('V','AB')" title="Alle Auftragsbestätigungen (der Filter „offen“ blendet abgeschlossene aus)">Kunden →</a> <span class="mut">Liefertermin laut Auftragsbestätigung überschritten</span></h2>${H?K.map(x=>karte({t:esc(bNr(x.b)),s:kt(x),u:ku(x),z:'Liefertermin '+dAT(x.b.liefertermin),a:`onclick="nav('beleg/${x.b.id}')"`})).join('')
+    :`<div style="overflow-x:auto"><table>${K.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${esc(bNr(x.b))}</td><td>${ku(x)}</td><td>${dAT(x.b.liefertermin)}</td><td>${kt(x)}</td></tr>`).join('')}</table></div>`}`;
   return`<div class="card${H?' kkl':''} lfd"${H?' style="padding:0"':''}><h2>${kopf}</h2>${ze}${zk}</div>`}
 // in der Karte „Lieferung“: Erinnerungen, Wiedervorlage und die beiden Knöpfe
 function lfErinInfo(b,w){if(!erw('lfErinnern'))return'';const L=b.lief||{},E=L.erinnert||[],z=E[E.length-1],wv=lfWv(b);if(!w&&!E.length)return'';
   return`<div class="bar lfe">${E.length?`<span>✉ erinnert ${E.length>1?E.length+'×, zuletzt ':''}${dtAT(z.ts)} an ${esc(z.an)}${z.weg==='mailto'?' <span class="mut">(E-Mail-Programm)</span>':''}</span>`:''}${wv?`<span>💤 Wiedervorlage am <b>${dAT(L.wv)}</b>${L.wvNotiz?' – '+esc(L.wvNotiz):''}</span>`:''}<span class="sp"></span>
-    ${w?`<button class="s" data-act="lfmail" title="E-Mail an den Lieferanten mit den fälligen bzw. offenen Positionen">✉ Erinnerung …</button><button class="s" data-act="lfwv" title="Bestellung bis zu einem Datum nicht in „Lieferverzug“ und im Zähler zeigen">💤 Wiedervorlage …</button>`:''}</div>`}
+    ${w?`<span class="lfeb"><button class="s" data-act="lfmail" title="E-Mail an den Lieferanten mit den fälligen bzw. offenen Positionen">✉ Erinnerung …</button><button class="s" data-act="lfwv" title="Bestellung bis zu einem Datum nicht in „Lieferverzug“ und im Zähler zeigen">💤 Wiedervorlage …</button></span>`:''}</div>`}
 // E-Mail-Vorlage der Erinnerung: Platzhalter der Belegtexte (phWerte) und LF_PH
 const LF_PH=[['Positionen','fällige (sonst alle offenen) Positionen mit Menge und Termin'],['AB','„ (Ihre Auftragsbestätigung Nr. … vom …)“, leer ohne Bestätigung'],['AbNr','Nr. der Auftragsbestätigung des Lieferanten'],['AbDatum','Datum der Auftragsbestätigung'],['Termin','bestätigter Liefertermin der Bestellung'],['Unterzeichner','Unterzeichner der Firma, sonst Bearbeiter']];
 const LF_MAIL={betreff:'Erinnerung: Bestellung {Nr} vom {Datum} – {Firma}',text:'{Anrede}\n\nzu unserer Bestellung {Nr} vom {Datum}{AB} sind folgende Positionen noch offen:\n\n{Positionen}\n\nBitte liefern Sie die offenen Positionen umgehend bzw. teilen Sie uns den neuen Liefertermin mit.\n\nMit freundlichen Grüßen\n{Unterzeichner}\n{Firma}'};
@@ -6068,7 +6098,7 @@ function lfMailWerte(b,P){const L=lfL(b)||{},ln=p=>p.lnr||b.fix?.lnr?.[p.id]||ln
   const z=x=>`- Pos ${x.nr}${x.p.nr?' '+x.p.nr:''} ${x.p.bez}${ln(x.p)?` (Ihre Art.-Nr. ${ln(x.p)})`:''}: offen ${fmtQ(x.offen)} ${x.p.einheit||''}`.trimEnd()+(x.teile.length>1?` (${x.teile.map(t=>`${fmtQ(t.menge)} ${x.p.einheit||''} bis ${t.termin?dAT(t.termin):'–'}`).join(', ')})`:x.termin?`, Termin ${dAT(x.termin)}`:'')+(x.tage>0?` – ${x.tage} Tag${x.tage===1?'':'e'} überfällig`:x.tage===0?' – heute fällig':'');
   return{...phWerte(b),Anrede:dOpt(b).briefAnrede?anrBeleg(b):'Sehr geehrte Damen und Herren,',Positionen:P.map(z).join('\n'),AB:L.abNr||L.abDatum?` (Ihre Auftragsbestätigung${L.abNr?' Nr. '+L.abNr:''}${L.abDatum?' vom '+dAT(L.abDatum):''})`:'',AbNr:L.abNr||'',AbDatum:L.abDatum?dAT(L.abDatum):'',Termin:L.termin?dAT(L.termin):'',Unterzeichner:S().firma.zeichner||S().bearbeiter||''}}
 async function lfMail(b){if(!b||b.typ!=='BE'||!b.fest||b.storno)return;const O=lfPos(b).filter(x=>x.offen>0);if(!O.length){alert('Keine offenen Positionen.');return}
-  const F=O.filter(x=>x.tage>=0),P=F.length?F:O,w=lfMailWerte(b,P),mv=S().mailVorlage||{},od=STORE.art==='od';
+  const F=O.filter(x=>x.st==='ueber'||x.st==='heute'),P=F.length?F:O,w=lfMailWerte(b,P),mv=S().mailVorlage||{},od=STORE.art==='od';
   const o=await formDialog({titel:`Erinnerung an den Lieferanten – Bestellung ${esc(bNr(b))}`,ok:od?'Senden':'E-Mail öffnen',breit:true,felder:[
     {typ:'hinweis',l:F.length?`${F.length} fällige Position${F.length>1?'en':''} (überfällig bzw. heute fällig).`:'Keine Position ist fällig – die E-Mail nennt alle offenen Positionen.'},
     {k:'an',l:'An (mehrere mit ; trennen)',wert:kontakt(b.kontaktId)?.email||'',cls:'w2',pflicht:true,neu:1},{k:'cc',l:'Cc',wert:''},
@@ -6083,7 +6113,9 @@ async function lfMail(b){if(!b||b.typ!=='BE'||!b.fest||b.storno)return;const O=l
       body:JSON.stringify({message:{subject:o.betreff,body:{contentType:'HTML',content:`<div style="font-family:Arial,sans-serif;font-size:10pt">${esc(o.text).replace(/\n/g,'<br>')}</div>`},toRecipients:an.map(a=>({emailAddress:{address:a}})),
         ccRecipients:cc.map(a=>({emailAddress:{address:a}})),bccRecipients:o.kopie&&lsGet('erp-user')?[{emailAddress:{address:lsGet('erp-user')}}]:[]},saveToSentItems:true})});
     saveState('');if(!r.ok){const j=await r.json().catch(()=>({}));alert('Senden fehlgeschlagen:\n'+(j.error?.message||r.status));return}}
-  else location.href=`mailto:${an.join(';')}?${new URLSearchParams({...(cc.length?{cc:cc.join(';')}:{}),subject:o.betreff,body:o.text}).toString().replace(/\+/g,'%20')}`;
+  else{const u=t=>`mailto:${an.join(';')}?${new URLSearchParams({...(cc.length?{cc:cc.join(';')}:{}),subject:o.betreff,body:t}).toString().replace(/\+/g,'%20')}`; // E-Mail-Programme (z. B. Outlook unter Windows) übernehmen nur ca. 2000 Zeichen: längere Nachricht über die Zwischenablage
+    let url=u(o.text),zw=false;if(url.length>1900)try{await navigator.clipboard.writeText(o.text);url=u('(Text der Erinnerung in der Zwischenablage – bitte hier einfügen)');zw=true}catch(e){}
+    location.href=url;if(zw)alert('Die Nachricht ist für die Übergabe an das E-Mail-Programm zu lang.\nSie liegt in der Zwischenablage – bitte in die E-Mail einfügen (Strg+V).')}
   ((b.lief??={}).erinnert??=[]).push({ts:new Date().toISOString(),an:an.join('; '),weg:od?'mail':'mailto'});
   log('Liefererinnerung',`${bNr(b)} an ${an.join(', ')}${od?'':' (E-Mail-Programm)'}: ${P.length} Position(en)`);commit();render();if(od)alert(`Erinnerung gesendet an ${an.join(', ')}.`)}
 async function lfWvPop(b){if(!b||b.typ!=='BE'||!b.fest)return;const L=b.lief||{};
@@ -6101,12 +6133,12 @@ function lfEinst(){if(!erw('lfErinnern'))return'';const m=S().mailVorlage||{};
   <div class="row"><label class="w05">Erinnern ab … Tage vor dem Termin<input type="number" min="0" step="1" inputmode="numeric" data-o="s" data-f="lfTage" value="${lfN()}"></label><span style="flex:2"></span></div>
   <div class="row"><label class="w2">Betreff der Erinnerung<input data-o="s" data-f="mailVorlage.lfBetreff" value="${esc(m.lfBetreff||'')}" placeholder="${esc(LF_MAIL.betreff)}"></label></div>
   <div class="row"><label class="w2">Text der Erinnerung<textarea data-o="s" data-f="mailVorlage.lfText" style="height:200px" placeholder="${esc(LF_MAIL.text)}">${esc(m.lfText||'')}</textarea></label></div>
-  <div class="bar" style="margin:4px 0 0">${phKnopf()}<span class="mut" style="font-size:13px">${LF_PH.map(([n,l])=>`<span title="${esc(l)}">{${n}}</span>`).join(' ')}</span></div></div>`,{zusatz:`${lfN()} Tage · ${m.lfText||m.lfBetreff?'eigene Vorlage':'Standardtext'}`})}
+  <div class="bar" style="margin:4px 0 0">${phKnopf()}${LF_PH.map(([n,l])=>`<button class="s" data-act="phins" data-n="${n}" title="${esc(l)} – an der Schreibmarke des zuletzt bearbeiteten Felds einfügen">{${n}}</button>`).join('')}</div></div>`,{zusatz:`${lfN()} Tage · ${m.lfText||m.lfBetreff?'eigene Vorlage':'Standardtext'}`})}
 queueMicrotask(()=>Object.assign(ACT,{lfmail:()=>lfMail(curBeleg()),lfwv:()=>lfWvPop(curBeleg())}));
 /* ---------- Lieferverzug im Verkauf (P35 Teil 4, erw.lfVerkauf): Auftragsbestätigungen an Kunden mit überschrittenem Liefertermin (fest, nicht storniert, erledigung() < 1
-   über Lieferscheine bzw. Rechnungen, nicht abgeschlossen nach P32) → eigener Abschnitt in der Karte „Lieferverzug“ (lfKunden); Bestellungen aus der Belegkette einer AB
+   über Lieferscheine bzw. Rechnungen, auch „abgeschlossen“ nach P32) → eigener Abschnitt in der Karte „Lieferverzug“ (lfKunden); Bestellungen aus der Belegkette einer AB
    (vorgaengerId bzw. gleicher Auftrag) mit überfälligen Positionen → Hinweis „Material verspätet“ in der AB (lfMaterial, lfHinweis). Nur Anzeige ---------- */
-erwPlus({k:'lfVerkauf',std:true,p:'Liefertermine (P35)',l:'Lieferverzug im Verkauf: Kundenlieferungen und verspätetes Material',info:'Auftragsbestätigungen an Kunden, deren Liefertermin vorbei ist und die noch nicht vollständig geliefert bzw. verrechnet sind (Lieferscheine, Rechnungen), stehen in einem eigenen Abschnitt der Karte „Lieferverzug“ im Überblick; ausgenommen sind Auftragsbestätigungen mit Status „abgeschlossen“ (Belegstatus P32). In der Auftragsbestätigung erscheint der Hinweis „Material verspätet“, wenn eine Bestellung aus derselben Belegkette (bzw. demselben Auftrag) überfällige Positionen hat, mit Bestellung, Lieferant und Termin.'});
+erwPlus({k:'lfVerkauf',std:true,p:'Liefertermine (P35)',l:'Lieferverzug im Verkauf: Kundenlieferungen und verspätetes Material',info:'Auftragsbestätigungen an Kunden, deren Liefertermin vorbei ist und die noch nicht vollständig geliefert bzw. verrechnet sind (Lieferscheine, Rechnungen), stehen in einem eigenen Abschnitt der Karte „Lieferverzug“ im Überblick, auch mit Status „abgeschlossen“ (Belegstatus P32 heißt nur „ausgegeben“). In der Auftragsbestätigung erscheint der Hinweis „Material verspätet“, wenn eine Bestellung aus derselben Belegkette (bzw. demselben Auftrag) überfällige Positionen hat, mit Bestellung, Lieferant und Termin.'});
 function lfMaterial(ab,h=isoD()){if(!ab?.fest)return[];return DB.belege.filter(x=>x.typ==='BE'&&x.fest&&!x.storno&&(x.vorgaengerId===ab.id||(ab.auftragId&&x.auftragId===ab.auftragId)))
   .map(b=>({b,w:lfStand(lfPos(b,h).filter(x=>x.st==='ueber'))})).filter(x=>x.w)} // Bestellungen der Belegkette mit überfälligen Positionen
 const lfKunden=(h=isoD())=>DB.belege.filter(b=>b.typ==='AB'&&b.fest&&!b.storno&&b.liefertermin&&b.liefertermin<h&&erledigung(b)<0.9999).map(b=>({b,tage:lfTage(b.liefertermin,h),m:lfMaterial(b,h)})).sort((a,c)=>a.b.liefertermin.localeCompare(c.b.liefertermin));
@@ -6289,7 +6321,8 @@ document.addEventListener('change',e=>{
   if(el.id==='imp')return importJSON(el);
   if(el.id==='lbimp')return lbImport(el);
   if(['lsscan','erfoto','bescan'].includes(el.id)){const f=[...el.files];el.value='';belegScan(f,{lsscan:'WE',erfoto:'ER',bescan:'BE'}[el.id]);return}
-  if(el.id==='kikey'){lsSet('erp-ki-key',el.value.trim()||null);render();return}
+  if(el.id==='kikey'){kiKeySetzen(el.value.trim()||null,kiSitzung());render();return}
+  if(el.id==='kises'){kiKeySetzen(kiKey(),el.checked);render();return}
   if(d.sc!==undefined)return scanSet(el);
   if(d.kette!==undefined){if(d.fk)return;const a=artikel(d.aid);if(!a)return;ketteWert(el).then(v=>{if(v!==null){const B=d.kette==='lp'?LP:GR;a[B.c.feld]=v;log(B.c.name+' zugeordnet',`${a.nr} → ${B.pfad(v)||'keine'}`);persist()}render()});return}
   if(d.lpa!==undefined){const a=artikel(d.lpa);a.lagerplatz=el.value;log('Lagerplatz zugeordnet',`${a.nr} → ${LP.pfad(el.value)||'keiner'}`);commit();return}

@@ -300,8 +300,8 @@ Wunsch des Anwenders: „Wie gehen wir mit Teillieferungen und Verzügen im Lief
 - **Druck/PDF:** A4 mit Briefkopf, Fotos zu zweit nebeneinander, Unterschriften mit Name, Zeitpunkt und Prüfwert („Als PDF speichern“ im Druckdialog).
 - Schalter (Einstellungen → Erweiterungen, alle Standard aus): Bautagesberichte, Fotos, abschließen und unterschreiben, drucken, Stunden in die Zeiterfassung; dazu „Unterschrift am Gerät und Sperre“ (P36 a, auch für Messprotokolle).
 
-## Messprotokolle nach OVE E 8101 (P37, Stand 16.10.2026)
-- Schalter „Messprotokolle nach OVE E 8101“ (Erweiterungen, Paket Messprotokoll P37, Standard aus): Seitenleiste „Messprotokolle“ mit Liste (Nr., Datum, Kunde, Anlage, Prüfart, Ergebnis, nächste Prüfung, fällige Prüfungen rot) und Prüfgeräten (Kalibrierdatum, abgelaufen = Hinweis).
+## Messprotokolle nach OVE E 8101 (P39, Stand 16.10.2026)
+- Schalter „Messprotokolle nach OVE E 8101“ (Erweiterungen, Paket Messprotokoll P39, Standard aus): Seitenleiste „Messprotokolle“ mit Liste (Nr., Datum, Kunde, Anlage, Prüfart, Ergebnis, nächste Prüfung, fällige Prüfungen rot) und Prüfgeräten (Kalibrierdatum, abgelaufen = Hinweis).
 - Prüfbefund je Anlage: Kunde, Auftrag (Vorbelegung aus dem Auftrag), Anlage und Anschrift, Prüfart, Netzform, Nennspannung, Vorsicherung, Netzbetreiber, Zählpunkt, Prüfer, Prüfgeräte; Besichtigung und Erprobung als Prüfpunkte (i. O. / Mangel / n. z., „alle offenen auf i. O.“); Messwerte je Verteiler und Stromkreis; Erder und Potentialausgleich; Mängel, Gesamtergebnis, nächste Prüfung, Bemerkungen.
 - Grenzwerte werden farbig markiert (rot außerhalb, gelb Z<sub>s</sub> über 2/3 des Grenzwerts), die Bewertung trifft der Prüfer. Wiederholungsprüfung übernimmt Anlage, Verteiler und Stromkreise ohne Messwerte. Karte „Messprotokolle“ im Auftrag, Treffer in der globalen Suche, Löschen über den Papierkorb.
 - Druck/PDF (Schalter „Messprotokoll drucken“, Standard ein): Prüfbefund mit Logo und Firmendaten, Messwerte quer, Werte außerhalb der Grenzwerte fett mit „!“, Unterschriftsfelder Prüfer und Auftraggeber.

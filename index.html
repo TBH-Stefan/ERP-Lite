@@ -171,7 +171,7 @@ nav button.zl{display:block;width:100%;text-align:left;background:none;border:0;
 nav .grp{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#8792a8;padding:12px 18px 3px}
 nav a.navkl{display:none;padding-left:32px;font-size:13px}body.navkl nav a.navkl{display:block} /* Kunden / Lieferanten in der Seitenleiste (P6, erw.navKL) */
 body:not(.btb) nav a.navbtb{display:none!important} /* Bautagesberichte (P36 Teil 1, erw.btb) */
-/* Messprotokoll (P37, erw.messprot): Eintrag in der Seitenleiste, Markierung der Grenzwerte, Stromkreis-Karten am Handy */
+/* Messprotokoll (P39, erw.messprot): Eintrag in der Seitenleiste, Markierung der Grenzwerte, Stromkreis-Karten am Handy */
 nav a.navmp{display:none}body.mpan nav a.navmp{display:block}
 .mpt td{padding:3px 3px;white-space:nowrap}.mpt input{padding-left:5px;padding-right:5px}.mpt th{white-space:nowrap;font-size:12px}.mpt select{min-width:0;padding-left:4px;padding-right:2px}.mppt td:first-child{white-space:normal}
 td.mpok input,label.mpok input{border-color:var(--ok);background:rgba(30,122,70,.08)}td.mpwarn input,label.mpwarn input{border-color:var(--warn);background:rgba(154,91,0,.1)}td.mperr input,label.mperr input{border-color:var(--err);background:rgba(180,35,24,.1)}
@@ -349,14 +349,14 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .kbf td.kbt{font-weight:700;font-size:11pt}.kbf .kbn{font-weight:700;font-size:12pt;text-align:center}.kbf .kbl{max-height:15mm;max-width:40mm;display:block;margin:0 auto}.kbf .kbfi{font-size:6.5pt;text-align:center;margin-top:.5mm}
 .kbf table.kbx td{border:0;padding:.3mm 0;font-weight:700}.kbf table.kbx td.x{width:8mm;text-align:center}.kbf td.lb2{font-size:6.5pt;border-left:0}.kbf .kbs td{font-weight:700;background:#f2f2f2}.kbf .kbft{margin-top:3mm;font-size:6.5pt;text-align:center;border-top:.6pt solid #80704d;padding-top:1mm}
 .kbf thead{display:table-header-group}.kbf tr{break-inside:avoid}.kbf .an td{font-size:7pt}.kbf td.kbsub{color:#1a4f9c;font-size:7pt}
-/* Messprotokoll drucken (P37 Teil 2): Blätter .mpf, Messwerte quer (@page mpq) */
+/* Messprotokoll drucken (P39 Teil 2): Blätter .mpf, Messwerte quer (@page mpq) */
 @page mpq{size:A4 landscape;margin:10mm 12mm 17.3mm 12mm}.mpf{font:8.5pt/1.3 Arial,Helvetica,sans-serif;color:#000}.mpf+.mpf{break-before:page}.mpf.quer{page:mpq}
 .mpf table{width:100%;border-collapse:collapse;margin:0}.mpf table+table{margin-top:-.6pt}.mpf th,.mpf td{border:.6pt solid #000;padding:.8mm 1.2mm;vertical-align:middle;color:#000;background:none;font-size:8.5pt}.mpf th{font-weight:700;text-align:center}
 .mpf .c{text-align:center}.mpf .n{text-align:right;white-space:nowrap}.mpf h4{margin:3.5mm 0 1mm;font-size:9.5pt}.mpf thead{display:table-header-group}.mpf tr{break-inside:avoid}
 .mpf .kbl{max-height:15mm;max-width:40mm;display:block;margin:0 auto}.mpf .kbfi{font-size:6.5pt;text-align:center;margin-top:.5mm}.mpf .kbft{margin-top:3mm;font-size:6.5pt;text-align:center;border-top:.6pt solid #80704d;padding-top:1mm}
 .mpf table.mpm th,.mpf table.mpm td{font-size:7.5pt;padding:.6mm .8mm}.mpf .mpl{font-size:6.5pt;margin:1.5mm 0 0}.mpf .mpsig{display:flex;gap:12mm;margin-top:14mm;break-inside:avoid}.mpf .mpsig>div{flex:1;font-size:7.5pt}.mpf .mpsl{border-bottom:.6pt solid #000;height:16mm;margin-bottom:1mm}@media print{body:has(#print .mpf) #dirtybar{display:none!important}}
 fieldset.mpfs{border:0;padding:0;margin:0;min-width:0}.mpf .sigb{margin-top:0}.mpf .sigbild{height:16mm}.mpf .sigbild img{max-height:15mm}.mpf .sigl,.mpf .sigp{font-size:7.5pt;color:#000} /* Messprotokoll Teil 3: gesperrter Editor, Unterschriften im Druck */
-/* Messprotokoll Teil 4 (P37, erw.mpVorlage): Häkchen, Prüfumfang-Matrix, Deckblatt im Druck */
+/* Messprotokoll Teil 4 (P39, erw.mpVorlage): Häkchen, Prüfumfang-Matrix, Deckblatt im Druck */
 .mpckl{display:flex;flex-wrap:wrap;gap:0 20px;margin:2px 0 6px}label.mpck{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--fg,inherit);margin:3px 0;min-height:28px;cursor:pointer}label.mpck input{width:20px;height:20px;margin:0;flex:none}.mph{font-size:13px;margin:12px 0 2px}
 .mpums{overflow-x:auto}table.mpum th span{writing-mode:vertical-rl;transform:rotate(180deg);display:inline-block;max-height:140px;font-size:11px;font-weight:500;white-space:normal;text-align:left}table.mpum th{vertical-align:bottom}
 table.mpum td select{width:54px;padding:3px 2px}table.mpum td:first-child{white-space:nowrap}table.mpumh{table-layout:fixed;width:100%}table.mpumh th,table.mpumh td{padding:4px 2px}table.mpumh th:not(:first-child){width:56px;text-align:center}table.mpumh td:first-child{white-space:normal;font-size:12px;overflow-wrap:anywhere}table.mpumh th{font-size:11px}table.mpumh td select{width:100%;min-width:0;padding-left:6px!important;padding-right:0!important}.mpumb+.mpumb{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}
@@ -1629,7 +1629,7 @@ function render(){
   closePop();
   document.body.classList.toggle('navkl',!!(erw('navKL')&&erw('kFilter'))); // Untereinträge Kunden/Lieferanten (P6)
   document.body.classList.toggle('btb',erw('btb')); // Bautagesberichte (P36)
-  document.body.classList.toggle('mpan',!!erw('messprot')); // Messprotokolle in der Seitenleiste (P37)
+  document.body.classList.toggle('mpan',!!erw('messprot')); // Messprotokolle in der Seitenleiste (P39)
   const f=V[view]||V.dash;
   document.body.classList.toggle('kompakt',kmp()); // Kompakte Ansicht (P30): CSS für bestehende Elemente nur unter body.kompakt
   document.body.classList.toggle('ios',kmp()&&erw('ios')); // iOS-Darstellung am Handy (CSS nur unter body.ios in @media max-width 760px)
@@ -1696,7 +1696,7 @@ function suIndex(){const E=[],add=(g,o,...h)=>E.push({g,...o,h:h.flat().filter(x
   for(const k of DB.kosten||[])add('kosten',{r:'kosten',k:k.id,ic:'💳',t:k.bez||'Kostenposition',u:[k.partner,k.vertragNr,KKAT[k.kat]?.[0]].filter(Boolean).join(' · '),b:fmt(k.betrag)+' €',betr:[+k.betrag]},k.bez,k.partner,k.vertragNr,k.notiz,KKAT[k.kat]?.[0]);
   for(const x of DB.lvbib||[])add('bib',{r:'lvbib',k:x.id,ic:'🧩',t:x.kurz||'Textbaustein',u:x.gruppe||''},x.kurz,x.gruppe,suTxt(x.lang));
   if(erw('btb'))for(const r of DB.berichte||[])add('btb',{r:'bericht/'+r.id,ic:'📝',t:`Bautagesbericht ${r.nr} · ${dAT(r.datum)}`,u:auftragKurz(r.auftragId),s:btbStatus(r),d:r.datum},'BTB '+r.nr,dAT(r.datum),r.ort,r.verfasser,auftragLabel(r.auftragId),(r.taet||[]).map(t=>[t.text,t.ort]),(r.personal||[]).map(p=>p.name),Object.values(r.vork||{})); // Bautagesberichte (P36)
-  if(erw('messprot'))mpSuche(add); // Messprotokolle (P37)
+  if(erw('messprot'))mpSuche(add); // Messprotokolle (P39)
   return E}
 function suTreffer(E,q){const w=q.toLowerCase().split(/\s+/).filter(Boolean),z=/^[-\d.,\s€]+$/.test(q)&&/\d/.test(q)?zahlDE(q.replace(/\s/g,'')):null,G={};
   for(const e of E){const tx=w.every(t=>e.h.includes(t)),bt=z!=null&&(e.betr||[]).some(v=>Math.abs(v-z)<0.005);if(tx||bt)(G[e.g]=G[e.g]||[]).push(bt&&!tx?{...e,u:'Betrag '+fmt(z)+' € · '+e.u}:e)}
@@ -6209,12 +6209,12 @@ Object.assign(ACT,{
     const t=[x.kurz,suTxt(x.lang).replace(/[ \t]+/g,' ').trim()].filter(Boolean).filter((s,i,a)=>a.indexOf(s)===i).join('\n'),L=r.taet||(r.taet=[]),leer=L.findIndex(y=>!pT(y.text)&&!pT(y.ort));
     if(leer>=0)L[leer].text=t;else L.push({text:t,ort:''});persist();render()}});
 SU_G.push(['btb','Bautagesberichte']); // Globale Suche (P20)
-/* ---------- Messprotokoll nach OVE E 8101 (P37 Teil 1, erw.messprot) ----------
+/* ---------- Messprotokoll nach OVE E 8101 (P39 Teil 1, erw.messprot) ----------
    Prüfbefund einer elektrischen Anlage nach OVE E 8101 Teil 6: Kopf (Kunde, Auftrag, Anlage, Prüfart, Netzform, Nennspannung, Prüfer, Prüfgeräte), Besichtigung und Erprobung als Prüfpunkte
    (i. O. / Mangel / n. z.), Messwerte je Verteiler und Stromkreis, Erder/Potentialausgleich, Mängel, Ergebnis und nächste Prüfung. Sammlung DB.messprot (neueDB/migrate, merge3, Papierkorb PK),
    Felder über den Pfad-Setter (ROOT.mp, data-o="path"), Zeilen über arradd/arrdel (TPL.mpv/mpsk). Prüfgeräte S().pgeraete {id,bez,typ,snr,kal = Kalibrierung gültig bis}.
    Grenzwerte (mpPruef) markieren nur, die Bewertung trifft der Prüfer. Nummer MP-<Jahr>-<nnnn> beim Anlegen (mpNr, laufend je Jahr). Liste #/mps, Editor #/mps/<id>. */
-erwPlus({k:'messprot',std:false,p:'Messprotokoll (P37)',l:'Messprotokolle nach OVE E 8101 (Prüfbefund)',info:'In der Seitenleiste erscheint „Messprotokolle“: je Anlage ein Prüfbefund nach OVE E 8101 Teil 6 mit Kopfdaten (Kunde, Auftrag, Anlage, Prüfart, Netzform, Nennspannung, Vorsicherung, Prüfer, Prüfgeräte mit Kalibrierdatum), Besichtigung und Erprobung als Prüfpunkte (i. O. / Mangel / nicht zutreffend), Messwerte je Verteiler und Stromkreis (Schutzleiter, Isolationswiderstand, Schleifenimpedanz, RCD-Auslösezeit und -strom, Berührungsspannung), Erder und Potentialausgleich, Mängel, Gesamtergebnis und nächste Prüfung. Grenzwerte werden farbig markiert, die Bewertung trifft der Prüfer. „Wiederholungsprüfung“ übernimmt Anlage, Verteiler und Stromkreise aus dem letzten Protokoll (ohne Messwerte). Im Auftrag gibt es die Karte „Messprotokolle“. Aus: Seitenleiste und Auftrag wie bisher, gespeicherte Protokolle bleiben erhalten.'});
+erwPlus({k:'messprot',std:false,p:'Messprotokoll (P39)',l:'Messprotokolle nach OVE E 8101 (Prüfbefund)',info:'In der Seitenleiste erscheint „Messprotokolle“: je Anlage ein Prüfbefund nach OVE E 8101 Teil 6 mit Kopfdaten (Kunde, Auftrag, Anlage, Prüfart, Netzform, Nennspannung, Vorsicherung, Prüfer, Prüfgeräte mit Kalibrierdatum), Besichtigung und Erprobung als Prüfpunkte (i. O. / Mangel / nicht zutreffend), Messwerte je Verteiler und Stromkreis (Schutzleiter, Isolationswiderstand, Schleifenimpedanz, RCD-Auslösezeit und -strom, Berührungsspannung), Erder und Potentialausgleich, Mängel, Gesamtergebnis und nächste Prüfung. Grenzwerte werden farbig markiert, die Bewertung trifft der Prüfer. „Wiederholungsprüfung“ übernimmt Anlage, Verteiler und Stromkreise aus dem letzten Protokoll (ohne Messwerte). Im Auftrag gibt es die Karte „Messprotokolle“. Aus: Seitenleiste und Auftrag wie bisher, gespeicherte Protokolle bleiben erhalten.'});
 const MP_ART=[['erst','Erstprüfung'],['wieder','Wiederkehrende Prüfung'],['aend','Prüfung nach Änderung / Erweiterung']];
 const MP_NETZ=['TN-C-S','TN-S','TN-C','TT','IT'];
 const MP_ERG=[['','–'],['io','i. O.'],['m','Mangel'],['nz','n. z.']];
@@ -6365,9 +6365,9 @@ Object.assign(ACT,{
   mpger:el=>{const m=ROOT.mp(el.dataset.id);if(!m)return;const s=new Set(m.gerIds||[]);el.checked?s.add(el.dataset.g):s.delete(el.dataset.g);m.gerIds=[...s];persist()},
   mpalle:el=>{const m=ROOT.mp(el.dataset.id),f=el.dataset.f;if(!m)return;const o=m[f]||(m[f]={});for(const[k]of f==='bes'?MP_BES:MP_ERP)if(!o[k])o[k]='io';persist();render()},
 });
-/* --- Messprotokoll (P37 Teil 2, erw.mpDruck): Druck/PDF über druckHTML() – Blatt 1 Kopf, Prüfgeräte, Besichtigung, Erprobung (A4 hoch), Blatt 2 Messwerte je Verteiler (A4 quer, @page mpq,
+/* --- Messprotokoll (P39 Teil 2, erw.mpDruck): Druck/PDF über druckHTML() – Blatt 1 Kopf, Prüfgeräte, Besichtigung, Erprobung (A4 hoch), Blatt 2 Messwerte je Verteiler (A4 quer, @page mpq,
    Tabellenkopf wiederholt sich), Blatt 3 Erder/Potentialausgleich, Mängel, Ergebnis, nächste Prüfung, Unterschriftsfelder; Werte außerhalb der Grenzwerte fett mit „!“ (mpPruef) --- */
-erwPlus({k:'mpDruck',std:true,p:'Messprotokoll (P37)',l:'Messprotokoll drucken (Prüfbefund, PDF)',info:'Im Messprotokoll druckt „PDF / Drucken“ den Prüfbefund mit Logo und Firmendaten: Anlage und Prüfung, Prüfgeräte, Besichtigung und Erprobung (A4 hoch), die Messwerte je Verteiler und Stromkreis (A4 quer, Werte außerhalb der Grenzwerte fett mit „!“), Erder und Potentialausgleich, Mängel, Gesamtergebnis, nächste Prüfung und Unterschriftsfelder. „Als PDF speichern“ im Druckdialog erzeugt die PDF-Datei. Wirkt nur mit eingeschalteten Messprotokollen.'});
+erwPlus({k:'mpDruck',std:true,p:'Messprotokoll (P39)',l:'Messprotokoll drucken (Prüfbefund, PDF)',info:'Im Messprotokoll druckt „PDF / Drucken“ den Prüfbefund mit Logo und Firmendaten: Anlage und Prüfung, Prüfgeräte, Besichtigung und Erprobung (A4 hoch), die Messwerte je Verteiler und Stromkreis (A4 quer, Werte außerhalb der Grenzwerte fett mit „!“), Erder und Potentialausgleich, Mängel, Gesamtergebnis, nächste Prüfung und Unterschriftsfelder. „Als PDF speichern“ im Druckdialog erzeugt die PDF-Datei. Wirkt nur mit eingeschalteten Messprotokollen.'});
 MP_KN.push(m=>erw('mpDruck')?`<button data-act="mpdruck" data-id="${m.id}">PDF / Drucken</button>`:'');
 const mpX=a=>a?(erw('mpVorlage')?'✓':'X'):''; // Teil 4: Häkchen
 function mpKopfF(m,titel){const f=S().firma;
@@ -6673,11 +6673,11 @@ ACT.btbdruck=async el=>{const r=ROOT.btb(el.dataset.id);if(!r)return;document.ac
   const P=[...(r.bilder||[]).map(b=>b.pfad),...Object.values(r.sig||{}).map(s=>s?.pfad)].filter(Boolean);
   await Promise.all(P.map(async p=>{try{BURL[p]??=URL.createObjectURL(await bildBlob(p));const i=new Image();i.src=BURL[p];await i.decode()}catch(e){}}));saveState('');
   const a=btbRoot(r);druckHTML(`<div class="doc btbp">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">Bautagesbericht ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${btbDoc(r)}</div>`,`Bautagesbericht ${r.nr} ${a?.nr||''} ${dAT(r.datum)}`);bilderLaden()};
-/* --- Messprotokoll (P37 Teil 3, erw.mpSig, wirkt mit erw.unterschrift aus P36 a): „Abschließen“ (Prüfer und Gesamtergebnis Pflicht, Rückfrage bei „in Ordnung“ trotz Grenzwertverletzungen
+/* --- Messprotokoll (P39 Teil 3, erw.mpSig, wirkt mit erw.unterschrift aus P36 a): „Abschließen“ (Prüfer und Gesamtergebnis Pflicht, Rückfrage bei „in Ordnung“ trotz Grenzwertverletzungen
    bzw. abgelaufener Kalibrierung; m.abgeschlossen, Editor als fieldset gesperrt, „Wieder öffnen“ bis zur Unterschrift) → „Unterschrift Prüfer“ (sperrt: sperren(), Prüfwert) →
    „Unterschrift Auftraggeber“ optional, auch später oder mit Vermerk (nur sig.kunde, Inhalt bleibt). Korrektur nach der Sperre nur als neues Protokoll (korrekturZu, Inhalt kopiert).
    Unterschriften m.sig {pruefer,kunde} als PNG in der Ablage Messprotokolle/<Jahr>/<Nr>/ (sigAblegen), im Druck statt der leeren Unterschriftsfelder (MP_SIGF) --- */
-erwPlus({k:'mpSig',std:false,p:'Messprotokoll (P37)',l:'Messprotokoll abschließen und unterschreiben',info:'Wirkt mit „Unterschrift am Gerät und Sperre“. „Abschließen“ prüft Prüfer und Gesamtergebnis (Rückfrage, wenn „in Ordnung“ gewählt ist, obwohl Messwerte außerhalb der Grenzwerte liegen, oder ein gewähltes Prüfgerät nicht mehr kalibriert ist) und sperrt die Eingabe; „Wieder öffnen“ geht bis zur Unterschrift. „Unterschrift Prüfer“ sperrt das Protokoll endgültig (Prüfwert über den Inhalt). „Unterschrift Auftraggeber“ ist optional und auch später möglich, alternativ mit Vermerk „unterschreibt nicht“. Korrekturen danach nur über „Korrektur …“ (neues Protokoll mit Verweis). Druck und PDF zeigen die Unterschriften. Aus: Eingabe wie bisher, unterschriebene Protokolle bleiben gesperrt.'});
+erwPlus({k:'mpSig',std:false,p:'Messprotokoll (P39)',l:'Messprotokoll abschließen und unterschreiben',info:'Wirkt mit „Unterschrift am Gerät und Sperre“. „Abschließen“ prüft Prüfer und Gesamtergebnis (Rückfrage, wenn „in Ordnung“ gewählt ist, obwohl Messwerte außerhalb der Grenzwerte liegen, oder ein gewähltes Prüfgerät nicht mehr kalibriert ist) und sperrt die Eingabe; „Wieder öffnen“ geht bis zur Unterschrift. „Unterschrift Prüfer“ sperrt das Protokoll endgültig (Prüfwert über den Inhalt). „Unterschrift Auftraggeber“ ist optional und auch später möglich, alternativ mit Vermerk „unterschreibt nicht“. Korrekturen danach nur über „Korrektur …“ (neues Protokoll mit Verweis). Druck und PDF zeigen die Unterschriften. Aus: Eingabe wie bisher, unterschriebene Protokolle bleiben gesperrt.'});
 SIG_C.messprot={n:m=>'Messprotokoll '+m.nr};
 const mpSigAn=()=>erw('mpSig')&&erw('unterschrift');
 const mpFest=m=>!!m?.gesperrt||mpSigAn()&&!!m?.abgeschlossen; // gesperrt gilt immer (P36 a), „abgeschlossen“ nur mit Schalter
@@ -6716,11 +6716,11 @@ Object.assign(ACT,{
     const c=JSON.parse(JSON.stringify(m));for(const x of['id','nr','erstellt','abgeschlossen','gesperrt','hash','sig','korrekturZu'])delete c[x];
     const n=mpNeu({...c,datum:isoD(),korrekturZu:m.id});DB.messprot.push(n);log('Messprotokoll Korrektur',`${n.nr} zu ${m.nr}`);persist();go('mps/'+n.id)},
 });
-/* --- Messprotokoll (P37 Teil 4, erw.mpVorlage): Prüfbericht nach der Vorlage des Anwenders (Prüfbefund OVE E 8101:2025, Ausgabe 2026). Auswahlen zum An- und Abwählen
+/* --- Messprotokoll (P39 Teil 4, erw.mpVorlage): Prüfbericht nach der Vorlage des Anwenders (Prüfbefund OVE E 8101:2025, Ausgabe 2026). Auswahlen zum An- und Abwählen
    als Häkchen (Prüfgrundlage, Intervall, Kenntnisnahme, Beiblätter, Anhänge, Maßnahmen; m.pb), Umfang der Überprüfung als Matrix je Anlagenteil (m.umfang[{id,teil,z:{<bereich>:{g,t,p,z}}}],
    Werte nach Legende J/N bzw. J/G/N; am Handy gedreht: Bereiche als Zeilen). Druck: Deckblatt „Prüfbericht“ und Blatt „Umfang der Überprüfung“ vor den bisherigen Blättern,
    Auswahlen als Kästchen mit Häkchen (mpCb), auch in den bisherigen Blättern (mpX) --- */
-erwPlus({k:'mpVorlage',std:false,p:'Messprotokoll (P37)',l:'Prüfbericht nach Vorlage (Häkchen, Prüfumfang-Matrix)',info:'Im Messprotokoll kommen die Angaben des Prüfberichts nach der Vorlage OVE E 8101:2025 dazu: Prüfgrundlage, Intervall der wiederkehrenden Prüfung, nächste Prüfung je Anlagenteil, Planer, Errichter, Kenntnisnahme sowie Beiblätter, Anhänge und Maßnahmen, jeweils zum An- und Abwählen mit Häkchen. Der Umfang der Überprüfung wird je Anlagenteil als Matrix nach der Legende ausgewählt (Geprüft, Technische Unterlagen, Prüfbefund: J/N; Anlagenzustand: J/G/N). Der Druck beginnt mit dem Deckblatt „Prüfbericht“ und dem Blatt „Umfang der Überprüfung“; Auswahlen erscheinen als Kästchen mit Häkchen. Wirkt nur mit eingeschalteten Messprotokollen; aus: Eingabe und Druck wie bisher.'});
+erwPlus({k:'mpVorlage',std:false,p:'Messprotokoll (P39)',l:'Prüfbericht nach Vorlage (Häkchen, Prüfumfang-Matrix)',info:'Im Messprotokoll kommen die Angaben des Prüfberichts nach der Vorlage OVE E 8101:2025 dazu: Prüfgrundlage, Intervall der wiederkehrenden Prüfung, nächste Prüfung je Anlagenteil, Planer, Errichter, Kenntnisnahme sowie Beiblätter, Anhänge und Maßnahmen, jeweils zum An- und Abwählen mit Häkchen. Der Umfang der Überprüfung wird je Anlagenteil als Matrix nach der Legende ausgewählt (Geprüft, Technische Unterlagen, Prüfbefund: J/N; Anlagenzustand: J/G/N). Der Druck beginnt mit dem Deckblatt „Prüfbericht“ und dem Blatt „Umfang der Überprüfung“; Auswahlen erscheinen als Kästchen mit Häkchen. Wirkt nur mit eingeschalteten Messprotokollen; aus: Eingabe und Druck wie bisher.'});
 const MP_UB=[['anl','Elektrotechnische Anlage, Versorgung, Schutzmaßnahmen'],['vt','Verteiler'],['bm','Betriebsmittel'],['erd','Erdungsanlage'],['blitz','Blitzschutzanlage'],
   ['ex','Anlagen in explosionsgeschützten Bereichen (Dokumentation)'],['sich','Sicherheitsstromerzeugungs- und -beleuchtungsanlage'],['pv','PV-Anlage / Speicher'],['lade','E-Ladeeinrichtung']];
 const MP_UZ=[['g','Geprüft nach','Geprüft','JN'],['t','Technische Unterlagen','Unterl.','JN'],['p','Prüfbefund','Befund','JN'],['z','Anlagenzustand','Zustand','JGN']];

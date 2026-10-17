@@ -6879,6 +6879,55 @@ async function belegDrucken(b){const a=await dupFrage(b);if(!a)return;drucken(b,
 async function belegPDF(b){const a=await dupFrage(b);if(!a)return;await pdfHerunterladen(b,a);ausgabeZaehlen(b,a);abAbschluss(b)}
 window.addEventListener('afterprint',()=>{if(DRUCK&&!DRUCK.an&&DRUCK.t!=null){document.title=DRUCK.t;DRUCK.t=null}});
 
+/* ---------- Messprotokolle (P40 Teil 5, erw.mpCsv): Messwerte aus dem CSV-Export eines Prüfgeräts – „⇪ Messwerte aus CSV …“ unter den Stromkreisen (MPX.csv, Dateifeld input.mpcsv), mpCsvText (UTF-8, sonst
+   Windows-1252), mpCsvTeile (Trennzeichen ; Tab , nach der ersten Zeile, Anführungszeichen), Kopfzeile = erste Zeile mit mindestens zwei erkannten Spaltenköpfen (MP_CSV). Zuordnung im Pop-up (mpCsvDialog:
+   Vorschlag gemerkt je Gerät in erp-mpCsv nach den Spaltenköpfen, sonst über MP_CSV), Übernahme mpCsvRein: je Zeile Stromkreis über Verteiler + Nr. bzw. nur Nr. ergänzen oder neu anhängen; Werte mit Einheit
+   werden umgerechnet (mpCsvW: z. B. kΩ → MΩ, A → mA), „>“/„<“ bleiben, Spalte „Schutz“ wie „B16“/„gG 35 A“ → Charakteristik und In ---------- */
+erwPlus({k:'mpCsv',std:true,p:'Messprotokolle (P40)',l:'Messprotokolle: Messwerte aus CSV-Datei des Prüfgeräts einlesen',info:'Unter den Stromkreisen liest „⇪ Messwerte aus CSV …“ den CSV-Export eines Installationsprüfgeräts (bzw. dessen PC-Software) ein: Die Spalten (Verteiler, Stromkreis-Nr., Bezeichnung, Schutz, Riso, RPE, Zs, Ik, RCD-Daten, IΔ, tΔ, UB, ΔU) werden nach den Spaltenköpfen vorgeschlagen und im Pop-up zugeordnet; die Zuordnung wird je Gerät für dieselben Spaltenköpfe gemerkt. Vorhandene Stromkreise mit gleicher Nummer (und gleichem Verteiler) werden ergänzt, die übrigen neu angelegt; Einheiten werden umgerechnet. Danach prüft die Grenzwertprüfung wie bei der Eingabe von Hand. Aus = kein Einlesen.'});
+const MP_CSV=[ // Zielfeld, Bezeichnung, Muster der Spaltenköpfe
+  ['vt','Verteiler',/verteil|^vt$|board|distrib/i],['nr','Stromkreis-Nr.',/^(nr\.?|stromkreis(.?nr\.?)?|sk|kreis|circuit|cct|id)$/i],['bez','Bezeichnung',/bezeich|beschreib|^name$|^text$|descr|ort$|location|kommentar/i],
+  ['sch','Schutz (z. B. B16)',/^(schutz|sicherung|ocpd|absicherung|ls|überstromschutz)$/i],['char','Charakteristik',/charakt|kennlinie|curve/i],['inn','In (A)',/^(in|i\s?n|nennstrom|rated.?current)\b/i],
+  ['riso','Riso (MΩ)',/r.?iso|isol|insul/i],['uiso','Prüfspannung Riso (V)',/u.?iso|prüfsp|pruefsp|test.?volt|u.?test/i],['rpe','RPE (Ω)',/r.?pe|r.?lo\b|schutzleiter|niederohm|continu|low.?ohm/i],
+  ['zs','Zs (Ω)',/^z.?s\b|schleif|loop|z.?l.?pe|z\(l-?pe\)/i],['ik','Ik (A)',/^i.?k\b|kurzschl|pscc|pfc|ipsc/i],['rcdTyp','RCD-Typ',/rcd.?typ|fi.?typ|rcd.?type/i],['idn','IΔn (mA)',/i.?Δ.?n|i.?delta.?n|nennfehl|rated.?resid/i],
+  ['ida','IΔ (mA)',/^i.?Δ(?!.?n)|^i.?delta(?!.?n)|auslösestrom|ausloesestrom|trip.?curr|^ia\b/i],['tda','tΔ (ms)',/t.?Δ|t.?delta|auslösezeit|ausloesezeit|trip.?time|^ta\b/i],['ub','UB (V)',/^u.?b\b|berühr|beruehr|touch|^uc\b/i],
+  ['du','ΔU (%)',/Δu|delta.?u|spannungsfall|volt.*drop/i]];
+const MP_CSVE={riso:[1e6,'Ω'],rpe:[1,'Ω'],zs:[1,'Ω'],ik:[1,'A'],ida:[1e-3,'A'],idn:[1e-3,'A'],tda:[1e-3,'s'],ub:[1,'V'],uiso:[1,'V'],inn:[1,'A']}; // Zieleinheit je Feld (Faktor zur Grundeinheit)
+async function mpCsvText(f){const b=await f.arrayBuffer();try{return new TextDecoder('utf-8',{fatal:true}).decode(b)}catch(e){return new TextDecoder('windows-1252').decode(b)}}
+function mpCsvTeile(t){t=String(t).replace(/^﻿/,'');const z0=t.split(/\r?\n/).find(l=>l.trim())||'',d=[';','\t',','].map(c=>[c,z0.split(c).length]).sort((a,c)=>c[1]-a[1])[0][0],R=[];let r=[],f='',q=false;
+  const zu=()=>{r.push(f);if(r.some(x=>x.trim()))R.push(r.map(x=>x.trim()));r=[];f=''};
+  for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}else if(c==='"')q=true;else if(c===d){r.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;zu()}else f+=c}
+  zu();return R}
+// Wert ohne Einheit im Format der Eingabe (Komma); Einheit mit Vorsatz (m, k, M, G) wird in die Zieleinheit umgerechnet
+function mpCsvW(f,v){let s=pT(v).replace(/\s+/g,' ');if(!s||/^-+$|^n\/?a$/i.test(s))return'';const vz=/^[<>≤≥]/.test(s)?s[0].replace('≥','>').replace('≤','<'):'';if(vz)s=s.slice(1).trim();
+  const m=/^(-?\d+(?:[.,]\d+)?)\s*([mkMG]?)(Ω|Ohm|A|V|s|%)?$/.exec(s);if(!m)return vz+s;let x=+m[1].replace(',','.');const e=MP_CSVE[f];
+  if(m[3]&&e&&(m[3]===e[1]||m[3]==='Ohm'&&e[1]==='Ω'))x=x*({m:1e-3,k:1e3,M:1e6,G:1e9}[m[2]]||1)/e[0];else if(!m[3]&&m[2]&&e)x=x*({m:1e-3,k:1e3,M:1e6,G:1e9}[m[2]])/e[0];
+  return vz+mpNorm(String(Math.round(x*1e4)/1e4))}
+const mpCsvKopf=R=>{const i=R.findIndex(r=>r.filter(c=>MP_CSV.some(x=>x[2].test(c))).length>=2);return i<0?0:i};
+const mpCsvMerk=()=>{try{const o=JSON.parse(lsGet('erp-mpCsv')||'{}');return o&&typeof o==='object'?o:{}}catch(e){return{}}};
+async function mpCsvDialog(b,datei){if(!mpFrei(b)||!erw('mpCsv'))return;let R;try{R=mpCsvTeile(await mpCsvText(datei))}catch(e){alert('Datei nicht lesbar: '+e.message);return}
+  const ki=mpCsvKopf(R),K=R[ki]||[],D=R.slice(ki+1).filter(r=>r.some(Boolean));if(!D.length||K.length<2){alert('In der Datei wurden keine Messwerte (Tabelle mit Spaltenköpfen) gefunden.');return}
+  const sig=K.join('|'),alt=mpCsvMerk()[sig],frei=new Set(K.map((_,i)=>i)),vor={};
+  for(const[f,,re]of MP_CSV){const i=alt?alt[f]:K.findIndex((c,j)=>frei.has(j)&&re.test(c));if(i!=null&&i>=0&&i<K.length){vor[f]=String(i);frei.delete(i)}}
+  const sp=[['','– nicht einlesen –'],...K.map((c,i)=>[String(i),`${c||'(ohne Kopf)'} – Sp. ${i+1}`])],bsp=D.slice(0,3).map(r=>esc(r.join(' | '))).join('<br>');
+  const o=await formDialog({titel:'Messwerte aus CSV einlesen',ok:'Einlesen',breit:true,scroll:true,felder:[{typ:'hinweis',l:`<b>${esc(datei.name)}</b>: ${D.length} Zeile${D.length>1?'n':''}, ${K.length} Spalten.${alt?' Zuordnung wie beim letzten Einlesen dieser Spalten.':''}<br><span style="font-size:12px">${bsp}</span>`},
+    {k:'modus',l:'Stromkreise',wert:'erg',cls:'w2',opts:[['erg','gleiche Nummer (und Verteiler) ergänzen, übrige neu anlegen'],['neu','alle als neue Stromkreise anhängen']],neu:1},
+    ...MP_CSV.map(([f,l],i)=>({k:f,l,wert:vor[f]||'',opts:sp,cls:'w05',neu:i%2===0}))]});
+  if(!o)return;b=mpB(b.id);if(!mpFrei(b))return;const Z={};for(const[f]of MP_CSV)if(o[f]!=='')Z[f]=+o[f];
+  if(!Object.keys(Z).some(f=>!/^(vt|nr|bez)$/.test(f))){alert('Bitte mindestens eine Spalte mit Messwerten zuordnen.');return}
+  const M=mpCsvMerk();M[sig]=Z;lsSet('erp-mpCsv',JSON.stringify(M));const r=mpCsvRein(b,D,Z,o.modus);
+  log('Messwerte aus CSV eingelesen',`${b.nr||'Entwurf vom '+dAT(b.datum)}: ${datei.name} (${r.e} ergänzt, ${r.n} neu)`);persist();render();
+  alert(`${D.length} Zeile${D.length>1?'n':''} eingelesen: ${r.e} Stromkreis${r.e===1?'':'e'} ergänzt, ${r.n} neu angelegt.${r.l?`\n${r.l} Zeile${r.l>1?'n':''} ohne Werte übersprungen.`:''}`)}
+function mpCsvRein(b,D,Z,modus){const r={e:0,n:0,l:0},nk=s=>pT(s).toLowerCase();
+  for(const z of D){const w={};for(const[f,i]of Object.entries(Z)){const v=f==='vt'||f==='nr'||f==='bez'||f==='rcdTyp'||f==='char'||f==='sch'?pT(z[i]):mpCsvW(f,z[i]);if(v!=='')w[f]=v}
+    if(w.sch){const m=/(gG|gL|\b[BCDKZ])\s*-?\s*(\d+(?:[.,]\d+)?)/i.exec(w.sch);if(m){w.char=/^g/i.test(m[1])?'gG':m[1].toUpperCase();w.inn=mpNorm(m[2])}delete w.sch}
+    if(w.char)w.char=/^g/i.test(w.char)?'gG':w.char.toUpperCase().replace(/[^BCDKZ]/g,'')||'';if(w.rcdTyp)w.rcdTyp=(w.rcdTyp.toUpperCase().replace(/TYP\s*/,'').match(/B\+|AC|A|F|B/)||[''])[0];if(w.idn)w.idn=String(Math.round(num(w.idn)));if(w.uiso)w.uiso=String(Math.round(num(w.uiso)));
+    if(!Object.keys(w).some(f=>!/^(vt|nr|bez)$/.test(f))&&!w.nr){r.l++;continue}
+    let k=modus==='erg'&&w.nr?(b.kreise||[]).find(x=>nk(x.nr)===nk(w.nr)&&(!('vt' in w)||nk(x.vt)===nk(w.vt))):null;
+    if(k)r.e++;else{k=mpKreisNeu();k.nr='';(b.kreise??=[]).push(k);r.n++}
+    for(const[f,v]of Object.entries(w))if(MP_KF.includes(f))k[f]=v}
+  return r}
+MPX.csv=b=>erw('mpCsv')?`<label class="btn" title="CSV-Export des Prüfgeräts einlesen (Spalten zuordnen)">⇪ Messwerte aus CSV …<input type="file" class="mpcsv" data-id="${b.id}" accept=".csv,.txt,text/csv,text/plain" hidden></label>`:'';
+document.addEventListener('change',e=>{const el=e.target;if(!el.classList?.contains('mpcsv'))return;const f=el.files[0];el.value='';const b=mpB(el.dataset.id);if(f&&b)mpCsvDialog(b,f)});
 /* ---------- PDF-Erzeugung ohne Fremdbibliothek: Layout aus der Belegvorschau (Arial ≙ Helvetica) ---------- */
 const WINANSI={0x20AC:128,0x201A:130,0x201E:132,0x2026:133,0x2018:145,0x2019:146,0x201C:147,0x201D:148,0x2022:149,0x2013:150,0x2014:151,0x2122:153,0x160:138,0x161:154,0x17D:142,0x17E:158,0x2212:45,0xA0:32,0x202F:32,0x2009:32,0x2007:32};
 const pdfDatum=(d=new Date())=>{const z=x=>String(x).padStart(2,'0'),o=-d.getTimezoneOffset();return`D:${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}${o>=0?'+':'-'}${z(Math.floor(Math.abs(o)/60))}'${z(Math.abs(o)%60)}'`}; // Zeitpunkt für die Datei-Info (statt Zeitstempel im Ausdruck)

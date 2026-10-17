@@ -52,6 +52,8 @@ tr.kind td{background:#f7f8fa;font-size:13px}tr.kind td:nth-child(2){padding-lef
 .modal{position:fixed;inset:0;background:rgba(15,20,30,.45);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:10vh 12px 12px;overflow-y:auto} /* hohe Dialoge (z. B. Artikel-Pop-up am Handy) lassen sich scrollen */
 .mbox{background:#fff;border-radius:10px;max-width:520px;width:100%;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
 .mtab td{border:0;padding:3px 10px 3px 0}
+/* Messprotokolle (P40 Teil 2): Hinweis zur Kalibrierung je Messgerät (leer = ausgeblendet) */
+.mpkal:empty{display:none}.mpkal .tag{white-space:normal}
 .mwarn{background:#fde8e6;border:1px solid #f4b8b1;color:#7a1a12;border-radius:6px;padding:9px 11px;margin-top:10px;font-size:13px}
 /* Kompakt (P30) Beleg: Kopfdaten als Zusammenfassung (.kzus, antippen öffnet „Kopfdaten“), Zahlungsbedingungen und Texte als Akkordeon */
 .kzus{line-height:1.55}.kzus[data-act]{cursor:pointer}.kzus[data-act]:hover{border-color:var(--acc)}.kz1{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;font-size:15px}.kzed{margin-left:auto;color:var(--acc);font-size:18px;line-height:1}
@@ -5463,6 +5465,43 @@ const ACT_FB={
   fbkdel:el=>{const k=FB().konten[+el.dataset.i];if(journal().some(e=>e.soll===k.nr||e.haben===k.nr)||JSON.stringify(FB().map).includes('"'+k.nr+'"')){alert('Konto ist bebucht oder zugeordnet und kann nicht gelöscht werden.');return}FB().konten.splice(+el.dataset.i,1);persist();render()},
 };
 
+/* ---------- Messprotokolle (P40 Teil 2, erw.mpGeraete): Messgeräte-Stammliste S().messgeraete [{id,hersteller,typ,snr,kalBis}] in Einstellungen → „Messgeräte“ (mgEinst, Felder data-o="s"),
+   im Protokoll „📋 Aus Stammliste …“ (MPX.geraete → mgWahl, mehrere; Zeile mit mgId als Schnappschuss) bzw. „⇪ in Stammliste“ für von Hand erfasste Geräte (mgAuf). Kalibrierung: im Protokoll gegen das
+   Prüfdatum (MPX.kal, mgKalP: abgelaufen bzw. Datum fehlt), Warnung beim Abschließen (MPX.gWarn), in der Stammliste und im Überblick gegen heute mit Vorlauf MG_TAGE (mgKal, MPX.dash) ---------- */
+erwPlus({k:'mpGeraete',std:true,p:'Messprotokolle (P40)',l:'Messprotokolle: Messgeräte-Stammliste mit Kalibrierwarnung',info:'Einstellungen → „Messgeräte“: Hersteller, Typ, Seriennummer und „kalibriert bis“ je Messgerät. Im Messprotokoll übernimmt „📋 Aus Stammliste …“ ein oder mehrere Geräte (als Abschrift, spätere Änderungen der Stammliste ändern das Protokoll nicht), „⇪ in Stammliste“ legt ein im Protokoll erfasstes Gerät an. Ist die Kalibrierung am Prüfdatum abgelaufen oder fehlt das Datum, steht ein Hinweis beim Gerät und beim Abschließen; in der Stammliste und im Überblick werden Geräte gezeigt, deren Kalibrierung abgelaufen ist oder in den nächsten 30 Tagen abläuft. Aus = Messgeräte nur von Hand im Protokoll, keine Hinweise.'});
+const MG_TAGE=30,mgL=()=>S().messgeraete||[];
+const mgName=g=>[g.hersteller,g.typ].map(pT).filter(Boolean).join(' ')+(pT(g.snr)?` (SNr. ${pT(g.snr)})`:'');
+const mgKal=(g,d=isoD())=>!g.kalBis?{s:'warn',t:'Kalibrierdatum fehlt'}:g.kalBis<d?{s:'err',t:`Kalibrierung abgelaufen (${dAT(g.kalBis)})`}:g.kalBis<=addDays(d,MG_TAGE)?{s:'warn',t:`Kalibrierung läuft am ${dAT(g.kalBis)} ab`}:{s:'ok',t:`kalibriert bis ${dAT(g.kalBis)}`};
+const mgKalP=(g,d)=>!g.kalBis?{s:'warn',t:'Kalibrierdatum fehlt'}:g.kalBis<(d||isoD())?{s:'err',t:`Kalibrierung am Prüfdatum abgelaufen (${dAT(g.kalBis)})`}:{s:'ok',t:'am Prüfdatum kalibriert'}; // im Protokoll: Stand am Prüfdatum
+const mgImStamm=g=>mgL().some(x=>x.id===g.mgId||pT(g.snr)&&pT(x.snr)===pT(g.snr)&&pT(x.typ)===pT(g.typ));
+MPX.kal=(b,g)=>{if(!erw('mpGeraete'))return'';const k=mgKalP(g,b.datum),i=(b.geraete||[]).indexOf(g);
+  return tag((k.s==='ok'?'✓ ':'⚠ ')+k.t,k.s)+(mpFrei(b)&&i>=0&&!g.mgId&&(pT(g.typ)||pT(g.snr))&&!mgImStamm(g)?` <button class="s" data-act="mgauf" data-id="${b.id}" data-i="${i}" title="Dieses Gerät in die Stammliste übernehmen">⇪ in Stammliste</button>`:'')};
+MPX.geraete=b=>erw('mpGeraete')?`<button data-act="mgwahl" data-id="${b.id}" title="Geräte aus der Stammliste (Einstellungen → Messgeräte) übernehmen">📋 Aus Stammliste …</button>`:'';
+MPX.gWarn=b=>erw('mpGeraete')?(b.geraete||[]).map(g=>{const k=mgKalP(g,b.datum);return k.s==='ok'?'':`Messgerät ${mgName(g)||'ohne Bezeichnung'}: ${k.t}.`}).filter(Boolean):[];
+(MPX.dash??=[]).push(()=>{if(!erw('mpGeraete'))return'';const L=mgL().map(g=>[g,mgKal(g)]).filter(([,k])=>k.s!=='ok');if(!L.length)return'';
+  const h=`<a href="#/einstellungen">Messgeräte: Kalibrierung prüfen →</a>`;
+  return kmpH()?`<div class="card kkl" style="padding:0"><h2>${h}</h2>${L.map(([g,k])=>karte({t:esc(mgName(g)||'Messgerät'),s:tag(k.s==='err'?'abgelaufen':'bald fällig',k.s),u:esc(k.t)})).join('')}</div>`
+    :`<div class="card"><h2>${h}</h2><table>${L.map(([g,k])=>`<tr><td>${esc(mgName(g)||'Messgerät')}</td><td>${tag(k.t,k.s)}</td></tr>`).join('')}</table></div>`});
+async function mgWahl(b){if(!mpFrei(b))return;const L=mgL();
+  if(!L.length){alert('Die Stammliste der Messgeräte ist leer.\nGeräte unter Einstellungen → „Messgeräte“ anlegen oder ein im Protokoll erfasstes Gerät mit „⇪ in Stammliste“ übernehmen.');return}
+  const da=g=>(b.geraete||[]).some(x=>x.mgId===g.id||pT(x.snr)&&pT(x.snr)===pT(g.snr)&&pT(x.typ)===pT(g.typ));
+  const o=await formDialog({titel:'Messgeräte aus der Stammliste',ok:'Übernehmen',felder:[{typ:'hinweis',l:'Ausgewählte Geräte werden mit Seriennummer und Kalibrierdatum ins Protokoll übernommen.'},
+    ...L.map((g,i)=>{const k=mgKalP(g,b.datum);return{k:'g'+i,typ:'checkbox',l:`${esc(mgName(g)||'Messgerät')} – ${esc(da(g)?'bereits im Protokoll':k.t)}`,wert:false,dis:da(g),neu:1}})]});
+  if(!o||!mpFrei(mpB(b.id)))return;let n=0;
+  L.forEach((g,i)=>{if(o['g'+i]&&!da(g)){(b.geraete??=[]).push({id:uid(),mgId:g.id,hersteller:g.hersteller||'',typ:g.typ||'',snr:g.snr||'',kalBis:g.kalBis||''});n++}});if(n){persist();render()}}
+function mgEinst(){if(!erw('mpGeraete')||!erw('mpProtokoll'))return'';const L=mgL(),a=(i,f)=>`data-o="s" data-f="messgeraete.${i}.${f}"`;
+  const inh=`<div class="card"><h2>Messgeräte (Messprotokolle)</h2><p class="mut" style="margin-top:0">Zur Auswahl im Messprotokoll („📋 Aus Stammliste …“). Hinweis, wenn die Kalibrierung abgelaufen ist oder in den nächsten ${MG_TAGE} Tagen abläuft.</p>
+  ${L.map((g,i)=>{const k=mgKal(g);return`<div class="mpg"><label class="mpg1">Hersteller<input ${a(i,'hersteller')} value="${esc(g.hersteller||'')}" list="mg-herst"></label><label class="mpg2">Typ<input ${a(i,'typ')} value="${esc(g.typ||'')}"></label><label class="mpg3">Seriennummer<input ${a(i,'snr')} value="${esc(g.snr||'')}"></label><label class="mpg4">Kalibriert bis<input type="date" ${a(i,'kalBis')} value="${esc(g.kalBis||'')}"></label><button class="s d tbx" data-act="mgdel" data-i="${i}" title="Gerät entfernen" aria-label="Messgerät ${i+1} entfernen">✕</button><div class="mpkal">${tag((k.s==='ok'?'✓ ':'⚠ ')+k.t,k.s)}</div></div>`}).join('')||'<p class="mut" style="margin:0 0 8px">Noch keine Messgeräte.</p>'}
+  <button style="margin-top:8px" data-act="mgneu">+ Messgerät</button>${mpDl('mg-herst',['Gossen Metrawatt','Fluke','Benning','Chauvin Arnoux','Metrel','Megger','Beha-Amprobe','HT Instruments'])}</div>`;
+  const n=L.filter(g=>mgKal(g).s!=='ok').length;return akk('e-mg','Messgeräte',inh,{zusatz:`${L.length} Gerät${L.length===1?'':'e'}${n?' '+tag(n+' Kalibrierung prüfen','warn'):''}`})}
+document.addEventListener('change',e=>{const d=e.target.dataset;if(d?.o==='s'&&/^messgeraete\.\d+\.kalBis$/.test(d.f||''))setTimeout(()=>{const y=scrollY;render();scrollTo(0,y)},0)}); // Hinweis zur Kalibrierung sofort
+queueMicrotask(()=>{const e0=V.einstellungen;V.einstellungen=()=>{const h=e0(),m=kmp()?'<details class="akk" data-akk="e-erw"':'<div class="card" id="erw">',i=h.indexOf(m);return i<0||!erw('mpGeraete')?h:h.slice(0,i)+mgEinst()+h.slice(i)}});
+queueMicrotask(()=>Object.assign(ACT,{ // Messprotokolle Messgeräte (P40 Teil 2)
+  mgwahl:el=>mgWahl(mpB(el.dataset.id)||mpCur()),
+  mgauf:el=>{const b=mpB(el.dataset.id)||mpCur(),g=b?.geraete?.[+el.dataset.i];if(!g||!mpFrei(b)||mgImStamm(g))return;const n={id:uid(),hersteller:g.hersteller||'',typ:g.typ||'',snr:g.snr||'',kalBis:g.kalBis||''};
+    (S().messgeraete??=[]).push(n);g.mgId=n.id;log('Messgerät in Stammliste',mgName(n));persist();render()},
+  mgneu:()=>{(S().messgeraete??=[]).push({id:uid(),hersteller:'',typ:'',snr:'',kalBis:''});persist();render();setTimeout(()=>document.querySelector(`[data-f="messgeraete.${mgL().length-1}.hersteller"]`)?.focus(),0)},
+  mgdel:el=>{const L=mgL(),g=L[+el.dataset.i];if(!g||(pT(g.typ)||pT(g.snr))&&!confirm(`Messgerät „${mgName(g)}“ aus der Stammliste entfernen?\n(Bereits erstellte Protokolle behalten ihre Angaben.)`))return;L.splice(+el.dataset.i,1);persist();render()}}));
 /* ---------- Export & Sicherung ---------- */
 function csvDownload(name,head,rows){
   const c=v=>{if(typeof v==='number')return String(r2(v)).replace('.',',');const s=String(v??'');return/[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};

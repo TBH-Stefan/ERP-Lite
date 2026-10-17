@@ -162,6 +162,11 @@ table.ps td{white-space:nowrap}
 .lv-ew{border-style:dashed}
 .oz{font-family:Consolas,monospace;align-self:center;min-width:70px}
 .lvact{display:flex;gap:3px;align-self:center}
+/* Messprotokolle (P40 Teil 4): Fotos je Mangel (Vorschaubilder, Knöpfe Kamera/Bilder), Druck drei je Zeile */
+.mpmfo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:2px}.mpf{position:relative;margin:0}.mpf img{display:block;width:96px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:#f2f4f7;cursor:zoom-in}
+.mpfx{position:absolute;top:2px;right:2px;background:#fff;min-width:28px}.mpfb{min-height:40px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;padding:4px 10px}td .mpmfo .mpf img{width:72px;height:54px}
+.mpd .mpfd{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin-top:2mm}.mpd .mpfd figure{margin:0;break-inside:avoid}.mpd .mpfd img{display:block;width:100%;max-height:55mm;object-fit:contain;border:.5pt solid #ccc}
+.mpd .mpfd figcaption{font-size:7.5pt;margin-top:.8mm}.mpd .mpfn{border:.5pt dashed #999;padding:5mm;text-align:center;color:#666;font-size:7.5pt}@media(max-width:760px){.mpfx{min-width:40px;min-height:40px}}
 details summary{cursor:pointer;font-size:12px;margin:4px 0}
 .k7bar{display:flex;gap:10px;align-items:center;margin-top:4px}
 /* Kompakt (P30) Endkontrolle: LV-Positionen am Handy als Karten (.lvkl), Kopfleiste mit nur ⋯ einzeilig, Tippziele für Links in Karten und Kartenköpfen,
@@ -7107,6 +7112,31 @@ function sammelRechnung(kid0=''){
     log('Sammelrechnung',`aus ${L.map(bNr).join(', ')}`);persist();go('beleg/'+re.id)});
 }
 
+/* ---------- Messprotokolle (P40 Teil 4, erw.mpFotos): Fotos je Mangel (MPX.fotos) wie bei den Tagesberichten (P36 Teil 3: tbJpeg, bildMini, Ablage über STORE.putFile): „📷“ Kamera bzw. „🖼“ Bilder wählen,
+   verkleinert auf höchstens 1600 px, Dateien pruefungen/<Jahr>/<Protokoll>/<id>.jpg und _m.jpg, im Datensatz nur maengel[i].fotos [{id,pfad,mini,sha,ts,w,h}] (sha = SHA-256 der Datei, damit Teil der Prüfsumme);
+   Hinzufügen und Entfernen nur im Entwurf (die Datei bleibt in der Ablage). Druck: unter der Mängeltabelle drei je Zeile mit „Mangel n“ (MPX.fotoDruck, Bilder vorab geladen über MPX.vorDruck) ---------- */
+erwPlus({k:'mpFotos',std:true,p:'Messprotokolle (P40)',l:'Messprotokolle: Fotos zu Mängeln',info:'Je Mangel im Messprotokoll „📷“ (Kamera am Handy bzw. Tablet) und „🖼“ (vorhandene Bilder, auch mehrere): verkleinert auf höchstens 1600 Pixel, als Dateien in der Ablage unter „pruefungen/“ wie die Fotos der Tagesberichte; die Daten (erp-daten.json) enthalten nur Dateiname und Prüfsumme der Datei. Hinzufügen und Entfernen nur, solange das Protokoll nicht abgeschlossen ist. Gedruckt unter den Mängeln, drei je Zeile mit Nummer des Mangels. Aus = keine neuen Fotos; vorhandene werden weiter angezeigt und gedruckt.'});
+async function mpFotoDazu(id,i,files){let b=mpB(id);const m0=b?.maengel?.[i];if(!mpFrei(b)||!erw('mpFotos')||!m0||!files.length)return;const neu=[],err=[];saveState('lade hoch …');
+  for(const f of files){if(!/^image\//.test(f.type)){err.push(`${f.name}: keine Bilddatei`);continue}
+    try{const g=await tbJpeg(f),mini=await bildMini(f),fid=uid(),dir=`pruefungen/${(b.datum||isoD()).slice(0,4)}/${b.id}/`,p=dir+fid+'.jpg',pm=dir+fid+'_m.jpg',sha=await tbSha(await g.b.arrayBuffer());
+      await STORE.putFile(p,g.b);await STORE.putFile(pm,mini);kvSet('img:'+p,g.b).catch(()=>{});kvSet('img:'+pm,mini).catch(()=>{});
+      neu.push({id:fid,pfad:p,mini:pm,sha,ts:new Date().toISOString(),w:g.w,h:g.h})}catch(e){err.push(`${f.name||'Bild'}: ${e.message}`)}}
+  b=mpB(id);const m=b?.maengel?.find(x=>x.id===m0.id);
+  if(neu.length&&mpFrei(b)&&m){(m.fotos??=[]).push(...neu);log('Messprotokoll Fotos',`${b.nr||'Entwurf vom '+dAT(b.datum)}, Mangel ${b.maengel.indexOf(m)+1}: ${neu.length} Foto${neu.length>1?'s':''}`);commit()}
+  else{saveState('');if(neu.length)err.push('Das Protokoll ist inzwischen abgeschlossen bzw. der Mangel entfernt – Fotos nicht übernommen.')}
+  if(err.length)alert('Nicht übernommen:\n'+err.join('\n'));render()}
+MPX.fotos=(b,i,frei)=>{const F=b.maengel?.[i]?.fotos||[],e=frei&&erw('mpFotos');if(!F.length&&!e)return'';if(F.length)queueMicrotask(()=>bilderLaden());
+  return`<div class="mpmfo">${F.map((f,j)=>`<figure class="mpf"><img data-bild="${esc(f.mini||f.pfad)}" alt="Foto ${j+1} zu Mangel ${i+1}" data-act="mpfoto" data-id="${b.id}" data-i="${i}" data-j="${j}" title="Foto öffnen">${e?`<button class="s d mpfx" data-act="mpfdel" data-id="${b.id}" data-i="${i}" data-j="${j}" title="Foto entfernen" aria-label="Foto ${j+1} zu Mangel ${i+1} entfernen">✕</button>`:''}</figure>`).join('')}
+  ${e?`<label class="btn mpfb" title="Foto aufnehmen">📷<input type="file" class="mpfin" data-id="${b.id}" data-i="${i}" accept="image/*" capture="environment" hidden></label><label class="btn mpfb" title="Bilder wählen">🖼<input type="file" class="mpfin" data-id="${b.id}" data-i="${i}" accept="image/*" multiple hidden></label>`:''}</div>`};
+document.addEventListener('change',e=>{const el=e.target;if(!el.classList?.contains('mpfin'))return;const f=[...el.files];el.value='';mpFotoDazu(el.dataset.id,+el.dataset.i,f)});
+MPX.vorDruck=async b=>{const U=[];for(const m of b.maengel||[])for(const f of m.fotos||[])for(const p of [f.pfad,f.mini]){if(!p)continue;if(BURL[p]){U.push(BURL[p]);break}try{const x=await bildBlob(p);if(x){BURL[p]=URL.createObjectURL(x);U.push(BURL[p]);break}}catch(e){}}
+  await Promise.all(U.map(u=>new Promise(r=>{const i=new Image();i.onload=i.onerror=r;i.src=u})))};
+MPX.fotoDruck=b=>{const F=(b.maengel||[]).flatMap((m,i)=>(m.fotos||[]).map((f,j)=>[f,i,j]));return F.length?`<div class="mpfd">${F.map(([f,i,j])=>{const u=BURL[f.pfad]||BURL[f.mini];
+  return`<figure>${u?`<img src="${u}" alt="Mangel ${i+1}, Foto ${j+1}">`:'<div class="mpfn">Bild nicht verfügbar (Ablage nicht erreichbar)</div>'}<figcaption><b>Mangel ${i+1}</b> · Foto ${j+1} (${dtAT(f.ts)})</figcaption></figure>`}).join('')}</div>`:''};
+queueMicrotask(()=>Object.assign(ACT,{ // Messprotokolle Fotos (P40 Teil 4)
+  mpfoto:async el=>{const f=(mpB(el.dataset.id)||mpCur())?.maengel?.[+el.dataset.i]?.fotos?.[+el.dataset.j];if(f)try{await STORE.openFile({path:f.pfad})}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
+  mpfdel:el=>{const b=mpB(el.dataset.id)||mpCur(),i=+el.dataset.i,j=+el.dataset.j,F=b?.maengel?.[i]?.fotos,f=F?.[j];if(!f||!mpFrei(b)||!confirm(`Foto ${j+1} von Mangel ${i+1} entfernen?\n(Die Datei bleibt in der Ablage erhalten.)`))return;
+    F.splice(j,1);log('Messprotokoll Foto entfernt',`${b.nr||'Entwurf vom '+dAT(b.datum)}: ${f.pfad}`);commit();render()}}));
 /* ---------- Event-Handling ---------- */
 const ACT={
   neu:el=>{if(!el.value)return;const b=neuBeleg(el.value);persist();go('beleg/'+b.id)},

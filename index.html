@@ -6499,6 +6499,44 @@ function wvRechnung(aid){
   log('Weiterverrechnung',`${xs.length} Pos. aus Wareneingängen → Rechnungsentwurf`);persist();go('beleg/'+re.id);
 }
 
+/* ---------- Messprotokolle (P40 Teil 3, erw.mpWieder): wiederkehrende Prüfung aus dem letzten Protokoll derselben Anlage. Anlage = Auftraggeber + Anlage/Objekt + Adresse (mpAnlage, ohne Groß-/Kleinschreibung
+   und Leerzeichen), Vorlage = neuestes abgeschlossenes bzw. unterschriebenes Protokoll der Anlage (mpVorlage). mpWied(a,o) legt an: Prüfart „wiederkehrend“, vorId, Kopf und Grundlage, Netz ohne Messwerte
+   (RA, Ik, Durchgängigkeit leer; Schutzpotentialausgleich nur „nicht vorhanden“), Prüfpunkte nur „entfällt“, Stromkreise ohne Messwerte und Ergebnisse, Frist der nächsten Prüfung; wahlweise Messgeräte und die
+   Mängel der Vorlage „zur Kontrolle“. Aufruf: ⋯-Menü bzw. Knopf im Protokoll (MPX.menue/knoepfe), „⟳ Wiederkehrende Prüfung …“ in der Liste (MPX.listeKnopf, Auswahl der Anlage), Filter „Prüfung fällig“
+   (MP_SF.faellig, nur mit Schalter) und Karte im Überblick (MPX.dash): Anlagen, deren empfohlene nächste Prüfung in MP_VOR Tagen fällig oder überfällig ist ---------- */
+erwPlus({k:'mpWieder',std:true,p:'Messprotokolle (P40)',l:'Messprotokolle: wiederkehrende Prüfung aus dem letzten Protokoll der Anlage',info:'„⟳ Wiederkehrende Prüfung …“ im Messprotokoll bzw. in der Liste legt ein neues Protokoll aus dem letzten abgeschlossenen Protokoll derselben Anlage (Auftraggeber, Anlage/Objekt, Adresse) an: Kopf, Grundlage, Netz und Versorgung (ohne Messwerte), Verteiler und Stromkreise mit Leitung und Schutzeinrichtungen – ohne Messwerte und Ergebnisse; Prüfpunkte nur mit „entfällt“, wahlweise die Messgeräte und die Mängel der letzten Prüfung zur Kontrolle der Behebung. Die nächste Prüfung wird mit derselben Frist vorgeschlagen. Liste: Filter „Prüfung fällig“, Überblick: Karte „Wiederkehrende Prüfungen fällig“ (fällig in den nächsten 60 Tagen oder überfällig). Aus = keine Knöpfe, kein Filter, keine Karte.'});
+const MP_VOR=60,mpNk=s=>pT(s).toLowerCase().replace(/\s+/g,' ');
+const mpAnlage=b=>[b.kontaktId||'',mpNk(b.objekt),mpNk(b.adresse)].join('|');
+const mpRang=b=>mpSig(b)?2:b.status==='abgeschlossen'?1:0;
+const mpVorlage=b=>(DB.pruef||[]).filter(x=>mpAnlage(x)===mpAnlage(b)&&mpRang(x)).sort((a,c)=>(c.datum||'').localeCompare(a.datum||'')||mpRang(c)-mpRang(a))[0]||b; // letztes abgeschlossenes Protokoll der Anlage
+const mpNeuestes=b=>(DB.pruef||[]).filter(x=>mpAnlage(x)===mpAnlage(b)).sort((a,c)=>(c.datum||'').localeCompare(a.datum||'')||(c.erstellt||'').localeCompare(a.erstellt||''))[0];
+const mpFaellig=b=>!!erw('mpWieder')&&mpRang(b)>0&&!!b.gesamt?.naechste&&b.gesamt.naechste<=addDays(isoD(),MP_VOR)&&mpNeuestes(b)===b; // neuestes Protokoll der Anlage, nächste Prüfung fällig
+function mpWied(a,o={}){const J=x=>JSON.parse(JSON.stringify(x??{})),N=J(a.netz),pa={};for(const[k,v]of Object.entries(N.pa||{}))if(v==='nv')pa[k]='nv';
+  const ent=D=>Object.fromEntries(Object.entries(D||{}).filter(([,x])=>x?.e==='ent').map(([k,x])=>[k,{e:'ent',...(pT(x.t)?{t:x.t}:{})}]));
+  const b=mpNeu({kontaktId:a.kontaktId,kopie:{art:'wied',vorId:a.id,kontaktId:a.kontaktId||'',betreiber:a.betreiber||'',objekt:a.objekt||'',adresse:a.adresse||'',anlagenart:a.anlagenart||'',umfang:a.umfang||'',
+    grundlage:J(a.grundlage||{e8101:true}),grundTxt:a.grundTxt||'',errichtNorm:a.errichtNorm||'',netz:{...N,ra:'',ik:'',paR:'',pa},geraete:o.geraete?(a.geraete||[]).map(g=>({...J(g),id:uid()})):[],bes:ent(a.bes),erp:ent(a.erp),
+    kreise:(a.kreise||[]).map(k=>({...mpKreisNeu(k),nr:k.nr||'',bez:k.bez||''})),gesamt:+a.gesamt?.frist>0?{frist:a.gesamt.frist,fristTxt:a.gesamt.fristTxt||''}:{},
+    maengel:o.maengel?(a.maengel||[]).map(m=>({id:uid(),t:`Aus ${a.nr||'der letzten Prüfung'} (Behebung prüfen): ${pT(m.t)}`,ort:m.ort||'',st:m.st||'mangel',frist:''})):[]}});
+  if(+b.gesamt.frist>0)b.gesamt.naechste=mpJahre(b.datum,+b.gesamt.frist);return b}
+async function mpWiedDialog(a){if(!a||!erw('mpWieder'))return;const M=(a.maengel||[]).length,G=(a.geraete||[]).length;
+  const o=await formDialog({titel:'Wiederkehrende Prüfung',ok:'Neues Protokoll',felder:[{typ:'hinweis',l:`Vorlage: <b>${esc(a.nr||'Entwurf')}</b> vom ${dAT(a.datum)} · ${esc(mpAnl(a)||kontakt(a.kontaktId)?.name||'')} · ${(a.kreise||[]).length} Stromkreise.<br>Übernommen werden Kopf, Netz und Versorgung sowie die Stromkreise – ohne Messwerte und Ergebnisse.`},
+    ...(G?[{k:'geraete',typ:'checkbox',l:`Messgeräte übernehmen (${G})`,wert:true,neu:1}]:[]),...(M?[{k:'maengel',typ:'checkbox',l:`Mängel der letzten Prüfung zur Kontrolle der Behebung übernehmen (${M})`,wert:true,neu:1}]:[])]});
+  if(!o)return;const b=mpWied(a,o);log('Wiederkehrende Prüfung angelegt',`aus ${a.nr||'Entwurf'} – ${mpAnl(b)}`);persist();go('messprotokoll/'+b.id)}
+async function mpWiedWahl(){const V_={};for(const b of DB.pruef||[])if(mpRang(b)){const k=mpAnlage(b),x=V_[k];if(!x||(b.datum||'')>(x.datum||''))V_[k]=b}
+  const L=Object.values(V_).sort((a,c)=>(a.gesamt?.naechste||'9999').localeCompare(c.gesamt?.naechste||'9999'));
+  if(!L.length){alert('Noch kein abgeschlossenes Messprotokoll – eine wiederkehrende Prüfung baut auf dem letzten Protokoll der Anlage auf.');return}
+  const o=await formDialog({titel:'Wiederkehrende Prüfung – Anlage wählen',ok:'Weiter',breit:true,felder:[{k:'a',l:'Anlage (letztes Protokoll)',wert:L[0].id,cls:'w2',opts:L.map(b=>[b.id,`${mpAnl(b)||'–'} · ${kontakt(b.kontaktId)?.name||''} · ${b.nr} vom ${dAT(b.datum)}${b.gesamt?.naechste?' · fällig '+dAT(b.gesamt.naechste):''}`])}]});
+  if(o)mpWiedDialog(mpB(o.a))}
+MPX.menue=b=>erw('mpWieder')?[{l:'Wiederkehrende Prüfung …',ic:'⟳',act:'mpwied',d:{id:b.id},titel:'Neues Protokoll aus dem letzten abgeschlossenen Protokoll dieser Anlage'}]:[];
+MPX.knoepfe=b=>erw('mpWieder')?`<button data-act="mpwied" data-id="${b.id}" title="Neues Protokoll aus dem letzten abgeschlossenen Protokoll dieser Anlage">⟳ Wiederkehrende Prüfung …</button>`:'';
+MPX.listeKnopf=()=>erw('mpWieder')&&(DB.pruef||[]).some(mpRang)?`<button data-act="mpwneu" title="Neues Protokoll aus dem letzten Protokoll einer Anlage">⟳ Wiederkehrende Prüfung …</button>`:'';
+(MPX.dash??=[]).push(()=>{if(!erw('mpWieder'))return'';const L=(DB.pruef||[]).filter(mpFaellig).sort((a,c)=>a.gesamt.naechste.localeCompare(c.gesamt.naechste)).slice(0,8);if(!L.length)return'';
+  const h=`<a href="javascript:void 0" onclick="mpZuListe('faellig')">Wiederkehrende Prüfungen fällig →</a>`,nb=b=>`onclick="nav('messprotokoll/${b.id}')"`,f=b=>b.gesamt.naechste<isoD()?tag('überfällig '+dAT(b.gesamt.naechste),'err'):tag('fällig '+dAT(b.gesamt.naechste),'warn');
+  return kmpH()?`<div class="card kkl" style="padding:0"><h2>${h}</h2>${L.map(b=>karte({t:esc(mpAnl(b)||'Anlage'),s:f(b),u:esc([kontakt(b.kontaktId)?.name,`letzte Prüfung ${b.nr} vom ${dAT(b.datum)}`].filter(Boolean).join(' · ')),a:nb(b)})).join('')}</div>`
+    :`<div class="card"><h2>${h}</h2><div style="overflow-x:auto"><table>${L.map(b=>`<tr class="click" ${nb(b)}><td>${esc(mpAnl(b))}</td><td>${esc(kontakt(b.kontaktId)?.name||'')}</td><td>${esc(b.nr)} vom ${dAT(b.datum)}</td><td>${f(b)}</td></tr>`).join('')}</table></div></div>`});
+queueMicrotask(()=>{const l0=V.messprotokolle;V.messprotokolle=a=>{if(erw('mpWieder'))MP_SF.faellig=['Prüfung fällig',mpFaellig];else delete MP_SF.faellig;return l0(a)}}); // Filter nur mit Schalter
+queueMicrotask(()=>Object.assign(ACT,{ // Messprotokolle wiederkehrende Prüfung (P40 Teil 3)
+  mpwied:el=>{const b=mpB(el.dataset.id)||mpCur();if(b)mpWiedDialog(mpVorlage(b))},mpwneu:()=>mpWiedWahl()}));
 /* ---------- Druck ---------- */
 // Firmenlogo TBH (Standard, falls in den Einstellungen kein eigenes Logo hochgeladen ist)
 const logoSVG=c=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="380 492 730 686"><g fill="#918467"><rect x="719" y="613" width="59" height="508"/><rect x="1043" y="613" width="59" height="508"/><rect x="778" y="819" width="265" height="51"/></g><path d="M687 729V1171M661 750H828C905 750 928 795 928 843S905 936 828 936H687M687 936H838C920 936 958 980 958 1044S920 1149 838 1149H661" fill="none" stroke="${c}" stroke-opacity=".93" stroke-width="44"/><path fill="${c}" d="M386 499H851V562H654V1121H583V562H386Z"/></svg>`;

@@ -2202,7 +2202,7 @@ const bpKopf=(r,n,G)=>{const a=G.anz.get(r.projekt)||0;return`<tr class="prjz"><
 const bpSpalte=()=>erw('bProjekt')?[{k:'projekt',l:'Projekt',f:b=>esc(bpVon(b)),std:false}]:[];
 const bpIn=b=>erw('bProjekt')&&bpVon(b)?' inprj':''; // Zeilen eines Projekts: Balken links
 const bpZeile=b=>erw('bProjekt')&&kmpH()&&UI.bWahl?`class="click${bpIn(b)}" onclick="this.querySelector('[data-bsel]')?.click()"`:''; // Handy im Modus „Markieren“: Antippen markiert
-const bpKnopf=()=>erw('bProjekt')?`<button class="${UI.bWahl?'on':''}" data-act="bwahl" title="Belege markieren (Projekt zuordnen)">☑</button>`:'';
+const bpKnopf=()=>erw('bProjekt')?`<button class="${UI.bWahl?'on':''}" data-act="bpwahl" title="Belege markieren (Projekt zuordnen)">☑</button>`:'';
 // Häkchen vor jeder Zeile (Kopf: alle angezeigten), vorhandene Zelle der Gruppen (+n, 🏷, └) bleibt dahinter; am Handy nur im Modus „Markieren“
 function bpVor(vg,L,k){if(!erw('bProjekt')||kmpH()&&!UI.bWahl)return vg;const s=bpSel(k),alle=L.length&&L.every(b=>s.has(b.id));
   return{kopf:`<span style="white-space:nowrap"><input type="checkbox" data-act="bselall" data-k="${k}" title="Alle angezeigten Belege markieren"${alle?' checked':''}>${vg?vg.kopf:''}</span>`,
@@ -2211,7 +2211,7 @@ function bpVor(vg,L,k){if(!erw('bProjekt')||kmpH()&&!UI.bWahl)return vg;const s=
 // Leiste über der Liste, sobald markiert ist (Handy: im Modus „Markieren“ unten fest); bereinigt die Auswahl auf die angezeigten Zeilen
 function bpLeiste(k,L){if(!erw('bProjekt'))return'';const ids=L.map(b=>b.id),I=new Set(ids),H=kmpH();BPL[k]=ids;UI.bSel=UI.bSel||{};const s=UI.bSel[k]=(UI.bSel[k]||[]).filter(id=>I.has(id));
   if(!s.length&&!(H&&UI.bWahl))return'';const dis=s.length?'':' disabled';
-  return`<div class="bar aws bpl"><b>${s.length} markiert</b><button data-act="bprj" data-k="${k}"${dis} title="Markierte Belege samt Belegkette einem Projekt zuordnen">🏷 Projekt …</button><button data-act="bprjweg" data-k="${k}"${dis} title="Projektzuordnung der markierten Belegketten entfernen">${H?'Entfernen':'Projekt entfernen'}</button>${H?'<span class="sp"></span><button class="p" data-act="bwahl">Fertig</button>':`<button data-act="bselx" data-k="${k}">Markierung aufheben</button>`}</div>`}
+  return`<div class="bar aws bpl"><b>${s.length} markiert</b><button data-act="bprj" data-k="${k}"${dis} title="Markierte Belege samt Belegkette einem Projekt zuordnen">🏷 Projekt …</button><button data-act="bprjweg" data-k="${k}"${dis} title="Projektzuordnung der markierten Belegketten entfernen">${H?'Entfernen':'Projekt entfernen'}</button>${H?'<span class="sp"></span><button class="p" data-act="bpwahl">Fertig</button>':`<button data-act="bselx" data-k="${k}">Markierung aufheben</button>`}</div>`}
 async function bpZuordnen(k){const B=[...bpSel(k)].map(beleg).filter(Boolean);if(!B.length)return;const R=[...new Set(B.map(bWurzel))],N=bpNamen(),alt=[...new Set(R.map(r=>r.projekt||''))],mit=R.filter(r=>r.projekt);
   const o=await formDialog({titel:'🏷 Projekt zuordnen',ok:'Zuordnen',felder:[{k:'n',l:'Projektname',pflicht:true,max:80,wert:alt.length===1?alt[0]:'',ph:N.length?'Name eingeben oder vorhandenes Projekt wählen':'Name des Projekts'},
     {typ:'hinweis',l:`${B.length} markierte(r) Beleg(e) in ${R.length} Belegkette(n). Die Zuordnung gilt jeweils für die ganze Belegkette (gespeichert am Ausgangsbeleg) und ändert keinen Belegtext.${mit.length?` ${mit.length} Kette(n) sind bereits zugeordnet (${esc([...new Set(mit.map(r=>r.projekt))].join(', '))}) – wird ersetzt.`:''}`}],
@@ -2224,7 +2224,7 @@ function bpUmbenennen(alt){if(!alt)return;const n=prompt(`Projekt „${alt}“ u
   const neu=n.trim(),B=DB.belege.filter(b=>b.projekt===alt),K=neu?DB.kalk.filter(x=>x.projekt===alt):[];if(!neu&&!confirm(`Projektzuordnung „${alt}“ bei ${B.length} Belegkette(n) aufheben?`))return;
   B.forEach(b=>b.projekt=neu);K.forEach(x=>x.projekt=neu);log('Projekt umbenannt',`${alt} → ${neu||'(entfernt)'}${K.length?` (auch ${K.length} K-Blatt/Blätter)`:''}`);commit();render()}
 queueMicrotask(()=>Object.assign(ACT,{bselall:el=>{(UI.bSel=UI.bSel||{})[el.dataset.k]=el.checked?[...BPL[el.dataset.k]]:[];render()},bselx:el=>{(UI.bSel=UI.bSel||{})[el.dataset.k]=[];render()},
-  bwahl:()=>{UI.bWahl=!UI.bWahl;if(!UI.bWahl)UI.bSel={};render()},bprj:el=>bpZuordnen(el.dataset.k),bprjweg:el=>bpEntfernen(el.dataset.k),bpren:el=>bpUmbenennen(el.dataset.n)}));
+  bpwahl:()=>{UI.bWahl=!UI.bWahl;if(!UI.bWahl)UI.bSel={};render()},bprj:el=>bpZuordnen(el.dataset.k),bprjweg:el=>bpEntfernen(el.dataset.k),bpren:el=>bpUmbenennen(el.dataset.n)}));
 const BICON={AN:'📝',AB:'✅',PR:'📄',LS:'🚚',AR:'💶',TR:'🧩',RE:'🧾',SR:'🏁',GS:'↩️',BE:'🛒',WE:'📦',ER:'📥'};
 const MONATE=['Jänner','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 let GRK=[];

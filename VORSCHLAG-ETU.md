@@ -1334,7 +1334,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - **Bestehend:** Projektname je Belegkette (`projektName()`, gespeichert am Ausgangsbeleg `b.projekt`, Überschrift nur bei Ketten mit Folgebelegen über 🏷), Gruppierung `belegGruppen()`.
 - **Umsetzung (Schalter `erw.bProjekt`, Paket „Projekte (P38)“, Standard ein):** Häkchen je Zeile (Handy: Modus „☑ Markieren“), Leiste mit „🏷 Projekt …“ / „Projekt entfernen“ / „Markierung aufheben“; die Zuordnung gilt für die ganze Kette der markierten Belege (Ausgangsbeleg wie bisher, keine neuen Felder); Ketten mit gleichem Projekt stehen beisammen unter einer Überschrift mit Anzahl und Balken, ✎ benennt das Projekt für alle Ketten und gleichnamige K-Blätter um; Suche und Spalte „Projekt“ über den Projektnamen der Kette.
 - **Recht:** reine Ordnungsangabe, Belegtext/Ausdruck/PDF festgeschriebener Belege unverändert (geprüft), Protokoll, Strg+Z.
-- ✅ umgesetzt (Commit 3779b57). Geprüft (Chromium, 1400 px mit/ohne kompakt, 390 px): 36 Prüfungen, Schalter aus = Listen-HTML gleich dem Stand af9335c, keine Konsolenfehler, kein Seitenüberlauf.
+- ✅ umgesetzt (Commit 3779b57; Korrektur 17.10.2026: Aktion „Markieren“ heißt `bpwahl` – der Name `bwahl` hatte zur Laufzeit die Baum-Auswahl von Artikelgruppe/Lagerplatz im Artikel überschrieben). Geprüft (Chromium, 1400 px mit/ohne kompakt, 390 px): 36 Prüfungen, Schalter aus = Listen-HTML gleich dem Stand af9335c, keine Konsolenfehler, kein Seitenüberlauf.
 
 ### P39 – Übersicht nach Wunsch (Auswertungen wählen, anordnen, erstellen)
 - **Wunsch des Anwenders (16.10.2026):** „Auswertungen sollen auf der Übersichtseite flexibel dargestellt und erstellt werden können.“

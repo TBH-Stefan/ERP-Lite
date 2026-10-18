@@ -1408,6 +1408,15 @@ Zeiteintrag zusätzlich `berichtId`. Unterschriften als PNG in der Ablage (`Beri
 
 ---
 
+### P38 – Datensicherung, Archiv (PDF, Excel, CSV) und Updates ohne Datenverlust
+- **Wunsch des Anwenders (16.10.2026):** „Die Daten aus dem System sollen in weiterer Folge auf dem Drive Laufwerk als Backup (in pdf, excel, csv,...) abgelegt werden. Ebenfalls soll täglich ein Backup mit allen Daten erstellt werden. Die Backups sollen so Speicherplatz sparend wie nur möglich erstellt werden. Updates am System sollen keine Auswirkung auf die Daten, Vorgänge oder andere Abläufe im System haben. Da es hier um Unternehmensdaten geht, darf nichts verloren gehen.“ (Sicherheitsprüfung getrennt, siehe CSP in CLAUDE.md.)
+- **Vorher:** Tagessicherung unkomprimiert beim ersten Speichern, ohne Prüfung; Abgleichkonflikt verwarf die eigene Version; `merge3()` nur über fest aufgezählte Listen; Import ohne Sicherung; `meta.version` ungenutzt; beschädigte Datei = Start bricht ab; Exporte nur als Download.
+- **Teile:** Teil 1 (ohne Schalter): Konfliktkopie, Abgleich aller Listen, Sicherung vor Import/Papierkorb leeren/Wiederherstellen, Liste und Wiederherstellen, Start mit beschädigter Datei. Teil 2 `erw.sicherung`: Tagessicherung gzip, ohne Doppelte, geprüft. Teil 3 `erw.archiv`: PDF je Rechnung/Gutschrift/Storno, Monatsexport Excel + CSV-ZIP, Datenstand zum Jahreswechsel. Teil 4 (ohne Schalter): Datenversion `DATENVER`, ältere Programmversion speichert nicht über neuere Daten. Teil 5 `erw.vollsicherung`: Vollsicherung als ZIP, Erinnerung nach 30 Tagen. Schalter Standard ein, aus = bisheriges Verhalten.
+- **Datenmodell:** unverändert (Datenversion bleibt 1); Merker nur je Gerät im localStorage (`erp-sich`, `erp-sichf`, `erp-archf`, `erp-voll`, von „Gerät leeren“ mit entfernt). Dateien nur im Speicherort unter `backup/` und `archiv/`.
+- **Entschieden (16.10.2026):** alle Tagessicherungen behalten (nicht ausdünnen); PDF beim Festschreiben nur für Rechnungen (RE_V: AR, TR, RE, SR, GS) samt Storno-Gutschrift; Monatsexport Excel und CSV.
+- ✅ umgesetzt (Commits d133e7e Teil 1, 662b459 Teil 2, bdf2f9c Teil 3, c106341 Teil 4, 29fe75e Teil 5). Ohne Bibliothek: ZIP-Schreiber `zipBlob()` (deflate-raw über `CompressionStream`, CRC-32), Excel `xlsxBlob()` (Office Open XML), keine neue Verbindung (CSP unverändert).
+- Offen: Test mit echtem OneDrive und zwei Geräten, Speicherbedarf mit echten Daten messen, Verschlüsselung der Vollsicherung (Kennwort).
+
 ### Bereits vorhanden (kein eigenes Paket)
 
 | ETU-Funktion | ERP-Lite heute (wo) | Kleine Ergänzung |
@@ -1485,6 +1494,7 @@ Zeiteintrag zusätzlich `berichtId`. Unterschriften als PNG in der Ablage (`Beri
   - seit P35 (14.10.2026): rückwärts aa0fa63 (Teil 4) → 291c038 (Teil 3) → 9601a6c (Mengenindex) → 9f473c7 (Teil 2) → a4abc3a (Teil 1) ergibt genau den Stand davor (a412d32); einzeln rücknehmbar nur Teil 4 und 9601a6c (Teil 3 ändert die Zeilen `lfNav()` und Status-Chips aus Teil 2 und nutzt `lfOffen()`/`LF_*`, Teil 4 ändert `lfDash()` aus Teil 3, alle Teile nutzen `lfPos()` aus Teil 1). Neu erst nach P35 rücknehmbar (direkt angrenzende Zeilen): Korrektur 68e30f6 (Zeile `lfNav()` am Ende von `render()`) – vorher P35 Teil 2 samt 9601a6c, Teil 3 und 4; U7 Commit 3 (439ca23, Überschrift des Überblicks mit `lfDash()`), U7 Commit 6 (89025f2) und P8 (f385ffd) (Zeile `lfEinst()` in den Einstellungen) – vorher P35 Teil 3 samt Teil 4. Alle übrigen Commits wie vorher (Teil 1 und 4 grenzen nur an Zeilen vor ETU bzw. an eigene). Geprüft (Klon): Rücknahme konfliktfrei, Programm nach jedem Schritt ohne Konsolenfehler (alle Ansichten, 1400 und 390 px).
   - P39 (18.10.2026): 54feeb2 (Übersicht anpassen), ff0623d (Speicherleiste) und 975c45b (Berichtsnummer) je einzeln rücknehmbar (geprüft); 975c45b ändert die Nummernzeile in `btbNeu()` aus P36 Teil 10, also vor Teil 10 zurücknehmen. Regressionsvergleich mit main (alle Schalter aus): 24 Ansichten gleich, nur Einstellungen zeigt die neuen Schalter.
   - seit P36 (16.10.2026): rückwärts 7cf41db (Personal Teil 2, Lohn) → 2f83950 (Personal P36 b) → 61564ea (Teil 6) → 25a51a1 (Teil 5) → e4c9e16 (Teil 4) → 73e5083 (Teil 3) → 5dcb5f6 (Teil 2) → b2bdd3a → b4de25b (Baustein 3a) → 545854a (Teil 1) ergibt den Stand P35; einzeln rücknehmbar (geprüft) Teile 2, 4, 6 und P36 b; die Erweiterung vom 18.10.2026 vorher rückwärts 9d4d680 (Teil 11) → 5d3a2e0 (Teil 10) → 9859338 (Teil 9) → 5eeb89c (Teil 8) → 54eb794 (Teil 7), einzeln rücknehmbar nur Teil 11 und 10 (9 ändert Zeilen aus 8, 7 und 5; 8 aus 7); kDok 3dae2ae unabhängig, einzeln rücknehmbar; Teil 7–11 vor Teil 5, 3 und 1, Teil 10 vor P36 b (Zuordnung der Zeiten), Teil 11 vor P35 (Zeile `lfKarte` im `V.beleg`); die Sperre „Gerät leeren“ bei wartenden Dateien (8090eb2, nach P37, Zeile in `geraetLeeren()`) vor 3a; P36 b vor Teil 5, Teil 5 vor Teil 3 (Löschschutz nutzt die Sperre), Teil 3 und 2 vor 3a (`ablegen()`, `sigPop()`), b2bdd3a vor b4de25b, alle vor Teil 1.
+  - seit P38 (16.10.2026): rückwärts 29fe75e (Teil 5) → c106341 (Teil 4) → bdf2f9c (Teil 3) → 662b459 (Teil 2) → d133e7e (Teil 1) ergibt genau den Stand davor (063a70d); einzeln rücknehmbar Teil 5 und Teil 4; Teil 3 erst nach Teil 5 (Zeile im Überblick, `zipBlob()`), Teil 2 erst nach Teil 3 und 5, Teil 1 zuletzt (alle Teile nutzen `sichSchreiben()`/`stempel()`, Teil 4 `sichern()`). Alle übrigen Commits wie vorher.
 - Noch offen: Test an echten Geräten (Edge, Firefox, Android, iOS; Druck, Strg+P, Browsermenü), echter Mailversand und Abgleich über OneDrive mit zwei Geräten, Tag `vor-etu` (nicht gesetzt).
 
 **Stufe 2: Kernfunktionen nach ETU (ca. 12–13 Tage)**
@@ -1571,6 +1581,11 @@ Zeiteintrag zusätzlich `berichtId`. Unterschriften als PNG in der Ablage (`Beri
   | 9601a6c | P35: Liefertermine – Mengen der Wareneingänge einmal je Liste | – |
   | 291c038 | P35: Liefertermine Teil 3 – Erinnerungen bei Lieferverzug | aa0fa63 |
   | aa0fa63 | P35: Liefertermine Teil 4 – Lieferverzug im Verkauf | – |
+  | d133e7e | P38: Datensicherung Teil 1 – Konfliktkopie, Abgleich aller Listen … | 29fe75e, c106341, bdf2f9c, 662b459 |
+  | 662b459 | P38: Datensicherung Teil 2 – Tagessicherung gzip … | 29fe75e, bdf2f9c |
+  | bdf2f9c | P38: Datensicherung Teil 3 – Archiv PDF, Excel, CSV | 29fe75e |
+  | c106341 | P38: Datensicherung Teil 4 – Datenversion | – |
+  | 29fe75e | P38: Datensicherung Teil 5 – Vollsicherung als ZIP | – |
 
 
 **Stufe 3: optional nach Bedarf (ca. 18–21 Tage)**
@@ -1620,6 +1635,7 @@ Jedes Paket wird erst nach Ihrem Test im Browser nach `main` übernommen. Bis da
 - **Stufe 2, Rest (U12, 12.10.2026):** P14 Preiseinheit vollständig, P18 Gliederung, P20 globale Suche – ✅ umgesetzt (Schalter `erw.pe`, `erw.gliederung`, `erw.suche`, Standard ein; Druckoptionen „Einzelpreis bei Preiseinheit“ je Preiseinheit, „PDF mit Lesezeichen“ aus); kompakte Darstellung am Handy (Pop-ups) wie gewünscht.
 - **12.10.2026, P34 K-Blätter nach Vorlage (U13):** Formblätter K2–K7 wie die Vorlagen, Eingabe über Auswahlfelder, Logo und Firmendaten der TBH im Ausdruck, Projektzuordnung, Zuschläge und Mittellohn in Angeboten und Rechnungen – ✅ umgesetzt (Schalter `erw.kbVorlage`, `erw.kbDruck`, `erw.kbProjekt`, `erw.kbBeleg`, Standard ein).
 - **14.10.2026, P35 Liefertermine, Teillieferungen und Erinnerungen:** Auftragsbestätigung des Lieferanten mit Terminen je Position und Teilmenge, Restmenge streichen, Liste „Offene Lieferungen“, Karte „Lieferverzug“ mit Zähler, Erinnerungs-E-Mail und Wiedervorlage, Kundenlieferungen und „Material verspätet“ in der AB – ✅ umgesetzt (Schalter `erw.lfTermin`, `erw.lfListe`, `erw.lfErinnern`, `erw.lfVerkauf`, Standard ein).
+- **16.10.2026, P38 Datensicherung:** Archiv im OneDrive (PDF je Rechnung/Gutschrift/Storno, Monatsexport Excel und CSV), tägliche komprimierte und geprüfte Sicherung (alle behalten), Konfliktkopie, Wiederherstellen, Datenversion gegen ältere Programmversionen, Vollsicherung als ZIP – ✅ umgesetzt (Schalter `erw.sicherung`, `erw.archiv`, `erw.vollsicherung`, Standard ein; Teil 1 und 4 ohne Schalter).
 - Noch offen: Fragen 5, 6, 7, 9, 10, 11, 12.
 
 ## 6. Offene Fragen

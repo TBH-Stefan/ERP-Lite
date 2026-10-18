@@ -37,7 +37,7 @@ async function zeichnen(page,h){
 }
 // Liste der Ansichten zu den Testdaten (Hash ohne #/)
 function ansichten(ids){
-  const l=['dash','belege/V','belege/E','auftraege','kosten','zeiten','kontakte','kontakte/K','kontakte/L','artikel','lager','auswertung','kbs','lvbib','lvs','fibu','export','einstellungen','verrechnung'];
+  const l=['dash','belege/V','belege/E','auftraege','kosten','zeiten','kontakte','kontakte/K','kontakte/L','artikel','lager','auswertung','kbs','lvbib','lvs','fibu','export','einstellungen','verrechnung','lieferungen','berichte','personal'];
   for(const id of [ids.an,ids.anP,ids.re,ids.reRC,ids.reSV,ids.ab,ids.ls,ids.be,ids.er,ids.gs])l.push('beleg/'+id);
   l.push('auftrag/'+ids.ab);if(ids.kb)l.push('kbs/'+ids.kb);
   return l;

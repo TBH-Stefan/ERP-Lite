@@ -87,6 +87,11 @@ nav .nbz{display:inline-block;min-width:18px;padding:0 6px;margin-left:4px;borde
 .lfe{font-size:13px;margin:0 0 6px;flex-wrap:wrap;row-gap:4px}.lfe .sp{min-width:8px}
 #dirtybar button:not(.p){color:var(--ink)}
 @media(max-width:760px){#dirtybar{left:8px;right:8px;transform:none;min-width:0;bottom:8px}}
+/* Speicherleiste (P39 Teil 2, erw.speicherLeiste): Bildschirm oben rechts im Inhalt (bleibt beim Bildlauf stehen), Handy in der Kopfleiste mit 44-pt-Symbolen; ersetzt den schwebenden Balken unten */
+#sleiste{display:flex;gap:4px;align-items:center}#sleiste button:disabled{opacity:.35}#sleiste .pt{color:#ffd27a}
+main>#sleiste{position:sticky;top:8px;float:right;z-index:30;margin:-8px -10px 6px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:4px;box-shadow:0 4px 14px rgba(0,0,0,.12)}main>#sleiste .pt{color:var(--warn)}body.sl #undobtn{display:none}
+@media(max-width:760px){.topbar #sleiste{gap:0}.topbar #sleiste button{min-width:44px;min-height:44px;font-size:20px;padding:0;color:#fff;background:none;border:0}.topbar #sleiste button.p{color:#ffd27a}.topbar #sleiste button:disabled{opacity:.3}body.sl .topbar #sync2{display:none}body.sl .topbar .home b{display:none}body.sl .topbar{gap:4px}}
+@media(max-width:380px){.topbar #sleiste [data-act=vor]{display:none}}
 .rte{border:1px solid #cdd2da;border-radius:5px;padding:5px 7px;min-height:32px;background:#fff;margin-top:2px;color:var(--ink);font-size:13px;line-height:1.4;cursor:text}
 .pos .rte{max-height:calc(5 * 1.4em + 12px);overflow-y:auto;resize:vertical} /* Langtext in der Eingabe: ca. 5 Zeilen, scrollbar */
 .rte[contenteditable]:focus{outline:2px solid var(--acc);outline-offset:-1px}
@@ -2286,6 +2291,15 @@ function dialog({titel,html,ok='OK',check='',gefahr=false}){
   });
 }
 
+/* Speicherleiste (P39 Teil 2, erw.speicherLeiste): ↶ Zurück, ↷ Vor, Verwerfen, Speichern immer an derselben Stelle (ausgegraut, wenn nichts zu tun ist); erneuert über dirtyBar()/undoBtn()/render() */
+erwPlus({k:'speicherLeiste',std:false,p:'Bedienung (P33)',l:'Speicherleiste in allen Bereichen',info:'Zurück, Vor, Verwerfen und Speichern stehen in jedem Bereich fest an derselben Stelle: am Bildschirm oben rechts (bleibt beim Bildlauf stehen), am Handy als große Symbole in der Kopfleiste (iPhone: unten bleibt frei für Safari-Leiste und Home-Balken). Knöpfe ohne Wirkung sind ausgegraut; ● zeigt ungespeicherte Änderungen. Der schwebende Balken „Ungespeicherte Änderungen“ unten entfällt.'});
+function sLeiste(){const an=!!DB&&erw('speicherLeiste'),h=HANDY.matches;document.body.classList.toggle('sl',an);let e=$('#sleiste');if(!an){e?.remove();return}
+  const ziel=h?$('.topbar'):$('#main');if(!ziel)return;if(!e||e.parentNode!==ziel){e?.remove();e=document.createElement('div');e.id='sleiste';h?ziel.appendChild(e):ziel.prepend(e)}
+  const k=(act,ic,l,dis,t,c='',z='')=>`<button class="${c}" data-act="${act}"${dis?' disabled':''} title="${t}" aria-label="${l}">${h?ic+z:ic+' '+l+z}</button>`;
+  e.innerHTML=k('zurueck','↶','Zurück',!UNDO.length,UNDO.length?`Letzte Änderung rückgängig (${UNDO.length} Schritt(e)) – Strg+Z`:'Nichts rückgängig zu machen')+k('vor','↷','Vor',!REDO.length,REDO.length?'Wiederholen – Strg+Y':'Nichts zu wiederholen')
+    +k('verwerfen','✕','Verwerfen',!DIRTY,DIRTY?'Alle ungespeicherten Änderungen verwerfen':'Keine ungespeicherten Änderungen')+k('speichern','💾','Speichern',!DIRTY,DIRTY?'Ungespeicherte Änderungen speichern':'Alles gespeichert',DIRTY?'p':'',DIRTY?'<span class="pt"> ●</span>':'')}
+{const d0=dirtyBar,u0=undoBtn,r0=render;dirtyBar=function(){if(DB&&erw('speicherLeiste')){$('#dirtybar')?.remove();return sLeiste()}d0();sLeiste()};undoBtn=function(){u0();sLeiste()};render=(...a)=>{const x=r0(...a);sLeiste();return x}}
+queueMicrotask(()=>{ACT.vor=()=>{if(!vor())alert('Nichts zu wiederholen.')}});
 /* Formular im Popup: felder=[{k,l,wert,typ,opts,cls,pflicht,dis,ph,max,info,h}] → Objekt mit Werten oder null (dis:true = gesperrt, Wert bleibt;
    ph = Platzhalter, max = höchste Zeichenzahl mit Zähler, info = Beschreibung unter dem Feld, h = Höhe Textfeld, typ 'hinweis' = nur Text l);
    extra = Beschriftung eines dritten Knopfs (Ergebnis 'extra'), scroll = hohes Formular mit Bildlauf;

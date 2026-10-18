@@ -1677,7 +1677,7 @@ function suIndex(){const E=[],add=(g,o,...h)=>E.push({g,...o,h:h.flat().filter(x
   for(const x of DB.kalk)add('kb',{r:'kbs/'+x.id,ic:'🧮',t:x.name||'K-Blatt',u:'K-Blatt'},x.name,x.nr);
   for(const k of DB.kosten||[])add('kosten',{r:'kosten',k:k.id,ic:'💳',t:k.bez||'Kostenposition',u:[k.partner,k.vertragNr,KKAT[k.kat]?.[0]].filter(Boolean).join(' · '),b:fmt(k.betrag)+' €',betr:[+k.betrag]},k.bez,k.partner,k.vertragNr,k.notiz,KKAT[k.kat]?.[0]);
   for(const x of DB.lvbib||[])add('bib',{r:'lvbib',k:x.id,ic:'🧩',t:x.kurz||'Textbaustein',u:x.gruppe||''},x.kurz,x.gruppe,suTxt(x.lang));
-  if(erw('btb'))for(const r of DB.berichte||[])add('btb',{r:'bericht/'+r.id,ic:'📝',t:`Bautagesbericht ${r.nr} · ${dAT(r.datum)}`,u:auftragKurz(r.auftragId),s:btbStatus(r),d:r.datum},'BTB '+r.nr,dAT(r.datum),r.ort,r.verfasser,auftragLabel(r.auftragId),(r.taet||[]).map(t=>[t.text,t.ort]),(r.personal||[]).map(p=>p.name),Object.values(r.vork||{})); // Bautagesberichte (P36)
+  if(erw('btb'))for(const r of DB.berichte||[])add('btb',{r:'bericht/'+r.id,ic:'📝',t:`${btbTitel(r)} ${r.nr} · ${dAT(r.datum)}`,u:auftragKurz(r.auftragId),s:btbStatus(r),d:r.datum},'BTB '+r.nr,dAT(r.datum),r.ort,r.verfasser,auftragLabel(r.auftragId),(r.taet||[]).map(t=>[t.text,t.ort]),(r.personal||[]).map(p=>p.name),Object.values(r.vork||{})); // Bautagesberichte (P36)
   return E}
 function suTreffer(E,q){const w=q.toLowerCase().split(/\s+/).filter(Boolean),z=/^[-\d.,\s€]+$/.test(q)&&/\d/.test(q)?zahlDE(q.replace(/\s/g,'')):null,G={};
   for(const e of E){const tx=w.every(t=>e.h.includes(t)),bt=z!=null&&(e.betr||[]).some(v=>Math.abs(v-z)<0.005);if(tx||bt)(G[e.g]=G[e.g]||[]).push(bt&&!tx?{...e,u:'Betrag '+fmt(z)+' € · '+e.u}:e)}
@@ -5748,6 +5748,24 @@ function abAbschluss(b,s=2){if(!erw('abAbschluss')||b?.typ!=='AB'||!b.fest||b.st
 async function belegDrucken(b){const a=await dupFrage(b);if(!a)return;drucken(b,a);ausgabeZaehlen(b,a);abAbschluss(b)}
 async function belegPDF(b){const a=await dupFrage(b);if(!a)return;await pdfHerunterladen(b,a);ausgabeZaehlen(b,a);abAbschluss(b)}
 window.addEventListener('afterprint',()=>{if(DRUCK&&!DRUCK.an&&DRUCK.t!=null){document.title=DRUCK.t;DRUCK.t=null}});
+/* Regie (P36 Teil 10, erw.regie): Regiebericht = Bericht mit r.art='RB' (Auswahl beim Anlegen über ACT.btbneu, eigene Nummer je Auftrag in btbNeu(aid,art), Titel btbTitel(r), Kürzel btbKz(r) „RB“).
+   Regiepreise je Stundentarif t.regie (leer = Verkauf; regiePreis(kz), Karte regieEinst() über Wrapper um V.einstellungen). Kundenunterschrift Pflicht: verrechenbar nur mit Unterschrift des Kunden
+   (btbVerr(r), in Teil 7; „unterschreibt nicht“ = „nicht anerkannt“, Status BTB_ST); Rechnung aus dem Regiebericht (Teil 7) mit Regiepreisen für die Stunden ab Position n0 (BTB_RE, nach Teil 8) */
+erwPlus({k:'regie',std:false,p:'Bautagesbericht (P36)',l:'Regiebericht und Regiepreise',info:'Beim Anlegen eines Berichts die Wahl „Bautagesbericht“ oder „Regiebericht“; der Regiebericht hat eine eigene Nummer je Auftrag („RB 3“) und den Titel „Regiebericht“. Die Unterschrift des Kunden ist beim Regiebericht Pflicht: Erst damit gilt er als anerkannt und kann verrechnet werden; „unterschreibt nicht“ = „nicht anerkannt“. Einstellungen → „Regiepreise“: eigener Stundensatz je Tarif (leer = normaler Verkaufspreis); die Rechnung aus einem Regiebericht rechnet die Stunden (auch Reisezeit) damit. Aus = keine Auswahl; vorhandene Regieberichte bleiben Regieberichte.'});
+const btbTitel=r=>r?.art==='RB'?'Regiebericht':'Bautagesbericht',btbKz=r=>r?.art==='RB'?'RB':'BTB';
+const regiePreis=kz=>{const t=S().tarife.find(x=>x.kz===kz);return t&&+t.regie>0?+t.regie:null};
+const btbVerr=r=>r?.art!=='RB'||!!r.sig?.kunde?.pfad;
+function regieEinst(){const T_=S().tarife;
+  const inh=`<div class="card">${kmp()?'':'<h2>Regiepreise</h2>'}<p class="mut" style="margin-top:0">Stundensatz für Regieberichte und Regieanträge; leer = normaler Verkaufspreis.</p><table style="max-width:560px"><thead><tr><th>Tarif</th><th class="n">Verkauf €/h</th><th>Regie €/h</th></tr></thead><tbody>
+    ${T_.map((t,i)=>`<tr><td>${esc(t.kz)} · ${esc(t.bez)}</td><td class="n">${fmt(t.vk)}</td><td style="width:140px"><input type="number" step="any" inputmode="decimal" data-o="tf" data-i="${i}" data-f="regie" value="${+t.regie>0?t.regie:''}" placeholder="${fmt(t.vk)}"></td></tr>`).join('')}</tbody></table></div>`;
+  return kmp()?akk('e-regie','Regiepreise',inh,{zusatz:T_.filter(t=>+t.regie>0).map(t=>`${esc(t.kz)} ${fmt(t.regie)}`).join(' · ')||'wie Verkauf'}):inh}
+const vEinst10=V.einstellungen;V.einstellungen=()=>{const h=vEinst10();if(!erw('regie'))return h;const e=kmp()?erwAkk():erwKarte(),i=h.lastIndexOf(e);return i<0?h+regieEinst():h.slice(0,i)+regieEinst()+h.slice(i)};
+queueMicrotask(()=>{
+  BTB_ST.unshift(r=>r?.art!=='RB'||!r.gesperrt||btbRe(r)?'':r.sig?.kunde?.ohne?tag('nicht anerkannt','err'):r.sig?.kunde?'':tag('Kunde fehlt','warn'));
+  BTB_RE.push((b,r,o,n0)=>{if(r.art!=='RB')return;for(const p of b.pos.slice(n0))if(p.art==='L'&&['h','Std.'].includes(p.einheit)){const x=regiePreis(p.tarif||p.nr);if(x!=null){p.ep=x;lsAufteilen(b,p)}}});
+  const neu0=ACT.btbneu;ACT.btbneu=async el=>{if(!erw('regie'))return neu0(el);let aid=el.dataset.id;const A=btbAuftraege();if(!aid&&!A.length){alert('Zuerst ein Angebot oder einen Auftrag anlegen.');return}
+    const o=await formDialog({titel:'Neuer Bericht',ok:'Anlegen',felder:[...(aid?[]:[{k:'a',l:'Auftrag',wert:A[0].id,opts:A.map(a=>[a.id,auftragLabel(a.id)]),cls:'w2',pflicht:true}]),{k:'art',l:'Art',wert:el.dataset.art||'',opts:[['','Bautagesbericht'],['RB','Regiebericht']],neu:1}]});if(!o)return;
+    const r=btbNeu(aid||o.a,o.art);persist();go('bericht/'+r.id)}});
 
 /* ---------- PDF-Erzeugung ohne Fremdbibliothek: Layout aus der Belegvorschau (Arial ≙ Helvetica) ---------- */
 const WINANSI={0x20AC:128,0x201A:130,0x201E:132,0x2026:133,0x2018:145,0x2019:146,0x201C:147,0x201D:148,0x2022:149,0x2013:150,0x2014:151,0x2122:153,0x160:138,0x161:154,0x17D:142,0x17E:158,0x2212:45,0xA0:32,0x202F:32,0x2009:32,0x2007:32};
@@ -6135,14 +6153,14 @@ const btbOrdner=r=>{const a=btbRoot(r);return`Berichte/${(r.datum||isoD()).slice
 const btbStatus=r=>{for(const f of BTB_ST){const t=f(r);if(t)return t}return tag('Entwurf')};
 const btbWetter=r=>{const w=r.wetter||{},t=[w.tMin,w.tMax].filter(x=>x!==''&&x!=null);return[[wTxt(w.vm),wTxt(w.nm)].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i).join(' / '),t.length?t.map(x=>fmtQ(x)).join(' bis ')+' °C':''].filter(Boolean).join(' · ')};
 const btbAuftraege=()=>auftragsListe().filter(a=>!a.docs.every(d=>d.storno));
-function btbNeu(aid){
+function btbNeu(aid,art=''){
   const L=DB.berichte.filter(x=>x.auftragId===aid),vor=[...L].sort((a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt))[0],k=kontakt((beleg(aid)||DB.belege.find(b=>b.auftragId===aid))?.kontaktId);
-  const nr=Math.max(0,...L.map(x=>+x.nr||0),...DB.papierkorb.filter(e=>e.c==='berichte'&&e.daten?.auftragId===aid).map(e=>+e.daten.nr||0))+1; // Nummer laufend je Auftrag, auch Gelöschtes zählt
-  const r={id:uid(),nr,auftragId:aid,datum:isoD(),ort:vor?.ort||[k?.strasse,[k?.plz,k?.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '),verfasser:vor?.verfasser||S().bearbeiter||'',
+  const nr=Math.max(0,...L.filter(x=>(x.art||'')===art).map(x=>+x.nr||0),...DB.papierkorb.filter(e=>e.c==='berichte'&&e.daten?.auftragId===aid&&(e.daten.art||'')===art).map(e=>+e.daten.nr||0))+1; // Nummer laufend je Auftrag, auch Gelöschtes zählt
+  const r={id:uid(),nr,...(art?{art}:{}),auftragId:aid,datum:isoD(),ort:vor?.ort||[k?.strasse,[k?.plz,k?.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '),verfasser:vor?.verfasser||S().bearbeiter||'',
     wetter:{vm:'',nm:'',tMin:'',tMax:'',beh:false,behStd:'',behTxt:''},personal:(vor?.personal||[]).map(p=>({name:p.name,tarif:p.tarif,von:p.von,bis:p.bis,pause:p.pause,stunden:p.von&&p.bis?'':p.stunden})),
     taet:[TPL.btbt()],material:[],geraete:[],vork:{},erstellt:new Date().toISOString()};
   if(!r.personal.length)r.personal=[{...TPL.btbp(),name:S().bearbeiter||''}];
-  DB.berichte.push(r);log('Bautagesbericht angelegt',`BTB ${r.nr} ${auftragKurz(aid)}`);return r}
+  DB.berichte.push(r);log(btbTitel(r)+' angelegt',`${btbKz(r)} ${r.nr} ${auftragKurz(aid)}`);return r}
 const bIn=(R,f,v,{t='text',l='',ph='',cls='',list='',dis=false}={})=>`<label class="${cls}">${l}<input type="${t}"${t==='number'?' step="any" inputmode="decimal" data-t="nl"':''} data-o="path" data-r="${R}" data-f="${f}" value="${esc(v??'')}"${ph?` placeholder="${esc(ph)}"`:''}${list?` list="${list}"`:''}${dis?' disabled':''}></label>`;
 const bTa=(R,f,v,{l='',ph='',cls='w2'}={})=>`<label class="${cls}">${l}${ft(R,f,v,ph)}</label>`;
 const bAbs=(id,titel,inhalt,{offen=true,zusatz=''}={})=>kmp()?akk(id,titel,inhalt,{offen,zusatz}):`<div class="card"><h2>${titel}${zusatz?` <span class="mut" style="font-weight:400;font-size:13px">· ${zusatz}</span>`:''}</h2>${inhalt}</div>`;
@@ -6175,27 +6193,27 @@ function btbDoc(r){const w=r.wetter||{},vk=r.vork||{},root=btbRoot(r),k=kontakt(
   ${VORK.some(([x])=>pT(vk[x]))?`<h3>Besondere Vorkommnisse</h3><table class="btbk"><tbody>${VORK.map(([x,l])=>zl(l,pT(vk[x])?nl(vk[x]):'')).join('')}</tbody></table>`:''}
   ${BTB_DOC.map(f=>f(r)).join('')}</div>`}
 V.bericht=id=>{const r=ROOT.btb(id);if(!r)return'<p>Bautagesbericht nicht gefunden.</p>';const root=btbRoot(r),fest=btbFest(r);
-  return`<div class="bar"><h1 style="margin:0">Bautagesbericht ${r.nr}</h1>${btbStatus(r)}<span class="sp"></span>${BTB_KN.map(f=>f(r)).join('')}${fest?'':`<button class="d" data-act="btbdel" data-id="${r.id}">Löschen</button>`}</div>
+  return`<div class="bar"><h1 style="margin:0">${btbTitel(r)} ${r.nr}</h1>${btbStatus(r)}<span class="sp"></span>${BTB_KN.map(f=>f(r)).join('')}${fest?'':`<button class="d" data-act="btbdel" data-id="${r.id}">Löschen</button>`}</div>
   <p class="mut" style="margin:2px 0 10px"><a href="#/berichte">Bautagesberichte</a> › <a href="#/auftrag/${r.auftragId}">Auftrag ${esc(auftragLabel(r.auftragId))}</a>${root?'':' (Auftrag nicht mehr vorhanden)'}</p>
   ${btbAnsicht(r,fest)}`};
 V.berichte=()=>{const auf=btbAuftraege(),A=UI.btbA||'',L=DB.berichte.filter(r=>!A||r.auftragId===A).sort((a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt));
   return`<div class="bar"><h1 style="margin:0">Bautagesberichte</h1><span class="sp"></span><button class="p" data-act="btbneu"${A?` data-id="${A}"`:''}>+ Bericht</button></div>
   ${erw('btb')?'':'<p class="hint">Bautagesberichte sind ausgeschaltet (Einstellungen → Erweiterungen); vorhandene Berichte bleiben lesbar.</p>'}
   <div class="row" style="max-width:520px"><label class="w2">Auftrag<select data-o="ui" data-f="btbA"><option value="">alle Aufträge</option>${auf.map(a=>opt(a.id,auftragLabel(a.id),A)).join('')}</select></label></div>
-  ${tabelle('berichte',[{k:'nr',l:'Nr.',f:r=>'BTB '+r.nr},{k:'datum',l:'Datum',f:r=>btbDat(r)},{k:'auftrag',l:'Auftrag',f:r=>esc(auftragKurz(r.auftragId))},{k:'kunde',l:'Kunde',f:r=>esc(kName(btbRoot(r)?.kontaktId)),std:false},
+  ${tabelle('berichte',[{k:'nr',l:'Nr.',f:r=>btbKz(r)+' '+r.nr},{k:'datum',l:'Datum',f:r=>btbDat(r)},{k:'auftrag',l:'Auftrag',f:r=>esc(auftragKurz(r.auftragId))},{k:'kunde',l:'Kunde',f:r=>esc(kName(btbRoot(r)?.kontaktId)),std:false},
     {k:'ort',l:'Baustelle',f:r=>esc(r.ort),std:false},{k:'taet',l:'Tätigkeit',f:r=>esc(suTxt((r.taet||[]).map(t=>t.text).filter(Boolean).join('; ')).slice(0,80))},{k:'wetter',l:'Witterung',f:r=>esc(btbWetter(r)),std:false},
     {k:'std',l:'Std.',n:1,f:r=>fmtQ(btbSumme(r))},{k:'status',l:'Status',f:btbStatus}],L,
     {zeile:r=>`class="click" onclick="nav('bericht/${r.id}')"`,leer:'Noch keine Bautagesberichte.',
-     mf:r=>karte({t:`BTB ${r.nr} · ${btbDat(r)}`,s:btbStatus(r),u:esc(suTxt((r.taet||[]).map(t=>t.text).filter(Boolean).join('; ')).slice(0,80)),z:esc(auftragKurz(r.auftragId)),b:fmtQ(btbSumme(r))+' h'})})}`};
+     mf:r=>karte({t:`${btbKz(r)} ${r.nr} · ${btbDat(r)}`,s:btbStatus(r),u:esc(suTxt((r.taet||[]).map(t=>t.text).filter(Boolean).join('; ')).slice(0,80)),z:esc(auftragKurz(r.auftragId)),b:fmtQ(btbSumme(r))+' h'})})}`};
 function btbAuftragKarte(aid){if(!erw('btb'))return'';const L=DB.berichte.filter(r=>r.auftragId===aid).sort((a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt));
-  const inh=`<div class="card">${kmp()?'':'<h2>Bautagesberichte</h2>'}${L.length?`<table><tbody>${L.map(r=>`<tr class="click" onclick="nav('bericht/${r.id}')"><td>BTB ${r.nr} · ${btbDat(r)}</td><td class="n">${fmtQ(btbSumme(r))} h</td><td>${btbStatus(r)}</td></tr>`).join('')}</tbody></table>`:'<p class="mut" style="margin:0">Noch kein Bautagesbericht zu diesem Auftrag.</p>'}
+  const inh=`<div class="card">${kmp()?'':'<h2>Bautagesberichte</h2>'}${L.length?`<table><tbody>${L.map(r=>`<tr class="click" onclick="nav('bericht/${r.id}')"><td>${btbKz(r)} ${r.nr} · ${btbDat(r)}</td><td class="n">${fmtQ(btbSumme(r))} h</td><td>${btbStatus(r)}</td></tr>`).join('')}</tbody></table>`:'<p class="mut" style="margin:0">Noch kein Bautagesbericht zu diesem Auftrag.</p>'}
     <div class="bar" style="margin:8px 0 0"><button class="s" data-act="btbneu" data-id="${aid}">+ Bautagesbericht</button></div></div>`;
   return kmp()?akk('a-btb','Bautagesberichte',inh,{offen:!!L.length,zusatz:L.length+''}):inh}
 Object.assign(ACT,{
   btbneu:async el=>{let aid=el.dataset.id;const A=btbAuftraege();if(!aid){if(!A.length){alert('Zuerst ein Angebot oder einen Auftrag anlegen.');return}
       const o=await formDialog({titel:'Neuer Bautagesbericht',ok:'Anlegen',felder:[{k:'a',l:'Auftrag',wert:A[0].id,opts:A.map(a=>[a.id,auftragLabel(a.id)]),cls:'w2',pflicht:true}]});if(!o)return;aid=o.a}
     const r=btbNeu(aid);persist();go('bericht/'+r.id)},
-  btbdel:el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r)||!confirm(`Bautagesbericht ${r.nr} löschen?`))return;wegwerfen('berichte',[r]);go('berichte')},
+  btbdel:el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r)||!confirm(`${btbTitel(r)} ${r.nr} löschen?`))return;wegwerfen('berichte',[r]);go('berichte')},
   btbbib:el=>{const r=ROOT.btb(el.dataset.id),x=DB.lvbib.find(y=>y.id===el.value);el.value='';if(!r||!x||btbFest(r))return;
     const t=[x.kurz,suTxt(x.lang).replace(/[ \t]+/g,' ').trim()].filter(Boolean).filter((s,i,a)=>a.indexOf(s)===i).join('\n'),L=r.taet||(r.taet=[]),leer=L.findIndex(y=>!pT(y.text)&&!pT(y.ort));
     if(leer>=0)L[leer].text=t;else L.push({text:t,ort:''});persist();render()}});
@@ -6214,30 +6232,30 @@ document.addEventListener('input',e=>{
 erwPlus({k:'btbRechnung',std:false,p:'Bautagesbericht (P36)',l:'Rechnung aus dem Bautagesbericht',info:'Abgeschlossene bzw. unterschriebene Bautagesberichte bekommen „📄 Rechnung erstellen …“: Auswahl der noch nicht verrechneten Berichte desselben Auftrags und was übernommen wird (Stunden, Material, Geräte). Daraus entsteht ein Rechnungsentwurf an den Kunden des Auftrags, bei mehreren Berichten je Bericht eine Gruppe, Leistungszeitraum aus den Berichtsdaten. Stunden aus der Zeiterfassung werden dort als abgerechnet markiert (keine Doppelverrechnung); Material zum Verkaufspreis aus dem Artikelstamm, nicht gefundenes Material und Geräte mit Preis 0 zum Ergänzen. Der Bericht zeigt danach „verrechnet“ mit Verweis auf die Rechnung; wird die Rechnung storniert oder der Entwurf gelöscht, ist er wieder offen. Aus = kein Knopf.'});
 const BTB_REF=[],BTB_RE=[],BTB_ZOK=[]; // BTB_ZOK: (Zeiteintrag, Auswahl) → übernehmen?
 const btbRe=r=>DB.belege.find(b=>!b.storno&&(b.btbIds||[]).includes(r.id));
-const btbReOffen=aid=>DB.berichte.filter(r=>r.auftragId===aid&&btbFest(r)&&!btbRe(r)).sort((a,c)=>(a.datum+a.erstellt).localeCompare(c.datum+c.erstellt));
+const btbReOffen=aid=>DB.berichte.filter(r=>r.auftragId===aid&&btbFest(r)&&!btbRe(r)&&btbVerr(r)).sort((a,c)=>(a.datum+a.erstellt).localeCompare(c.datum+c.erstellt));
 const btbArt=bez=>{const t=pT(bez).toLowerCase(),A=DB.artikel.filter(a=>a.aktiv!==false);return!t?null:A.find(a=>`${a.nr} – ${a.bez}`.toLowerCase()===t)||A.find(a=>String(a.bez||'').toLowerCase()===t)||A.find(a=>String(a.nr||'').toLowerCase()===t)||null};
 const btbZtFrei=z=>!z.belegId||!beleg(z.belegId)||!!beleg(z.belegId).storno; // Eintrag einer stornierten Rechnung wieder verrechenbar
 queueMicrotask(()=>{BTB_ST.unshift(r=>btbRe(r)?tag('verrechnet','ok'):''); // vor dem Status aus Teil 3
   const auf=ACT.btbauf;if(auf)ACT.btbauf=el=>{const b=btbRe(ROOT.btb(el.dataset.id)||{});if(b){alert(`Der Bericht ist mit ${T[b.typ].bez} ${bNr(b)} verrechnet. Zum Ändern zuerst den Rechnungsentwurf löschen bzw. die Rechnung stornieren.`);return}return auf(el)}});
-BTB_KN.push(r=>{if(!erw('btbRechnung'))return'';const b=btbRe(r);return b?`<button onclick="nav('beleg/${b.id}')" title="verrechnet">📄 ${T[b.typ].bez} ${esc(bNr(b))}</button>`:btbFest(r)?`<button data-act="btbre" data-id="${r.id}">📄 Rechnung erstellen …</button>`:''});
-ACT.btbre=async el=>{const r=ROOT.btb(el.dataset.id);if(!r||!btbFest(r)||btbRe(r))return;const root=btbRoot(r);if(!root?.kontaktId){alert('Der Auftrag hat keinen Kunden.');return}
+BTB_KN.push(r=>{if(!erw('btbRechnung'))return'';const b=btbRe(r);return b?`<button onclick="nav('beleg/${b.id}')" title="verrechnet">📄 ${T[b.typ].bez} ${esc(bNr(b))}</button>`:btbFest(r)&&btbVerr(r)?`<button data-act="btbre" data-id="${r.id}">📄 Rechnung erstellen …</button>`:''});
+ACT.btbre=async el=>{const r=ROOT.btb(el.dataset.id);if(!r||!btbFest(r)||btbRe(r)||!btbVerr(r))return;const root=btbRoot(r);if(!root?.kontaktId){alert('Der Auftrag hat keinen Kunden.');return}
   const L=btbReOffen(r.auftragId),o=await formDialog({titel:'Rechnung aus Bautagesbericht',ok:'Rechnung erstellen',breit:true,scroll:true,felder:[
     {typ:'abschnitt',l:'Berichte (noch nicht verrechnet)'},
-    ...L.map((x,i)=>({k:'r'+i,typ:'checkbox',l:`BTB ${x.nr} · ${dAT(x.datum)} · ${fmtQ(btbSumme(x))} h${x.gesperrt?'':' · nicht unterschrieben'}${x.nachtragZu?' · Nachtrag':''}`,wert:x===r,neu:1,cls:'w2'})),
+    ...L.map((x,i)=>({k:'r'+i,typ:'checkbox',l:`${btbKz(x)} ${x.nr} · ${dAT(x.datum)} · ${fmtQ(btbSumme(x))} h${x.gesperrt?'':' · nicht unterschrieben'}${x.nachtragZu?' · Nachtrag':''}`,wert:x===r,neu:1,cls:'w2'})),
     {typ:'abschnitt',l:'Übernehmen'},{k:'std',typ:'checkbox',l:'Stunden',wert:true,neu:1},{k:'mat',typ:'checkbox',l:'Material',wert:true},{k:'ger',typ:'checkbox',l:'Geräte',wert:true},
     ...BTB_REF.flatMap(f=>f(L,root)),
     {typ:'hinweis',l:'Stunden aus der Zeiterfassung (dort danach abgerechnet), sonst aus dem Personal je Tarif. Material zum Verkaufspreis aus dem Artikelstamm; nicht gefundenes Material und Geräte mit Preis 0 – im Entwurf ergänzen.'}],
     pruef:o=>L.some((x,i)=>o['r'+i])||(alert('Bitte mindestens einen Bericht wählen.'),false)});
   const W=o?L.filter((x,i)=>o['r'+i]):[];if(!W.length)return;
   const k=kontakt(root.kontaktId),b=neuBeleg('RE',{kontaktId:root.kontaktId,auftragId:r.auftragId,betreff:root.betreff||'',zahlungsziel:S().zahlungsziel,btbIds:W.map(x=>x.id)});if(k)konditionenUebernehmen(b,k);
-  for(const x of W){const n0=b.pos.length;if(W.length>1)b.pos.push(neuPos({art:'G',bez:`Bautagesbericht ${x.nr} vom ${dAT(x.datum)}`}));
+  for(const x of W){const n0=b.pos.length;if(W.length>1)b.pos.push(neuPos({art:'G',bez:`${btbTitel(x)} ${x.nr} vom ${dAT(x.datum)}`}));
     if(o.std){if(DB.zeiten.some(z=>z.berichtId===x.id))zeitenInPos(b,DB.zeiten.filter(z=>z.berichtId===x.id&&btbZtFrei(z)&&BTB_ZOK.every(f=>f(z,o))));
       else{const g={};for(const p of x.personal||[]){const h=btbStd(p);if(h)(g[p.tarif+'|'+btbPD(x,p)]??=[]).push([p,h])}
         for(const[gk,P]of Object.entries(g)){const[kz,tg]=gk.split('|'),tf=S().tarife.find(t=>t.kz===kz)||{};b.pos.push(neuPos({art:'L',nr:kz,bez:tf.bez||kz,text:[dAT(tg),P.map(y=>y[0].name).filter(pT).join(', ')].filter(Boolean).join(' – '),menge:r2(sum(P,y=>y[1])),einheit:'h',ep:+tf.vk||0,ek:+tf.kosten||0}));lsAufteilen(b,b.pos[b.pos.length-1])}}}
     if(o.mat)for(const m of x.material||[]){if(!pT(m.bez))continue;const a=btbArt(m.bez),p=neuPos(),q=m.menge!==''&&m.menge!=null?+m.menge||0:1;b.pos.push(p);
       if(a&&(!m.einh||m.einh===a.einheit))artikelInPos(b,p,a);else Object.assign(p,{bez:m.bez,einheit:m.einh||'Stk',ep:0});p.menge=q}
     if(o.ger)for(const g of x.geraete||[])if(pT(g.bez))b.pos.push(neuPos({bez:'Gerät: '+g.bez,menge:g.stunden!==''&&g.stunden!=null?+g.stunden||0:1,einheit:g.stunden!==''&&g.stunden!=null?'h':'Stk',ep:0}));
-    for(const f of BTB_RE)f(b,x,o);if(W.length>1&&b.pos.length===n0+1)b.pos.splice(n0,1)}
+    for(const f of BTB_RE)f(b,x,o,n0);if(W.length>1&&b.pos.length===n0+1)b.pos.splice(n0,1)}
   const ds=W.flatMap(x=>[x.datum,x.bis]).filter(Boolean).sort();if(ds.length)b.leistung=ds[0]===ds[ds.length-1]?dAT(ds[0]):`${dAT(ds[0])} – ${dAT(ds[ds.length-1])}`;
   log('Rechnung aus Bautagesbericht',`${auftragKurz(r.auftragId)}: ${W.map(x=>'BTB '+x.nr).join(', ')}`);persist();go('beleg/'+b.id)};
 document.addEventListener('click',e=>{
@@ -6352,7 +6370,7 @@ BTB_DOC.push(r=>{const re=btbReise(r),P=(r.personal||[]).filter(p=>+p.reise),z=(
   return`<h3>Fahrt und Reisezeit</h3><table class="btbk"><tbody>${+r.km?z('Gefahrene km',fmtQ(r.km)+' km'):''}${pT(r.anf)?z('Anfahrten',fmtQ(btbAnf(r))):''}${btbEntf(r)?z('Entfernung',fmtQ(btbEntf(r))+' km'):''}${re?z('Reisezeit',`${fmtQ(re)} h (${P.map(p=>`${esc(p.name||'?')}${btbMehr(r)?' '+dAT(btbPD(r,p)).slice(0,6):''} ${fmtQ(p.reise)}`).join(', ')})`):''}</tbody></table>`});
 queueMicrotask(()=>BTB_NACH.push(r=>{if(!erw('btbFahrt')||!erw('btbZeit'))return;const f=fahrtS(),t=S().tarife.find(x=>x.kz===f.tarif)||{};let n=0;
   for(const p of r.personal||[]){const h=+p.reise||0;if(!h)continue;const m=p.maId&&DB.mitarbeiter?.find(x=>x.id===p.maId);
-    DB.zeiten.push({id:uid(),datum:btbPD(r,p),auftragId:r.auftragId,tarif:f.tarif,stunden:h,text:[`BTB ${r.nr}`,p.name,'Reisezeit'].filter(pT).join(' · '),kosten:m&&typeof maKosten==='function'?maKosten(m,t):+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id,reise:true,...(m?{maId:m.id}:{})});n++}
+    DB.zeiten.push({id:uid(),datum:btbPD(r,p),auftragId:r.auftragId,tarif:f.tarif,stunden:h,text:[`${btbKz(r)} ${r.nr}`,p.name,'Reisezeit'].filter(pT).join(' · '),kosten:m&&typeof maKosten==='function'?maKosten(m,t):+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id,reise:true,...(m?{maId:m.id}:{})});n++}
   if(n)log('Reisezeit aus Bautagesbericht',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${fmtQ(btbReise(r))} h`)}));
 BTB_REF.push((L,root)=>{if(!erw('btbFahrt'))return[];const k=kontakt(root.kontaktId)||{};return[{typ:'abschnitt',l:'Fahrt'},{k:'fahrt',l:'Fahrtkosten',wert:k.fahrtArt||'',opts:FAHRT_ART,neu:1},{k:'reise',typ:'checkbox',l:'Reisezeit verrechnen',wert:k.fahrtReise==='ja'}]});
 BTB_ZOK.push((z,o)=>!z.reise||!erw('btbFahrt')||!!o.reise);
@@ -6549,12 +6567,12 @@ Object.assign(ACT,{
   btbauf:async el=>{const r=ROOT.btb(el.dataset.id);if(!r||r.gesperrt)return;delete r.abgeschlossen;log('Bautagesbericht wieder geöffnet',`BTB ${r.nr}`);await commit();render()},
   btbsig:async el=>{const r=ROOT.btb(el.dataset.id),m=el.dataset.r==='monteur';if(!r||!btbSigAn()||(m?r.gesperrt||!r.abgeschlossen:!r.gesperrt||r.sig?.kunde))return;
     const k=kontakt(btbRoot(r)?.kontaktId),e=await sigPop(m?'Unterschrift Monteur':'Unterschrift Auftraggeber / Kunde',m?{name:r.verfasser||S().bearbeiter||'',hinweis:'Mit der Unterschrift wird der Bericht gesperrt: Inhalt, Fotos und Zeiten sind danach nicht mehr änderbar (Korrektur nur als Nachtrag).'}
-      :{name:persName(k)||'',ohne:true,hinweis:`Der Kunde bestätigt Bautagesbericht ${r.nr} vom ${dAT(r.datum)}. Der Inhalt bleibt unverändert.`});
+      :{name:persName(k)||'',ohne:true,hinweis:`Der Kunde bestätigt ${btbTitel(r)} ${r.nr} vom ${dAT(r.datum)}${r.art==='RB'?' und erkennt die Regieleistungen an':''}. Der Inhalt bleibt unverändert.`});
     if(!e||(m?r.gesperrt:r.sig?.kunde))return;const s=await sigAblegen(btbOrdner(r),m?'monteur':'kunde',e);
     if(m){r.sig={monteur:s};await sperren(r);for(const f of BTB_NACH)f(r)}else r.sig={...r.sig,kunde:s};
     log(m?'Bautagesbericht unterschrieben (Monteur)':'Bautagesbericht unterschrieben (Kunde)',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${s.name}${s.ohne?' – '+s.ohne:''}`);await commit();render()},
   btbnach:el=>{const r=ROOT.btb(el.dataset.id);if(!r||!confirm(`Nachtrag zu Bautagesbericht ${r.nr} anlegen?\n\nDer neue Bericht übernimmt den Inhalt zum Korrigieren; Bericht ${r.nr} bleibt unverändert.`))return;
-    const n=btbNeu(r.auftragId),c=JSON.parse(JSON.stringify(r));for(const k of['id','nr','erstellt','abgeschlossen','gesperrt','hash','sig','nachtragZu'])delete c[k];Object.assign(n,c,{nachtragZu:r.id});
+    const n=btbNeu(r.auftragId,r.art||''),c=JSON.parse(JSON.stringify(r));for(const k of['id','nr','erstellt','abgeschlossen','gesperrt','hash','sig','nachtragZu'])delete c[k];Object.assign(n,c,{nachtragZu:r.id});
     log('Bautagesbericht Nachtrag',`BTB ${n.nr} zu BTB ${r.nr}`);persist();go('bericht/'+n.id)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();commit()}
   if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='p'&&DB&&erw('strgP')&&curBeleg()){e.preventDefault();document.activeElement?.blur?.();belegDrucken(curBeleg())}}); // Strg+P: geöffneten Beleg drucken (offene Eingabe vorher übernehmen)
@@ -6567,7 +6585,7 @@ BTB_KN.push(r=>erw('btbZeit')&&!btbFest(r)&&btbZeitFrei(r).length?`<button data-
 BTB_NACH.push(r=>{if(!erw('btbZeit'))return;let n=0;
   for(const p of r.personal||[]){const h=btbStd(p),z=p.zid&&DB.zeiten.find(x=>x.id===p.zid);
     if(z){if(!z.belegId){z.stunden=h;z.tarif=p.tarif}z.berichtId=r.id;continue}
-    if(!h)continue;const t=S().tarife.find(x=>x.kz===p.tarif)||{};DB.zeiten.push({id:uid(),datum:btbPD(r,p),auftragId:r.auftragId,tarif:p.tarif,stunden:h,text:[`BTB ${r.nr}`,p.name].filter(pT).join(' · '),kosten:+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id});n++}
+    if(!h)continue;const t=S().tarife.find(x=>x.kz===p.tarif)||{};DB.zeiten.push({id:uid(),datum:btbPD(r,p),auftragId:r.auftragId,tarif:p.tarif,stunden:h,text:[`${btbKz(r)} ${r.nr}`,p.name].filter(pT).join(' · '),kosten:+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id});n++}
   if(n)log('Zeiten aus Bautagesbericht',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${n} Eintrag/Einträge`)});
 BTB_DOC.push(r=>{if(!r.gesperrt)return'';const Z=DB.zeiten.filter(z=>z.berichtId===r.id);return Z.length?`<p class="mut btbzt">In der Zeiterfassung: ${fmtQ(sum(Z,z=>z.stunden))} h${Z.some(z=>z.belegId)?' (teilweise abgerechnet)':''}</p>`:''});
 ACT.btbzeit=el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r))return;const L=btbZeitFrei(r);if(!L.length)return;
@@ -6579,7 +6597,7 @@ $('#menu').onclick=e=>{e.stopPropagation();document.body.classList.toggle('nav')
    (Briefkopf, btbDoc) auf dem Blatt, folgt jeder Eingabe; abgeschlossene Berichte als Blatt. btbAnsicht(r,fest) in V.bericht, ohne Schalter wie bisher */
 erwPlus({k:'btbVorschau',std:false,p:'Bautagesbericht (P36)',l:'Vorschau im Bautagesbericht',info:'Im Bautagesbericht wie im Verkauf „Eingabe | Vorschau | Beides“: Die Vorschau zeigt den Bericht so, wie er gedruckt wird (A4 mit Briefkopf); „Beides“ (großer Bildschirm) zeigt Eingabe und Vorschau nebeneinander, die Vorschau folgt jeder Eingabe. Abgeschlossene und unterschriebene Berichte erscheinen als Blatt. Die Wahl gilt gemeinsam mit den Verkaufsbelegen. Aus = wie bisher nur Eingabe bzw. Ansicht.'});
 const btbBlatt=r=>{const h=btbDoc(r),W='<div class="btbd">'; // flach im Blatt, damit vorschauSeiten() an den Abschnitten in Seiten teilt
-  return`<div class="blatt"><div class="doc btbp btbd">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">Bautagesbericht ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${h.startsWith(W)?h.slice(W.length,-6):h}</div></div>`};
+  return`<div class="blatt"><div class="doc btbp btbd">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">${btbTitel(r)} ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${h.startsWith(W)?h.slice(W.length,-6):h}</div></div>`};
 function btbAnsicht(r,fest){if(!erw('btbVorschau'))return fest?`<div class="card">${btbDoc(r)}</div>`:btbEditor(r);if(fest)return btbBlatt(r);const ans=ansicht();
   return`<div class="bar" style="margin:0 0 10px"><span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span></div>`
     +(ans==='beides'?`<div class="split"><div>${btbEditor(r)}</div><div class="sticky">${btbBlatt(r)}</div></div>`:ans==='vorschau'?btbBlatt(r):btbEditor(r))}
@@ -6600,7 +6618,7 @@ const btbMaSel=r=>{if(!erw('mitarbeiter'))return'';const L=maAkt().filter(m=>!(r
   return L.length?`<select data-act="btbma" data-id="${r.id}" style="width:auto"><option value="">+ Mitarbeiter …</option>${L.map(m=>opt(m.id,m.name+(m.funktion?' · '+m.funktion:''),'')).join('')}</select>`:''};
 BTB_ED.push(()=>erw('mitarbeiter')?`<datalist id="dl-ma">${maAkt().map(m=>`<option value="${esc(m.name)}">`).join('')}</datalist>`:'');
 BTB_NACH.push(r=>{for(const p of r.personal||[]){const m=maVon(p.maId);if(!m)continue; // nach Teil 5: dessen Einträge (p.zid bzw. Text „BTB <Nr> · Name“) dem Mitarbeiter zuordnen
-  for(const z of DB.zeiten)if(z.berichtId===r.id&&!z.maId&&(z.id===p.zid||z.text===[`BTB ${r.nr}`,p.name].filter(pT).join(' · '))){z.maId=m.id;if(!z.belegId)z.kosten=maKosten(m,S().tarife.find(t=>t.kz===z.tarif))}}});
+  for(const z of DB.zeiten)if(z.berichtId===r.id&&!z.maId&&(z.id===p.zid||z.text===[`${btbKz(r)} ${r.nr}`,p.name].filter(pT).join(' · '))){z.maId=m.id;if(!z.belegId)z.kosten=maKosten(m,S().tarife.find(t=>t.kz===z.tarif))}}});
 V.personal=()=>{const A=!!UI.maAlle,mo=isoD().slice(0,7),L=maL().filter(m=>A||m.aktiv!==false).sort((a,c)=>String(a.nr||'').localeCompare(String(c.nr||''),'de',{numeric:true})||String(a.name||'').localeCompare(String(c.name||''),'de'));
   const sd=m=>sum(maZeiten(m.id,mo),z=>+z.stunden||0);
   return`<div class="bar"><h1 style="margin:0">Personal</h1><span class="sp"></span><button class="p" data-act="maneu">+ Mitarbeiter</button></div>
@@ -6655,7 +6673,7 @@ BTB_KN.push(r=>erw('btbDruck')?`<button data-act="btbdruck" data-id="${r.id}">�
 ACT.btbdruck=async el=>{const r=ROOT.btb(el.dataset.id);if(!r)return;document.activeElement?.blur?.();saveState('Druck wird vorbereitet …');
   const P=[...(r.bilder||[]).map(b=>b.pfad),...Object.values(r.sig||{}).map(s=>s?.pfad)].filter(Boolean);
   await Promise.all(P.map(async p=>{try{BURL[p]??=URL.createObjectURL(await bildBlob(p));const i=new Image();i.src=BURL[p];await i.decode()}catch(e){}}));saveState('');
-  const a=btbRoot(r);druckHTML(`<div class="doc btbp">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">Bautagesbericht ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${btbDoc(r)}</div>`,`Bautagesbericht ${r.nr} ${a?.nr||''} ${dAT(r.datum)}`);bilderLaden()};
+  const a=btbRoot(r);druckHTML(`<div class="doc btbp">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">${btbTitel(r)} ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${btbDoc(r)}</div>`,`${btbTitel(r)} ${r.nr} ${a?.nr||''} ${dAT(r.datum)}`);bilderLaden()};
 start();
 </script>
 </body>

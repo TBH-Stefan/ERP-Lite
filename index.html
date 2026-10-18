@@ -6199,12 +6199,15 @@ const btbWetter=r=>{const w=r.wetter||{},t=[w.tMin,w.tMax].filter(x=>x!==''&&x!=
 const btbAuftraege=()=>auftragsListe().filter(a=>!a.docs.every(d=>d.storno));
 function btbNeu(aid,art=''){
   const L=DB.berichte.filter(x=>x.auftragId===aid),vor=[...L].sort((a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt))[0],k=kontakt((beleg(aid)||DB.belege.find(b=>b.auftragId===aid))?.kontaktId);
-  const nr=Math.max(0,...L.filter(x=>(x.art||'')===art).map(x=>+x.nr||0),...DB.papierkorb.filter(e=>e.c==='berichte'&&e.daten?.auftragId===aid&&(e.daten.art||'')===art).map(e=>+e.daten.nr||0))+1; // Nummer laufend je Auftrag, auch Gelöschtes zählt
+  const nr=erw('btbNrDatum')?btbNrTag(isoD()):Math.max(0,...L.filter(x=>(x.art||'')===art).map(x=>+x.nr||0),...DB.papierkorb.filter(e=>e.c==='berichte'&&e.daten?.auftragId===aid&&(e.daten.art||'')===art).map(e=>+e.daten.nr||0))+1; // Nummer laufend je Auftrag, auch Gelöschtes zählt
   const r={id:uid(),nr,...(art?{art}:{}),auftragId:aid,datum:isoD(),ort:vor?.ort||[k?.strasse,[k?.plz,k?.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '),verfasser:vor?.verfasser||S().bearbeiter||'',
     wetter:{vm:'',nm:'',tMin:'',tMax:'',beh:false,behStd:'',behTxt:''},personal:(vor?.personal||[]).map(p=>({name:p.name,tarif:p.tarif,von:p.von,bis:p.bis,pause:p.pause,stunden:p.von&&p.bis?'':p.stunden})),
     taet:[TPL.btbt()],material:[],geraete:[],vork:{},erstellt:new Date().toISOString()};
   if(!r.personal.length)r.personal=[{...TPL.btbp(),name:S().bearbeiter||''}];
   DB.berichte.push(r);log(btbTitel(r)+' angelegt',`${btbKz(r)} ${r.nr} ${auftragKurz(aid)}`);return r}
+/* P39 Teil 1 (erw.btbNrDatum): Berichtsnummer JJJJMMTT-NNN, Zähler je Tag über alle Aufträge, Bautages- und Regieberichte gemeinsam; Gelöschtes zählt mit, bestehende Nummern bleiben */
+erwPlus({k:'btbNrDatum',std:false,p:'Bautagesbericht (P36)',l:'Berichtsnummer nach Datum',info:'Neue Bautages- und Regieberichte bekommen die Nummer aus dem Datum und einer laufenden Nummer je Tag, z. B. „BTB 20261018-001“, „RB 20261018-002“. Der Zähler gilt für alle Aufträge gemeinsam, die Nummer ist im Betrieb eindeutig. Bestehende Berichte behalten ihre Nummer; wird das Datum später geändert, bleibt die Nummer.'});
+function btbNrTag(d){const v=String(d||isoD()).replace(/-/g,'')+'-',n=Math.max(0,...[...DB.berichte,...DB.papierkorb.filter(e=>e.c==='berichte').map(e=>e.daten||{})].map(x=>String(x.nr??'')).filter(x=>x.startsWith(v)).map(x=>+x.slice(v.length)||0));return v+String(n+1).padStart(3,'0')}
 const bIn=(R,f,v,{t='text',l='',ph='',cls='',list='',dis=false}={})=>`<label class="${cls}">${l}<input type="${t}"${t==='number'?' step="any" inputmode="decimal" data-t="nl"':''} data-o="path" data-r="${R}" data-f="${f}" value="${esc(v??'')}"${ph?` placeholder="${esc(ph)}"`:''}${list?` list="${list}"`:''}${dis?' disabled':''}></label>`;
 const bTa=(R,f,v,{l='',ph='',cls='w2'}={})=>`<label class="${cls}">${l}${ft(R,f,v,ph)}</label>`;
 const bAbs=(id,titel,inhalt,{offen=true,zusatz=''}={})=>kmp()?akk(id,titel,inhalt,{offen,zusatz}):`<div class="card"><h2>${titel}${zusatz?` <span class="mut" style="font-weight:400;font-size:13px">· ${zusatz}</span>`:''}</h2>${inhalt}</div>`;

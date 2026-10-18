@@ -23,11 +23,9 @@ const aendern=page=>page.evaluate(()=>{
   for(const t of s.tarife){t.vk*=2;t.lohnNw=false}
 });
 
-// Bekannte Abweichung (Stand 15.10.2026, nicht behoben): Die Datei-Info der PDF (Titel mit Kunde, Autor = Firma) liest bei
-// festgeschriebenen Belegen den aktuellen Kontakt und die aktuelle Firma (pdfAusBeleg(), Zeile „/Info“: kName(b.kontaktId),
-// S().firma.name) statt b.adresse bzw. b.fix. Sichtbar nur in den Dokumenteigenschaften, nicht im Ausdruck.
-// Nach der Korrektur BEKANNT_PDF_INFO auf false setzen – dann wird auch die Datei-Info streng geprüft.
-const BEKANNT_PDF_INFO=true;
+// Datei-Info der PDF (Titel mit Kunde, Autor = Firma): seit 18.10.2026 aus b.adresse bzw. b.fix (pdfAusBeleg()), daher ebenfalls streng geprüft.
+// Für eine künftige bekannte Abweichung BEKANNT_PDF_INFO vorübergehend auf true setzen (nur Hinweis statt Fehler).
+const BEKANNT_PDF_INFO=false;
 
 test('Nachdruck festgeschriebener Belege bleibt nach Änderungen an Stammdaten und Einstellungen gleich',async({page})=>{
   const fehler=await oeffnen(page),ids=H.lesen(H.IDS);

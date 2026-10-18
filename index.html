@@ -10,6 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ERP-Lite">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="data:image/png;base64,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">
 <title>ERP-Lite</title>
 <style>
@@ -486,6 +487,13 @@ body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150p
   .segr span{display:flex;align-items:center;justify-content:center;min-height:40px;padding:0 2px;border-radius:7px;font-size:13px;color:var(--ink);cursor:pointer}
   .segr input:checked+span{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18);font-weight:600}
 }
+/* App (P40, erw.netStatus): Online/Offline-Anzeige in Kopfleiste und Seitenleiste */
+button.netz{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#c9d1dc;white-space:nowrap;padding:2px 6px;border-radius:10px}
+button.netz::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:#34c759}
+button.netz.off{color:#ffd27a}button.netz.off::before{background:#ff9f0a}
+button.netz.sync::before{background:#0a84ff;animation:netzp .8s infinite alternate}@keyframes netzp{to{opacity:.25}}
+nav button.netz{margin:0 12px 2px}
+@media(max-width:760px){.topbar button.netz{min-height:44px;justify-content:center}.topbar button.netz.on{font-size:0;gap:0;min-width:24px}}
 </style>
 </head>
 <body>
@@ -776,7 +784,7 @@ async function kvGet(k){const db=await idbOpen();return new Promise(r=>{const q=
 async function kvSet(k,v){const db=await idbOpen();return new Promise(r=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>r();tx.onerror=()=>r()})}
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
-function saveState(t,bad){for(const e of [$('#savestate'),$('#sync2')]){if(e){e.textContent=t;e.className=bad?'bad':''}}}
+function saveState(t,bad){for(const e of [$('#savestate'),$('#sync2')]){if(e){e.textContent=t;e.className=bad?'bad':''}}netzZeigen()}
 /* Änderungen werden erst nach Bestätigung gespeichert (persist = vormerken, commit = speichern) */
 function persist(){merk();DIRTY=true;dirtyBar()}
 function snap(){SNAP=JSON.stringify(DB)}
@@ -995,20 +1003,21 @@ async function saveNow(){
     do{
       saveAgain=false;txt=JSON.stringify(DB);
       try{localStorage.setItem('erp-lite-cache',txt)}catch(e){}
+      if(OFFSTART){pending=true;kvSet('unsynced',{local:txt,base:STORE.lastText,ts:Date.now()}).catch(()=>{});saveState('Offline – wird abgeglichen, sobald Internet da ist',true);setTimeout(nachholen,0);return} // ohne Netz gestartet (P40): nie ohne eTag hochladen, erst abgleichen
       if(STORE.art==='cache'){pending=false;saveState('Nur Browser-Cache – keine Synchronisierung!',true);return}
       const heute=isoD();
       if(lastBackupDay!==heute&&STORE.lastText){try{await STORE.backup(STORE.lastText,heute)}catch(e){}lastBackupDay=heute}
       await STORE.save(txt);STORE.lastText=txt;
     }while(saveAgain);
-    pending=false;kvSet('unsynced',null).catch(()=>{});
+    pending=false;NETZFEHL=false;kvSet('unsynced',null).catch(()=>{});
     saveState('Gespeichert '+new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}));
   }catch(e){
     if(e.konflikt){saving=false;await zusammenfuehren();return}
     kvSet('unsynced',{local:txt||JSON.stringify(DB),base:STORE.lastText,ts:Date.now()}).catch(()=>{});
     if(e.login){saveState('Anmeldung abgelaufen – tippen zum Anmelden',true);loginHinweis()}
-    else if(e instanceof TypeError||!navigator.onLine){saveState('Offline – wird später gespeichert',true);clearTimeout(retryT);retryT=setTimeout(saveNow,30000)}
+    else if(e instanceof TypeError||!navigator.onLine){NETZFEHL=true;saveState('Offline – wird später gespeichert',true);clearTimeout(retryT);retryT=setTimeout(saveNow,30000)}
     else{saveState('FEHLER beim Speichern!',true);alert('Speichern fehlgeschlagen:\n'+e.message+'\n\nDie Änderungen bleiben in diesem Browser erhalten und werden beim nächsten Start nachgetragen.')}
-  }finally{saving=false}
+  }finally{saving=false;netzZeigen()}
 }
 window.addEventListener('online',()=>{if(pending)saveNow()});
 function loginHinweis(){for(const e of [$('#savestate'),$('#sync2')])if(e){e.style.cursor='pointer';e.onclick=()=>AUTH.login()}}
@@ -1053,6 +1062,7 @@ async function zusammenfuehren(){
 }
 /* Beim Zurückkehren zur App (Handy/PC) neuere Daten holen */
 async function aktualisieren(){
+  if(OFFSTART){nachholen();return} // ohne Netz gestartet (P40)
   if(STORE.art!=='od'||DIRTY||pending||saving||!DB)return;
   const a=document.activeElement;if(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))return;
   try{const m=await STORE.meta();if(m&&m.eTag!==STORE.etag){const txt=await STORE.load();DB=migrate(JSON.parse(txt));snap();undoBasis(true);artDatalist();render();saveState('Aktualisiert '+new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}))}}catch(e){}
@@ -1073,9 +1083,48 @@ async function start(){
   let neu=false;
   try{neu=await AUTH.redirectVerarbeiten()}catch(e){alert('Anmeldung: '+e.message)}
   if(neu)lsSet('erp-modus','od');
-  if(lsGet('erp-modus')==='od'&&AUTH.tok()){try{await odStart();return}catch(e){if(!e.login)alert('OneDrive nicht erreichbar:\n'+e.message)}}
+  if(lsGet('erp-modus')==='od'&&AUTH.tok()){try{await odStart();return}catch(e){if(!e.login&&(e instanceof TypeError||navigator.onLine===false)&&await offlineStart())return;if(!e.login)alert('OneDrive nicht erreichbar:\n'+e.message)}}
   startScreen();
 }
+/* App (P40): Start ohne Internet und Online/Offline-Anzeige.
+   erw.appOffline: Service Worker sw.js hält nur das Programm (index.html, Symbol) für den Start ohne Netz bereit, holt online immer zuerst die neueste Version; keine Daten.
+   Ohne Netz gestartet (OFFSTART): Daten aus der Browser-Kopie, Speichern nur lokal (unsynced), mit Netz nachholen() = 3-Wege-Abgleich wie zusammenfuehren(), erst dann Hochladen mit eTag.
+   erw.netStatus: Anzeige .netz vor #sync2/#savestate (Online, Abgleich …, Offline · Änderungen warten), Tippen gleicht ab */
+erwPlus({k:'appOffline',std:false,p:'App iPhone/iPad (P40)',l:'App: Start auch ohne Internet',info:'Die App vom Home-Bildschirm (bzw. die Seite im Browser) startet auch ohne Internetverbindung, z. B. im Keller oder auf der Baustelle. Gearbeitet wird dann mit den Daten auf diesem Gerät; sobald wieder Internet da ist, werden die Änderungen mit dem OneDrive abgeglichen. Festschreiben (Nummernvergabe) bleibt nur mit Internet möglich. Online lädt die App immer die neueste Programmversion.'},
+  {k:'netStatus',std:false,p:'App iPhone/iPad (P40)',l:'Online/Offline-Anzeige mit Abgleich',info:'Zeigt oben in der Kopfleiste (Handy) bzw. in der Seitenleiste (PC) an, ob eine Verbindung zum OneDrive besteht: grün = online, blau = Abgleich läuft, orange = offline (mit Hinweis, wenn Änderungen auf den Abgleich warten). Tippen gleicht sofort ab.'});
+var OFFSTART=false,NETZFEHL=false,NHL=false,SWZ=null;
+const appOffAn=()=>lsGet('erp-app')==='1'; // Schalter beim Start, bevor Daten geladen sind
+function swPruefen(){const an=!!DB&&STORE.art!=='cache'&&!!erw('appOffline');if(an===SWZ)return;SWZ=an;lsSet('erp-app',an?'1':null);
+  if(!('serviceWorker' in navigator)||!window.isSecureContext)return;
+  if(an)navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{});
+  else navigator.serviceWorker.getRegistrations().then(L=>{for(const r of L)if(/\/sw\.js$/.test(r.active?.scriptURL||r.installing?.scriptURL||r.waiting?.scriptURL||''))r.unregister();if(window.caches)caches.keys().then(k=>k.filter(x=>x.startsWith('erp-app')).forEach(x=>caches.delete(x)))}).catch(()=>{})}
+async function offlineStart(){
+  if(!appOffAn())return false;
+  const c=cacheLaden(),u=await kvGet('unsynced').catch(()=>null),d=c||(u?.local?JSON.parse(u.local):null);if(!d)return false;
+  STORE=ODSTORE;STORE.etag=null;STORE.lastText=u?u.base:JSON.stringify(d);OFFSTART=true;NETZFEHL=true;pending=!!u;
+  laden(d);saveState('Offline – Daten von diesem Gerät',true);return true}
+async function nachholen(){
+  if(!OFFSTART||NHL||saving||DIRTY||navigator.onLine===false)return;NHL=true;netzZeigen();
+  try{const base=STORE.lastText?JSON.parse(STORE.lastText):null,txt=await STORE.load();
+    let konfl=[];if(txt){const r=migrate(JSON.parse(txt));if(r.settings?.erw?.mfaPflicht&&!mfaOk()){mfaSperre();return}const m=merge3(base,DB,r);DB=migrate(m.db);konfl=m.konfl}
+    OFFSTART=false;NETZFEHL=false;undoBasis(true);artDatalist();render();pending=true;await saveNow();
+    if(konfl.length)alert('Diese Datensätze wurden gleichzeitig auf einem anderen Gerät geändert – es gilt die Version des anderen Geräts:\n\n• '+[...new Set(konfl)].join('\n• '))}
+  catch(e){if(e.login){saveState('Anmeldung abgelaufen – tippen zum Anmelden',true);loginHinweis()}}
+  finally{NHL=false;netzZeigen()}}
+window.addEventListener('online',()=>{nachholen();netzZeigen()});
+window.addEventListener('offline',()=>netzZeigen());
+setInterval(()=>{if(OFFSTART&&document.visibilityState==='visible')nachholen()},30000);
+function netzZeigen(){
+  let an=false;try{an=!!DB&&STORE.art==='od'&&!!erw('netStatus')}catch(e){return}
+  let L=document.querySelectorAll('button.netz');if(!an){L.forEach(e=>e.remove());return}
+  if(!L.length){for(const r of [$('#sync2'),$('#savestate')])if(r){const e=document.createElement('button');e.type='button';e.className='netz';e.dataset.act='netz';r.before(e)}L=document.querySelectorAll('button.netz')}
+  const off=navigator.onLine===false||OFFSTART||NETZFEHL,sync=!off&&(pending||saving||NHL),k=off?'off':sync?'sync':'on',
+    t=off?'Offline'+(pending?' · Änderungen warten':''):sync?'Abgleich …':'Online',
+    ti=off?'Keine Verbindung zum OneDrive. Änderungen bleiben auf diesem Gerät und werden abgeglichen, sobald wieder Internet da ist. Festschreiben erst wieder online.':'Verbunden mit dem OneDrive – tippen zum Abgleichen';
+  L.forEach(e=>{e.className='netz '+k;e.textContent=t;e.title=ti;e.setAttribute('aria-label',t)})}
+queueMicrotask(()=>Object.assign(ACT,{netz:()=>{
+  if(navigator.onLine===false){alert('Offline: keine Internetverbindung.\n\nDu kannst weiterarbeiten. Die Änderungen bleiben auf diesem Gerät und werden mit dem OneDrive abgeglichen, sobald wieder Internet da ist. Festschreiben ist erst dann wieder möglich.');return}
+  if(OFFSTART){if(DIRTY){alert('Bitte zuerst speichern, dann wird abgeglichen.');return}nachholen()}else if(pending)saveNow();else{NETZFEHL=false;aktualisieren().then(()=>saveState('Abgeglichen '+new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})))}}}));
 /* Zweiter Faktor (P37, erw.mfaPflicht, Standard aus): Microsoft trägt im Zugriffstoken unter „amr“ ein, wie angemeldet wurde ("pwd", "mfa").
    Mit Schalter lädt das Programm die Daten aus dem OneDrive nur, wenn die Anmeldung einen zweiten Faktor hatte (Authenticator, SMS …).
    Einschalten nur in einer solchen Anmeldung (mfaFrei), damit man sich nicht selbst aussperrt. Ersetzt nicht die MFA-Pflicht in Microsoft Entra */
@@ -1629,6 +1678,7 @@ function render(){
   document.body.classList.toggle('ma',erw('mitarbeiter')); // Personal (P36 b)
   document.body.classList.toggle('kompakt',kmp()); // Kompakte Ansicht (P30): CSS für bestehende Elemente nur unter body.kompakt
   document.body.classList.toggle('ios',kmp()&&erw('ios')); // iOS-Darstellung am Handy (CSS nur unter body.ios in @media max-width 760px)
+  swPruefen();netzZeigen(); // App (P40): Service Worker an/ab, Online/Offline-Anzeige
   $('#main').innerHTML=f(arg);
   document.body.classList.toggle('zlaus',!erw('zuletzt'));if(arg&&ZL_V.includes(view))zuletztMerk(view+'/'+arg); // Zuletzt geöffnet (P19 a)
   requestAnimationFrame(vorschauSeiten);

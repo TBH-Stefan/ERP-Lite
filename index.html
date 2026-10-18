@@ -308,6 +308,17 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .hint{background:#fff8e6;border:1px solid #f3dca5;border-radius:6px;padding:8px 10px;margin-bottom:12px;font-size:13px}
 .bstat{font-size:13px;color:var(--mut);margin:-6px 0 12px;line-height:1.6}.bstat a{color:var(--acc);text-decoration:none}.bstat a:hover{text-decoration:underline}.bstat b{color:var(--ink)}.bstat .tag{margin-left:4px} /* Statuszeile im Beleg (P19 c) */
 .bstat.fix{position:sticky;z-index:25;background:var(--bg);margin:-6px -4px 12px;padding:4px;border-bottom:1px solid var(--line)}main:has(.bstat.fix) .split .sticky{top:48px;max-height:calc(100vh - 58px)}
+/* Tab-Leiste (P40, erw.tabLeiste): iPhone unten wie iOS-Apps; nicht im Beleg mit Aktionsleiste (.aktl) und nicht bei offener Tastatur */
+#tabl{display:none}
+@media(max-width:760px){
+  body.tl #tabl{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:36;background:rgba(249,249,251,.94);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid rgba(0,0,0,.22);padding:0 max(4px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(4px,env(safe-area-inset-left))}
+  #tabl a{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:50px;font-size:10px;font-weight:500;color:#8e8e93;text-decoration:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+  #tabl a svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  #tabl a.on{color:var(--acc)}
+  body.tl:has(.aktl) #tabl,body.tl:has(:is(input:not([type=checkbox]):not([type=radio]),textarea,select,[contenteditable="true"]):focus) #tabl{display:none}
+  body.tl:not(:has(.aktl)) main{padding-bottom:calc(140px + env(safe-area-inset-bottom))}
+  body.tl:not(:has(.aktl)) #dirtybar{bottom:calc(58px + env(safe-area-inset-bottom))}
+}
 #start{max-width:620px;margin:8vh auto;padding:0 16px}
 @media(max-width:760px){
   body.loaded #app{display:block}
@@ -1847,7 +1858,23 @@ function render(){
   document.body.classList.toggle('ihh',erw('ihHover')&&HOVER.matches);document.body.classList.toggle('ssp',erw('scrollSperre')); // Bedienung (P33)
   document.querySelectorAll('.modal').forEach(m=>{try{if(m._gilt&&!m._gilt()){(m._weg||(()=>m.remove()))();return}m._zeich?.()}catch(e){}}); // offene Bearbeiten-Pop-ups (P30) zeigen den neuen Stand; Pop-ups eines verlassenen oder ersetzten Belegs (Navigation, Abgleich, Verwerfen) schließen
   lfNav(); // Seitenleiste: „Offene Lieferungen“ (P35)
+  tabLeiste(); // iPhone: Tab-Leiste unten (P40)
 }
+/* Tab-Leiste (P40, erw.tabLeiste, nur iPhone mit iOS-Darstellung): #tabl am Ende von body, aus render() über tabLeiste(); aktiv = Eintrag der Seitenleiste (nav a.on), sonst „Mehr“ (öffnet die Seitenleiste).
+   erw.wischZurueck: in der App vom Home-Bildschirm (standalone) Wischen vom linken Rand = Zurück (history.back) */
+erwPlus({k:'tabLeiste',std:false,p:'App iPhone/iPad (P40)',l:'iPhone: Tab-Leiste unten',info:'Am iPhone steht unten eine Leiste wie in iOS-Apps: Überblick, Verkauf, Einkauf, Berichte (bzw. Zeiten, wenn die Bautagesberichte aus sind) und Mehr (öffnet das Menü mit allen Bereichen). Im geöffneten Beleg und beim Tippen in ein Feld wird sie ausgeblendet. Wirkt nur mit der iOS-Darstellung.'},
+  {k:'wischZurueck',std:false,p:'App iPhone/iPad (P40)',l:'Wischen vom linken Rand = Zurück',info:'In der App vom Home-Bildschirm gibt es keine Zurück-Taste des Browsers. Mit diesem Schalter führt Wischen vom linken Bildschirmrand nach rechts zur vorigen Seite (wie in Safari). Nicht bei offenen Pop-ups.'});
+const TB_I={dash:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',V:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',E:'<path d="M3 4h2l2.5 11h11L21 7H7"/><circle cx="10" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/>',
+  btb:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/>',zt:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',mehr:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>'};
+function tabLeiste(){
+  const an=!!DB&&kmpH()&&erw('ios')&&erw('tabLeiste');document.body.classList.toggle('tl',!!an);let el=$('#tabl');if(!an){el?.remove();return}
+  if(!el){el=document.createElement('div');el.id='tabl';el.setAttribute('role','tablist');document.body.appendChild(el)}
+  const L=[['dash','Überblick','dash'],['belege/V','Verkauf','V'],['belege/E','Einkauf','E'],erw('btb')?['berichte','Berichte','btb']:['zeiten','Zeiten','zt']],
+    akt=$('nav a.on')?.dataset.n||'',hat=L.some(x=>x[0]===akt),sv=i=>`<svg viewBox="0 0 24 24" aria-hidden="true">${TB_I[i]}</svg>`;
+  el.innerHTML=L.map(([n,l,i])=>`<a href="#/${n}" class="${n===akt?'on':''}">${sv(i)}${l}</a>`).join('')+`<a href="#" class="${hat?'':'on'}" onclick="event.preventDefault();event.stopPropagation();document.body.classList.toggle('nav')">${sv('mehr')}Mehr</a>`}
+{let w0=null;const app=()=>navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
+  document.addEventListener('touchstart',e=>{w0=null;if(!DB||!erw('wischZurueck')||e.touches.length!==1||!app())return;const p=e.touches[0];if(p.clientX>24||document.querySelector('.modal,.mpop')||document.body.classList.contains('nav'))return;w0=[p.clientX,p.clientY,Date.now()]},{passive:true});
+  document.addEventListener('touchend',e=>{if(!w0)return;const p=e.changedTouches[0],dx=p.clientX-w0[0],dy=Math.abs(p.clientY-w0[1]),dt=Date.now()-w0[2];w0=null;if(dx>80&&dy<60&&dt<800)history.back()},{passive:true});}
 window.addEventListener('hashchange',async()=>{
   if(!DB)return;
   if(erw('strgP'))druckLeeren(); // Druckbereich gehört zur verlassenen Seite

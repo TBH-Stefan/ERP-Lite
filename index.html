@@ -6246,6 +6246,28 @@ document.addEventListener('click',e=>{
   if(el.tagName==='SELECT')return;
   ACT[el.dataset.act]?.(el,e);
 });
+/* Dokumente je Kontakt (P31, erw.kDok): Abschnitt „Dokumente“ im Kunden bzw. Lieferanten (Wrapper um V.kontakt). Dateien in der Ablage unter Kontakte/<Nr>_<Name>/ (STORE.putFile, Bilder verkleinert),
+   in den Daten nur die Verknüpfung k.dok=[{name,path,id,url,datum,groesse,art,notiz}]; Öffnen wie Beleganhänge (STORE.openFile → blobOeffnen), „Entfernen“ löst nur die Verknüpfung.
+   Art und Notiz über den Pfad-Setter (ROOT.kd), Hochladen über input[data-kdok] (am Handy auch Kamera) */
+erwPlus({k:'kDok',std:false,p:'Stammdaten (P31)',l:'Dokumente je Kunde / Lieferant',info:'Im Kunden bzw. Lieferanten der Abschnitt „Dokumente“: Dateien hochladen (am Handy auch Foto) mit Art (Vertrag, Plan, Korrespondenz, Sonstiges) und Notiz. Die Dateien liegen in der Ablage unter Kontakte/<Nr>_<Name>/ (OneDrive bzw. Ordner), in den Daten steht nur die Verknüpfung. PDF und Bilder öffnen im Programm, andere Dateien als Download. „Entfernen“ löst nur die Verknüpfung, die Datei bleibt in der Ablage. Aus = Abschnitt verborgen, Verknüpfungen bleiben erhalten.'});
+const KDOK=[['vertrag','Vertrag'],['plan','Plan'],['korr','Korrespondenz'],['sonst','Sonstiges']];
+ROOT.kd=id=>kontakt(id);
+const kdOrdner=k=>`Kontakte/${String(k.nr||k.id).replace(/[^\w.\-]+/g,'_')}_${String(k.name||'').replace(/[^\w.\-]+/g,'_').slice(0,40)}`;
+function kDokKarte(k){const L=k.dok||[],R='kd|'+k.id,lk=(x,i)=>`<a href="javascript:void 0" data-act="kdoko" data-id="${k.id}" data-i="${i}">📄 ${esc(x.name)}</a>`,
+    art=(x,i)=>`<select data-o="path" data-r="${R}" data-f="dok.${i}.art">${KDOK.map(([v,l])=>opt(v,l,x.art||'sonst')).join('')}</select>`,no=(x,i)=>`<input data-o="path" data-r="${R}" data-f="dok.${i}.notiz" value="${esc(x.notiz||'')}" placeholder="Notiz">`,
+    wg=(i)=>`<button class="s d" data-act="kdokx" data-id="${k.id}" data-i="${i}" title="Verknüpfung entfernen (Datei bleibt in der Ablage)">✕</button>`,info=x=>`<div class="mut" style="font-size:12px">${dAT((x.datum||'').slice(0,10))}${x.groesse?' · '+fmtQ(r2(x.groesse/1024))+' KB':''}</div>`;
+  const inh=`<div class="card">${kmp()?'':'<h2>Dokumente</h2>'}${L.length&&kmpH()?L.map((x,i)=>`<div style="padding:6px 0;border-bottom:1px solid var(--line,#e5e7eb)"><div class="bar" style="margin:0">${lk(x,i)}<span class="sp"></span>${wg(i)}</div>${info(x)}<div class="row" style="margin-top:4px"><label>Art${art(x,i)}</label><label class="w2">Notiz${no(x,i)}</label></div></div>`).join(''):L.length?`<table class="kdok"><tbody>${L.map((x,i)=>`<tr><td>${lk(x,i)}${info(x)}</td><td style="width:150px">${art(x,i)}</td><td>${no(x,i)}</td><td style="width:40px">${wg(i)}</td></tr>`).join('')}</tbody></table>`:'<p class="mut" style="margin:0">Noch keine Dokumente.</p>'}
+    <div class="bar" style="margin:8px 0 0"><label class="btn" style="cursor:pointer">+ Dokument hochladen<input type="file" multiple data-kdok="${k.id}" style="display:none"></label><span class="mut" style="font-size:12px">Ablage: ${esc(kdOrdner(k))}/</span></div></div>`;
+  return kmp()?akk('k-dok','Dokumente',inh,{offen:!!L.length,zusatz:L.length+''}):inh}
+const vKontakt0=V.kontakt;V.kontakt=id=>{const h=vKontakt0(id),k=kontakt(id);return k&&erw('kDok')?h+kDokKarte(k):h};
+document.addEventListener('change',async e=>{const id=e.target.dataset?.kdok;if(id==null)return;const k=kontakt(id),F=[...e.target.files];e.target.value='';if(!k||!F.length)return;
+  saveState('lade hoch …');k.dok=k.dok||[];
+  try{for(const f0 of F){const f=/^image\//.test(f0.type)?await bildVerkleinern(f0):f0,safe=f.name.replace(/[^\w.\-]+/g,'_').slice(-60),a=await STORE.putFile(`${kdOrdner(k)}/${Date.now().toString(36)}_${safe}`,f);
+    k.dok.push({...a,name:f0.name,datum:new Date().toISOString(),groesse:f.size,art:'sonst',notiz:''});log('Dokument zum Kontakt',`${k.nr} ${k.name}: ${f0.name}`)}}
+  catch(x){alert('Hochladen fehlgeschlagen:\n'+x.message)}saveState('');commit();render()});
+Object.assign(ACT,{
+  kdoko:async el=>{const x=kontakt(el.dataset.id)?.dok?.[+el.dataset.i];if(!x)return;try{await STORE.openFile(x)}catch(e){alert('Öffnen fehlgeschlagen: '+e.message)}},
+  kdokx:el=>{const k=kontakt(el.dataset.id),x=k?.dok?.[+el.dataset.i];if(!x||!confirm(`Verknüpfung zu „${x.name}“ entfernen?\n\nDie Datei bleibt in der Ablage (${x.path}).`))return;k.dok.splice(+el.dataset.i,1);log('Dokument vom Kontakt entfernt',`${k.nr} ${k.name}: ${x.name}`);commit();render()}});
 document.addEventListener('change',e=>{
   const el=e.target,d=el.dataset;
   if(el.tagName==='SELECT'&&d.act){ACT[d.act]?.(el,e);return}

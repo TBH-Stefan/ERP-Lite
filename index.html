@@ -186,6 +186,19 @@ body:not(.btb) nav a.navbtb{display:none!important} /* Bautagesberichte (P36 Tei
 #undobtn{margin:auto 18px 0;background:#2c3446;color:#fff;border:0}#undobtn:disabled{opacity:.4}
 #savestate.bad{color:#ffb4ab}
 main{flex:1;padding:20px 26px 60px;min-width:0}
+/* Sichere Bereiche ab 761 px (P40, Fehlerbehebung): App vom Home-Bildschirm mit durchsichtiger Statusleiste (iPad, iPhone quer) – Uhrzeit, Datum, Akku und WLAN stehen auf einem Streifen in Farbe der Seitenleiste, nie über Bedienelementen; am PC ist env() 0 */
+@media(min-width:761px){
+  body.loaded::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--side);z-index:99;pointer-events:none}
+  body.loaded #app{padding-top:env(safe-area-inset-top,0px)}
+  nav{top:env(safe-area-inset-top,0px);height:calc(100vh - env(safe-area-inset-top,0px));padding-left:env(safe-area-inset-left,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  main{padding-left:max(26px,env(safe-area-inset-left,0px));padding-right:max(26px,env(safe-area-inset-right,0px));padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
+  main>#sleiste{top:calc(8px + env(safe-area-inset-top,0px))}
+  .split .sticky,.glsp,body.kompakt .cols.bcol>:last-child{top:calc(10px + env(safe-area-inset-top,0px))}
+  .esu{top:env(safe-area-inset-top,0px)}
+  .modal{padding-top:max(10vh,calc(env(safe-area-inset-top,0px) + 12px))}
+  body.ipad.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(190px,1fr))} /* Übersicht am iPad: breitere Kennzahlen-Kacheln */
+}
+@media(min-width:761px) and (max-width:1100px){body.ipad.loaded .topbar{top:env(safe-area-inset-top,0px);padding-top:8px}body.ipad.loaded nav{height:100vh}body.ipad main>#sleiste{top:calc(68px + env(safe-area-inset-top,0px))}}
 h1{font-size:21px;margin:0 0 14px}h2{font-size:15px;margin:0 0 10px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:14px}
 /* Kompakt (P30) Beleg: Lese-Ansicht festgeschriebener Belege (dl.kvl, table.pos.pl ohne Eingabefelder), Zahlungsstatus oben (.zst) mit Zahlungen als Karten */
@@ -2122,7 +2135,7 @@ const quickK=()=>kmpH()?'<div class="quick"><button class="p" data-act="menue" d
 /* Übersicht anpassen (P39 Teil 3, erw.dashFlex): Bausteine DASH (ein/aus, Reihenfolge), Kennzahlen DASH_KPI, Zeitraum DASH_ZEIT; Einstellung je Gerätart S().dash.<pc|handy> {reihe,sicht:{k:bool},kpi:{k:bool},zeit} nur Abweichungen; Zahnrad ⚙ → LIVE.dash, Aktionen dashauf/dashstd */
 erwPlus({k:'dashFlex',std:false,p:'Bedienung (P33)',l:'Übersicht anpassen',info:'Im Überblick das Zahnrad ⚙: Bausteine ein- und ausschalten, Reihenfolge ändern, Kennzahlen wählen und den Zeitraum für Umsatz und DB II (Jahr, Quartal, Monat, letzte 12 Monate). Zusätzliche Bausteine: Offene Arbeiten, Berichte, Regieanträge, Umsatz je Monat. Gespeichert getrennt für Handy und Bildschirm. Ohne Änderung sieht der Überblick aus wie bisher.'});
 const DASH_ZEIT={jahr:'Jahr',quartal:'Quartal',monat:'Monat','12m':'Letzte 12 Monate'};
-const dashG=()=>HANDY.matches?'handy':'pc',dashS=()=>S().dash?.[dashG()]||{};
+const dashG=()=>HANDY.matches?'handy':erw('ipad')&&IPAD.matches?'tablet':'pc',dashS=()=>S().dash?.[dashG()]||(dashG()==='tablet'&&S().dash?.pc)||{}; // iPad (P40): eigene Einstellung „tablet“, bis dahin wie der Bildschirm
 function dashZeit(){const h=isoD(),j=h.slice(0,4),m=+h.slice(5,7),z=dashS().zeit||'jahr',q=Math.ceil(m/3);
   if(z==='quartal')return{von:`${j}-${String(q*3-2).padStart(2,'0')}-01`,bis:h,t:`Q${q} ${j}`};
   if(z==='monat')return{von:h.slice(0,8)+'01',bis:h,t:`${MONATE[m-1]} ${j}`};
@@ -2196,9 +2209,9 @@ function dashFlex(){const heute=isoD(),Z=dashZeit();
   for(const x of B){if(x.arr){G.push(x);continue}grp();out+=x.f(c)}grp();
   return`<div class="bar dkopf"><h1 style="margin:0">Überblick ${Z.t}</h1><span class="sp"></span><button data-act="lpop" data-lp="dash" title="Übersicht anpassen" aria-label="Übersicht anpassen">⚙</button></div>
   ${!S().firma.name?'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>':''}${out}`}
-LIVE.dash=()=>livePop('Übersicht anpassen',()=>{const g=dashG(),s=dashS(),R=dashReihe(),f=`dash.${g}`,K=s.kpi||{};
+LIVE.dash=()=>livePop('Übersicht anpassen',()=>{if(dashG()==='tablet'&&!S().dash?.tablet&&S().dash?.pc)S().dash.tablet=structuredClone(S().dash.pc);const g=dashG(),s=dashS(),R=dashReihe(),f=`dash.${g}`,K=s.kpi||{};
   const ch=(p,an,l)=>`<label class="chk"><input type="checkbox" data-o="s" data-f="${f}.${p}"${an?' checked':''}> ${l}</label>`;
-  return`<p class="mut" style="margin-top:0">Gilt für ${g==='handy'?'das Handy':'den Bildschirm'} auf allen Geräten dieser Art.</p>
+  return`<p class="mut" style="margin-top:0">Gilt für ${g==='handy'?'das Handy':g==='tablet'?'das iPad (Tablet)':'den Bildschirm'} auf allen Geräten dieser Art.</p>
   <div class="row"><label>Zeitraum für Umsatz und DB II<select data-o="s" data-f="${f}.zeit">${Object.entries(DASH_ZEIT).map(([k,l])=>`<option value="${k}"${(s.zeit||'jahr')===k?' selected':''}>${l}</option>`).join('')}</select></label></div>
   <table class="dcfg"><tbody>${R.map((k,i)=>{const x=DASH.find(y=>y.k===k),nein=x.nur&&!x.nur();return`<tr${nein?' class="mut"':''}><td>${ch('sicht.'+k,s.sicht?.[k]??x.std!==false,esc(x.l))}${nein?' <small>(Erweiterung aus)</small>':''}
     ${k==='kpi'?`<div class="dkpi">${DASH_KPI.map(y=>ch('kpi.'+y.k,K[y.k]??y.std!==false,esc(y.l))).join('')}</div>`:''}</td>

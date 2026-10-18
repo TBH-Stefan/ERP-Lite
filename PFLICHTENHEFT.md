@@ -305,5 +305,11 @@ Wunsch des Anwenders: „Wie gehen wir mit Teillieferungen und Verzügen im Lief
 - **Mehrere Tage** (Teil 9): Bericht von–bis (höchstens 31 Tage), Personal und Tätigkeiten je Tag, Witterung je Tag, Druck je Tag mit Summe.
 - **Regiebericht** (Teil 10): Art beim Anlegen (Bautagesbericht oder Regiebericht, eigene Nummern), eigene Regiepreise je Stundentarif; Regieberichte werden erst nach Unterschrift des Kunden verrechnet.
 - **Regieantrag** (Teil 11): eigene Belegart im Verkauf mit Nummernkreis RA, Regiepreise einsetzen, Genehmigung durch Unterschrift am Gerät, schriftlich oder abgelehnt; Regieberichte dazu verknüpft, Soll/Ist der Stunden und Beträge.
+- **Berichtsnummer nach Datum** (P39, Wunsch Anwender 18.10.2026): neue Berichte „BTB 20261018-001“ / „RB 20261018-002“, Zähler je Tag über alle Aufträge, Bautages- und Regieberichte gemeinsam; bestehende Nummern bleiben.
 - **Dokumente je Kunde/Lieferant** (P31): Dateien im Kontakt ablegen (Ablage `Kontakte/<Nr>_<Name>`), Art und Notiz, öffnen, Verweis entfernen.
 - Schalter (Einstellungen → Erweiterungen, alle Standard aus): Bautagesberichte, Fotos, abschließen und unterschreiben, drucken, Stunden in die Zeiterfassung, Vorschau, Rechnung, Fahrt und Reisezeit, mehrere Tage, Regiebericht, Regieantrag; Dokumente je Kontakt; Personal (P36 b); dazu „Unterschrift am Gerät und Sperre“ (P36 a, auch für Messprotokolle).
+
+## Bedienung: Speicherleiste und Übersicht (P39, Stand 18.10.2026)
+- **Speicherleiste:** Zurück, Vor, Verwerfen und Speichern in jedem Bereich an derselben Stelle (Bildschirm oben rechts, Handy als große Symbole in der Kopfleiste; unten bleibt am iPhone frei). Ausgegraut, wenn nichts zu tun ist; ● bei ungespeicherten Änderungen.
+- **Übersicht anpassen:** Zahnrad im Überblick: Bausteine ein/aus und Reihenfolge, Kennzahlen wählen, Zeitraum für Umsatz und DB II (Jahr, Quartal, Monat, letzte 12 Monate). Zusätzliche Bausteine: Offene Arbeiten (offene Auftragsbestätigungen, nicht verrechnete Stunden), offene Berichte, offene Regieanträge, Umsatz je Monat mit Vorjahr. Getrennt für Handy und Bildschirm gespeichert.
+- Schalter (Einstellungen → Erweiterungen, Standard aus): Berichtsnummer nach Datum, Speicherleiste in allen Bereichen, Übersicht anpassen.

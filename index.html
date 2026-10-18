@@ -82,6 +82,10 @@ nav a.navlf{padding-left:32px;font-size:13px}body.lfaus nav a.navlf{display:none
 @media(max-width:1000px){.lbcols{grid-template-columns:1fr}.lblist{max-height:30vh}}
 #dirtybar{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:60;background:#1d2330;color:#fff;border-radius:10px;padding:8px 10px 8px 16px;display:flex;gap:10px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.3);min-width:360px}
 #dirtybar span:first-child{color:#ffd27a}
+/* Übersicht anpassen (P39 Teil 3, erw.dashFlex): Kopf mit ⚙, Umsatz je Monat als Balken, Einstellung im Pop-up */
+.dkopf{margin-bottom:12px}.dums{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;height:160px;align-items:end}.dums>div{position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px;padding-bottom:18px;box-sizing:border-box}
+.dums span{width:40%;max-width:18px;border-radius:3px 3px 0 0;min-height:1px}.dums .da{background:var(--acc)}.dv{background:#c9d3e3}i.dv{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle}.dums small{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:11px;color:var(--mut)}
+.dcfg{width:100%;border-collapse:collapse}.dcfg td{padding:4px 6px;vertical-align:top;border-bottom:1px solid var(--line)}.dkpi{margin:4px 0 0 22px;display:grid;grid-template-columns:1fr 1fr;gap:2px 12px}@media(max-width:760px){.dkpi{grid-template-columns:1fr}.dums{gap:2px}}
 /* Liefertermine (P35): Zähler an „Einkauf“, Karte „Lieferverzug“ im Überblick, Erinnerung und Wiedervorlage in der Karte „Lieferung“ */
 nav .nbz{display:inline-block;min-width:18px;padding:0 6px;margin-left:4px;border-radius:9px;background:var(--err);color:#fff;font-size:11px;line-height:18px;text-align:center}.lfd{border-left:4px solid var(--err)}.lfd h2 .mut{font-weight:400;font-size:13px}
 .lfe{font-size:13px;margin:0 0 6px;flex-wrap:wrap;row-gap:4px}.lfe .sp{min-width:8px}
@@ -1860,6 +1864,95 @@ MENUE.lager=()=>[{l:'Lagerplätze verwalten …',ic:'📍',act:'lpverw'},{l:'Lag
 queueMicrotask(()=>{const z=MENUE.lagerz;if(z)MENUE.lagerz=el=>[{l:'Bestand buchen …',ic:'±',act:'lgpop',d:{aid:el.dataset.aid}},...z(el)]}); // nach allen Definitionen: ⋯ der Lagerkarte (Listen als Karten) ergänzen
 const quickK=()=>kmpH()?'<div class="quick"><button class="p" data-act="menue" data-m="neu">+ Neu ▾</button><button data-act="menue" data-m="einlesen">📷 Einlesen ▾</button><a class="btn" href="#/zeiten">⏱ Zeit</a></div>'
   :'<div class="quick"><a class="btn" href="#/zeiten">⏱ Zeit erfassen</a><button data-act="menue" data-m="einlesen">📷 Belege einlesen ▾</button><button data-act="qneu" data-t="AN">+ Angebot</button><button data-act="qneu" data-t="LS">+ Lieferschein</button><button data-act="qneu" data-t="RE">+ Rechnung</button></div>';
+/* Übersicht anpassen (P39 Teil 3, erw.dashFlex): Bausteine DASH (ein/aus, Reihenfolge), Kennzahlen DASH_KPI, Zeitraum DASH_ZEIT; Einstellung je Gerätart S().dash.<pc|handy> {reihe,sicht:{k:bool},kpi:{k:bool},zeit} nur Abweichungen; Zahnrad ⚙ → LIVE.dash, Aktionen dashauf/dashstd */
+erwPlus({k:'dashFlex',std:false,p:'Bedienung (P33)',l:'Übersicht anpassen',info:'Im Überblick das Zahnrad ⚙: Bausteine ein- und ausschalten, Reihenfolge ändern, Kennzahlen wählen und den Zeitraum für Umsatz und DB II (Jahr, Quartal, Monat, letzte 12 Monate). Zusätzliche Bausteine: Offene Arbeiten, Berichte, Regieanträge, Umsatz je Monat. Gespeichert getrennt für Handy und Bildschirm. Ohne Änderung sieht der Überblick aus wie bisher.'});
+const DASH_ZEIT={jahr:'Jahr',quartal:'Quartal',monat:'Monat','12m':'Letzte 12 Monate'};
+const dashG=()=>HANDY.matches?'handy':'pc',dashS=()=>S().dash?.[dashG()]||{};
+function dashZeit(){const h=isoD(),j=h.slice(0,4),m=+h.slice(5,7),z=dashS().zeit||'jahr',q=Math.ceil(m/3);
+  if(z==='quartal')return{von:`${j}-${String(q*3-2).padStart(2,'0')}-01`,bis:h,t:`Q${q} ${j}`};
+  if(z==='monat')return{von:h.slice(0,8)+'01',bis:h,t:`${MONATE[m-1]} ${j}`};
+  if(z==='12m')return{von:addDays(`${j-1}${h.slice(4)}`,1),bis:h,t:'letzte 12 Monate'};
+  return{von:j+'-01-01',bis:h,t:j}}
+const dashIn=(d,Z)=>!!d&&d>=Z.von&&d<=Z.bis;
+const DASH_KPI=[
+  {k:'ums',l:'Umsatz netto',f:c=>`<div class="kpi click" onclick="nav('auswertung')" title="Auswertungen">Umsatz netto ${c.Z.t}<b>${fmt(c.ums)} €</b></div>`},
+  {k:'db',l:'DB II Aufträge',f:c=>`<div class="kpi click" onclick="nav('auftraege')" title="Aufträge &amp; DB II">DB II Aufträge ${c.Z.t}<b>${fmt(c.db)} € ${c.u2?dbTag(c.db/c.u2):''}</b></div>`},
+  {k:'ford',l:'Offene Forderungen',f:c=>`<div class="kpi click" onclick="zuListe('V','','offenRe')" title="Offene Rechnungen im Verkauf">Offene Forderungen<b>${fmt(c.ford)} €</b><span class="${c.ueber.length?'err':'mut'}" ${c.ueber.length?`onclick="event.stopPropagation();zuListe('V','','ueber')" title="Überfällige Rechnungen" style="text-decoration:underline"`:''}>${c.ueber.length} überfällig</span></div>`},
+  {k:'verb',l:'Offene Verbindlichkeiten',f:c=>`<div class="kpi click" onclick="zuListe('E','','offenRe')" title="Offene Rechnungen im Einkauf">Offene Verbindlichkeiten<b>${fmt(c.verb)} €</b></div>`},
+  {k:'kosten',l:'Laufende Kosten',f:()=>{const x=kostenStand();return`<div class="kpi click" onclick="nav('kosten')" title="Laufende Kosten">Laufende Kosten / Monat<b>${fmt(x.mon)} €</b><span class="${x.ueber.length?'err':'mut'}">${x.ueber.length?x.ueber.length+' fällig zu buchen ('+fmt(sum(x.ueber,y=>y.k.betrag))+' €)':'nichts fällig'}</span></div>`}},
+  {k:'wv',l:'Noch zu verrechnen (EK)',f:c=>`<div class="kpi click" onclick="nav('verrechnung')">Noch zu verrechnen (EK)<b>${fmt(sum(c.wv,x=>x.offen*(+x.p.ep||+x.p.ek||0)))} €</b><span class="mut">${new Set(c.wv.map(x=>x.b.id)).size} Wareneingänge</span></div>`},
+  {k:'ang',l:'Offene Angebote',f:c=>`<div class="kpi click" onclick="zuListe('V','AN','offen')" title="Offene Angebote im Verkauf">Offene Angebote<b>${fmt(sum(c.ang,b=>summen(b).netto))} €</b><span class="mut">${c.ang.length} Stück</span></div>`},
+  {k:'std',l:'Stunden nicht verrechnet',std:false,f:c=>`<div class="kpi click" onclick="nav('zeiten')" title="Zeiterfassung">Stunden nicht verrechnet<b>${fmtQ(sum(c.ztOffen,z=>+z.stunden||0))} h</b><span class="mut">${c.ztOffen.length} Einträge</span></div>`}];
+const dashA=(h,f)=>`<a href="javascript:void 0" onclick="${f}" title="Alle anzeigen">${h} →</a>`,dashNb=b=>`onclick="nav('beleg/${b.id}')"`;
+const DASH=[
+  {k:'lf',l:'Lieferverzug (Liefertermine)',f:()=>lfDash()},
+  {k:'quick',l:'Schnellzugriff',f:()=>kmp()?quickK():`<div class="quick">
+    <a class="btn" href="#/zeiten">⏱ Zeit erfassen</a>
+    <label class="btn">📷 Lieferschein einlesen<input type="file" id="lsscan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Eingangsrechnung einlesen<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label><label class="btn">📄 Lieferantenangebot einlesen<input type="file" id="bescan" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>
+    <button data-act="qneu" data-t="AN">+ Angebot</button>
+    <button data-act="qneu" data-t="LS">+ Lieferschein</button>
+    <button data-act="qneu" data-t="RE">+ Rechnung</button>
+  </div>`},
+  {k:'kpi',l:'Kennzahlen',f:c=>{const K=dashS().kpi||{},L=DASH_KPI.filter(x=>K[x.k]??x.std!==false);return L.length?`<div class="grid">${L.map(x=>x.f(c)).join('')}</div>`:''}},
+  {k:'ueber',l:'Überfällige Ausgangsrechnungen',h:()=>dashA('Überfällige Ausgangsrechnungen',`zuListe('V','','ueber')`),arr:c=>c.ueber,leer:'nichts überfällig',
+    tab:b=>`<tr class="click" ${dashNb(b)}><td>${b.nr}</td><td>${esc(kName(b.kontaktId))}</td><td>fällig ${dAT(faellig(b))}</td><td class="n">${fmt(offen(b))}</td></tr>`,
+    karte:b=>karte({t:esc(b.nr),u:esc(kName(b.kontaktId)),z:'fällig '+dAT(faellig(b)),b:fmt(offen(b))+' €',a:dashNb(b)})},
+  {k:'erUe',l:'Eingangsrechnungen fällig (7 Tage)',h:()=>dashA('Eingangsrechnungen fällig (7 Tage)',`zuListe('E','ER','offenRe')`),arr:c=>c.erUe,leer:'keine fälligen Eingangsrechnungen',
+    tab:b=>`<tr class="click" ${dashNb(b)}><td>${esc(b.fremdNr)}</td><td>${esc(kName(b.kontaktId))}</td><td>${dAT(faellig(b))}</td><td class="n">${fmt(offen(b))}</td></tr>`,
+    karte:b=>karte({t:esc(b.fremdNr||bNr(b)),u:esc(kName(b.kontaktId)),z:'fällig '+dAT(faellig(b)),b:fmt(offen(b))+' €',a:dashNb(b)})},
+  {k:'min',l:'Unter Mindestbestand',h:()=>dashA('Unter Mindestbestand',`nav('lager')`),arr:c=>c.min,leer:'nichts unter Mindestbestand',
+    tab:a=>`<tr class="click" onclick="nav('artikel/${a.id}')"><td>${esc(a.nr)}</td><td>${esc(a.bez)}</td><td class="n">${fmtQ(bestand(a.id).menge)} / ${fmtQ(a.minBestand)} ${esc(a.einheit)}</td></tr>`,
+    karte:a=>karte({t:`${esc(a.nr)} ${esc(a.bez)}`,b:`${fmtQ(bestand(a.id).menge)} / ${fmtQ(a.minBestand)} ${esc(a.einheit)}`,a:`onclick="nav('artikel/${a.id}')"`})},
+  {k:'beOffen',l:'Offene Bestellungen',h:()=>dashA('Offene Bestellungen',`zuListe('E','BE','offen')`),arr:c=>c.beOffen,leer:'keine offenen Bestellungen',
+    tab:b=>`<tr class="click" ${dashNb(b)}><td>${b.nr}</td><td>${esc(kName(b.kontaktId))}</td><td>${b.liefertermin?dAT(b.liefertermin):''}</td><td>${statusTag(b)}</td></tr>`,
+    karte:b=>karte({t:esc(b.nr),s:statusTag(b),u:esc(kName(b.kontaktId)),z:b.liefertermin?'Liefertermin '+dAT(b.liefertermin):'',a:dashNb(b)})},
+  {k:'entw',l:'Entwürfe',h:()=>`Entwürfe <a href="javascript:void 0" onclick="zuListe('V','','entwurf')" style="font-weight:400;font-size:13px">Verkauf →</a> <a href="javascript:void 0" onclick="zuListe('E','','entwurf')" style="font-weight:400;font-size:13px">Einkauf →</a>`,arr:c=>c.entw,leer:'keine Entwürfe',
+    tab:b=>`<tr class="click" ${dashNb(b)}><td>${T[b.typ].bez}</td><td>${esc(kName(b.kontaktId))}</td><td>${esc(b.betreff)}</td><td>${dAT(b.datum)}</td></tr>`,
+    karte:b=>karte({t:`${BICON[b.typ]||''} ${T[b.typ].bez}`,u:[kName(b.kontaktId),b.betreff].filter(x=>x&&x!=='–').map(esc).join(' · '),z:dAT(b.datum),a:dashNb(b)})},
+  {k:'arbeit',l:'Offene Arbeiten',std:false,h:c=>dashA('Offene Arbeiten',`nav('auftraege')`)+(c.ztOffen.length?` <a href="#/zeiten" style="font-weight:400;font-size:13px">${fmtQ(sum(c.ztOffen,z=>+z.stunden||0))} h nicht verrechnet →</a>`:''),arr:c=>c.abOffen,leer:'keine offenen Aufträge',
+    tab:b=>`<tr class="click" ${dashNb(b)}><td>${b.nr}</td><td>${esc(kName(b.kontaktId))}</td><td>${esc(b.betreff||'')}</td><td class="n">${fmtQ(Math.round(erledigung(b)*100))} % geliefert</td></tr>`,
+    karte:b=>karte({t:esc(b.nr),u:[kName(b.kontaktId),b.betreff].filter(x=>x&&x!=='–').map(esc).join(' · '),b:fmtQ(Math.round(erledigung(b)*100))+' %',a:dashNb(b)})},
+  {k:'btb',l:'Berichte',std:false,nur:()=>erw('btb'),h:()=>dashA('Berichte offen',`nav('berichte')`),arr:c=>c.btbOffen,leer:'keine offenen Berichte',
+    tab:r=>`<tr class="click" onclick="nav('bericht/${r.id}')"><td>${btbKz(r)} ${r.nr}</td><td>${btbDat(r)}</td><td>${esc(auftragKurz(r.auftragId))}</td><td>${btbStatus(r)}</td></tr>`,
+    karte:r=>karte({t:`${btbKz(r)} ${r.nr} · ${btbDat(r)}`,s:btbStatus(r),z:esc(auftragKurz(r.auftragId)),a:`onclick="nav('bericht/${r.id}')"`})},
+  {k:'ra',l:'Regieanträge',std:false,nur:()=>erw('regieAntrag'),h:()=>dashA('Regieanträge offen',`zuListe('V','RA','')`),arr:c=>c.raOffen,leer:'keine offenen Regieanträge',
+    tab:b=>`<tr class="click" ${dashNb(b)}><td>${b.nr}</td><td>${esc(kName(b.kontaktId))}</td><td>${esc(b.betreff||'')}</td><td>${dAT(b.datum)}</td></tr>`,
+    karte:b=>karte({t:esc(b.nr),u:esc(kName(b.kontaktId)),z:dAT(b.datum),a:dashNb(b)})},
+  {k:'umsM',l:'Umsatz je Monat',std:false,f:()=>dashUmsM()}];
+function dashUmsM(){const j=+isoD().slice(0,4),W={};for(const b of DB.belege)if(zaehltUmsatz(b)){const y=+b.datum.slice(0,4);if(y===j||y===j-1){const k=b.datum.slice(0,7);W[k]=(W[k]||0)+sgn(b)*summen(b).nettoEff}}
+  const M=MONATE.map((_,i)=>[W[`${j}-${String(i+1).padStart(2,'0')}`]||0,W[`${j-1}-${String(i+1).padStart(2,'0')}`]||0]),mx=Math.max(1,...M.flat()),h=x=>Math.max(0,Math.round(x/mx*100));
+  return`<div class="card dumsm"><h2><a href="javascript:void 0" onclick="nav('auswertung')" title="Auswertungen">Umsatz je Monat ${j} →</a> <span class="mut" style="font-weight:400;font-size:13px"><i class="dv"></i> Vorjahr ${j-1}</span></h2><div class="dums">${M.map(([a,v],i)=>`<div title="${MONATE[i]}: ${fmt(a)} € (Vorjahr ${fmt(v)} €)"><span class="dv" style="height:${h(v)}%"></span><span class="da" style="height:${h(a)}%"></span><small>${MONATE[i].slice(0,3)}</small></div>`).join('')}</div></div>`}
+const dashReihe=()=>{const r=(dashS().reihe||[]).filter(k=>DASH.some(x=>x.k===k));return[...r,...DASH.map(x=>x.k).filter(k=>!r.includes(k))]};
+const dashAn=x=>(!x.nur||x.nur())&&(dashS().sicht?.[x.k]??x.std!==false);
+function dashFlex(){const heute=isoD(),Z=dashZeit();
+  const reV=DB.belege.filter(b=>RE_V.includes(b.typ)&&b.fest&&!b.storno),er=DB.belege.filter(b=>b.typ==='ER'&&b.fest&&!b.storno);
+  const nk=auftragsListe().filter(a=>a.docs.some(d=>zaehltUmsatz(d)&&dashIn(d.datum,Z))).map(a=>nachkalk(a.id));
+  const c={Z,ford:sum(reV,offen),ueber:reV.filter(b=>offen(b)>0.005&&faellig(b)<heute),verb:sum(er,offen),erUe:er.filter(b=>offen(b)>0.005&&faellig(b)<=addDays(heute,7)),
+    ang:DB.belege.filter(b=>b.typ==='AN'&&b.fest&&!b.storno&&!b.status&&(!b.gueltigBis||b.gueltigBis>=heute)),
+    ums:sum(DB.belege.filter(b=>zaehltUmsatz(b)&&dashIn(b.datum,Z)),b=>sgn(b)*summen(b).nettoEff),db:sum(nk,x=>x.db2),u2:sum(nk,x=>x.uN),
+    min:DB.artikel.filter(a=>a.lager&&a.aktiv!==false&&+a.minBestand>0&&bestand(a.id).menge<+a.minBestand),
+    beOffen:DB.belege.filter(b=>b.typ==='BE'&&b.fest&&!b.storno&&erledigung(b)<0.9999),entw:DB.belege.filter(b=>!b.fest&&!b.storno),wv:zuVerrechnen().filter(x=>x.offen>0),
+    ztOffen:(DB.zeiten||[]).filter(z=>!z.belegId),abOffen:DB.belege.filter(b=>b.typ==='AB'&&b.fest&&!b.storno&&!abZu(b)&&erledigung(b)<0.9999),
+    btbOffen:(DB.berichte||[]).filter(r=>!r.gesperrt||(r.art==='RB'&&!r.sig?.kunde)||(erw('btbRechnung')&&typeof btbRe==='function'&&btbVerr(r)&&!btbRe(r))).sort((a,b)=>(b.datum||'').localeCompare(a.datum||'')),
+    raOffen:DB.belege.filter(b=>b.typ==='RA'&&b.fest&&!b.storno&&!['gen','abg'].includes(b.ra?.st))};
+  const H=kmpH(),B=dashReihe().map(k=>DASH.find(x=>x.k===k)).filter(dashAn);let out='',G=[];
+  const grp=()=>{if(!G.length)return;if(H){const leer=G.filter(x=>!x.arr(c).length).map(x=>x.leer);out+=G.filter(x=>x.arr(c).length).map(x=>`<div class="card kkl" style="padding:0"><h2>${x.h(c)}</h2>${x.arr(c).map(x.karte).join('')}</div>`).join('')+(leer.length?`<div class="card mut">${leer.join(' · ').replace(/^./,z=>z.toUpperCase())}</div>`:'')}
+    else out+=`<div class="cols" style="grid-template-columns:1fr 1fr">${G.map(x=>{const a=x.arr(c);return`<div class="card"><h2>${x.h(c)}</h2>${a.length?`<table>${a.map(x.tab).join('')}</table>`:'<p class="mut">keine</p>'}</div>`}).join('')}</div>`;G=[]};
+  for(const x of B){if(x.arr){G.push(x);continue}grp();out+=x.f(c)}grp();
+  return`<div class="bar dkopf"><h1 style="margin:0">Überblick ${Z.t}</h1><span class="sp"></span><button data-act="lpop" data-lp="dash" title="Übersicht anpassen" aria-label="Übersicht anpassen">⚙</button></div>
+  ${!S().firma.name?'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>':''}${out}`}
+LIVE.dash=()=>livePop('Übersicht anpassen',()=>{const g=dashG(),s=dashS(),R=dashReihe(),f=`dash.${g}`,K=s.kpi||{};
+  const ch=(p,an,l)=>`<label class="chk"><input type="checkbox" data-o="s" data-f="${f}.${p}"${an?' checked':''}> ${l}</label>`;
+  return`<p class="mut" style="margin-top:0">Gilt für ${g==='handy'?'das Handy':'den Bildschirm'} auf allen Geräten dieser Art.</p>
+  <div class="row"><label>Zeitraum für Umsatz und DB II<select data-o="s" data-f="${f}.zeit">${Object.entries(DASH_ZEIT).map(([k,l])=>`<option value="${k}"${(s.zeit||'jahr')===k?' selected':''}>${l}</option>`).join('')}</select></label></div>
+  <table class="dcfg"><tbody>${R.map((k,i)=>{const x=DASH.find(y=>y.k===k),nein=x.nur&&!x.nur();return`<tr${nein?' class="mut"':''}><td>${ch('sicht.'+k,s.sicht?.[k]??x.std!==false,esc(x.l))}${nein?' <small>(Erweiterung aus)</small>':''}
+    ${k==='kpi'?`<div class="dkpi">${DASH_KPI.map(y=>ch('kpi.'+y.k,K[y.k]??y.std!==false,esc(y.l))).join('')}</div>`:''}</td>
+    <td class="n" style="white-space:nowrap"><button class="s" data-act="dashauf" data-k="${k}" data-d="-1"${i?'':' disabled'} title="Nach oben">↑</button><button class="s" data-act="dashauf" data-k="${k}" data-d="1"${i<R.length-1?'':' disabled'} title="Nach unten">↓</button></td></tr>`}).join('')}</tbody></table>
+  <div class="bar" style="margin:10px 0 0"><button data-act="dashstd">Standard wiederherstellen</button></div>`},{breit:true});
+queueMicrotask(()=>Object.assign(ACT,{
+  dashauf:el=>{const g=dashG(),R=dashReihe(),i=R.indexOf(el.dataset.k),j=i+(+el.dataset.d);if(i<0||j<0||j>=R.length)return;[R[i],R[j]]=[R[j],R[i]];((S().dash??={})[g]??={}).reihe=R;persist();render()},
+  dashstd:()=>{if(S().dash)delete S().dash[dashG()];persist();render()}}));
+{const d0=V.dash;V.dash=()=>DB&&erw('dashFlex')?dashFlex():d0()}
 const FILTER={};
 const fKnopf=(fl,n,a='')=>`<button class="${n?'on':''}" data-act="filter" data-fl="${fl}"${a}>Filter${n?` (${n})`:''} ▾</button>`;
 const fChips=L=>L.length?`<div class="bar chips">${L.map(([f,l])=>`<button class="on" data-act="fweg" data-f="${f}" title="Filter entfernen">${esc(l)} ✕</button>`).join('')}</div>`:'';

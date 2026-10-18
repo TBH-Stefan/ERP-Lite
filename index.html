@@ -450,6 +450,40 @@ body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150p
 }
 @media(pointer:coarse) and (min-width:761px){body.kompakt :is(main,.mbox) :is(button,.btn,select,input:not([type=checkbox]):not([type=radio]):not([type=file])):not(table.pos *){min-height:40px}}
 @media(min-width:761px) and (max-height:820px){body.kompakt nav a,body.kompakt nav button.zl{padding:4px 18px}body.kompakt nav .grp{padding:8px 18px 2px}body.kompakt nav .logo{padding:10px 18px 6px}}
+/* iPad (P40, erw.ipad): iOS-Gestaltung am Tablet mit Touch (ab 761 px, pointer:coarse) – Systemschrift, 44-pt-Tippziele, Schalter, Segmente; Hochformat bis 1100 px: Kopfleiste mit ☰, Seitenleiste als Menü */
+@media(min-width:761px){
+  body.ipad{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  body.ipad :is(a,button,input,select,textarea,label,summary,[data-act]){-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  body.ipad :is(button,.btn,summary,.mi){-webkit-user-select:none;user-select:none}
+  body.ipad :is(main,.mbox,.mpop,#dirtybar) :is(button,.btn):not(:disabled):not(table.pos *){min-height:44px}
+  body.ipad .mpop .mi{min-height:44px}
+  body.ipad :is(button,.btn,.mi,nav a):active{opacity:.55}
+  body.ipad nav a,body.ipad nav button.zl{min-height:44px;display:flex;align-items:center}
+  body.ipad :is(input,select,textarea,.rte){font-size:16px} /* kein Zoom beim Tippen in ein Feld */
+  body.ipad :is(main,.mbox) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select):not(table.pos *){min-height:44px;border-radius:10px}
+  body.ipad :is(main,.mbox) :is(textarea,.rte){border-radius:10px}
+  body.ipad :is(.card,.kk){border-radius:12px}
+  body.ipad .seg{background:#e9e9ee;border:0;border-radius:9px;padding:2px;gap:2px}
+  body.ipad .seg button{border:0!important;border-radius:7px;background:none}
+  body.ipad .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+  body.ipad label.chk>input[type=checkbox]:not(table.pos *){-webkit-appearance:none;appearance:none;flex:none;width:51px;height:31px;border-radius:16px;background:#e9e9ea;position:relative;transition:background .2s;margin:0;cursor:pointer}
+  body.ipad label.chk>input[type=checkbox]:not(table.pos *)::before{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:transform .2s}
+  body.ipad label.chk>input[type=checkbox]:not(table.pos *):checked{background:#34c759}
+  body.ipad label.chk>input[type=checkbox]:not(table.pos *):checked::before{transform:translateX(20px)}
+  body.ipad label.chk>input[type=checkbox]:disabled{opacity:.5}
+  body.ipad:has(.modal){overflow:hidden}
+  body.ipad :is(.modal,.mbox,.mpop){overscroll-behavior:contain}
+  body.ipad.lp :is(#main,nav) :is(tr,.kk,[onclick]){-webkit-touch-callout:none} /* langes Drücken: Kontextmenü statt iOS-Vorschau */
+}
+@media(min-width:761px) and (max-width:1100px){
+  body.ipad.loaded #app{display:block}
+  body.ipad .topbar{display:flex;position:sticky;top:0;z-index:35;background:var(--side);color:#fff;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 8px max(16px,env(safe-area-inset-left))}
+  body.ipad .topbar button{background:none;border:0;color:#fff;font-size:22px;padding:0 6px;min-width:44px;min-height:44px}
+  body.ipad .topbar #sync2{font-size:12px;color:#8fd3a8}body.ipad .topbar #sync2.bad{color:#ffb4ab}
+  body.ipad nav{position:fixed;left:-280px;top:0;z-index:40;transition:left .2s;width:270px;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  body.ipad.nav nav{left:0;box-shadow:0 0 0 100vmax rgba(0,0,0,.4)}
+  body.ipad nav a,body.ipad nav button.zl{padding:10px 20px}
+}
 /* iOS (P30, erw.ios): sichere Bereiche (Notch, Home-Indikator) immer; Gestaltung nach Apple-Vorgaben nur unter body.ios am Handy (Systemschrift, 44-pt-Tippziele, Blätter mit Griff, Segmente, Schalter) */
 @media(max-width:760px){
   .topbar{padding-top:calc(8px + env(safe-area-inset-top));padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
@@ -1791,6 +1825,7 @@ function render(){
   document.body.classList.toggle('navkl',!!(erw('navKL')&&erw('kFilter'))); // Untereinträge Kunden/Lieferanten (P6)
   document.body.classList.toggle('btb',erw('btb')); // Bautagesberichte (P36)
   const f=V[view]||V.dash;
+  document.body.classList.toggle('ipad',kmp()&&erw('ipad')&&IPAD.matches);document.body.classList.toggle('lp',!!erw('langDruck')); // iPad, langes Drücken (P40)
   document.body.classList.toggle('ma',erw('mitarbeiter')); // Personal (P36 b)
   document.body.classList.toggle('kompakt',kmp()); // Kompakte Ansicht (P30): CSS für bestehende Elemente nur unter body.kompakt
   document.body.classList.toggle('ios',kmp()&&erw('ios')); // iOS-Darstellung am Handy (CSS nur unter body.ios in @media max-width 760px)
@@ -1906,6 +1941,19 @@ document.querySelector('nav button.zl')?.insertAdjacentHTML('afterend','<button 
 const HANDY=matchMedia('(max-width:760px)');
 const kmp=()=>!!erw('kompakt'),kmpH=()=>kmp()&&HANDY.matches;
 HANDY.addEventListener?.('change',()=>{if(!DB||!kmp()||document.querySelector('.modal'))return;document.activeElement?.blur?.();render()}); // Handy gedreht bzw. Fenster über die Grenze: neu zeichnen
+/* iPad (P40): erw.ipad = iOS-Gestaltung am Tablet mit Touch (body.ipad, CSS ab 761 px; Hochformat bis 1100 px Seitenleiste als Menü), Apple Pencil in sigPop() (Handballen ignoriert, Strichstärke nach Druck).
+   erw.langDruck = langes Drücken (iPhone/iPad) öffnet das Kontextmenü (P33, erw.kontext) über ein contextmenu-Ereignis, der Klick danach wird verschluckt */
+erwPlus({k:'ipad',std:false,p:'App iPhone/iPad (P40)',l:'iPad: Bedienung für Finger und Apple Pencil',info:'Am iPad (bzw. jedem Tablet mit Touch) gelten dieselben Bedienregeln wie am iPhone: große Tippflächen, Schalter, Segmente, Systemschrift, kein Zoom beim Tippen in Felder. Im Hochformat wird die Seitenleiste zum Menü (☰ oben links), damit mehr Platz für den Inhalt bleibt; im Querformat bleibt sie stehen. Beim Unterschreiben mit dem Apple Pencil wird der Handballen ignoriert und die Strichstärke folgt dem Druck. Wirkt nur mit „Kompakte Ansicht“.'},
+  {k:'langDruck',std:false,p:'App iPhone/iPad (P40)',l:'Langes Drücken öffnet das Kontextmenü',info:'Am iPhone und iPad öffnet langes Drücken auf einen Beleg, Kontakt, Artikel oder eine Position dasselbe Menü wie die rechte Maustaste am PC (Öffnen, Neuer Beleg, Löschen …). Voraussetzung: Schalter „Kontextmenü“ unter Bedienung (P33).'});
+const IPAD=matchMedia('(pointer:coarse) and (min-width:761px)');
+IPAD.addEventListener?.('change',()=>{if(!DB||!erw('ipad')||document.querySelector('.modal'))return;document.activeElement?.blur?.();render()});
+{let lpT=null,lp0=null,lpWeg=false;const LP_AUS='input,textarea,select,[contenteditable="true"],.modal,.mpop,canvas';
+  document.addEventListener('touchstart',e=>{clearTimeout(lpT);lpWeg=false;if(!DB||!erw('langDruck')||!erw('kontext')||e.touches.length!==1)return;const t=e.target;if(!t.closest||t.closest(LP_AUS))return;
+    const p=e.touches[0];lp0=[p.clientX,p.clientY];
+    lpT=setTimeout(()=>{lpT=null;const ev=new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:lp0[0],clientY:lp0[1]});t.dispatchEvent(ev);if(ev.defaultPrevented){lpWeg=true;navigator.vibrate?.(10)}},550)},{passive:true});
+  document.addEventListener('touchmove',e=>{if(lpT&&lp0){const p=e.touches[0];if(Math.hypot(p.clientX-lp0[0],p.clientY-lp0[1])>10){clearTimeout(lpT);lpT=null}}},{passive:true});
+  document.addEventListener('touchend',e=>{clearTimeout(lpT);lpT=null;if(lpWeg){e.preventDefault();setTimeout(()=>{lpWeg=false},400)}}); // Klick nach dem Menü nicht auslösen
+  document.addEventListener('click',e=>{if(lpWeg&&!e.target.closest('.mpop')){lpWeg=false;e.preventDefault();e.stopPropagation()}},true);}
 const MENUE={},LIVE={};let MPOP=null;
 function menuePop(btn,eintraege){
   closePop();MPOP=btn;const blatt=HANDY.matches,d=document.createElement('div');d.className='pop mpop'+(blatt?' unten':'');let bg=null;
@@ -6634,13 +6682,13 @@ function sigPop(titel,{name='',ohne=false,hinweis=''}={}){return new Promise(res
     <p class="err" id="m-err" style="margin:6px 0 0"></p>
     <div class="bar" style="margin:12px 0 0"><button id="sg-x">Löschen</button><span class="sp"></span><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Übernehmen</button></div></div>`;
   document.body.appendChild(d);
-  const c=d.querySelector('#sg-c'),x=c.getContext('2d'),q=s=>d.querySelector(s);let leer=true,zieh=false,lp=null,bb=null;const bbP=p=>{bb=bb?[Math.min(bb[0],p[0]),Math.min(bb[1],p[1]),Math.max(bb[2],p[0]),Math.max(bb[3],p[1])]:[p[0],p[1],p[0],p[1]]};
+  const c=d.querySelector('#sg-c'),x=c.getContext('2d'),q=s=>d.querySelector(s);let leer=true,zieh=false,lp=null,bb=null,stift=false;const bbP=p=>{bb=bb?[Math.min(bb[0],p[0]),Math.min(bb[1],p[1]),Math.max(bb[2],p[0]),Math.max(bb[3],p[1])]:[p[0],p[1],p[0],p[1]]};
   const neu=()=>{const r=c.getBoundingClientRect(),k=devicePixelRatio||1;c.width=Math.max(1,Math.round(r.width*k));c.height=Math.max(1,Math.round(r.height*k));x.setTransform(k,0,0,k,0,0);
     x.lineWidth=2.2;x.lineCap='round';x.lineJoin='round';x.strokeStyle=x.fillStyle='#0b1f4d';leer=true;bb=null;q('.sgl').hidden=false};
   requestAnimationFrame(neu);const rs=()=>{if(leer)neu()};addEventListener('resize',rs);
   const pt=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
-  c.addEventListener('pointerdown',e=>{if(q('#sg-o')?.checked)return;e.preventDefault();c.setPointerCapture?.(e.pointerId);zieh=true;lp=pt(e);bbP(lp);x.beginPath();x.arc(lp[0],lp[1],1.1,0,7);x.fill();leer=false;q('.sgl').hidden=true});
-  c.addEventListener('pointermove',e=>{if(!zieh)return;e.preventDefault();for(const v of e.getCoalescedEvents?.()||[e]){const p=pt(v);x.beginPath();x.moveTo(lp[0],lp[1]);x.lineTo(p[0],p[1]);x.stroke();lp=p;bbP(p)}});
+  c.addEventListener('pointerdown',e=>{if(q('#sg-o')?.checked)return;if(erw('ipad')){if(e.pointerType==='pen')stift=true;else if(stift&&e.pointerType==='touch')return} /* Apple Pencil (P40): Handballen ignorieren */e.preventDefault();c.setPointerCapture?.(e.pointerId);zieh=true;lp=pt(e);bbP(lp);x.beginPath();x.arc(lp[0],lp[1],1.1,0,7);x.fill();leer=false;q('.sgl').hidden=true});
+  c.addEventListener('pointermove',e=>{if(!zieh)return;e.preventDefault();for(const v of e.getCoalescedEvents?.()||[e]){const p=pt(v);if(stift&&v.pointerType==='pen')x.lineWidth=1.2+2.4*(v.pressure||.5);x.beginPath();x.moveTo(lp[0],lp[1]);x.lineTo(p[0],p[1]);x.stroke();lp=p;bbP(p)}});
   for(const t of['pointerup','pointercancel','pointerleave'])c.addEventListener(t,()=>{zieh=false});
   q('#sg-x').onclick=neu;q('#sg-o')?.addEventListener('change',e=>{q('#sg-or').hidden=!e.target.checked;q('.sgf').classList.toggle('aus',e.target.checked)});
   const fin=v=>{d.remove();document.removeEventListener('keydown',kd);removeEventListener('resize',rs);res(v)};

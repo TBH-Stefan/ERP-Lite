@@ -5137,6 +5137,20 @@ queueMicrotask(()=>Object.assign(ACT,{esx:()=>{ESQ='';const q=$('#esq');if(q){q.
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:`.esu{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;background:var(--bg);padding:6px 0 8px;margin:-4px 0 8px}
 .esu input{flex:1 1 auto;min-width:0;max-width:520px;font-size:16px}.esu input::-webkit-search-cancel-button{display:none}#esn::after{content:attr(data-n);font-size:13px;color:var(--mut);white-space:nowrap}
 .es-weg{display:none!important}.es-hit{background:#fff1a8;border-radius:6px;box-shadow:0 0 0 3px #fff1a8}tr.es-hit>td{background:#fff1a8}.kk.es-hit{background:#fff1a8}`}));
+
+/* Suche in den Einstellungen (P42) Teil 2, erw.suEinst: globale Suche (P20) mit Gruppe „Einstellungen“ – je Bereich ein Eintrag (Titel + Text ohne Feldwerte, aus V.einstellungen() mit ES_IDX)
+   und je Erweiterungs-Schalter einer (k = '§erw.<k>'); suOeffnen() öffnet die Einstellungen mit ES_ZIEL {q,f}, ES_MO springt nach dem Zeichnen zur Stelle (mit Teil 1 bleibt der Begriff im Suchfeld). */
+erwPlus({k:'suEinst',std:false,p:'Suche in den Einstellungen (P42)',l:'Einstellungen in der globalen Suche',info:'Die globale Suche (🔍, Strg+K bzw. F3) zeigt zusätzlich die Gruppe „Einstellungen“: Bereiche wie Firma oder Kaufmännisch (auch über Feldnamen, z. B. „IBAN“) und alle Erweiterungs-Schalter mit Beschreibung. Ein Treffer öffnet die Einstellungen und springt zur Stelle; mit eingeschaltetem Suchfeld steht der Suchbegriff dort. Aus = keine Einstellungen in der globalen Suche.'});
+SU_G.push(['einst','Einstellungen']);
+const suIndex42=suIndex;suIndex=()=>{const E=suIndex42();if(!erw('suEinst'))return E;
+  for(const x of ERW)E.push({g:'einst',r:'einstellungen',k:'§erw.'+x.k,ic:'⚙️',t:x.l,u:'Erweiterung · '+x.p,s:tag(erw(x.k)?'ein':'aus',erw(x.k)?'ok':''),h:[x.l,x.p,x.info,'Erweiterung'].join(' ').toLowerCase()});
+  const t=document.createElement('template');ES_IDX=true;try{t.innerHTML=V.einstellungen()}finally{ES_IDX=false}
+  for(const s of t.content.children){if(s.tagName==='H1')continue;const ti=esTitel(s).trim();if(!ti)continue;const c=s.cloneNode(true);c.querySelectorAll(ES_F.split(',')[0]).forEach(x=>x.remove());
+    E.push({g:'einst',r:'einstellungen',k:'',ic:'⚙️',t:ti,u:'Einstellungen',h:(ti+' '+esTxt0(c,false)).toLowerCase()})}
+  return E};
+const suOeffnen42=suOeffnen;suOeffnen=(r,k)=>{if(r!=='einstellungen')return suOeffnen42(r,k);document.querySelector('.modal.such')?._weg?.();
+  const x=k?.startsWith('§erw.')&&ERW.find(y=>'§erw.'+y.k===k),q=x?x.l:SUQ.trim();ES_ZIEL={q,f:x?k.slice(1):''};if(erw('einstSuche'))ESQ=q;
+  if(/^#\/?einstellungen$/.test(location.hash))render();else nav('einstellungen')};
 // Karte „Erweiterungen“: alle Funktionsschalter mit Beschreibung, Abweichungen vom Standard, Zurücksetzen je Paket bzw. alle
 function erwKarte(){
   const pNr=p=>{const m=String(p).match(/\(P(\d+)\s*([a-z]?)/);return m?+m[1]*100+(m[2]?m[2].charCodeAt(0)-96:0):1e6}; // Pakete nach Nummer ordnen (P0 b … P19), unabhängig von der Reihenfolge in ERW

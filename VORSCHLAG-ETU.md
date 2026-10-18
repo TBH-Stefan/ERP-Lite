@@ -1286,7 +1286,130 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
 - ✅ umgesetzt (U13, Commits 89529cb Teil 1, 043e8fa Teil 2, f4953c5 Teil 3, 9f49f0b Teil 4, 93398de Teil 5; Korrektur 1007ff6: K7-Übersicht am Handy als Karten; Korrektur bc9d31c nach Prüfung: Reiter des Editors brechen um, KV-Tabelle bei 360 px, Formel der Lohnzeile im K5-Druck). Geprüft: Browsertests 390 und 1400 px ohne Konsolenfehler (alle Ansichten, jeder P34-Schalter einzeln aus, kompakte Ansicht aus = bisherige Oberfläche), Druck als PDF (K4/K6/K7 quer), Regressionsvergleich mit cd570b3: `docHTML`, Vorschau und PDF von 30 Belegen gleich.
 - Offen: K-Blatt-Druck an echten Geräten (Druckdialog iOS/Android), Kollektivvertragslöhne trägt der Anwender selbst ein.
 
+### P35 – Liefertermine, Teillieferungen und Erinnerungen
+- **Wunsch des Anwenders (14.10.2026):** „Wie gehen wir mit Teillieferungen und Verzügen im Lieferdatum um? Es sollen dabei Erinnerungen erstellt werden, wenn Material nicht lt. Auftragsbestätigung geliefert wurde.“
+- **Bestehend (Grundlage):** Bestellung mit gewünschtem Liefertermin (`b.liefertermin`), Folgebeleg BE → WE mit Teilmengen, `erledigung()` über `kinderMenge()`, Karte „Offene Bestellungen“, Verkauf AB → LS (Teillieferungen an Kunden), Belegstatus P32, Mail-Versand (`versenden()`/`mailToken()`, ohne Office 365 mailto), Platzhalter P8, kompakte Ansicht P30, Rechtsklick P33.
+- **Schalter** (Paket „Liefertermine (P35)“, alle Standard ein, aus = bisheriges Verhalten; eingetragen über `erwPlus()` an der Stelle des Codes):
+  - `erw.lfTermin` – Teil 1: Auftragsbestätigung des Lieferanten an der Bestellung als Statusangabe `b.lief` (AB-Nr., Datum, bestätigter Liefertermin der ganzen Bestellung, je Position Termin und Teilmengen mit Termin, Terminverlauf mit altem/neuem Termin, Zeitpunkt und Grund), „Restmenge streichen“ je Position mit Grund (`erledigung()` und Wareneingang rechnen mit Menge − gestrichen), Karte „Lieferung“ in festgeschriebenen Bestellungen (bestellt / geliefert / offen / Termin / Verzug in Tagen, am Handy Karten), Pop-up „Bestätigung & Termine …“, „📦 Wareneingang …“.
+  - `erw.lfListe` – Teil 2: Liste „Offene Lieferungen“ (Seitenleiste unter „Einkauf“) je offene Position mit Lieferant, Bestellung, Artikel, offen, Termin (bestätigt, sonst gewünscht), Status rechtzeitig / heute fällig / überfällig (Tage) / ohne Termin; Filter, Suche, Spaltenauswahl, am Handy Karten, Sprung zur Bestellung, „📦 WE“.
+  - `erw.lfErinnern` – Teil 3: Karte „Lieferverzug“ im Überblick (überfällig und in den nächsten N Tagen fällig, N in Einstellungen → Liefertermine & Erinnerungen, Standard 3), Zähler an „Einkauf“ in der Seitenleiste, „✉ Erinnerung …“ je Bestellung (E-Mail mit den fälligen Positionen, Vorlage mit Platzhaltern, Office 365 bzw. mailto, Versand an der Bestellung vermerkt), „💤 Wiedervorlage …“. Keine Browser-Benachrichtigungen.
+  - `erw.lfVerkauf` – Teil 4: überfällige Kundenlieferungen (AB festgeschrieben, Liefertermin vorbei, `erledigung()` < 1, auch „abgeschlossen“ nach P32 – Entscheidung 14.10.2026) als eigener Abschnitt der Karte „Lieferverzug“; Hinweis „Material verspätet (Bestellung …, Termin …)“ in der AB, wenn eine Bestellung ihrer Belegkette überfällige Positionen hat.
+- **Datenmodell (nur ergänzend, alle Felder optional, daher ohne Eintrag in `migrate()`/`neueDB()` wie `S().mailVorlage`):** Bestellung `lief` `{abNr,abDatum,termin,pos:{<posId>:{termin,teil[],gestrichen,gDatum,gGrund}},verlauf[],erinnert[],wv,wvNotiz}`; Einstellungen `lfTage`, `mailVorlage.lfBetreff`, `mailVorlage.lfText`. Alte Daten ohne diese Felder: Termin = gewünschter Liefertermin.
+- **Recht und Nachvollziehbarkeit:** `b.lief` sind Statusangaben, kein Belegsinhalt – Nummer, Positionen, Summen, Ausdruck und PDF der festgeschriebenen Bestellung bleiben unverändert (geprüft), die Bestellung selbst wird nicht geändert. Jede Änderung ist ein `commit()` mit Eintrag im Protokoll (Lieferantenbestätigung, Restmenge gestrichen, Streichung aufgehoben, Liefererinnerung, Wiedervorlage) und mit Strg+Z rücknehmbar; Terminverschiebungen und Streichungen stehen zusätzlich im Terminverlauf der Bestellung.
+- ✅ umgesetzt (Commits a4abc3a Teil 1, 9f473c7 Teil 2, 9601a6c Mengenindex für Liste und Zähler, 291c038 Teil 3, aa0fa63 Teil 4). Geprüft (Chromium, 1400 und 390 px Handy): Teillieferungen mit zwei Wareneingängen, Teilmengen mit eigenen Terminen, Restmenge streichen und aufheben, Status und Verzug zum heutigen Datum, Erinnerung über mailto (Standard- und eigene Vorlage), Wiedervorlage, Kundenlieferung mit Teillieferung per Lieferschein und verspätetem Material, alte Daten ohne neue Felder; jeder Schalter aus: `#main` gleich dem Stand a412d32 (18 Ansichten, 1400/390 px), `docHTML` aller Testbelege gleich; Regressionsvergleich mit a412d32: `docHTML`, Vorschau und PDF 28/28 gleich; keine Konsolenfehler, kein Seitenüberlauf; keine doppelten Aktionen (185 zur Laufzeit). Liste und Zähler bei 300 Bestellungen und 1950 Belegen ca. 20 ms.
+- **Entschieden (14.10.2026):** Auftragsbestätigungen mit Status „abgeschlossen“ (P32: nach der ersten Ausgabe) erscheinen weiter im Abschnitt „Kunden“ und zeigen „Liefertermin überschritten“, solange sie nicht vollständig geliefert sind – „abgeschlossen“ heißt nur „ausgegeben“.
+- Offen: echter Mailversand über Office 365, Test an echten Geräten.
+
 ---
+
+### P36 – Bautagesbericht mit Unterschrift
+- **Wunsch des Anwenders (16.10.2026):** „Es soll erweitert werden, auf der Baustelle Tagesberichte erstellt werden. Es soll dabei die Tätigkeit, die Zeiterfassung, Witterung, Bilder, etc. angeführt werden können. Dabei soll nach ‚Abschluss‘ des Berichtes die Möglichkeit gegeben sein, dass der Monteur als auch der Kunde (optional) unterschreiben kann. Nach Unterschrift soll keine Änderung mehr möglich sein.“
+- **Entscheidungen des Anwenders (16.10.2026, Vorschlag freigegeben):** Nummer laufend je Auftrag; Stunden beim Unterschreiben automatisch in die Zeiterfassung; Kundenunterschrift später nachholbar; Fotos und Unterschriften ohne Netz zwischenspeichern.
+
+#### 3. Umfang
+
+Ein Bautagesbericht gehört immer zu **einem Auftrag** und **einem Tag**. Mehrere Berichte je Tag und Auftrag sind erlaubt (z. B. zwei Partien).
+
+| Bereich | Inhalt |
+|---|---|
+| Kopf | Auftrag (Auswahl wie in der Zeiterfassung), Datum, Bericht-Nr., Baustelle/Ort (Vorgabe aus Lieferadresse bzw. Kunde), Verfasser (Monteur) |
+| Witterung | Auswahl je Halbtag: sonnig, bewölkt, Regen, Schnee, Frost, Sturm/Wind; Temperatur min/max (°C); Haken „Arbeit witterungsbedingt behindert/unterbrochen“ mit Stunden und Text |
+| Personal und Zeiten | Zeilen `{name, tarif, von, bis, pause, stunden}`; Stunden aus von/bis/Pause gerechnet oder direkt eingegeben; Schnellknöpfe wie in der Zeiterfassung (0,5/1/2/4/8 h) |
+| Tätigkeiten | Freie Zeilen `{text, ort}` (Bauteil, Geschoß, Raum); Textbausteine aus dem bestehenden Textbaustein-Register auswählbar |
+| Material / Geräte (optional) | Material `{artikel oder Freitext, menge, einheit}`, Geräte `{bez, stunden}`; nur Dokumentation, keine Lagerbuchung |
+| Besondere Vorkommnisse | Felder: Behinderungen/Wartezeiten, Anordnungen des Auftraggebers, Zusatz- und Regieleistungen, Mängel/Schäden, Sicherheit; jedes Feld optional |
+| Bilder | Kamera direkt am Handy (`capture`) oder Datei; Beschriftung je Bild, Aufnahmezeit; Ablage `Berichte/<Jahr>/<Nr>/…` |
+| Abschluss | Abschließen → Unterschrift Monteur → Unterschrift Kunde (optional) → gesperrt |
+
+#### 4. Ablauf und Unveränderbarkeit
+
+1. **Entwurf:** frei bearbeitbar, speichert wie jeder andere Datensatz (`persist()`/`commit()`).
+2. **Abschließen:** Prüfung der Pflichtangaben (Auftrag, Datum, mindestens eine Tätigkeit; Hinweis, wenn keine Stunden erfasst sind) über `pflichtWarnung()`. Danach Leseansicht mit Knopf „Unterschreiben“. „Wieder öffnen“ ist bis zur ersten Unterschrift möglich.
+3. **Unterschrift Monteur:** Name (Vorgabe Bearbeiter) und Unterschrift mit Finger oder Maus auf einer Fläche (Canvas, am Handy quer möglich), „Löschen“ und „Übernehmen“. Mit dem Übernehmen wird der Bericht **gesperrt**: Inhalt, Bilder und Zeiten sind nicht mehr änderbar, die Ablagedateien werden nicht mehr überschrieben.
+4. **Unterschrift Kunde (optional):** direkt danach am selben Gerät oder später (z. B. am nächsten Tag). Sie ändert nichts am Inhalt, sie wird nur hinzugefügt. Alternativ „Kunde nicht anwesend / verweigert“ mit kurzem Vermerk.
+5. **Korrektur nach der Sperre:** nur über einen **Nachtrag** (neuer Bericht mit Verweis „Nachtrag zu BTB …“), so wie Festgeschriebenes bei Belegen nur per Storno/Gutschrift korrigiert wird.
+
+Nachweis der Unveränderbarkeit: Beim Unterschreiben wird über den Berichtsinhalt (ohne Unterschriften) ein SHA-256-Prüfwert gebildet und mit Zeitpunkt gespeichert; Druck und Ansicht zeigen „Prüfwert gültig“ bzw. eine Warnung, falls der Inhalt in der Datei nachträglich verändert wurde. Rechtlich ist das eine einfache elektronische Unterschrift (frei beweiswürdigbar wie eine Unterschrift auf dem Tablet beim Paketdienst), keine qualifizierte Signatur.
+
+### 4a. Gemeinsamer Baustein „Unterschrift und Sperre“ (auch für Messprotokolle OVE E 8101)
+
+Unterschrift, Sperre und Prüfwert werden nicht nur für den Bautagesbericht gebaut, sondern als allgemeine Funktionen, die jede Sammlung nutzen kann (zuerst Bautagesbericht und Messprotokoll):
+
+- `sigPop(titel,{name,rolle})` → Pop-up mit Unterschriftsfläche (Canvas, Zeiger-Ereignisse für Maus/Finger/Stift, „Löschen“, „Übernehmen“, „ohne Unterschrift“ mit Vermerk, falls erlaubt) → `{name,zeit,png}` oder null.
+- `sigAblegen(ordner,rolle,e)` → PNG über `ablegen()` in die Ablage (ohne Netz Warteschlange), Rückgabe `{name,zeit,pfad}` bzw. `{name,zeit,ohne}`; Anzeige über `bildBlob()`.
+- `sperren(obj)` setzt `gesperrt` und `hash = sperrWert(obj)` (SHA-256 über den Inhalt ohne `SIG_FREI` = sig/hash/gesperrt/status/ausgaben, Schlüssel sortiert); `sperrTag(obj)` zeigt gültig/ungültig.
+- `gesperrt(obj)` → wahr, sobald die erste Pflicht-Unterschrift vorliegt; Pfad-Setter, `arradd`/`arrdel`, `undoSperre()` (`sigUndo()`) und `merge3()` (`sigMerge()`) achten darauf; Sammlungen mit Sperre melden sich in `SIG_C` an (z. B. `SIG_C.berichte`).
+- `sigBlock(obj,rollen)` → HTML für Ansicht und Druck (Name, Zeitpunkt, Bild, Vermerk „Prüfwert gültig“).
+- Rollen frei je Verwendung: Bautagesbericht `monteur` (Pflicht, sperrt) und `kunde` (optional, später); Messprotokoll z. B. `pruefer` (Pflicht, sperrt) und `kunde` (optional).
+
+Der Baustein kommt als eigener Commit mit dem Schalter `erw.unterschrift` vor Teil 3; Teil 3 und das Messprotokoll setzen ihn voraus (bei Rücknahme zuerst diese zurücknehmen).
+
+#### 5. Zeiterfassung
+
+- Stunden des Berichts werden beim **Unterschreiben des Monteurs** als Einträge in `DB.zeiten` übernommen (mit `berichtId`). Damit laufen Nachkalkulation, DB je Stunde und „Zeiten abrechnen“ unverändert weiter.
+- Doppelerfassung vermeiden: Beim Anlegen bietet der Bericht bereits erfasste, noch nicht verknüpfte Zeiten desselben Auftrags und Tages zur Übernahme an („aus Zeiterfassung laden“); diese werden dann nur verknüpft, nicht neu angelegt.
+- Zeiteinträge mit `berichtId` eines unterschriebenen Berichts sind in der Zeiterfassung nicht löschbar (Hinweis auf den Bericht).
+
+#### 6. Oberfläche
+
+- Seitenleiste „Bautagesberichte“ (`#/berichte`, `#/bericht/<id>`), Liste nach Datum mit Spalten Nr., Datum, Auftrag, Kunde, Stunden, Wetter, Status (Entwurf / abgeschlossen / unterschrieben / Kunde unterschrieben); Filter Auftrag und Zeitraum.
+- Im Auftrag (`V.auftrag`) Karte „Bautagesberichte“ mit „+ Bericht“; in der Zeiterfassung Verweis auf den Bericht.
+- „+ Bericht“ belegt vom letzten Bericht desselben Auftrags Personal, Baustelle und Tarife vor (Witterung, Tätigkeiten und Bilder bleiben leer).
+- Handy (390 px): Abschnitte als Aufklapper (`akk()`), Personal und Bilder als Karten, Unterschrift als Vollbild-Pop-up; Desktop als Formular wie die übrigen Editoren. Globale Suche (P20) findet Berichte.
+
+#### 7. Druck / PDF
+
+- A4 hoch im Stil der Belege: Logo und Firmendaten, Kopf (Bericht-Nr., Datum, Auftrag, Kunde, Baustelle), Witterung, Personal mit Summe Stunden, Tätigkeiten, Material/Geräte, Vorkommnisse, Bilder (2 je Zeile, mit Beschriftung), Unterschriftsfelder Monteur und Kunde mit Name und Zeitpunkt, Prüfwert in der Fußzeile.
+- Ausgabe über `druckHTML()` (Browserdruck bzw. „Als PDF speichern“). Versand per E-Mail an den Kunden mit `versenden()` ist Teil 4b (siehe offene Punkte).
+
+#### 8. Schalter (Paket „Bautagesbericht (P36)“)
+
+Nach der Regel „Standard = bisheriges Verhalten“ alle **Standard aus**; ohne Schalter bleibt jede Ansicht unverändert. Eintrag in `ERW` je Teil in einem eigenen Commit, damit jeder Teil einzeln mit `git revert` rücknehmbar ist.
+
+| Teil | Schalter | Inhalt |
+|---|---|---|
+| 1 | `erw.btb` | Datenmodell, Liste, Editor, Witterung, Personal, Tätigkeiten, Material/Geräte, Vorkommnisse, Karte im Auftrag, Suche |
+| 2 | `erw.btbBild` | Bilder (Kamera, Beschriftung, Ablage) |
+| 3a | `erw.unterschrift` | gemeinsamer Baustein Unterschrift/Sperre/Prüfwert (Abschnitt 4a), auch für Messprotokolle |
+| 3 | `erw.btbSig` | Abschließen, Unterschrift Monteur/Kunde, Sperre, Prüfwert, Nachtrag |
+| 4 | `erw.btbDruck` | Druck/PDF |
+| 5 | `erw.btbZeit` | Übernahme in die Zeiterfassung, „aus Zeiterfassung laden“ |
+| 6 | `erw.btbVorschau` | Vorschau wie im Verkauf (Eingabe / Vorschau / Beides), abgeschlossene Berichte als Blatt (Wunsch Anwender 16.10.2026) |
+| b | `erw.mitarbeiter` | Paket „Personal (P36 b)“: Reiter Personal mit Stammdaten, Stunden je Mitarbeiter buchen (Zeiterfassung, Bericht, Mitarbeiter), Monatsübersicht (Wunsch Anwender 16.10.2026); Teil 2 `erw.maLohn` Lohn je Mitarbeiter verbuchen (Entscheidung 18.10.2026) |
+
+Abhängigkeiten für die Rücknahme: 2–6 und b setzen Teil 1 voraus; b vor Teil 5 (Spalte in der Zeiterfassung) und vor Teil 3 (`BTB_NACH`); 3 und das Messprotokoll setzen 3a voraus; 5 nutzt die Sperre aus Teil 3 (Löschschutz), also vor 3 zurücknehmen.
+
+#### 9. Datenmodell (nur ergänzend)
+
+Neue Sammlung `DB.berichte` (in `neueDB()`, von `migrate()` als leere Liste ergänzt, in `merge3()` und Papierkorb aufgenommen):
+
+```
+{id, nr, auftragId, datum, ort, verfasser,
+ wetter:{vm,nm,tMin,tMax,beh,behStd,behTxt},
+ personal:[{name,tarif,von,bis,pause,stunden}],
+ taet:[{text,ort}], material:[{artId,bez,menge,einh}], geraete:[{bez,stunden}],
+ vork:{beh,anord,zusatz,maengel,sicher},
+ bilder:[{pfad,mini,text,zeit}],
+ abgeschlossen, gesperrt, hash,   (Status wird daraus abgeleitet)
+ sig:{monteur:{name,zeit,pfad}, kunde:{name,zeit,pfad}|{ohne:text}},
+ nachtragZu, erstellt}
+```
+
+Zeiteintrag zusätzlich `berichtId`. Unterschriften als PNG in der Ablage (`Berichte/<Jahr>/<Auftrag>_BTB-<Nr>/unterschrift-monteur-….png`), im Datensatz nur der Pfad. Nummer: laufend je Auftrag („BTB 3“, gedruckt mit Auftragsnummer). Abgleich: Ist ein Bericht auf einem Gerät unterschrieben, gilt beim Abgleich dieser Stand; eine spätere Kundenunterschrift wird übernommen.
+
+- ✅ umgesetzt (Teil 1 545854a, Baustein 3a b4de25b mit Nachtrag b2bdd3a, Teil 2 5dcb5f6, Teil 3 73e5083, Teil 4 e4c9e16, Teil 5 25a51a1, Teil 6 61564ea, Personal P36 b 2f83950; auf P35 aufgesetzt). Geprüft: Browsertests 390 und 1400 px ohne Konsolenfehler (Anlegen, Witterung, Personal mit Stundenrechnung, Textbaustein, Fotos, Abschließen, Unterschrift Monteur und Kunde, Sperre gegen Pfad-Setter, Rückgängig und Abgleich, Prüfwert nach Manipulation ungültig, Nachtrag, Zeiten mit Übernahme aus der Zeiterfassung und Nachkalkulation, Druck als PDF), Warteschlange ohne Netz; Regressionsvergleich mit a412d32 (alle Schalter aus): 24 Ansichten und `docHTML` gleich, nur Einstellungen → Erweiterungen zeigt die neuen Schalter. Jeder Teil einzeln mit `git revert` rücknehmbar (Teil 5 vor 3, 3 und 2 vor 3a, alle vor 1).
+- Offen: Test an echten Geräten (Kamera und Unterschrift am iPhone/Android, Druckdialog), Abgleich mit zwei Geräten über OneDrive.
+
+---
+
+### P38 – Datensicherung, Archiv (PDF, Excel, CSV) und Updates ohne Datenverlust
+- **Wunsch des Anwenders (16.10.2026):** „Die Daten aus dem System sollen in weiterer Folge auf dem Drive Laufwerk als Backup (in pdf, excel, csv,...) abgelegt werden. Ebenfalls soll täglich ein Backup mit allen Daten erstellt werden. Die Backups sollen so Speicherplatz sparend wie nur möglich erstellt werden. Updates am System sollen keine Auswirkung auf die Daten, Vorgänge oder andere Abläufe im System haben. Da es hier um Unternehmensdaten geht, darf nichts verloren gehen.“ (Sicherheitsprüfung getrennt, siehe CSP in CLAUDE.md.)
+- **Vorher:** Tagessicherung unkomprimiert beim ersten Speichern, ohne Prüfung; Abgleichkonflikt verwarf die eigene Version; `merge3()` nur über fest aufgezählte Listen; Import ohne Sicherung; `meta.version` ungenutzt; beschädigte Datei = Start bricht ab; Exporte nur als Download.
+- **Teile:** Teil 1 (ohne Schalter): Konfliktkopie, Abgleich aller Listen, Sicherung vor Import/Papierkorb leeren/Wiederherstellen, Liste und Wiederherstellen, Start mit beschädigter Datei. Teil 2 `erw.sicherung`: Tagessicherung gzip, ohne Doppelte, geprüft. Teil 3 `erw.archiv`: PDF je Rechnung/Gutschrift/Storno, Monatsexport Excel + CSV-ZIP, Datenstand zum Jahreswechsel. Teil 4 (ohne Schalter): Datenversion `DATENVER`, ältere Programmversion speichert nicht über neuere Daten. Teil 5 `erw.vollsicherung`: Vollsicherung als ZIP, Erinnerung nach 30 Tagen. Schalter Standard ein, aus = bisheriges Verhalten.
+- **Datenmodell:** unverändert (Datenversion bleibt 1); Merker nur je Gerät im localStorage (`erp-sich`, `erp-sichf`, `erp-archf`, `erp-voll`, von „Gerät leeren“ mit entfernt). Dateien nur im Speicherort unter `backup/` und `archiv/`.
+- **Entschieden (16.10.2026):** alle Tagessicherungen behalten (nicht ausdünnen); PDF beim Festschreiben nur für Rechnungen (RE_V: AR, TR, RE, SR, GS) samt Storno-Gutschrift; Monatsexport Excel und CSV.
+- ✅ umgesetzt (Commits d133e7e Teil 1, 662b459 Teil 2, bdf2f9c Teil 3, c106341 Teil 4, 29fe75e Teil 5). Ohne Bibliothek: ZIP-Schreiber `zipBlob()` (deflate-raw über `CompressionStream`, CRC-32), Excel `xlsxBlob()` (Office Open XML), keine neue Verbindung (CSP unverändert).
+- Offen: Test mit echtem OneDrive und zwei Geräten, Speicherbedarf mit echten Daten messen, Verschlüsselung der Vollsicherung (Kennwort).
 
 ### Bereits vorhanden (kein eigenes Paket)
 
@@ -1362,6 +1485,9 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   - seit U13 (P34, 12.10.2026): zuerst die Korrektur bc9d31c (ändert Zeilen aus Teil 1, 2 und 3; einzeln rücknehmbar), dann die Korrektur 1007ff6 (K7 am Handy, ändert Zeilen aus Teil 1 und 2; einzeln rücknehmbar); einzeln rücknehmbar sind außerdem Teil 5 (93398de), Teil 4 (9f49f0b) und Teil 3 (f4953c5); Teil 2 (043e8fa) erst nach Teil 3 und Teil 4 (beide ergänzen Zeilen von Teil 2: `kbdup`/`kbdruck` in `ACT_LV`, Kopf in `kbEditK()`); Teil 1 (89529cb) ganz zuletzt (alle Teile nutzen `erwPlus()` und den Rechenkern). Rückwärts 1007ff6 → 5 → 4 → 3 → 2 → 1 ergibt genau den Stand vor U13 (cd570b3). Neu erst nach U13 rücknehmbar (geänderte bzw. direkt angrenzende Zeilen): P18 (8cc4e82, Eintrag im ⋯-Menü des Belegs) und „+ Stundentarif …“ (f5e28f9, Tarifliste `tfListe()`) – vorher P34 Teil 5; U7 Commit 1 (7acb6e1, CSS vor `#print`) – vorher P34 Teil 3; damit auch alle Commits, die diese schon bisher voraussetzten. Alle übrigen Code-Commits seit ETU wie vor U13. Geprüft (Klon, `git revert` je Commit an der Spitze und an cd570b3): Rücknahme konfliktfrei in dieser Reihenfolge; Programm ohne Teil 3, ohne Teil 4, ohne Teil 5 und mit nur Teil 1 ohne Konsolenfehler (390 und 1400 px).
   - Endkontrolle (13.10.2026, a1fc952): einzeln rücknehmbar (Rücknahme ergibt genau e16378a); vorher zurückzunehmen vor U7 Commit 2 (4e15709), U8 Commit 1 (fcfbee7) und 3 (f974f09), iOS ae69ae6 (Bausteine bzw. CSS-Klassen) und vor P34 Teil 1 (89529cb, Zeile `kbK2V()`); alle übrigen Commits wie vorher.
   - Gesamttest Stufe 2 (13.10.2026): Korrektur c4c2a6c einzeln rücknehmbar, vor U7 Commit 6 (89025f2, Zeile `lpEntf()`) und damit vor U7 Commit 2. Die vollständige, geprüfte Vorgängerliste je Code-Commit steht unten bei „Gesamttest Stufe 2“; wo sie strenger ist als die Angaben oben, gilt sie.
+  - seit P35 (14.10.2026): rückwärts aa0fa63 (Teil 4) → 291c038 (Teil 3) → 9601a6c (Mengenindex) → 9f473c7 (Teil 2) → a4abc3a (Teil 1) ergibt genau den Stand davor (a412d32); einzeln rücknehmbar nur Teil 4 und 9601a6c (Teil 3 ändert die Zeilen `lfNav()` und Status-Chips aus Teil 2 und nutzt `lfOffen()`/`LF_*`, Teil 4 ändert `lfDash()` aus Teil 3, alle Teile nutzen `lfPos()` aus Teil 1). Neu erst nach P35 rücknehmbar (direkt angrenzende Zeilen): Korrektur 68e30f6 (Zeile `lfNav()` am Ende von `render()`) – vorher P35 Teil 2 samt 9601a6c, Teil 3 und 4; U7 Commit 3 (439ca23, Überschrift des Überblicks mit `lfDash()`), U7 Commit 6 (89025f2) und P8 (f385ffd) (Zeile `lfEinst()` in den Einstellungen) – vorher P35 Teil 3 samt Teil 4. Alle übrigen Commits wie vorher (Teil 1 und 4 grenzen nur an Zeilen vor ETU bzw. an eigene). Geprüft (Klon): Rücknahme konfliktfrei, Programm nach jedem Schritt ohne Konsolenfehler (alle Ansichten, 1400 und 390 px).
+  - seit P36 (16.10.2026): rückwärts 7cf41db (Personal Teil 2, Lohn) → 2f83950 (Personal P36 b) → 61564ea (Teil 6) → 25a51a1 (Teil 5) → e4c9e16 (Teil 4) → 73e5083 (Teil 3) → 5dcb5f6 (Teil 2) → b2bdd3a → b4de25b (Baustein 3a) → 545854a (Teil 1) ergibt den Stand P35; einzeln rücknehmbar (geprüft) Teile 2, 4, 6 und P36 b; die Sperre „Gerät leeren“ bei wartenden Dateien (8090eb2, nach P37, Zeile in `geraetLeeren()`) vor 3a; P36 b vor Teil 5, Teil 5 vor Teil 3 (Löschschutz nutzt die Sperre), Teil 3 und 2 vor 3a (`ablegen()`, `sigPop()`), b2bdd3a vor b4de25b, alle vor Teil 1.
+  - seit P38 (16.10.2026): rückwärts 29fe75e (Teil 5) → c106341 (Teil 4) → bdf2f9c (Teil 3) → 662b459 (Teil 2) → d133e7e (Teil 1) ergibt genau den Stand davor (063a70d); einzeln rücknehmbar Teil 5 und Teil 4; Teil 3 erst nach Teil 5 (Zeile im Überblick, `zipBlob()`), Teil 2 erst nach Teil 3 und 5, Teil 1 zuletzt (alle Teile nutzen `sichSchreiben()`/`stempel()`, Teil 4 `sichern()`). Alle übrigen Commits wie vorher.
 - Noch offen: Test an echten Geräten (Edge, Firefox, Android, iOS; Druck, Strg+P, Browsermenü), echter Mailversand und Abgleich über OneDrive mit zwei Geräten, Tag `vor-etu` (nicht gesetzt).
 
 **Stufe 2: Kernfunktionen nach ETU (ca. 12–13 Tage)**
@@ -1393,11 +1519,11 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   | d477ebc | ETU Rest: Abgleich meldet „Einstellungen“ nicht, wenn beid … | – |
   | 7acb6e1 | Kompakt: Fehlerbehebung Seitenüberlauf, Reiter, Leiste „Un … | bc9d31c, f4953c5 |
   | 4e15709 | Kompakt: Schalter erw.kompakt und Grundbausteine | c4c2a6c, a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, 48ff8cf, dffb7d3, 395368b, f385ffd, 570074f, 6daa4c2, 1d7338f, 1e322aa, 8a9b49b, 06ffa33, ae69ae6, b6f7a9f, 68e30f6, c5a105f, 281c9b9, d1dc351, f974f09, 8311235, fcfbee7, 32f486a, 89025f2, 56f4235, 050e6d5, 7160459, 439ca23 |
-  | 439ca23 | Kompakt: Listen als Karten | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, 48ff8cf, dffb7d3, 395368b, f385ffd, 570074f, 6daa4c2, 1d7338f, 8a9b49b, 06ffa33, ae69ae6, b6f7a9f, 68e30f6, c5a105f, 281c9b9, d1dc351, f974f09, 8311235 |
+  | 439ca23 | Kompakt: Listen als Karten | aa0fa63, 291c038, a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, 48ff8cf, dffb7d3, 395368b, f385ffd, 570074f, 6daa4c2, 1d7338f, 8a9b49b, 06ffa33, ae69ae6, b6f7a9f, 68e30f6, c5a105f, 281c9b9, d1dc351, f974f09, 8311235 |
   | 7160459 | Kompakt: Neu-/Einlesen-Menüs und Filter-Pop-up | 32f486a |
   | 050e6d5 | Kompakt: Kontakt als Visitenkarte, Artikel als Akkordeon | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, dffb7d3, 395368b, f385ffd, 570074f, 1e322aa |
   | 56f4235 | Kompakt: Kosten, Verrechnung, Aufträge, Auswertung, Konten … | 9f49f0b |
-  | 89025f2 | Kompakt: Einstellungen als Akkordeon | c4c2a6c, a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, 73ee3b1, dffb7d3, 395368b, f385ffd |
+  | 89025f2 | Kompakt: Einstellungen als Akkordeon | aa0fa63, 291c038, c4c2a6c, a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, 73ee3b1, dffb7d3, 395368b, f385ffd |
   | 32f486a | U7: Korrektur Auswahlleiste Artikel am Handy verdeckt die … | – |
   | fcfbee7 | Kompakt: Beleg | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, 48ff8cf, dffb7d3, 395368b, f385ffd, 570074f, 6daa4c2, 1d7338f, 8a9b49b, 06ffa33, ae69ae6, b6f7a9f, 68e30f6, c5a105f, 281c9b9, d1dc351, f974f09, 8311235 |
   | 8311235 | Kompakt: Beleg | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, 48ff8cf, dffb7d3, 395368b, f385ffd, 570074f, 6daa4c2, 1d7338f, 8a9b49b, 06ffa33, ae69ae6, b6f7a9f, 68e30f6, c5a105f, 281c9b9, d1dc351, f974f09 |
@@ -1405,7 +1531,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   | d1dc351 | Kompakt: Beleg | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, dffb7d3, 395368b, f385ffd, 570074f, 1d7338f, 8a9b49b, 06ffa33 |
   | 281c9b9 | Kompakt: Beleg | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, dffb7d3, 395368b, f385ffd, 570074f, 1d7338f, 8a9b49b, 06ffa33, 68e30f6, c5a105f |
   | c5a105f | Kompakt: Beleg | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, dffb7d3, 395368b, f385ffd, 570074f, 1d7338f, 8a9b49b, 06ffa33, 68e30f6 |
-  | 68e30f6 | U8: Korrektur Beleg-Pop-ups beim Belegwechsel, Gruppensumme | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, 73ee3b1, dffb7d3, 395368b, 1d7338f |
+  | 68e30f6 | U8: Korrektur Beleg-Pop-ups beim Belegwechsel, Gruppensumme | aa0fa63, 291c038, 9601a6c, 9f473c7, a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, 73ee3b1, dffb7d3, 395368b, 1d7338f |
   | dddb216 | Logo „Technisches Büro“; Handy-Vorschau: keine automatisch … | – |
   | 4affb0f | Handy: Eingabefelder mit 16 px Schrift, damit iOS beim Ant … | – |
   | b6f7a9f | Fehlerbehebung: Auswahllisten in Pop-ups öffnen sich nach … | – |
@@ -1416,7 +1542,7 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   | 1d7338f | ETU P4: Positionsdarstellung im Druckprofil, Zuschlag je P … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, 73ee3b1, dffb7d3, 395368b |
   | 6daa4c2 | U9: Korrektur iOS-Schalter am Handy (Breite) | – |
   | 570074f | ETU P6: Anrede, Titel, Vor-/Nachname und Briefanrede (Kont … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, 5d46434, aadf42a, 4fae2a5, 8cc4e82, 028e467, 4710d17, f5e28f9, d3cc148, 30cbf83, cf0457e, 6351e48, 04bd23c, 73ee3b1, dffb7d3, 395368b, f385ffd |
-  | f385ffd | ETU P8: Platzhalter in Texten ({Kunde}, {Nr} …) mit Einfüg … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, 73ee3b1, dffb7d3, 395368b |
+  | f385ffd | ETU P8: Platzhalter in Texten ({Kunde}, {Nr} …) mit Einfüg … | aa0fa63, 291c038, a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, 73ee3b1, dffb7d3, 395368b |
   | 395368b | ETU P9: Lohnkostennachweis nur auf Wunsch je Beleg (Satz n … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 8cc4e82, 028e467, 4710d17, 73ee3b1, dffb7d3 |
   | dffb7d3 | U10: Korrektur Platzhalter-Einfügen und Häkchen Lohnkosten … | – |
   | 48ff8cf | ETU P10: Gesamtkalkulation mit „Aufschlag neu“ und teilwei … | a1fc952, bc9d31c, 1007ff6, 93398de, 9f49f0b, f4953c5, 043e8fa, 89529cb, aadf42a, 028e467, 4710d17, 73ee3b1 |
@@ -1443,6 +1569,16 @@ IDS-Connect ist ohne Server nicht sinnvoll machbar. Ein Datanorm-Import geht dag
   | bc9d31c | U13: Korrektur K-Blätter | – |
   | a1fc952 | Kompakt: Endkontrolle | – |
   | c4c2a6c | ETU Stufe 2: Korrektur Löschen im Pop-up und Datumsfelder … | – |
+  | a4abc3a | P35: Liefertermine Teil 1 – Auftragsbestätigung des Lieferanten … | aa0fa63, 291c038, 9601a6c, 9f473c7 |
+  | 9f473c7 | P35: Liefertermine Teil 2 – Liste „Offene Lieferungen“ | aa0fa63, 291c038, 9601a6c |
+  | 9601a6c | P35: Liefertermine – Mengen der Wareneingänge einmal je Liste | – |
+  | 291c038 | P35: Liefertermine Teil 3 – Erinnerungen bei Lieferverzug | aa0fa63 |
+  | aa0fa63 | P35: Liefertermine Teil 4 – Lieferverzug im Verkauf | – |
+  | d133e7e | P38: Datensicherung Teil 1 – Konfliktkopie, Abgleich aller Listen … | 29fe75e, c106341, bdf2f9c, 662b459 |
+  | 662b459 | P38: Datensicherung Teil 2 – Tagessicherung gzip … | 29fe75e, bdf2f9c |
+  | bdf2f9c | P38: Datensicherung Teil 3 – Archiv PDF, Excel, CSV | 29fe75e |
+  | c106341 | P38: Datensicherung Teil 4 – Datenversion | – |
+  | 29fe75e | P38: Datensicherung Teil 5 – Vollsicherung als ZIP | – |
 
 
 **Stufe 3: optional nach Bedarf (ca. 18–21 Tage)**
@@ -1491,7 +1627,9 @@ Jedes Paket wird erst nach Ihrem Test im Browser nach `main` übernommen. Bis da
 - **12.10.2026:** P31 (Lieferant direkt anlegen, Dublettenprüfung, Listenpreis/Rabatt/EK), Bild je Artikel (Teil P24), Infoblock „UID Kunde“ mit Gliederung (neuer Standard), Druck ohne Browser-Kopfzeile, P32 (AB nach Ausgabe „abgeschlossen“), P33 (Bedienung), „+ Stundentarif …“ – alle ✅ umgesetzt, Standard ein.
 - **Stufe 2, Rest (U12, 12.10.2026):** P14 Preiseinheit vollständig, P18 Gliederung, P20 globale Suche – ✅ umgesetzt (Schalter `erw.pe`, `erw.gliederung`, `erw.suche`, Standard ein; Druckoptionen „Einzelpreis bei Preiseinheit“ je Preiseinheit, „PDF mit Lesezeichen“ aus); kompakte Darstellung am Handy (Pop-ups) wie gewünscht.
 - **12.10.2026, P34 K-Blätter nach Vorlage (U13):** Formblätter K2–K7 wie die Vorlagen, Eingabe über Auswahlfelder, Logo und Firmendaten der TBH im Ausdruck, Projektzuordnung, Zuschläge und Mittellohn in Angeboten und Rechnungen – ✅ umgesetzt (Schalter `erw.kbVorlage`, `erw.kbDruck`, `erw.kbProjekt`, `erw.kbBeleg`, Standard ein).
-- Noch offen: Fragen 5, 6, 7, 9, 10, 11.
+- **14.10.2026, P35 Liefertermine, Teillieferungen und Erinnerungen:** Auftragsbestätigung des Lieferanten mit Terminen je Position und Teilmenge, Restmenge streichen, Liste „Offene Lieferungen“, Karte „Lieferverzug“ mit Zähler, Erinnerungs-E-Mail und Wiedervorlage, Kundenlieferungen und „Material verspätet“ in der AB – ✅ umgesetzt (Schalter `erw.lfTermin`, `erw.lfListe`, `erw.lfErinnern`, `erw.lfVerkauf`, Standard ein).
+- **16.10.2026, P38 Datensicherung:** Archiv im OneDrive (PDF je Rechnung/Gutschrift/Storno, Monatsexport Excel und CSV), tägliche komprimierte und geprüfte Sicherung (alle behalten), Konfliktkopie, Wiederherstellen, Datenversion gegen ältere Programmversionen, Vollsicherung als ZIP – ✅ umgesetzt (Schalter `erw.sicherung`, `erw.archiv`, `erw.vollsicherung`, Standard ein; Teil 1 und 4 ohne Schalter).
+- Noch offen: Fragen 5, 6, 7, 9, 10, 11, 12.
 
 ## 6. Offene Fragen
 
@@ -1517,3 +1655,5 @@ Jedes Paket wird erst nach Ihrem Test im Browser nach `main` übernommen. Bis da
     *Vorschlag:* Logo und Fußzeile nach Ihrer Wahl in Stufe 3; die mehrstufige Gliederung nur, wenn Sie große, mehrstufige Angebote erstellen.
 11. **Weitere Screenshots:** Der Inhalt der ETU-Reiter „Angebotsdaten“ und „Erweitert…“ (Bild 11), „Weitere Einstellungen…“ (Bild 10) sowie der Reiter „Drucker“ und „Formular“ ist auf den Bildern nicht zu sehen. Können Sie diese nachreichen?
     *Vorschlag:* Ja, dann ergänze ich den Vorschlag gezielt.
+12. **Lieferverzug und Belegstatus (P35/P32):** Sollen Auftragsbestätigungen mit Status „abgeschlossen“ (nach der ersten Ausgabe) weiter im Abschnitt „Kunden“ der Karte „Lieferverzug“ erscheinen, solange sie nicht vollständig geliefert sind?
+    *Entschieden:* Ja – „abgeschlossen“ bedeutet bei P32 nur „ausgegeben“; der Verzug der Lieferung an den Kunden ist davon unabhängig (umgesetzt 14.10.2026).

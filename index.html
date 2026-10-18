@@ -2457,7 +2457,7 @@ V.beleg=id=>{
     <button data-act="druck">PDF / Drucken</button>
     ${!b.storno&&t.folge.length&&b.status!=='ersetzt'?`${['AN','AB','LS','PR'].includes(b.typ)?`<button data-act="folgere">→ Rechnung</button>`:''}<select data-act="folge" title="${b.fest?'':'Wird vorher festgeschrieben'}">${opt('','Folgebeleg …','')}${t.folge.map(f=>opt(f,T[f].bez,'')).join('')}</select>`:''}
     ${b.typ==='LS'&&!b.storno?`<button data-act="sammelre">Sammelrechnung …</button>`:''}
-    <button data-act="senden" title="Als PDF per E-Mail versenden">✉ Senden …</button><button data-act="pdfdl" title="PDF-Datei speichern">PDF speichern</button>
+    <button data-act="senden" title="Als PDF per E-Mail versenden">✉ Senden …</button><button data-act="pdfdl" title="PDF-Datei speichern">${pdfL()}</button>
     ${b.fest&&!b.storno&&b.typ==='AN'&&b.status!=='ersetzt'?`<button data-act="anrev" title="Erstellt eine neue Revision zum Bearbeiten – dieser Stand bleibt unverändert gespeichert">✎ Bearbeiten (Revision)</button><button data-act="anfolge">Folgeangebot</button><button data-act="anst" data-v="${b.status==='abgelehnt'?'':'abgelehnt'}">${b.status==='abgelehnt'?'wieder offen':'abgelehnt'}</button>`:''}
     ${abZu(b)?`<button data-act="abauf" title="Ausgegeben am ${dAT(b.abgeschlossen.slice(0,10))} – Status wieder auf offen bzw. nach Lieferung und Rechnung">Status wieder offen</button>`:''}${b.fest&&!b.storno&&REOPEN.includes(b.typ)&&b.status!=='ersetzt'?`<button data-act="reopen">Bearbeiten</button>`:''}
     <button data-act="dup">Duplizieren</button>
@@ -2539,7 +2539,7 @@ function belegKopfbarK(b,ans){const t=T[b.typ],H=HANDY.matches,h=belegHaupt(b);
       ${H?'':`${h.act!=='druck'?'<button data-act="druck">PDF / Drucken</button>':''}${zuRE(b)&&h.act!=='folgere'?`<button data-act="folgere"${b.fest?'':' title="Wird vorher festgeschrieben"'}>→ Rechnung</button>`:''}`}<button class="p" data-act="${h.act}"${h.value?` value="${h.value}"`:''}>${esc(H&&h.lh||h.l)}</button><button class="mehr" data-act="menue" data-m="beleg" title="Weitere Aktionen: PDF speichern, Senden, Folgebeleg, Duplizieren …">⋯</button></div>
   </div>${belegStatus(b)}${b.status==='ersetzt'?`<div class="hint">Dieses Angebot wurde durch eine Revision ersetzt.</div>`:''}`}
 MENUE.beleg=()=>{const b=curBeleg();if(!b)return[];const t=T[b.typ],H=HANDY.matches,h=belegHaupt(b),fo=!b.storno&&t.folge.length&&b.status!=='ersetzt',vf=b.fest?'':'Wird vorher festgeschrieben',anF=b.fest&&!b.storno&&b.typ==='AN'&&b.status!=='ersetzt';
-  const L=[H&&h.act!=='druck'&&{l:'PDF / Drucken',ic:'🖨',act:'druck'},{l:'PDF speichern',ic:'⤓',act:'pdfdl',titel:'PDF-Datei speichern'},{l:'Senden …',ic:'✉',act:'senden',titel:'Als PDF per E-Mail versenden'},{trenn:1},
+  const L=[H&&h.act!=='druck'&&{l:'PDF / Drucken',ic:'🖨',act:'druck'},{l:pdfL(),ic:'⤓',act:'pdfdl',titel:'PDF-Datei speichern'},{l:'Senden …',ic:'✉',act:'senden',titel:'Als PDF per E-Mail versenden'},{trenn:1},
     H&&zuRE(b)&&h.act!=='folgere'&&{l:'→ Rechnung',ic:BICON.RE,act:'folgere',titel:vf},fo&&{l:'Folgebeleg',ic:'➜',sub:t.folge.map(f=>({l:T[f].bez,ic:BICON[f],act:'folge',value:f,titel:vf}))},
     b.typ==='LS'&&!b.storno&&{l:'Sammelrechnung …',ic:'🧾',act:'sammelre'},{trenn:1},
     glZeigen(b)&&{l:'Gliederung …',ic:'≡',act:'glpop',titel:'Gruppen und Positionen im Überblick – Sprung zur Stelle'},
@@ -6250,7 +6250,7 @@ function ausgabeZaehlen(b,a,speichern=true){if(!a?.z)return;b.ausgaben=a.n+1;if(
 const abZu=b=>!!(erw('abAbschluss')&&b?.typ==='AB'&&b.abgeschlossen&&!b.storno);
 function abAbschluss(b,s=2){if(!erw('abAbschluss')||b?.typ!=='AB'||!b.fest||b.storno||b.abgeschlossen)return;b.abgeschlossen=new Date().toISOString();log('Auftragsbestätigung abgeschlossen',`${b.nr} (ausgegeben)`);if(s)commit();if(s>1&&curBeleg()?.id===b.id)render()}
 async function belegDrucken(b){const a=await dupFrage(b);if(!a)return;drucken(b,a);ausgabeZaehlen(b,a);abAbschluss(b)}
-async function belegPDF(b){const a=await dupFrage(b);if(!a)return;await pdfHerunterladen(b,a);ausgabeZaehlen(b,a);abAbschluss(b)}
+async function belegPDF(b){const a=await dupFrage(b);if(!a)return;if(await pdfHerunterladen(b,a)===false)return;ausgabeZaehlen(b,a);abAbschluss(b)}
 window.addEventListener('afterprint',()=>{if(DRUCK&&!DRUCK.an&&DRUCK.t!=null){document.title=DRUCK.t;DRUCK.t=null}});
 /* Regie (P36 Teil 10, erw.regie): Regiebericht = Bericht mit r.art='RB' (Auswahl beim Anlegen über ACT.btbneu, eigene Nummer je Auftrag in btbNeu(aid,art), Titel btbTitel(r), Kürzel btbKz(r) „RB“).
    Regiepreise je Stundentarif t.regie (leer = Verkauf; regiePreis(kz), Karte regieEinst() über Wrapper um V.einstellungen). Kundenunterschrift Pflicht: verrechenbar nur mit Unterschrift des Kunden
@@ -6352,7 +6352,19 @@ async function pdfAusBeleg(b,o={}){
   return new Blob(teile,{type:'application/pdf'});
 }
 const pdfName=b=>`${T[b.typ].bez}-${bNr(b)}-${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_')+'.pdf';
-async function pdfHerunterladen(b,o={}){const bl=await pdfAusBeleg(b,o),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=pdfName(b);document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+async function pdfHerunterladen(b,o={}){const bl=await pdfAusBeleg(b,o);if(pdfTeilenOk())return pdfTeilen(new File([bl],pdfName(b),{type:'application/pdf'}));const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=pdfName(b);document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+/* PDF teilen (P40, erw.iosTeilen): am iPhone/iPad (Touch, navigator.canShare mit Datei) öffnet „PDF speichern“ das Teilen-Blatt (Mail, WhatsApp, Dateien, AirDrop, Drucken).
+   Ist die Tippgeste nach dem Erzeugen abgelaufen (NotAllowedError), fragt ein kleines Fenster noch einmal; abgebrochen = false (belegPDF() zählt dann keine Ausgabe) */
+erwPlus({k:'iosTeilen',std:false,p:'App iPhone/iPad (P40)',l:'PDF teilen statt speichern (iPhone/iPad)',info:'Am iPhone und iPad öffnet „PDF teilen“ das iOS-Teilen-Blatt: direkt an Mail, WhatsApp, Nachrichten, AirDrop, in „Dateien“ sichern oder drucken. Abbrechen zählt nicht als Ausgabe (Vermerk DUPLIKAT, Abschluss der Auftragsbestätigung). Am PC bleibt es beim Speichern der Datei.'});
+const pdfTeilenOk=()=>{try{return!!DB&&erw('iosTeilen')&&matchMedia('(pointer:coarse)').matches&&!!navigator.canShare?.({files:[new File([''],'x.pdf',{type:'application/pdf'})]})}catch(e){return false}};
+const pdfL=()=>pdfTeilenOk()?'PDF teilen …':'PDF speichern';
+async function pdfTeilen(f){
+  const los=async()=>{try{await navigator.share({files:[f],title:f.name.replace(/\.pdf$/i,'')});return true}catch(e){if(e.name==='AbortError')return false;throw e}};
+  try{return await los()}catch(e){if(e.name!=='NotAllowedError'){alert('Teilen nicht möglich:\n'+e.message);return false}}
+  return new Promise(res=>{const d=document.createElement('div');d.className='modal';
+    d.innerHTML=`<div class="mbox" style="max-width:420px"><h2>PDF ist bereit</h2><p>${esc(f.name)}</p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Teilen …</button></div></div>`;
+    document.body.appendChild(d);d.querySelector('#m-no').onclick=()=>{d.remove();res(false)};
+    d.querySelector('#m-ok').onclick=async()=>{d.remove();try{res(await los())}catch(e){alert('Teilen nicht möglich:\n'+e.message);res(false)}}})}
 
 /* ---------- Versand per E-Mail über Office 365 (Microsoft Graph, Mail.Send) ---------- */
 const MAILSCOPE='https://graph.microsoft.com/Mail.Send offline_access';

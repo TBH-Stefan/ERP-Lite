@@ -1220,9 +1220,9 @@ async function offlineStart(){
 async function nachholen(){
   if(!OFFSTART||NHL||saving||DIRTY||navigator.onLine===false)return;NHL=true;netzZeigen();
   try{const base=STORE.lastText?JSON.parse(STORE.lastText):null,txt=await STORE.load();
-    let konfl=[];if(txt){const r=migrate(JSON.parse(txt));if(r.settings?.erw?.mfaPflicht&&!mfaOk()){mfaSperre();return}const m=merge3(base,DB,r);DB=migrate(m.db);konfl=m.konfl}
+    let konfl=[],verdr=null;if(txt){const r=migrate(JSON.parse(txt));if(r.settings?.erw?.mfaPflicht&&!mfaOk()){mfaSperre();return}const m=merge3(base,DB,r);DB=migrate(m.db);konfl=m.konfl;verdr=m.verdr}
     OFFSTART=false;NETZFEHL=false;undoBasis(true);artDatalist();render();pending=true;await saveNow();
-    if(konfl.length)alert('Diese Datensätze wurden gleichzeitig auf einem anderen Gerät geändert – es gilt die Version des anderen Geräts:\n\n• '+[...new Set(konfl)].join('\n• '))}
+    if(konfl.length){const kp=await konfliktKopie(verdr);alert('Diese Datensätze wurden gleichzeitig auf einem anderen Gerät geändert – es gilt die Version des anderen Geräts:\n\n• '+[...new Set(konfl)].join('\n• ')+kkHinweis(kp))}}
   catch(e){if(e.login){saveState('Anmeldung abgelaufen – tippen zum Anmelden',true);loginHinweis()}}
   finally{NHL=false;netzZeigen()}}
 window.addEventListener('online',()=>{nachholen();netzZeigen()});

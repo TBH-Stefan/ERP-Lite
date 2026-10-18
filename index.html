@@ -2648,15 +2648,17 @@ function adrCtx(el){if(!erw('adrVorschlag')||el.tagName!=='INPUT')return null;co
     c={f:el.dataset.k,ex:'',el:q,fill:o=>{for(const x of ['strasse','plz','ort','land'])if(o[x]!=null&&o[x]!==''&&q(x))q(x).value=o[x]}}}
   else if(el.dataset.o==='k'&&['strasse','plz'].includes(el.dataset.f)){const id=el.dataset.id,q=x=>document.querySelector(`[data-o="k"][data-id="${id}"][data-f="${x}"]`);
     c={f:el.dataset.f,ex:id,el:q,fill:o=>{const k=kontakt(id);if(!k)return;document.activeElement?.blur?.();for(const x of ['strasse','plz','ort','land'])if(o[x]!=null&&o[x]!=='')k[x]=o[x];persist();render()}}}
-  if(c){c.g=x=>c.el(x)?.value||'';el.setAttribute('autocomplete','off')}return c}
+  if(c)c.g=x=>c.el(x)?.value||'';return c}
 let ADR=null,ADR_T=0; // offene Liste {el,box,l,i,c}
 function adrZu(){ADR?.box.remove();ADR=null}
 function adrZeigen(el,c,l){adrZu();if(!l.length||document.activeElement!==el)return;const box=document.createElement('div'),r=el.getBoundingClientRect(),w=Math.min(Math.max(r.width,300),innerWidth-16);
-  box.className='adrv';box.style.cssText=`left:${Math.max(8,Math.min(r.left,innerWidth-w-8))}px;top:${r.bottom+2}px;width:${w}px`;
+  box.className='adrv';box.style.cssText=`left:${Math.max(8,Math.min(r.left,innerWidth-w-8))}px;top:0;width:${w}px;visibility:hidden`;
   box.innerHTML=l.map((o,i)=>{const po=esc([o.plz,o.ort].filter(Boolean).join(' '))+(o.land&&!adrAT(o.land)?', '+esc(o.land):'');return`<div class="adri" data-i="${i}">${o.lokal?'👤 ':''}${o.strasse?`${esc(o.strasse)}<span class="mut"> · ${po}</span>`:po}</div>`}).join('')+(l.some(o=>!o.lokal)?'<div class="adrq">© OpenStreetMap</div>':'');
   box.addEventListener('mousedown',e=>e.preventDefault()); // Fokus bleibt im Feld
   box.addEventListener('click',e=>{const t=e.target.closest('.adri');if(t)adrWahl(+t.dataset.i)});
-  document.body.appendChild(box);ADR={el,box,l,i:-1,c}}
+  document.body.appendChild(box);ADR={el,box,l,i:-1,c};
+  // über dem Feld, damit das Autofill des Browsers (Chrome/Edge am Bildschirm, unter dem Feld) frei bleibt; zu wenig Platz oben → darunter (Handy/Tablet: Autofill in der Leiste über der Tastatur)
+  const ob=r.top-6>=Math.min(box.offsetHeight,140);if(ob)box.style.maxHeight=Math.min(box.offsetHeight,r.top-6)+'px';box.style.top=(ob?r.top-2-box.offsetHeight:r.bottom+2)+'px';box.style.visibility=''}
 function adrWahl(i){const A=ADR,o=A?.l[i];if(!o)return;adrZu();
   if(!o.strasse){A.c.fill({plz:o.plz,ort:o.ort,land:o.land});return} // PLZ → Ort
   const nr=adrNr(A.el.value),st=!o.nr&&!o.lokal&&nr&&!adrNr(o.strasse)?o.strasse+' '+nr:o.strasse;A.c.fill({...o,strasse:st});

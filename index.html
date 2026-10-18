@@ -1220,6 +1220,7 @@ function erledigung(b){if(lfL(b))return lfErl(b); // Bestellung mit Restmenge ge
 function statusTag(b){
   if(b.storno)return Math.abs(offen(b))>0.005?tag('storniert – Guthaben '+fmt(-offen(b)),'err'):tag('storniert','err');
   if(!b.fest)return tag('Entwurf');
+  if(b.typ==='RA')return raTag(b); // Regieantrag (P36 Teil 11)
   if(b.typ==='AN'&&b.status==='ersetzt')return tag('ersetzt');
   if(b.typ==='AN')return b.status==='angenommen'?tag('angenommen','ok'):b.status==='abgelehnt'?tag('abgelehnt','err'):(b.gueltigBis&&b.gueltigBis<isoD()?tag('abgelaufen','warn'):tag('offen','acc'));
   if(b.typ==='GS'&&beleg(b.vorgaengerId)&&T[beleg(b.vorgaengerId).typ].re)return tag('verrechnet','ok');
@@ -2095,7 +2096,7 @@ V.beleg=id=>{
       <td data-l="Kz" style="width:74px">${kzSel(i,p)}</td>${akt}
     </tr>`}).join('');
   const kette=DB.belege.filter(x=>b.auftragId?x.auftragId===b.auftragId:(x.id===b.id||x.vorgaengerId===b.id||x.id===b.vorgaengerId)).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
-  const k=kontakt(b.kontaktId),scan=(['WE','ER','BE'].includes(b.typ)?scanBox(b):'')+lfKarte(b)+lfHinweis(b); // Karte „Lieferung“ der Bestellung, Hinweis in der Auftragsbestätigung (P35)
+  const k=kontakt(b.kontaktId),scan=(['WE','ER','BE'].includes(b.typ)?scanBox(b):'')+lfKarte(b)+lfHinweis(b)+raKarte(b); // Karte „Lieferung“ der Bestellung, Hinweis in der Auftragsbestätigung (P35)
   const ans=ansicht();
   const kopfbar=kmpB()?belegKopfbarK(b,ans)+zahlKopfK(b)+aktLeiste(b):`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
@@ -2227,6 +2228,49 @@ document.addEventListener('focusout',e=>{const el=e.target.closest?.('[data-ed]'
 document.addEventListener('focusin',e=>{const el=e.target.closest?.('[data-roh]');if(!el||!el.isContentEditable)return;el.innerHTML=el.dataset.roh;el.removeAttribute('data-roh');const r=document.createRange();r.selectNodeContents(el);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r)}); // Platzhalter (P8): zum Bearbeiten den Rohtext zeigen
 document.addEventListener('keydown',e=>{const el=e.target.closest?.('[data-ed]');if(el&&e.key==='Enter'&&!el.classList.contains('ml')&&!el.classList.contains('rte')){e.preventDefault();el.blur()}});
 document.addEventListener('paste',e=>{if(!e.target.closest?.('[data-ed]'))return;e.preventDefault();document.execCommand('insertText',false,(e.clipboardData||window.clipboardData).getData('text/plain'))});
+/* Regieantrag (P36 Teil 11, erw.regieAntrag, mit Teil 10): Belegart RA im Verkauf (T.RA, eigener Nummernkreis RA-JJJJ-0001, Reiter und „Neu“ in der Verkaufsliste), nur vorhanden, wenn der Schalter an ist
+   oder schon Regieanträge bestehen (raSync() beim Laden über migrate und in render). Inhalt wie ein Angebot, Stundentarife zu Regiepreisen (ACT.ptarif, „Regiepreise einsetzen“).
+   Nach dem Festschreiben Status b.ra={st:'gen'|'abg',datum,wie:'sig'|'schriftlich',sig?,notiz} (auch am festgeschriebenen Beleg, per commit mit log; statusTag → raTag): Genehmigung per Unterschrift des
+   Kunden (sigPop, Ablage Regie/<Jahr>/<Nr>) oder Vermerk „schriftlich genehmigt am …“ (Schreiben als Anhang des Belegs). Karte raKarte(b) in V.beleg: Status, Soll (Stunden, netto) gegen Ist der
+   zugeordneten Regieberichte (r.raId; Stunden, bewertet zu Regiepreisen, verrechnet), „+ Regiebericht“; im Regiebericht Auswahl des Regieantrags (BTB_ED) und Vermerk im Druck (BTB_DOC) */
+erwPlus({k:'regieAntrag',std:false,p:'Bautagesbericht (P36)',l:'Regieantrag im Verkauf',info:'Wirkt mit „Regiebericht und Regiepreise“. Im Verkauf die Belegart „Regieantrag“ mit eigenem Reiter und Nummernkreis (RA-2026-0001): Beschreibung der Zusatzarbeit, geschätzte Stunden je Tarif (zu Regiepreisen) und Material, Vor- und Nachtext wie im Angebot. Nach dem Festschreiben: „Genehmigung mit Unterschrift“ am Gerät, „schriftlich genehmigt …“ (Schreiben als Anhang) oder „abgelehnt“. Aus einem genehmigten Regieantrag entstehen Regieberichte; der Antrag zeigt Soll (geschätzt) gegen Ist (Regieberichte) in Stunden und Betrag. Aus = keine neuen Regieanträge; vorhandene bleiben in der Liste.'});
+const RA_T={bez:'Regieantrag',b:'V',folge:[]},RA_KOPF='Für die folgenden, im Auftrag nicht enthaltenen Leistungen ersuchen wir um Genehmigung als Regiearbeiten:';
+function raSync(d=DB){if(!d?.settings)return;const an=!!d.settings.erw?.regieAntrag||(d.belege||[]).some(b=>b.typ==='RA');
+  if(!an){delete T.RA;return}T.RA??=RA_T;BICON.RA??='🛠';const s=d.settings;s.nk??={};s.texte??={};s.nk.RA??={prefix:'RA',zaehler:{}};s.texte.RA??={kopf:RA_KOPF,fuss:''}}
+const migrate11=migrate;migrate=d=>{const x=migrate11(d);raSync(x);return x};
+const render11=render;render=(...a)=>{if(DB)raSync();return render11(...a)};
+const raTag=b=>b.ra?.st==='gen'?tag('genehmigt','ok'):b.ra?.st==='abg'?tag('abgelehnt','err'):tag('offen','acc');
+const raPreise=b=>{let n=0;for(const p of b.pos)if(p.art==='L'){const x=regiePreis(p.tarif||p.nr);if(x!=null&&+p.ep!==x){p.ep=x;lsAufteilen(b,p);n++}}return n};
+const raBerichte=b=>DB.berichte.filter(r=>r.raId===b.id);
+const raPreisH=kz=>regiePreis(kz)??(+S().tarife.find(t=>t.kz===kz)?.vk||0);
+function raKarte(b){if(b.typ!=='RA')return'';
+  if(!b.fest)return`<div class="card"><h2>Regieantrag</h2><p class="mut" style="margin:0 0 8px">Stundentarife werden zu Regiepreisen eingesetzt (Einstellungen → Regiepreise). Nach dem Festschreiben folgt die Genehmigung durch den Kunden.</p><button class="s" data-act="rapreise">Regiepreise einsetzen</button></div>`;
+  const g=gruppenInfo(b),P=b.pos.filter(p=>!effKz(p,g)),sStd=r2(sum(P,posStd)),R=raBerichte(b),iStd=r2(sum(R,btbSumme)),iW=r2(sum(R,r=>sum(r.personal||[],p=>btbStd(p)*raPreisH(p.tarif)))),
+    RE=[...new Set(R.map(btbRe).filter(Boolean))],iV=r2(sum(RE,x=>summen(x).netto)),ra=b.ra||{},z=(l,s,i)=>`<tr><td>${l}</td><td class="n">${s}</td><td class="n">${i}</td></tr>`;
+  return`<div class="card"><div class="bar" style="margin:0 0 6px"><h2 style="margin:0">Regieantrag</h2>${raTag(b)}</div>
+    ${ra.st?`<p style="margin:0 0 6px">${ra.st==='gen'?'Genehmigt':'Abgelehnt'} am ${dAT(ra.datum)}${ra.wie==='sig'?' mit Unterschrift':ra.wie==='schriftlich'?' schriftlich':''}${ra.notiz?' · '+esc(ra.notiz):''}</p>${ra.sig?sigBlock({sig:{kunde:ra.sig}},[['kunde','Auftraggeber / Kunde']]):''}`:''}
+    <table><thead><tr><th></th><th class="n">Soll</th><th class="n">Ist</th></tr></thead><tbody>${z('Stunden',fmtQ(sStd)+' h',fmtQ(iStd)+' h')}${z('Betrag netto',fmt(summen(b).netto)+' €',`${fmt(iW)} € <span class="mut" style="font-size:12px">bewertet</span>`)}${RE.length?z('verrechnet','',fmt(iV)+' €'):''}</tbody></table>
+    ${R.length?`<p class="mut" style="margin:6px 0 0">${R.map(r=>`<a href="#/bericht/${r.id}">RB ${r.nr}</a> ${dAT(r.datum)}`).join(' · ')}</p>`:''}
+    <div class="bar" style="margin:8px 0 0">${b.storno?'':!ra.st?`<button class="p" data-act="rasig" data-id="${b.id}">✍ Genehmigung mit Unterschrift</button><button data-act="raschr" data-id="${b.id}">schriftlich genehmigt …</button><button class="d" data-act="raabg" data-id="${b.id}">abgelehnt</button>`
+      :`${ra.st==='gen'&&erw('btb')?`<button class="p" data-act="rarb" data-id="${b.id}">+ Regiebericht</button>`:''}${ra.st==='abg'||!R.length&&ra.wie!=='sig'?`<button data-act="raauf" data-id="${b.id}">Status zurücksetzen</button>`:''}`}</div></div>`}
+queueMicrotask(()=>{ // nach den Abschnitten aus P36 (BTB_ED/BTB_DOC stehen weiter unten)
+BTB_ED.push(r=>{if(r.art!=='RB'||!erw('regieAntrag'))return'';const L=DB.belege.filter(b=>b.typ==='RA'&&b.fest&&!b.storno&&b.auftragId===r.auftragId);
+  return bAbs('btb-ra','Regieantrag',`<div class="row"><label class="w2">Regieantrag${fsel('btb|'+r.id,'raId',r.raId||'',[['','– keiner –'],...L.map(b=>[b.id,`${b.nr} · ${b.betreff||''} (${b.ra?.st==='gen'?'genehmigt':b.ra?.st==='abg'?'abgelehnt':'offen'})`])])}</label></div>`,{zusatz:esc(beleg(r.raId)?.nr||'keiner')})});
+BTB_DOC.push(r=>{const b=r.raId&&beleg(r.raId);return b?`<p style="margin-top:10px">Regieantrag ${esc(b.nr)} vom ${dAT(b.datum)}${b.ra?.st==='gen'?', genehmigt am '+dAT(b.ra.datum):''}</p>`:''});});
+queueMicrotask(()=>{const qn0=ACT.qneu,pt0=ACT.ptarif;
+  ACT.qneu=async el=>{if(el.dataset.t!=='RA')return qn0(el);const A=btbAuftraege();
+    const o=await formDialog({titel:'Neuer Regieantrag',ok:'Anlegen',felder:[{k:'a',l:'zum Auftrag',wert:A[0]?.id||'',opts:[...A.map(a=>[a.id,auftragLabel(a.id)]),['','– ohne Auftrag –']],cls:'w2'}]});if(!o)return;
+    const root=o.a&&(beleg(o.a)||DB.belege.find(x=>x.auftragId===o.a)),k=kontakt(root?.kontaktId),b=neuBeleg('RA',root?{auftragId:o.a,kontaktId:root.kontaktId,betreff:root.betreff||''}:{});if(k)konditionenUebernehmen(b,k);persist();go('beleg/'+b.id)};
+  ACT.ptarif=el=>{const b=curBeleg(),n=b?.pos.length;pt0(el);if(b?.typ==='RA'&&b.pos.length>n&&raPreise(b)){persist();render()}};
+  Object.assign(ACT,{
+    rapreise:()=>{const b=curBeleg();if(!b||b.fest||b.typ!=='RA')return;const n=raPreise(b);alert(n?`${n} Position(en) auf Regiepreis gesetzt.`:'Keine Änderung – alle Stundentarife stehen bereits auf dem Regiepreis bzw. ohne Regiepreis.');if(n){persist();render()}},
+    rasig:async el=>{const b=beleg(el.dataset.id);if(!b?.fest||b.ra?.st)return;const k=kontakt(b.kontaktId),e=await sigPop('Genehmigung Regieantrag',{name:persName(k)||k?.name||'',hinweis:`Der Auftraggeber genehmigt Regieantrag ${b.nr} vom ${dAT(b.datum)} (netto ${fmt(summen(b).netto)} €) zur Ausführung als Regiearbeiten.`});
+      if(!e||b.ra?.st)return;const s=await sigAblegen(`Regie/${b.datum.slice(0,4)}/${b.nr}`,'kunde',e);b.ra={st:'gen',datum:isoD(),wie:'sig',sig:s};log('Regieantrag genehmigt',`${b.nr}: Unterschrift ${s.name}`);await commit();render()},
+    raschr:async el=>{const b=beleg(el.dataset.id);if(!b?.fest||b.ra?.st)return;const o=await formDialog({titel:'Regieantrag schriftlich genehmigt',ok:'Speichern',felder:[{k:'datum',l:'genehmigt am',typ:'date',wert:isoD(),pflicht:true},{k:'notiz',l:'Vermerk (z. B. E-Mail von …)',cls:'w2'},{typ:'hinweis',l:'Das Schreiben bitte als Anhang zu diesem Beleg ablegen.'}]});
+      if(!o)return;b.ra={st:'gen',datum:o.datum,wie:'schriftlich',...(o.notiz?{notiz:o.notiz}:{})};log('Regieantrag genehmigt',`${b.nr}: schriftlich ${dAT(o.datum)}`);await commit();render()},
+    raabg:async el=>{const b=beleg(el.dataset.id);if(!b?.fest||b.ra?.st)return;const n=prompt('Regieantrag abgelehnt – Vermerk (optional):','');if(n===null)return;b.ra={st:'abg',datum:isoD(),...(pT(n)?{notiz:pT(n)}:{})};log('Regieantrag abgelehnt',b.nr);await commit();render()},
+    raauf:async el=>{const b=beleg(el.dataset.id);if(!b?.ra||b.ra.wie==='sig'&&b.ra.st==='gen'||!confirm('Status des Regieantrags zurücksetzen?'))return;delete b.ra;log('Regieantrag Status zurückgesetzt',b.nr);await commit();render()},
+    rarb:el=>{const b=beleg(el.dataset.id);if(!b||b.ra?.st!=='gen')return;if(!b.auftragId){alert('Der Regieantrag gehört zu keinem Auftrag.');return}const r=btbNeu(b.auftragId,'RB');r.raId=b.id;persist();go('bericht/'+r.id)}})});
 
 /* ---------- Sicherheitsabfrage ---------- */
 function dialog({titel,html,ok='OK',check='',gefahr=false}){

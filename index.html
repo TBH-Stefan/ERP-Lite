@@ -3001,17 +3001,18 @@ async function kostenDialog(k){const neu=!k;k=k||{};const fb=FB();
   if(neu){k={id:uid(),gebucht:{},...o};DB.kosten.push(k);log('Kostenposition angelegt',`${k.bez} ${fmt(k.betrag)} ${KINT[k.intervall][0]}`)}else{Object.assign(k,o);log('Kostenposition geändert',k.bez)}
   commit();render()}
 // Lohnbuchung aus dem Lohnjournal (Lohnverrechnung extern)
-async function lohnBuchung(){const fb=FB(),vm=addDays(isoD().slice(0,8)+'01',-1);
-  const o=await formDialog({titel:'Lohnbuchung (Monat laut Lohnjournal)',ok:'Buchen',breit:true,felder:[
-    {k:'datum',l:'Monatsletzter',typ:'date',wert:vm},{k:'konto',l:'Konto',wert:'6200',opts:[['6200','6200 Gehälter'],['6000','6000 Löhne']]},{k:'beleg',l:'Beleg (z. B. Lohnjournal 09/2026)',wert:'Lohnjournal '+vm.slice(5,7)+'/'+vm.slice(0,4)},
+async function lohnBuchung(ma){const fb=FB(),vm=addDays(isoD().slice(0,8)+'01',-1);
+  const o=await formDialog({titel:ma?'Lohn verbuchen – '+esc(ma.name||''):'Lohnbuchung (Monat laut Lohnjournal)',ok:'Buchen',breit:true,felder:[
+    {k:'datum',l:'Monatsletzter',typ:'date',wert:vm},{k:'konto',l:'Konto',wert:ma?ma.lohnKonto||'6000':'6200',opts:[['6200','6200 Gehälter'],['6000','6000 Löhne']]},{k:'beleg',l:'Beleg (z. B. Lohnjournal 09/2026)',wert:(ma?`Lohnzettel ${ma.name||''} `:'Lohnjournal ')+vm.slice(5,7)+'/'+vm.slice(0,4)},
     {k:'brutto',l:'Bruttobezüge',typ:'number',wert:'',neu:1,pflicht:true},{k:'svdn',l:'SV Dienstnehmer',typ:'number',wert:''},{k:'lst',l:'Lohnsteuer',typ:'number',wert:''},
     {k:'svdg',l:'SV Dienstgeber (inkl. BV)',typ:'number',wert:'',neu:1},{k:'db',l:'DB',typ:'number',wert:''},{k:'dz',l:'DZ',typ:'number',wert:''},{k:'ks',l:'Kommunalsteuer',typ:'number',wert:''}]});
   if(!o)return;const netto=r2(o.brutto-o.svdn-o.lst);if(netto<0){alert('Abzüge größer als Bruttobezüge.');return}
   if(fb.sperre&&o.datum<=fb.sperre){alert('Periode gesperrt.');return}
   const B=[[o.konto,KV.sv,o.svdn,'SV Dienstnehmer'],[o.konto,KV.fa,o.lst,'Lohnsteuer'],[o.konto,KV.lohn,netto,'Nettobezüge'],[KV.sozDG,KV.sv,o.svdg,'SV Dienstgeber'],[KV.db,KV.fa,o.db,'DB'],[KV.dz,KV.fa,o.dz,'DZ'],[KV.ks,KV.gem,o.ks,'Kommunalsteuer']].filter(x=>+x[2]>0);
+  if(ma&&maLohnB(ma.id).some(x=>String(x.datum).slice(0,7)===o.datum.slice(0,7))&&!confirm(`Für ${ma.name} ist im Monat ${o.datum.slice(5,7)}/${o.datum.slice(0,4)} bereits Lohn gebucht. Trotzdem noch einmal buchen?`))return;
   if(!confirm(`Lohnbuchung ${o.beleg}:\n\n${B.map(([s,h,b,t])=>`${s} an ${h}  ${fmt(b)}  ${t}`).join('\n')}\n\nBuchen?`))return;
-  for(const[soll,haben,b,t]of B)fb.buchungen.push({id:uid(),datum:o.datum,beleg:o.beleg,text:`${t} ${o.beleg}`,soll,haben,betrag:r2(b),stArt:'',satz:0,lohn:true,erfasst:new Date().toISOString()});
-  log('Lohnbuchung',`${o.beleg}: brutto ${fmt(o.brutto)}, netto ${fmt(netto)}`);commit();render()}
+  for(const[soll,haben,b,t]of B)fb.buchungen.push({id:uid(),datum:o.datum,beleg:o.beleg,text:`${t} ${o.beleg}`,soll,haben,betrag:r2(b),stArt:'',satz:0,lohn:true,...(ma?{maId:ma.id}:{}),erfasst:new Date().toISOString()});
+  if(ma)ma.lohnKonto=o.konto;log('Lohnbuchung',`${o.beleg}: brutto ${fmt(o.brutto)}, netto ${fmt(netto)}`);commit();render()}
 // USt-Zahllast: Umsatzsteuer und Vorsteuer des Zeitraums auf das Abgabenkonto umbuchen
 async function uvaZahllast(){const fb=FB(),M=fb.map,h=isoD(),vm=addDays(h.slice(0,8)+'01',-1);
   const o=await formDialog({titel:'USt-Zahllast umbuchen (UVA)',ok:'Umbuchen',felder:[{k:'jahr',l:'Jahr',wert:vm.slice(0,4)},{k:'zr',l:'Zeitraum',wert:vm.slice(5,7),opts:[...MONATE.map((m,i)=>[String(i+1).padStart(2,'0'),m]),...['Q1','Q2','Q3','Q4'].map(q=>[q,q])]}]});
@@ -5694,6 +5695,16 @@ function vorschauSeiten(){
     if(eng)bl.style.zoom=(av/bl.offsetWidth).toFixed(4)}
 }
 window.addEventListener('resize',()=>{clearTimeout(vorschauSeiten.t);vorschauSeiten.t=setTimeout(vorschauSeiten,200)});
+/* Personal Teil 2 (P36 b, erw.maLohn): Lohn je Mitarbeiter verbuchen – lohnBuchung(ma) (gleiche Buchungen wie „Lohnbuchung“ in Laufende Kosten, zusätzlich maId, Konto je Mitarbeiter
+   ma.lohnKonto, Hinweis bei zweiter Buchung im selben Monat); Abschnitt „Lohn“ im Mitarbeiter (MA_ABS): je Monat Brutto, Dienstgeberanteile, Lohnkosten, Stunden, Kosten je Stunde */
+erwPlus({k:'maLohn',std:false,p:'Personal (P36 b)',l:'Lohn je Mitarbeiter verbuchen',info:'Im Mitarbeiter (Reiter „Personal“) bucht „Lohn verbuchen …“ den Monatslohn laut Lohnzettel in die Finanzbuchhaltung: Bruttobezüge, SV Dienstnehmer, Lohnsteuer, SV Dienstgeber, DB, DZ und Kommunalsteuer, wie die bisherige „Lohnbuchung“ unter Laufende Kosten, aber dem Mitarbeiter zugeordnet. Der Abschnitt „Lohn“ zeigt je Monat Brutto, Dienstgeberanteile, Lohnkosten gesamt, die gebuchten Stunden und die tatsächlichen Kosten je Stunde. Aus = kein Abschnitt; gebuchte Löhne bleiben in der Buchhaltung.'});
+const MA_ABS=[],maLohnB=id=>(FB().buchungen||[]).filter(b=>b.maId===id);
+function maLohnMon(id){const M={},DG=[KV.sozDG,KV.db,KV.dz,KV.ks];for(const b of maLohnB(id)){const x=M[String(b.datum).slice(0,7)]??={brutto:0,dg:0,beleg:new Set()};if(DG.includes(b.soll))x.dg+=+b.betrag||0;else x.brutto+=+b.betrag||0;x.beleg.add(b.beleg)}return M}
+MA_ABS.push(m=>{if(!erw('maLohn'))return'';const M=maLohnMon(m.id),K=Object.keys(M).sort().reverse(),mon=k=>k.slice(5)+'/'+k.slice(0,4);
+  const z=k=>{const x=M[k],h=sum(maZeiten(m.id,k),y=>+y.stunden||0),g=r2(x.brutto+x.dg);return`<tr><td>${mon(k)}</td><td>${esc([...x.beleg].join(', '))}</td><td class="n">${fmt(x.brutto)}</td><td class="n">${fmt(x.dg)}</td><td class="n"><b>${fmt(g)}</b></td><td class="n">${fmtQ(h)}</td><td class="n">${h?fmt(g/h):'–'}</td></tr>`};
+  return bAbs('ma-lohn','Lohn',`<div class="bar" style="margin:0 0 8px"><span class="mut">Monatslohn laut Lohnzettel, gebucht in die Finanzbuchhaltung.</span><span class="sp"></span>${erw('mitarbeiter')?`<button class="p" data-act="malohn" data-id="${m.id}">Lohn verbuchen …</button>`:''}</div>
+    ${K.length?`<div style="overflow-x:auto"><table><thead><tr><th>Monat</th><th>Beleg</th><th class="n">Brutto</th><th class="n">Dienstgeber</th><th class="n">Lohnkosten</th><th class="n">Std.</th><th class="n" title="Lohnkosten ÷ gebuchte Stunden">je Std.</th></tr></thead><tbody>${K.map(z).join('')}</tbody></table></div>`:'<p class="mut" style="margin:0">Noch keine Lohnbuchung.</p>'}`,{zusatz:K.length?mon(K[0]):'keine'})});
+queueMicrotask(()=>{ACT.malohn=el=>{const m=maVon(el.dataset.id);if(m)lohnBuchung(m)}});
 /* Druckvorbereitung an einer Stelle: Papierformat, #print, .mb, Fußzeile (#pgfuss) und Titel werden bei jedem Druck neu gesetzt.
    erw.strgP: Strg+P bzw. Browsermenü drucken den geöffneten Beleg (beforeprint); #print wird erst beim nächsten Routenwechsel geleert,
    nicht in afterprint (Android/iOS lösen es sofort oder gar nicht aus → leere Ausdrucke). DRUCK={h:Route,an:drucken()/druckHTML() druckt gerade,t:alter Titel} */
@@ -6495,7 +6506,7 @@ V.mitarbeiter=id=>{const m=maVon(id);if(!m)return'<p>Mitarbeiter nicht gefunden.
     <p style="margin:8px 0 0"><b>Summe ${fmtQ(sum(Z,z=>+z.stunden||0))} h</b> · Kosten ${fmt(sum(Z,z=>z.stunden*z.kosten))} € · ${new Set(Z.map(z=>z.auftragId)).size} Auftrag/Aufträge</p>`;
   return`<div class="bar"><h1 style="margin:0">${esc(m.name||'Mitarbeiter')}</h1>${m.aktiv===false?tag('inaktiv'):''}<span class="sp"></span><button class="d" data-act="madel" data-id="${m.id}">Löschen</button></div>
   <p class="mut" style="margin:2px 0 10px"><a href="#/personal">Personal</a></p>
-  ${bAbs('ma-stamm','Stammdaten',stamm,{zusatz:esc(m.funktion||'')})}${bAbs('ma-kont','Kontakt',kont,{offen:!kmpH(),zusatz:esc(m.tel||'')})}${bAbs('ma-zeit','Stunden',zeit,{zusatz:fmtQ(sum(Z,z=>+z.stunden||0))+' h'})}`};
+  ${bAbs('ma-stamm','Stammdaten',stamm,{zusatz:esc(m.funktion||'')})}${bAbs('ma-kont','Kontakt',kont,{offen:!kmpH(),zusatz:esc(m.tel||'')})}${bAbs('ma-zeit','Stunden',zeit,{zusatz:fmtQ(sum(Z,z=>+z.stunden||0))+' h'})}${MA_ABS.map(f=>f(m)).join('')}`};
 Object.assign(ACT,{
   maneu:()=>{const L=(DB.mitarbeiter??=[]),m={id:uid(),nr:String(Math.max(0,...L.map(x=>parseInt(x.nr)||0))+1),name:'',funktion:'',tarif:(S().tarife.find(t=>t.kz==='MONT')||S().tarife[0])?.kz||'',kosten:'',aktiv:true,eintritt:isoD()};
     L.push(m);log('Mitarbeiter angelegt',m.nr);persist();go('mitarbeiter/'+m.id)},

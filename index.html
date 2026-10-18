@@ -1611,7 +1611,7 @@ window.addEventListener('hashchange',async()=>{
     const ziel=location.hash;history.replaceState(null,'',CURHASH||'#/dash');
     const r=await frageSpeichern();if(r==='abbrechen')return;
     if(r==='speichern')await commit();else{if(SNAP)DB=migrate(JSON.parse(SNAP));merk();DIRTY=false;dirtyBar();artDatalist()}
-    location.hash=ziel;return;
+    history.replaceState(null,'',ziel);CURHASH=ziel;snap();render();return; // Eintrag ersetzen statt neuen anlegen: sonst steht der verlassene Datensatz doppelt im Verlauf (Zurück führt wieder hinein)
   }
   CURHASH=location.hash;snap();render();
 });

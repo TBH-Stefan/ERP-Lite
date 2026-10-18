@@ -5091,6 +5091,66 @@ V.einstellungen=()=>{
   ${lfEinst()}
   ${kmp()?erwAkk():erwKarte()}`;
 };
+/* Suche in den Einstellungen (P42) Teil 1, erw.einstSuche: Suchfeld unter der Überschrift (sticky, #esu/#esq), filtert beim Tippen die Seite im DOM (Wrapper um V.einstellungen, damit auch
+   Karten anderer Pakete erfasst sind). Bereiche (Kinder von #main) bleiben bei Treffer im Titel, in einem Eintrag (label, Tabellenzeile, .kk) oder im übrigen Text; Erweiterungs-Schalter und
+   Druckoptionen (ES_F) werden einzeln ausgeblendet, Pakete/Gruppen ohne Treffer ebenso. Klassen .es-weg/.es-hit, geöffnete Akkordeons merken data-esa (Zustand in erp-akk bleibt unverändert).
+   Suchbegriff ESQ nur für die Sitzung, gilt nach jedem Neuzeichnen (MutationObserver ES_MO, nur Kindknoten; die Suche selbst ändert nur Attribute) und wird beim Verlassen der Seite gelöscht. */
+erwPlus({k:'einstSuche',std:false,p:'Suche in den Einstellungen (P42)',l:'Suchfeld in den Einstellungen',info:'Oben in den Einstellungen steht ein Suchfeld „Einstellung suchen …“, das beim Scrollen sichtbar bleibt. Beim Tippen bleiben nur Bereiche mit Treffern im Titel, in Feldbeschriftungen oder im Text stehen; passende Felder werden gelb markiert. Erweiterungs-Schalter (Titel, Beschreibung, Paket) und Druckoptionen werden einzeln gefiltert. In der kompakten Ansicht klappen Bereiche mit Treffern auf. Groß-/Kleinschreibung egal, „ae“ findet „ä“, mehrere Wörter in beliebiger Reihenfolge. Enter springt zum ersten Treffer, Esc leert das Feld. Aus = kein Suchfeld.'});
+let ESQ='',esDa=false,esT=null,ES_ZIEL=null,ES_IDX=false;
+const ES_F='label:has(input[data-f^="erw."]),label:has([data-f^="druckprofil."])',ES_I='label,tbody>tr,.kk'; // einzeln filterbar bzw. nur markiert
+const esN=s=>String(s??'').toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/­/g,'');
+const esW=q=>esN(q).split(/\s+/).filter(Boolean);
+function esTxt0(el,wert=true){let t='';const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT,{acceptNode:n=>{if(n.nodeType===3)return NodeFilter.FILTER_ACCEPT;
+    if(n.tagName==='SELECT'){if(wert)t+=' '+[...n.selectedOptions].map(o=>o.text).join(' ');return NodeFilter.FILTER_REJECT}
+    if(/^(TEXTAREA|SCRIPT|STYLE|OPTION)$/.test(n.tagName))return NodeFilter.FILTER_REJECT;
+    if(wert&&n.tagName==='INPUT'&&!/^(password|file|checkbox|radio|hidden)$/.test(n.type))t+=' '+n.value;return NodeFilter.FILTER_SKIP}}); // Auswahllisten nur mit der gewählten Option, Texte von Textfeldern nicht
+  while(w.nextNode())t+=' '+w.currentNode.nodeValue;return t.replace(/\s+/g,' ').trim()}
+const esTxt=el=>esN(esTxt0(el));
+const esTitel=el=>(el.matches('details')?el.querySelector(':scope>summary .akt'):el.querySelector(':scope>h2,:scope>.bar b,:scope>.mut'))?.textContent||'';
+const esGruppe=it=>it.parentElement.closest('details.akk')||(it.querySelector('[data-f^="erw."]')?it.parentElement:it.parentElement.parentElement); // Paket bzw. Gruppe der Druckoptionen
+const esAuf=d=>{if(d.open||d.matches('.ih'))return;d.dataset.esa=d.dataset.auf??'0';if(d.dataset.akk!=null)d.dataset.auf='1';d.open=true}; // data-auf = open: der toggle-Handler speichert nichts
+const esAufKette=el=>{for(let d=el?.parentElement?.closest('details');d;d=d.parentElement?.closest('details'))esAuf(d)};
+function esLauf(w,filtern){const m=$('#main'),hits=[];if(!m)return hits;
+  m.querySelectorAll('.es-weg,.es-hit').forEach(x=>x.classList.remove('es-weg','es-hit'));
+  m.querySelectorAll('details[data-esa]').forEach(d=>{const a=d.dataset.esa;delete d.dataset.esa;if(d.dataset.akk!=null)d.dataset.auf=a;d.open=a==='1'});
+  if(!w.length)return hits;
+  const ok=t=>w.every(x=>t.includes(x)),hit=it=>{it.classList.add('es-hit');hits.push(it);esAufKette(it)};
+  for(const s of m.children){if(s.id==='esu'||s.tagName==='H1')continue;const st=ok(esN(esTitel(s))),G=new Map();let n=0;
+    for(const it of s.querySelectorAll(ES_F)){const g=esGruppe(it);if(!G.has(g))G.set(g,{t:ok(esN(esTitel(g))),n:0});const x=G.get(g);
+      if(st||x.t){x.n++;n++}else if(ok(esTxt(it))){x.n++;n++;hit(it)}else if(filtern)it.classList.add('es-weg')}
+    for(const[g,x]of G)if(!x.n){if(filtern)g.classList.add('es-weg')}else if(x.t&&!st){if(g.matches('details'))esAuf(g);esAufKette(g)}
+    for(const it of s.querySelectorAll(ES_I))if(!it.closest(ES_F)&&!it.parentElement.closest('.es-hit')&&ok(esTxt(it))){hit(it);n++}
+    if(st||n||ok(esTxt(s))){if(s.matches('details'))esAuf(s);if(!s.querySelector('.es-hit'))hits.push(s)}else if(filtern)s.classList.add('es-weg')}
+  return hits}
+function esZaehl(h){const n=$('#esn'),b=$('#esu');if(n)n.dataset.n=!ESQ.trim()?'':h.length?h.length+' Treffer':'Keine Einstellung gefunden';if(b)b.style.top=(document.querySelector('.topbar')?.offsetHeight||0)+'px'}
+function esZeig(el){if(!el)return;el.scrollIntoView({block:'center'});el.classList.remove('blink');void el.offsetWidth;el.classList.add('blink')}
+const esLeiste=()=>`<div class="esu" id="esu"><input id="esq" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" aria-label="Einstellung suchen" placeholder="🔍 Einstellung suchen …" value="${esc(ESQ)}"><button class="s" data-act="esx" title="Suche leeren (Esc)" aria-label="Suche leeren">✕</button><span id="esn"></span></div>`;
+const ES_MO=new MutationObserver(()=>{if(!/^#\/?einstellungen$/.test(location.hash)){ES_MO.disconnect();esDa=false;return}
+  const z=ES_ZIEL;ES_ZIEL=null;const h=esLauf(esW(ESQ||z?.q||''),!!$('#esq'));esZaehl(h);
+  if(z){const el=z.f?document.querySelector(`#main [data-f="${z.f}"]`)?.closest('label'):h[0];if(el&&z.f){el.classList.add('es-hit');esAufKette(el)}esZeig(el)}});
+const vEinst42=V.einstellungen;V.einstellungen=()=>{const h=vEinst42();if(ES_IDX)return h;if(!esDa&&!ES_ZIEL)ESQ='';esDa=true;
+  if(erw('einstSuche')||ES_ZIEL)ES_MO.observe($('#main'),{childList:true,subtree:true});return erw('einstSuche')?h.replace('<h1>Einstellungen</h1>','<h1>Einstellungen</h1>'+esLeiste()):h};
+document.addEventListener('input',e=>{if(e.target.id!=='esq')return;ESQ=e.target.value;clearTimeout(esT);esT=setTimeout(()=>esZaehl(esLauf(esW(ESQ),true)),80)});
+document.addEventListener('keydown',e=>{if(e.target.id!=='esq')return;
+  if(e.key==='Enter'){e.preventDefault();clearTimeout(esT);ESQ=e.target.value;const h=esLauf(esW(ESQ),true);esZaehl(h);esZeig(h[0])}else if(e.key==='Escape'&&e.target.value){e.preventDefault();ACT.esx()}});
+queueMicrotask(()=>Object.assign(ACT,{esx:()=>{ESQ='';const q=$('#esq');if(q){q.value='';q.focus()}esZaehl(esLauf([],true))}}));
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:`.esu{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;background:var(--bg);padding:6px 0 8px;margin:-4px 0 8px}
+.esu input{flex:1 1 auto;min-width:0;max-width:520px;font-size:16px}.esu input::-webkit-search-cancel-button{display:none}#esn::after{content:attr(data-n);font-size:13px;color:var(--mut);white-space:nowrap}
+.es-weg{display:none!important}.es-hit{background:#fff1a8;border-radius:6px;box-shadow:0 0 0 3px #fff1a8}tr.es-hit>td{background:#fff1a8}.kk.es-hit{background:#fff1a8}`}));
+
+/* Suche in den Einstellungen (P42) Teil 2, erw.suEinst: globale Suche (P20) mit Gruppe „Einstellungen“ – je Bereich ein Eintrag (Titel + Text ohne Feldwerte, aus V.einstellungen() mit ES_IDX)
+   und je Erweiterungs-Schalter einer (k = '§erw.<k>'); suOeffnen() öffnet die Einstellungen mit ES_ZIEL {q,f}, ES_MO springt nach dem Zeichnen zur Stelle (mit Teil 1 bleibt der Begriff im Suchfeld). */
+erwPlus({k:'suEinst',std:false,p:'Suche in den Einstellungen (P42)',l:'Einstellungen in der globalen Suche',info:'Die globale Suche (🔍, Strg+K bzw. F3) zeigt zusätzlich die Gruppe „Einstellungen“: Bereiche wie Firma oder Kaufmännisch (auch über Feldnamen, z. B. „IBAN“) und alle Erweiterungs-Schalter mit Beschreibung. Ein Treffer öffnet die Einstellungen und springt zur Stelle; mit eingeschaltetem Suchfeld steht der Suchbegriff dort. Aus = keine Einstellungen in der globalen Suche.'});
+SU_G.push(['einst','Einstellungen']);
+const suIndex42=suIndex;suIndex=()=>{const E=suIndex42();if(!erw('suEinst'))return E;
+  for(const x of ERW)E.push({g:'einst',r:'einstellungen',k:'§erw.'+x.k,ic:'⚙️',t:x.l,u:'Erweiterung · '+x.p,s:tag(erw(x.k)?'ein':'aus',erw(x.k)?'ok':''),h:[x.l,x.p,x.info,'Erweiterung'].join(' ').toLowerCase()});
+  const t=document.createElement('template');ES_IDX=true;try{t.innerHTML=V.einstellungen()}finally{ES_IDX=false}
+  for(const s of t.content.children){if(s.tagName==='H1')continue;const ti=esTitel(s).trim();if(!ti)continue;const c=s.cloneNode(true);c.querySelectorAll(ES_F.split(',')[0]).forEach(x=>x.remove());
+    E.push({g:'einst',r:'einstellungen',k:'',ic:'⚙️',t:ti,u:'Einstellungen',h:(ti+' '+esTxt0(c,false)).toLowerCase()})}
+  return E};
+const suOeffnen42=suOeffnen;suOeffnen=(r,k)=>{if(r!=='einstellungen')return suOeffnen42(r,k);document.querySelector('.modal.such')?._weg?.();
+  const x=k?.startsWith('§erw.')&&ERW.find(y=>'§erw.'+y.k===k),q=x?x.l:SUQ.trim();ES_ZIEL={q,f:x?k.slice(1):''};if(erw('einstSuche'))ESQ=q;
+  if(/^#\/?einstellungen$/.test(location.hash))render();else nav('einstellungen')};
 // Karte „Erweiterungen“: alle Funktionsschalter mit Beschreibung, Abweichungen vom Standard, Zurücksetzen je Paket bzw. alle
 function erwKarte(){
   const pNr=p=>{const m=String(p).match(/\(P(\d+)\s*([a-z]?)/);return m?+m[1]*100+(m[2]?m[2].charCodeAt(0)-96:0):1e6}; // Pakete nach Nummer ordnen (P0 b … P19), unabhängig von der Reihenfolge in ERW

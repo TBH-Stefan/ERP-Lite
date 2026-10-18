@@ -29,7 +29,7 @@ function pruefen(datei=path.join(__dirname,'..','index.html')){
     if(n.type==='AssignmentExpression'&&n.operator==='='&&n.left.type==='MemberExpression'&&!n.left.computed&&n.left.object.type==='Identifier'){
       // Erweiterung eines vorhandenen Eintrags (const m0=MENUE.beleg;MENUE.beleg=el=>…m0(el)…) ist kein Duplikat:
       // die Anweisung (oberste Ebene) liest den bisherigen Wert NAME.k selbst
-      const N=n.left.object.name,k=n.left.property.name,top=anc[1]||n,t=src.slice(top.start,top.end);
+      const N=n.left.object.name,k=n.left.property.name,top=anc[1]||n,vor=ast.body[ast.body.indexOf(top)-1],t=src.slice(vor&&/^(const|let|var)$/.test(vor.kind)?vor.start:top.start,top.end); // auch „const v0=V.x;V.x=…“ (vorige Anweisung merkt den bisherigen Wert)
       const lesen=(t.match(new RegExp('\\b'+N+'\\.'+k+'\\b(?!\\s*=[^=>])','g'))||[]).length;
       if(!lesen)add(zuw,N,{k,z:n.loc.start.line})}
     if(n.type==='CallExpression'&&n.callee.type==='MemberExpression'&&n.callee.object.name==='Object'&&n.callee.property.name==='assign'&&n.arguments[0]?.type==='Identifier')

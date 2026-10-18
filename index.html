@@ -6207,6 +6207,39 @@ document.addEventListener('input',e=>{
   clearTimeout(suchT);suchT=setTimeout(()=>{UI[d.f]=el.value;const pos=el.selectionStart;render();
     const n=document.querySelector(`[data-o="ui"][data-f="${d.f}"]`);if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}},d.f==='lbQ'?350:150);
 });
+/* Bautagesbericht Teil 7 (P36, erw.btbRechnung): „Rechnung erstellen …“ an abgeschlossenen bzw. unterschriebenen Berichten → Rechnungsentwurf an den Kunden des Auftrags mit den gewählten, noch
+   nicht verrechneten Berichten desselben Auftrags (Verknüpfung b.btbIds an der Rechnung, der Bericht bleibt unverändert; storniert = wieder offen). Je Bericht eine Gruppe, wenn es mehrere sind.
+   Stunden: Einträge der Zeiterfassung mit berichtId (Teil 5; zeitenInPos markiert belegId, bereits abgerechnete fehlen), ohne solche Einträge das Personal je Tarif; Material über den Artikelstamm
+   (btbArt, artikelInPos, nur bei gleicher Einheit), sonst Preis 0; Geräte Preis 0. Erweiterungspunkte BTB_REF (Felder im Dialog), BTB_RE (nach den Positionen je Bericht) und BTB_ZOK (Auswahl der Zeiteinträge) */
+erwPlus({k:'btbRechnung',std:false,p:'Bautagesbericht (P36)',l:'Rechnung aus dem Bautagesbericht',info:'Abgeschlossene bzw. unterschriebene Bautagesberichte bekommen „📄 Rechnung erstellen …“: Auswahl der noch nicht verrechneten Berichte desselben Auftrags und was übernommen wird (Stunden, Material, Geräte). Daraus entsteht ein Rechnungsentwurf an den Kunden des Auftrags, bei mehreren Berichten je Bericht eine Gruppe, Leistungszeitraum aus den Berichtsdaten. Stunden aus der Zeiterfassung werden dort als abgerechnet markiert (keine Doppelverrechnung); Material zum Verkaufspreis aus dem Artikelstamm, nicht gefundenes Material und Geräte mit Preis 0 zum Ergänzen. Der Bericht zeigt danach „verrechnet“ mit Verweis auf die Rechnung; wird die Rechnung storniert oder der Entwurf gelöscht, ist er wieder offen. Aus = kein Knopf.'});
+const BTB_REF=[],BTB_RE=[],BTB_ZOK=[]; // BTB_ZOK: (Zeiteintrag, Auswahl) → übernehmen?
+const btbRe=r=>DB.belege.find(b=>!b.storno&&(b.btbIds||[]).includes(r.id));
+const btbReOffen=aid=>DB.berichte.filter(r=>r.auftragId===aid&&btbFest(r)&&!btbRe(r)).sort((a,c)=>(a.datum+a.erstellt).localeCompare(c.datum+c.erstellt));
+const btbArt=bez=>{const t=pT(bez).toLowerCase(),A=DB.artikel.filter(a=>a.aktiv!==false);return!t?null:A.find(a=>`${a.nr} – ${a.bez}`.toLowerCase()===t)||A.find(a=>String(a.bez||'').toLowerCase()===t)||A.find(a=>String(a.nr||'').toLowerCase()===t)||null};
+const btbZtFrei=z=>!z.belegId||!beleg(z.belegId)||!!beleg(z.belegId).storno; // Eintrag einer stornierten Rechnung wieder verrechenbar
+queueMicrotask(()=>{BTB_ST.unshift(r=>btbRe(r)?tag('verrechnet','ok'):''); // vor dem Status aus Teil 3
+  const auf=ACT.btbauf;if(auf)ACT.btbauf=el=>{const b=btbRe(ROOT.btb(el.dataset.id)||{});if(b){alert(`Der Bericht ist mit ${T[b.typ].bez} ${bNr(b)} verrechnet. Zum Ändern zuerst den Rechnungsentwurf löschen bzw. die Rechnung stornieren.`);return}return auf(el)}});
+BTB_KN.push(r=>{if(!erw('btbRechnung'))return'';const b=btbRe(r);return b?`<button onclick="nav('beleg/${b.id}')" title="verrechnet">📄 ${T[b.typ].bez} ${esc(bNr(b))}</button>`:btbFest(r)?`<button data-act="btbre" data-id="${r.id}">📄 Rechnung erstellen …</button>`:''});
+ACT.btbre=async el=>{const r=ROOT.btb(el.dataset.id);if(!r||!btbFest(r)||btbRe(r))return;const root=btbRoot(r);if(!root?.kontaktId){alert('Der Auftrag hat keinen Kunden.');return}
+  const L=btbReOffen(r.auftragId),o=await formDialog({titel:'Rechnung aus Bautagesbericht',ok:'Rechnung erstellen',breit:true,scroll:true,felder:[
+    {typ:'abschnitt',l:'Berichte (noch nicht verrechnet)'},
+    ...L.map((x,i)=>({k:'r'+i,typ:'checkbox',l:`BTB ${x.nr} · ${dAT(x.datum)} · ${fmtQ(btbSumme(x))} h${x.gesperrt?'':' · nicht unterschrieben'}${x.nachtragZu?' · Nachtrag':''}`,wert:x===r,neu:1,cls:'w2'})),
+    {typ:'abschnitt',l:'Übernehmen'},{k:'std',typ:'checkbox',l:'Stunden',wert:true,neu:1},{k:'mat',typ:'checkbox',l:'Material',wert:true},{k:'ger',typ:'checkbox',l:'Geräte',wert:true},
+    ...BTB_REF.flatMap(f=>f(L,root)),
+    {typ:'hinweis',l:'Stunden aus der Zeiterfassung (dort danach abgerechnet), sonst aus dem Personal je Tarif. Material zum Verkaufspreis aus dem Artikelstamm; nicht gefundenes Material und Geräte mit Preis 0 – im Entwurf ergänzen.'}],
+    pruef:o=>L.some((x,i)=>o['r'+i])||(alert('Bitte mindestens einen Bericht wählen.'),false)});
+  const W=o?L.filter((x,i)=>o['r'+i]):[];if(!W.length)return;
+  const k=kontakt(root.kontaktId),b=neuBeleg('RE',{kontaktId:root.kontaktId,auftragId:r.auftragId,betreff:root.betreff||'',zahlungsziel:S().zahlungsziel,btbIds:W.map(x=>x.id)});if(k)konditionenUebernehmen(b,k);
+  for(const x of W){const n0=b.pos.length;if(W.length>1)b.pos.push(neuPos({art:'G',bez:`Bautagesbericht ${x.nr} vom ${dAT(x.datum)}`}));
+    if(o.std){if(DB.zeiten.some(z=>z.berichtId===x.id))zeitenInPos(b,DB.zeiten.filter(z=>z.berichtId===x.id&&btbZtFrei(z)&&BTB_ZOK.every(f=>f(z,o))));
+      else{const g={};for(const p of x.personal||[]){const h=btbStd(p);if(h)(g[p.tarif]??=[]).push([p,h])}
+        for(const[kz,P]of Object.entries(g)){const tf=S().tarife.find(t=>t.kz===kz)||{};b.pos.push(neuPos({art:'L',nr:kz,bez:tf.bez||kz,text:[dAT(x.datum),P.map(y=>y[0].name).filter(pT).join(', ')].filter(Boolean).join(' – '),menge:r2(sum(P,y=>y[1])),einheit:'h',ep:+tf.vk||0,ek:+tf.kosten||0}));lsAufteilen(b,b.pos[b.pos.length-1])}}}
+    if(o.mat)for(const m of x.material||[]){if(!pT(m.bez))continue;const a=btbArt(m.bez),p=neuPos(),q=m.menge!==''&&m.menge!=null?+m.menge||0:1;b.pos.push(p);
+      if(a&&(!m.einh||m.einh===a.einheit))artikelInPos(b,p,a);else Object.assign(p,{bez:m.bez,einheit:m.einh||'Stk',ep:0});p.menge=q}
+    if(o.ger)for(const g of x.geraete||[])if(pT(g.bez))b.pos.push(neuPos({bez:'Gerät: '+g.bez,menge:g.stunden!==''&&g.stunden!=null?+g.stunden||0:1,einheit:g.stunden!==''&&g.stunden!=null?'h':'Stk',ep:0}));
+    for(const f of BTB_RE)f(b,x,o);if(W.length>1&&b.pos.length===n0+1)b.pos.splice(n0,1)}
+  const ds=W.map(x=>x.datum).filter(Boolean).sort();if(ds.length)b.leistung=ds[0]===ds[ds.length-1]?dAT(ds[0]):`${dAT(ds[0])} – ${dAT(ds[ds.length-1])}`;
+  log('Rechnung aus Bautagesbericht',`${auftragKurz(r.auftragId)}: ${W.map(x=>'BTB '+x.nr).join(', ')}`);persist();go('beleg/'+b.id)};
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');
   if(!el){if(!e.target.closest('.pop'))closePop();return}

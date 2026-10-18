@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheit (P37 S3): erlaubte Ziele für Skripte und Verbindungen. Neue externe Verbindung → hier ergänzen. frame-ancestors wirkt per meta nicht → Prüfung im Script (P37) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: blob: https://login.microsoftonline.com https://graph.microsoft.com https://*.sharepoint.com https://*.1drv.com https://*.livefilestore.com https://api.anthropic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: blob: https://login.microsoftonline.com https://graph.microsoft.com https://*.sharepoint.com https://*.1drv.com https://*.livefilestore.com https://api.anthropic.com https://cdn.jsdelivr.net https://photon.komoot.io; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d2330">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -230,6 +230,11 @@ label>input,label>select,label>textarea{margin-top:2px;color:var(--ink);font-siz
 .vk>div{margin-top:3px}.vk .vkl{display:flex;flex-wrap:wrap;gap:4px 16px}.vk .vkl a{color:var(--acc);text-decoration:none;padding:6px 0;display:inline-block}.vk .vkn{white-space:pre-wrap;color:var(--ink);background:#fafbfc;border-radius:6px;padding:6px 8px;margin-top:6px}
 .kkl>.kkf{border-top:1px solid var(--line)}.kkl>.kkf>button{margin:0 10px 0 0}.tag.warn{background:#fdf1dc;color:var(--warn)}.tag.err{background:#fde8e6;color:var(--err)}.tag.acc{background:var(--acc2);color:var(--acc)}
 .pfehlt,.pfehlt .bwfeld{border-color:var(--err)!important;box-shadow:0 0 0 2px rgba(180,35,24,.22)!important}
+/* Adressvorschläge (P41) */
+.adrv{position:fixed;z-index:300;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:45vh;overflow:auto;font-size:14px}
+.adri{padding:7px 10px;cursor:pointer;border-bottom:1px solid #f0f0f3}.adri:hover,.adri.on{background:var(--acc2)}
+.adrq{padding:3px 10px;font-size:11px;color:var(--mut);text-align:right}
+body.ios .adri{min-height:44px;display:flex;align-items:center;flex-wrap:wrap;gap:0 4px}
 /* Bild je Artikel (P31) */
 .abild{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}.abild img{max-width:220px;max-height:220px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}
 /* Bedienung (P33): ⓘ als Fenster beim Darüberfahren (body.ihh), nur im Pop-up scrollen (body.ssp), Struktur-Auswahl in Spalten (#bw-l.bwk) */
@@ -642,6 +647,7 @@ const ERW=[
   {k:'vkVorschlag',std:true,p:'Aufschlag (P11)',l:'VK-Vorschlag aus dem Aufschlag je Artikel',info:'Im Artikel kann ein „VK-Aufschlag % auf HK“ eingetragen werden. Ändert sich beim Einlesen eines Belegs der EK, schlägt der Abgleich zusätzlich VK = (Herstellkosten bzw. EK) × (1 + Aufschlag/100) vor (übernommen wird nur, was angehakt ist); im Artikel erscheint bei abweichendem VK der Knopf „VK-Vorschlag … übernehmen“. Ohne eingetragenen Aufschlag ändert sich nichts. Aus: Feld und Vorschlag ausgeblendet, eingetragene Werte bleiben gespeichert.'},
   {k:'lfNeu',std:true,p:'Stammdaten (P31)',l:'„+ Neuer Lieferant …“ in der Lieferantenauswahl von Artikeln',info:'In „Neuer Artikel“, im Artikel-Pop-up einer Position (✎) und in der Lieferantenliste eines Artikels steht in der Auswahl „Lieferant“ der Eintrag „+ Neuer Lieferant …“. Er öffnet das Pop-up „Neuer Lieferant“, danach ist der neue Lieferant gleich gewählt. Der Lieferant bleibt angelegt, auch wenn der Artikel danach nicht angelegt wird. Aus = Lieferant vorher unter „Kunden & Lieferanten“ anlegen.'},
   {k:'dublette',std:true,p:'Stammdaten (P31)',l:'Bei Neuanlage prüfen, ob Artikel bzw. Kontakt schon angelegt ist',info:'Beim Anlegen eines Artikels (Artikelstamm, aus einer Position, Artikel-Pop-up einer Position) meldet das Programm Artikel mit gleicher oder sehr ähnlicher Bezeichnung (Zahlen wie 3x1,5 müssen übereinstimmen) oder mit gleicher Art.-Nr. beim selben Lieferanten, auch deaktivierte. Beim Anlegen eines Kunden oder Lieferanten meldet es Kontakte mit gleichem oder ähnlichem Namen (ohne GmbH, KG …), gleicher UID-Nr. oder gleicher E-Mail, auch solche der anderen Art. Angelegt wird erst nach Rückfrage, sonst bleibt das Formular offen. Beim Einlesen von Belegen werden Zeilen wie bisher vorhandenen Artikeln zugeordnet.'},
+  {k:'adrVorschlag',std:false,p:'Adressen (P41)',l:'Adressvorschläge beim Tippen von Straße und PLZ (Kunden und Lieferanten)',info:'In „Neuer Kunde“ / „Neuer Lieferant“, beim Bearbeiten und im geöffneten Kontakt erscheint ab 3 Zeichen in „Straße“ (bzw. 4 Ziffern in „PLZ“) eine Liste mit passenden Adressen. Antippen oder Pfeiltasten + Enter füllt Straße, PLZ, Ort und Land. Zuerst stehen Adressen aus den eigenen Kontakten (auch ohne Netz), danach Treffer aus OpenStreetMap (Dienst Photon von komoot, kostenlos, ohne Schlüssel). Gesendet wird nur der getippte Adresstext, kein Name, keine Firma, keine E-Mail.'},
   {k:'ekRechnen',std:true,p:'Stammdaten (P31)',l:'Listenpreis, Rabatt und EK: zwei Werte ergeben den dritten',info:'In „Neuer Artikel“, im Artikel-Pop-up einer Position (✎) und in der Lieferantenliste eines Artikels: Listenpreis und Rabatt ergeben den EK, EK und Listenpreis den Rabatt, EK und Rabatt den Listenpreis. Neu berechnet wird jeweils das Feld, das am längsten nicht bearbeitet wurde. Wird zuerst nur der EK oder nur der Listenpreis eingetragen, gilt Listenpreis = EK und Rabatt 0 – so sind immer alle drei Felder ausgefüllt. Aus = wie bisher (nur im Artikel-Pop-up einer Position: Listenpreis/Rabatt → EK, EK → Rabatt).'},
   {k:'artBild',std:true,p:'Bilder (P24)',l:'Bild je Artikel',info:'Im Artikel (Karte „Bild“) und in „Neuer Artikel“ lässt sich ein Foto oder Bild einfügen, am Handy auch direkt mit der Kamera. Das Bild liegt als Datei in der Ablage unter „bilder/“ (OneDrive bzw. Ordner, im Test nur in diesem Browser) – als Vorschau mit höchstens 320 Pixeln und in voller Größe (große Bilder verkleinert); die Daten (erp-daten.json) enthalten nur den Dateinamen. Ein Klick auf die Vorschau öffnet das Bild. Belege und Ausdrucke bleiben unverändert (Bilder im Druck folgen mit P24). Aus = Karte und Feld ausgeblendet, gespeicherte Bilder bleiben erhalten.'},
   {k:'abAbschluss',std:true,p:'Belegstatus (P32)',l:'Auftragsbestätigung nach der Ausgabe „abgeschlossen“',info:'Sobald eine festgeschriebene Auftragsbestätigung gedruckt, als PDF gespeichert oder per E-Mail versendet wird, steht ihr Status auf „abgeschlossen“ (nicht mehr unter „offen“). „Status wieder offen“ im Beleg nimmt das zurück, „Bearbeiten“ ebenfalls. Aus = Status wie bisher nach Lieferung und Rechnung (offen, teilweise, erledigt).'},
@@ -2602,6 +2608,51 @@ const dubFrage=(r,was)=>!r.length||confirm(`${was} ist möglicherweise schon ang
 function kontaktPruef(o,k,typ){const istK=typ!=='L';if(DB.kontakte.some(x=>x!==k&&x.nr===o.nr)){alert('Nummer '+o.nr+' ist bereits vergeben.');return false}
   if(!k&&erw('dublette')&&!dubFrage(kontDubletten(o),istK?'Der Kunde':'Der Lieferant'))return false;
   if(o.kundenart==='B2B'&&!o.uid&&istK&&!confirm('Für Unternehmenskunden ist die UID-Nr. bei Rechnungen über 10.000 € brutto und bei Reverse Charge Pflicht.\nOhne UID-Nr. speichern?'))return false}
+/* Adressvorschläge (P41, erw.adrVorschlag): Liste unter „Straße“ (ab 3 Zeichen) bzw. „PLZ“ (4 Ziffern) im Pop-up „Neuer Kunde/Lieferant“ (formDialog, data-k) und im
+   geöffneten Kontakt (Setter 'k', auch LIVE.kontakt); zuerst Adressen aus den eigenen Kontakten (auch ohne Netz), dann Photon (komoot, OpenStreetMap, CSP connect-src).
+   Gesendet wird nur der Adresstext; ohne Netz oder bei Fehler nur die eigenen. Wahl füllt Straße, PLZ, Ort, Land (Straße ohne Hausnummer: Schreibmarke bleibt in „Straße“). */
+const ADR_URL='https://photon.komoot.io/api/',ADR_C=new Map(),adrP=x=>String(x||'').replace(/\D/g,''),adrAT=l=>['','österreich','oesterreich','austria','at','a'].includes(pT(l).toLowerCase());
+const adrNr=s=>(pT(s).match(/\s(\d+\s*[a-z]?(?:\s*[\/-]\s*\d+\s*[a-z]?)*)$/i)||[])[1]||''; // Hausnummer am Ende („25“, „3/2/7“, „12a“)
+const adrKey=o=>[normT(o.strasse),adrP(o.plz),normT(o.ort)].join('|');
+async function adrFetch(q,land,n=8){const at=adrAT(land),u=`${ADR_URL}?q=${encodeURIComponent(q)}&limit=${at?n*2:n}&lang=de${at?'&bbox=9.5,46.35,17.2,49.05':''}`; // Österreich: Rahmen + nur countrycode AT
+  if(ADR_C.has(u))return ADR_C.get(u);if(!navigator.onLine)return null;
+  try{const r=await fetch(u,{signal:AbortSignal.timeout(5000)});if(!r.ok)return null;const j=await r.json(),l=(j.features||[]).map(f=>f.properties||{}).filter(p=>!at||p.countrycode==='AT');ADR_C.set(u,l);return l}catch(e){return null}}
+const adrAus=p=>{const st=p.street||(p.osm_key==='highway'||p.type==='street'?p.name:'');return{strasse:st?[st,p.housenumber].filter(Boolean).join(' '):'',plz:p.postcode||'',ort:p.city||p.locality||p.district||(p.type==='city'?p.name:'')||'',land:p.country||'',nr:!!p.housenumber}};
+const adrLokal=(q,f,ex)=>{const n=f==='plz'?adrP(q):normT(q),r=[];if(!n)return r;for(const k of DB.kontakte)if(k.id!==ex&&pT(k[f])&&(f==='plz'?adrP(k.plz):normT(k.strasse)).startsWith(n))r.push({strasse:f==='plz'?'':k.strasse||'',plz:k.plz||'',ort:k.ort||'',land:k.land||'',lokal:1});return r};
+// Eingabefeld → Zusammenhang {f,ex,g(feld)=Wert,el(feld),fill(o)} oder null
+function adrCtx(el){if(!erw('adrVorschlag')||el.tagName!=='INPUT')return null;const m=el.closest('.modal');let c=null;
+  if(m&&['strasse','plz'].includes(el.dataset.k)&&m.querySelector('[data-k="name"]')&&m.querySelector('[data-k="ort"]')){const q=x=>m.querySelector(`[data-k="${x}"]`);
+    c={f:el.dataset.k,ex:'',el:q,fill:o=>{for(const x of ['strasse','plz','ort','land'])if(o[x]!=null&&o[x]!==''&&q(x))q(x).value=o[x]}}}
+  else if(el.dataset.o==='k'&&['strasse','plz'].includes(el.dataset.f)){const id=el.dataset.id,q=x=>document.querySelector(`[data-o="k"][data-id="${id}"][data-f="${x}"]`);
+    c={f:el.dataset.f,ex:id,el:q,fill:o=>{const k=kontakt(id);if(!k)return;document.activeElement?.blur?.();for(const x of ['strasse','plz','ort','land'])if(o[x]!=null&&o[x]!=='')k[x]=o[x];persist();render()}}}
+  if(c){c.g=x=>c.el(x)?.value||'';el.setAttribute('autocomplete','off')}return c}
+let ADR=null,ADR_T=0; // offene Liste {el,box,l,i,c}
+function adrZu(){ADR?.box.remove();ADR=null}
+function adrZeigen(el,c,l){adrZu();if(!l.length||document.activeElement!==el)return;const box=document.createElement('div'),r=el.getBoundingClientRect(),w=Math.min(Math.max(r.width,300),innerWidth-16);
+  box.className='adrv';box.style.cssText=`left:${Math.max(8,Math.min(r.left,innerWidth-w-8))}px;top:${r.bottom+2}px;width:${w}px`;
+  box.innerHTML=l.map((o,i)=>{const po=esc([o.plz,o.ort].filter(Boolean).join(' '))+(o.land&&!adrAT(o.land)?', '+esc(o.land):'');return`<div class="adri" data-i="${i}">${o.lokal?'👤 ':''}${o.strasse?`${esc(o.strasse)}<span class="mut"> · ${po}</span>`:po}</div>`}).join('')+(l.some(o=>!o.lokal)?'<div class="adrq">© OpenStreetMap</div>':'');
+  box.addEventListener('mousedown',e=>e.preventDefault()); // Fokus bleibt im Feld
+  box.addEventListener('click',e=>{const t=e.target.closest('.adri');if(t)adrWahl(+t.dataset.i)});
+  document.body.appendChild(box);ADR={el,box,l,i:-1,c}}
+function adrWahl(i){const A=ADR,o=A?.l[i];if(!o)return;adrZu();
+  if(!o.strasse){A.c.fill({plz:o.plz,ort:o.ort,land:o.land});return} // PLZ → Ort
+  const nr=adrNr(A.el.value),st=!o.nr&&!o.lokal&&nr&&!adrNr(o.strasse)?o.strasse+' '+nr:o.strasse;A.c.fill({...o,strasse:st});
+  if(!adrNr(st)){const e=A.c.el('strasse');if(e){e.value=st+' ';e.focus();e.setSelectionRange(e.value.length,e.value.length)}}} // Hausnummer noch eintippen
+async function adrSuchen(el,c,q){const land=c.g('land'),eind=l=>{const s=new Set();return l.filter(o=>{const k=adrKey(o);return!s.has(k)&&s.add(k)})},lok=adrLokal(q,c.f,c.ex);
+  adrZeigen(el,c,eind(lok).slice(0,8));let f=[];
+  if(c.f==='plz'){const l=await adrFetch(adrP(q)+(adrAT(land)?'':' '+land),land);f=(l||[]).map(adrAus).filter(o=>adrP(o.plz).startsWith(adrP(q))&&o.ort).map(o=>({plz:o.plz,ort:o.ort,land:o.land,strasse:''}))}
+  else{const zu=[c.g('plz'),c.g('ort')].map(pT).filter(Boolean).join(' ');let l=zu?await adrFetch(q+', '+zu,land):null;if(!l?.length)l=await adrFetch(q,land); // mit PLZ/Ort, sonst ohne
+    f=(l||[]).map(adrAus).filter(o=>o.strasse)}
+  if(pT(el.value)!==q||document.activeElement!==el)return; // inzwischen weitergetippt
+  if(f.length)adrZeigen(el,c,eind([...lok,...f]).slice(0,8))}
+document.addEventListener('input',e=>{const el=e.target,c=adrCtx(el);if(!c)return;clearTimeout(ADR_T);const q=pT(el.value);
+  if(c.f==='strasse'?q.length<3:adrP(q).length<4){adrZu();return}ADR_T=setTimeout(()=>adrSuchen(el,c,q),300)});
+document.addEventListener('keydown',e=>{if(!ADR||e.target!==ADR.el)return;const n=ADR.l.length; // vor dem Enter/Esc der Pop-ups (capture)
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();ADR.i=e.key==='ArrowDown'?(ADR.i+1)%n:ADR.i<=0?n-1:ADR.i-1;ADR.box.querySelectorAll('.adri').forEach((x,i)=>x.classList.toggle('on',i===ADR.i));ADR.box.children[ADR.i]?.scrollIntoView({block:'nearest'})}
+  else if(e.key==='Enter'){if(ADR.i>=0){e.preventDefault();e.stopPropagation();adrWahl(ADR.i)}else adrZu()}
+  else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();adrZu()}},true);
+document.addEventListener('focusout',e=>{if(ADR&&e.target===ADR.el)setTimeout(()=>{if(ADR&&document.activeElement!==ADR.el)adrZu()},200)});
+document.addEventListener('scroll',e=>{if(ADR&&!ADR.box.contains(e.target))adrZu()},true);
 // Listenpreis, Rabatt, EK: je zwei ergeben den dritten; berechnet wird das am längsten nicht bearbeitete Feld (r = Reihenfolge, zuletzt bearbeitet vorne, anfangs leere Felder
 // zuletzt); erste Eingabe von nur EK bzw. nur Listenpreis füllt die anderen (Listenpreis = EK, Rabatt 0). w = {lp,rab,ek} als Text, k = geändertes Feld → geänderte Werte
 const ekReihe=w=>{const v=k=>k==='rab'?pT(w.rab)!=='':!!num(w[k]);return[...['lp','rab','ek'].filter(v),...['lp','rab','ek'].filter(k=>!v(k))]},EKR={}; // EKR: Reihenfolge je Lieferantenzeile eines Artikels

@@ -6333,6 +6333,48 @@ function onHead(b,f,v){
   updateCalc(b);
 }
 // Zahlungskonditionen und Kundenrabatt des Kontakts in den Beleg übernehmen (nur wo eingetragen)
+/* Bautagesbericht Teil 8 (P36, erw.btbFahrt): Fahrtkosten und Reisezeit. Einstellungen S().fahrt {kmSatz (Kilometergeld, Vorgabe 0,50 €), staffel:[{bis,betrag}] (Anfahrtspauschale nach einfacher
+   Entfernung), ueber (€/km über der letzten Stufe, leer = Betrag der letzten Stufe), tarif (Reisezeit, Vorgabe FAHRT)} über fahrtS(), Karte fahrtEinst() (Wrapper um V.einstellungen);
+   Kunde k.fahrtArt (''|km|pausch), k.fahrtReise ('ja'), k.entfernung (km einfach; Wrapper um V.kontakt); Bericht r.km (gefahrene km), r.anf (Anfahrten, leer = 1), r.entf (leer = Kunde), Personal p.reise (h).
+   Reisezeit beim Unterschreiben in die Zeiterfassung (BTB_NACH mit Teil 5, Eintrag reise:true, Tarif fahrtS().tarif); Rechnung aus dem Bericht (Teil 7): Auswahl im Dialog (BTB_REF, Vorgabe vom Kunden),
+   Positionen je Bericht (BTB_RE), Reisezeit-Einträge nur mit Auswahl (BTB_ZOK). Kilometergeld und Pauschale schließen sich aus; Pauschale je Anfahrt (Entscheidung Anwender 18.10.2026) */
+erwPlus({k:'btbFahrt',std:false,p:'Bautagesbericht (P36)',l:'Fahrtkosten und Reisezeit',info:'Einstellungen → „Fahrtkosten“: Kilometergeld je km (Vorgabe 0,50 €), Anfahrtspauschale als Staffel „bis km → Betrag“ nach der einfachen Entfernung (darüber wahlweise € je km) und Tarif der Reisezeit (Vorgabe FAHRT). Im Kunden die Vorgabe „Fahrtkosten: keine / Kilometergeld / Anfahrtspauschale“, „Reisezeit verrechnen“ und die Entfernung zur Baustelle. Im Bautagesbericht der Abschnitt „Fahrt und Reisezeit“: gefahrene km, Anfahrten (leer = 1), Entfernung (leer = Kunde) und Reisezeit je Person; die Reisezeit kommt beim Unterschreiben in die Zeiterfassung (mit „Stunden in die Zeiterfassung“). „Rechnung erstellen …“ übernimmt Kilometergeld bzw. Pauschale je Anfahrt und die Reisezeit nach Auswahl (Vorgabe vom Kunden). Aus = Abschnitte verborgen, Angaben bleiben erhalten.'});
+const FAHRT_STD={kmSatz:0.5,staffel:[],ueber:'',tarif:'FAHRT'},FAHRT_ART=[['','keine'],['km','Kilometergeld'],['pausch','Anfahrtspauschale']];
+const fahrtS=()=>({...FAHRT_STD,...(S().fahrt||{})});
+const fahrtPausch=e=>{if(!(e>0))return null;const f=fahrtS(),L=(f.staffel||[]).filter(x=>+x.bis>0).sort((a,c)=>a.bis-c.bis),s=L.find(x=>e<=+x.bis),l=L[L.length-1];
+  return s?{b:+s.betrag||0,t:`bis ${fmtQ(s.bis)} km`}:+f.ueber>0?{b:r2(e*f.ueber),t:`${fmtQ(e)} km × ${fmt(f.ueber)} €`}:l?{b:+l.betrag||0,t:`über ${fmtQ(l.bis)} km`}:null};
+const btbKd=r=>kontakt(btbRoot(r)?.kontaktId),btbEntf=r=>r.entf!==''&&r.entf!=null?+r.entf||0:+btbKd(r)?.entfernung||0,btbAnf=r=>r.anf!==''&&r.anf!=null?+r.anf||0:1,btbReise=r=>r2(sum(r.personal||[],p=>+p.reise||0));
+BTB_ED.push(r=>{if(!erw('btbFahrt'))return'';const R='btb|'+r.id,k=btbKd(r),P=r.personal||[];
+  const inh=`<div class="row">${bIn(R,'km',r.km,{t:'number',l:'gefahrene km (hin und zurück)'})}${bIn(R,'anf',r.anf,{t:'number',l:'Anfahrten',ph:'1',cls:'w05'})}${bIn(R,'entf',r.entf,{t:'number',l:'Entfernung km (einfach)',ph:+k?.entfernung?fmtQ(k.entfernung)+' (Kunde)':''})}</div>
+    ${P.length?`<p class="mut" style="margin:8px 0 4px">Reisezeit je Person (Std.)</p><div class="row">${P.map((p,i)=>bIn(R,`personal.${i}.reise`,p.reise,{t:'number',l:esc(p.name||'Person '+(i+1)),cls:'w05'})).join('')}</div>`:''}`;
+  return bAbs('btb-fahrt','Fahrt und Reisezeit',inh,{offen:!!(+r.km||btbReise(r)),zusatz:[+r.km?fmtQ(r.km)+' km':'',btbReise(r)?fmtQ(btbReise(r))+' h Reisezeit':''].filter(Boolean).join(' · ')||'keine'})});
+BTB_DOC.push(r=>{const re=btbReise(r),P=(r.personal||[]).filter(p=>+p.reise),z=(l,v)=>`<tr><th>${l}</th><td>${v}</td></tr>`;if(!+r.km&&!re&&!pT(r.anf)&&!pT(r.entf))return'';
+  return`<h3>Fahrt und Reisezeit</h3><table class="btbk"><tbody>${+r.km?z('Gefahrene km',fmtQ(r.km)+' km'):''}${pT(r.anf)?z('Anfahrten',fmtQ(btbAnf(r))):''}${btbEntf(r)?z('Entfernung',fmtQ(btbEntf(r))+' km'):''}${re?z('Reisezeit',`${fmtQ(re)} h (${P.map(p=>`${esc(p.name||'?')} ${fmtQ(p.reise)}`).join(', ')})`):''}</tbody></table>`});
+queueMicrotask(()=>BTB_NACH.push(r=>{if(!erw('btbFahrt')||!erw('btbZeit'))return;const f=fahrtS(),t=S().tarife.find(x=>x.kz===f.tarif)||{};let n=0;
+  for(const p of r.personal||[]){const h=+p.reise||0;if(!h)continue;const m=p.maId&&DB.mitarbeiter?.find(x=>x.id===p.maId);
+    DB.zeiten.push({id:uid(),datum:r.datum,auftragId:r.auftragId,tarif:f.tarif,stunden:h,text:[`BTB ${r.nr}`,p.name,'Reisezeit'].filter(pT).join(' · '),kosten:m&&typeof maKosten==='function'?maKosten(m,t):+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id,reise:true,...(m?{maId:m.id}:{})});n++}
+  if(n)log('Reisezeit aus Bautagesbericht',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${fmtQ(btbReise(r))} h`)}));
+BTB_REF.push((L,root)=>{if(!erw('btbFahrt'))return[];const k=kontakt(root.kontaktId)||{};return[{typ:'abschnitt',l:'Fahrt'},{k:'fahrt',l:'Fahrtkosten',wert:k.fahrtArt||'',opts:FAHRT_ART,neu:1},{k:'reise',typ:'checkbox',l:'Reisezeit verrechnen',wert:k.fahrtReise==='ja'}]});
+BTB_ZOK.push((z,o)=>!z.reise||!erw('btbFahrt')||!!o.reise);
+BTB_RE.push((b,r,o)=>{if(!erw('btbFahrt'))return;const f=fahrtS();
+  if(o.reise&&!DB.zeiten.some(z=>z.berichtId===r.id)){const h=btbReise(r),t=S().tarife.find(x=>x.kz===f.tarif)||{};if(h){b.pos.push(neuPos({art:'L',nr:f.tarif,bez:t.bez||'Reisezeit',text:`${dAT(r.datum)} – Reisezeit`,menge:h,einheit:'h',ep:+t.vk||0,ek:+t.kosten||0}));lsAufteilen(b,b.pos[b.pos.length-1])}}
+  if(o.fahrt==='km'&&+r.km>0)b.pos.push(neuPos({bez:'Kilometergeld',text:dAT(r.datum),menge:+r.km,einheit:'km',ep:+f.kmSatz||0}));
+  if(o.fahrt==='pausch'&&btbAnf(r)>0){const e=btbEntf(r),p=fahrtPausch(e);b.pos.push(neuPos({bez:'Anfahrtspauschale',text:`${dAT(r.datum)} · ${e?`Entfernung ${fmtQ(e)} km${p?` (${p.t})`:''}`:'Entfernung fehlt'}`,menge:btbAnf(r),einheit:'PA',ep:p?p.b:0}))}});
+function fahrtEinst(){const f=fahrtS(),L=f.staffel||[],a=x=>`data-o="s" data-f="fahrt.${x}"`,ni=(x,v,w='')=>`<input type="number" step="any" inputmode="decimal" ${a(x)} value="${esc(v??'')}"${w?` style="width:${w}"`:''}>`;
+  const inh=`<div class="card">${kmp()?'':'<h2>Fahrtkosten</h2>'}<div class="row"><label class="w05">Kilometergeld € je km${ni('kmSatz',f.kmSatz)}</label><label>Tarif der Reisezeit<select ${a('tarif')}>${S().tarife.map(t=>opt(t.kz,t.kz+' – '+t.bez,f.tarif)).join('')}</select></label></div>
+    <p class="mut" style="margin:10px 0 4px">Anfahrtspauschale je Anfahrt nach der einfachen Entfernung zur Baustelle</p>
+    ${L.length?`<table style="max-width:420px"><thead><tr><th>bis km</th><th>Betrag €</th><th></th></tr></thead><tbody>${L.map((x,i)=>`<tr><td>${ni(`staffel.${i}.bis`,x.bis)}</td><td>${ni(`staffel.${i}.betrag`,x.betrag)}</td><td style="width:40px"><button class="s d" data-act="fstx" data-i="${i}" title="Stufe entfernen">✕</button></td></tr>`).join('')}</tbody></table>`:'<p class="mut" style="margin:0">Noch keine Stufen.</p>'}
+    <div class="row" style="margin-top:6px"><label class="w05">über der letzten Stufe € je km${ni('ueber',f.ueber)}</label><span class="mut" style="flex:2;align-self:center;font-size:12px">leer = Betrag der letzten Stufe</span></div>
+    <div class="bar" style="margin:8px 0 0"><button class="s" data-act="fstneu">+ Stufe</button></div></div>`;
+  return kmp()?akk('e-fahrt','Fahrtkosten',inh,{zusatz:`${fmt(f.kmSatz)} €/km · ${L.length} Stufen`}):inh}
+const vEinst0=V.einstellungen;V.einstellungen=()=>{const h=vEinst0();if(!erw('btbFahrt'))return h;const e=kmp()?erwAkk():erwKarte(),i=h.lastIndexOf(e);return i<0?h+fahrtEinst():h.slice(0,i)+fahrtEinst()+h.slice(i)};
+const vKontakt8=V.kontakt;V.kontakt=id=>{const h=vKontakt8(id),k=kontakt(id);if(!k||!erw('btbFahrt')||k.typ==='L')return h;const a=f=>`data-o="k" data-id="${k.id}" data-f="${f}"`;
+  const inh=`<div class="card">${kmp()?'':'<h2>Fahrtkosten</h2>'}<div class="row"><label>Fahrtkosten<select ${a('fahrtArt')}>${FAHRT_ART.map(([v,l])=>opt(v,l,k.fahrtArt||'')).join('')}</select></label><label>Reisezeit verrechnen<select ${a('fahrtReise')}>${opt('','nein',k.fahrtReise||'')}${opt('ja','ja',k.fahrtReise||'')}</select></label>
+    <label class="w05">Entfernung km (einfach)<input type="number" step="any" inputmode="decimal" ${a('entfernung')} value="${esc(k.entfernung??'')}"></label></div>${k.fahrtArt==='pausch'&&+k.entfernung?`<p class="mut" style="margin:4px 0 0">Anfahrtspauschale: ${(p=>p?fmt(p.b)+' € ('+esc(p.t)+')':'keine Stufe eingetragen')(fahrtPausch(+k.entfernung))}</p>`:''}</div>`;
+  return h+(kmp()?akk('k-fahrt','Fahrtkosten',inh,{offen:!!k.fahrtArt,zusatz:FAHRT_ART.find(x=>x[0]===(k.fahrtArt||''))[1]}):inh)};
+Object.assign(ACT,{
+  fstneu:()=>{const f=S().fahrt=fahrtS(),L=f.staffel=[...(f.staffel||[])],l=L[L.length-1];L.push({bis:l?+l.bis+20:10,betrag:''});persist();render()},
+  fstx:el=>{const L=S().fahrt?.staffel;if(!L)return;L.splice(+el.dataset.i,1);persist();render()}});
 function konditionenUebernehmen(b,k,frage=false){
   if(k.zahlungsziel!==''&&k.zahlungsziel!=null&&!isNaN(+k.zahlungsziel))b.zahlungsziel=+k.zahlungsziel;
   if(+k.skonto>0){b.skonto=+k.skonto;b.skontoTage=+k.skontoTage||0}

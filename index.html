@@ -547,7 +547,7 @@ button.netz::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;
 button.netz.off{color:#ffd27a}button.netz.off::before{background:#ff9f0a}
 button.netz.sync::before{background:#0a84ff;animation:netzp .8s infinite alternate}@keyframes netzp{to{opacity:.25}}
 nav button.netz{margin:0 12px 2px}
-@media(max-width:760px){.topbar button.netz{min-height:44px;justify-content:center}.topbar button.netz.on{font-size:0;gap:0;min-width:24px}}
+@media(max-width:760px){.topbar button.netz{min-height:44px;justify-content:center}.topbar button.netz.on{font-size:0;gap:0;min-width:24px}.topbar button.netz .nzx{display:none}}
 </style>
 </head>
 <body>
@@ -1287,9 +1287,9 @@ function netzZeigen(){
   let L=document.querySelectorAll('button.netz');if(!an){L.forEach(e=>e.remove());return}
   if(!L.length){for(const r of [$('#sync2'),$('#savestate')])if(r){const e=document.createElement('button');e.type='button';e.className='netz';e.dataset.act='netz';r.before(e)}L=document.querySelectorAll('button.netz')}
   const off=navigator.onLine===false||OFFSTART||NETZFEHL,sync=!off&&(pending||saving||NHL),k=off?'off':sync?'sync':'on',
-    t=off?'Offline'+(pending?' · Änderungen warten':''):sync?'Abgleich …':'Online',
+    t=off?'Offline'+(pending?' · Änderungen warten':''):sync?'Abgleich …':'Online',h=off&&pending?'Offline<span class="nzx"> · Änderungen warten</span>':esc(t),
     ti=off?'Keine Verbindung zum OneDrive. Änderungen bleiben auf diesem Gerät und werden abgeglichen, sobald wieder Internet da ist. Festschreiben erst wieder online.':'Verbunden mit dem OneDrive – tippen zum Abgleichen';
-  L.forEach(e=>{e.className='netz '+k;e.textContent=t;e.title=ti;e.setAttribute('aria-label',t)})}
+  L.forEach(e=>{e.className='netz '+k;e.innerHTML=h;e.title=ti;e.setAttribute('aria-label',t)})}
 queueMicrotask(()=>Object.assign(ACT,{netz:()=>{
   if(navigator.onLine===false){alert('Offline: keine Internetverbindung.\n\nDu kannst weiterarbeiten. Die Änderungen bleiben auf diesem Gerät und werden mit dem OneDrive abgeglichen, sobald wieder Internet da ist. Festschreiben ist erst dann wieder möglich.');return}
   if(OFFSTART){if(DIRTY){alert('Bitte zuerst speichern, dann wird abgeglichen.');return}nachholen()}else if(pending)saveNow();else{NETZFEHL=false;aktualisieren().then(()=>saveState('Abgeglichen '+new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})))}}}));

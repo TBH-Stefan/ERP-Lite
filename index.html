@@ -6147,30 +6147,30 @@ const bIn=(R,f,v,{t='text',l='',ph='',cls='',list='',dis=false}={})=>`<label cla
 const bTa=(R,f,v,{l='',ph='',cls='w2'}={})=>`<label class="${cls}">${l}${ft(R,f,v,ph)}</label>`;
 const bAbs=(id,titel,inhalt,{offen=true,zusatz=''}={})=>kmp()?akk(id,titel,inhalt,{offen,zusatz}):`<div class="card"><h2>${titel}${zusatz?` <span class="mut" style="font-weight:400;font-size:13px">· ${zusatz}</span>`:''}</h2>${inhalt}</div>`;
 function btbEditor(r){const R='btb|'+r.id,w=r.wetter||{},T_=S().tarife,add=(f,tpl,l)=>`<button class="s" data-act="arradd" data-r="${R}" data-f="${f}" data-tpl="${tpl}">${l}</button>`,del=(f,i)=>`<button class="s d" data-act="arrdel" data-r="${R}" data-f="${f}" data-i="${i}" title="Zeile entfernen">✕</button>`;
-  const kopf=`<div class="row">${bIn(R,'datum',r.datum,{t:'date',l:'Datum',cls:'w05'})}${bIn(R,'ort',r.ort,{l:'Baustelle / Ort',cls:'w2'})}${bIn(R,'verfasser',r.verfasser,{l:'Verfasser (Monteur)',list:erw('mitarbeiter')?'dl-ma':''})}</div>`;
+  const kopf=`<div class="row">${bIn(R,'datum',r.datum,{t:'date',l:'Datum',cls:'w05'})}${erw('btbTage')?bIn(R,'bis',r.bis,{t:'date',l:'bis (mehrere Tage)',cls:'w05'}):''}${bIn(R,'ort',r.ort,{l:'Baustelle / Ort',cls:'w2'})}${bIn(R,'verfasser',r.verfasser,{l:'Verfasser (Monteur)',list:erw('mitarbeiter')?'dl-ma':''})}</div>`;
   const wetter=`<div class="row"><label>Vormittag${fsel(R,'wetter.vm',w.vm,WETTER)}</label><label>Nachmittag${fsel(R,'wetter.nm',w.nm,WETTER)}</label>${bIn(R,'wetter.tMin',w.tMin,{t:'number',l:'Temp. min °C',cls:'w05'})}${bIn(R,'wetter.tMax',w.tMax,{t:'number',l:'Temp. max °C',cls:'w05'})}</div>
     <label class="chk"><input type="checkbox" data-o="path" data-r="${R}" data-f="wetter.beh"${w.beh?' checked':''}> Arbeit witterungsbedingt behindert / unterbrochen</label>
     ${w.beh?`<div class="row" style="margin-top:6px">${bIn(R,'wetter.behStd',w.behStd,{t:'number',l:'Ausfall Std.',cls:'w05'})}${bIn(R,'wetter.behTxt',w.behTxt,{l:'Beschreibung',cls:'w2'})}</div>`:''}`;
   const pers=(r.personal||[]).map((p,i)=>{const P=`personal.${i}`,ber=btbMin(p.von)!=null&&btbMin(p.bis)!=null;
-    return`<div class="row btbz">${bIn(R,P+'.name',p.name,{l:'Name',cls:'w2',list:erw('mitarbeiter')?'dl-ma':''})}<label>Tarif${fsel(R,P+'.tarif',p.tarif,T_.map(t=>[t.kz,t.kz+' – '+t.bez]))}</label>${bIn(R,P+'.von',p.von,{t:'time',l:'Beginn',cls:'w05'})}${bIn(R,P+'.bis',p.bis,{t:'time',l:'Ende',cls:'w05'})}${bIn(R,P+'.pause',p.pause,{t:'number',l:'Pause min',cls:'w05'})}
+    return`<div class="row btbz">${btbTagF(r,R,P+'.datum',p.datum)}${bIn(R,P+'.name',p.name,{l:'Name',cls:'w2',list:erw('mitarbeiter')?'dl-ma':''})}<label>Tarif${fsel(R,P+'.tarif',p.tarif,T_.map(t=>[t.kz,t.kz+' – '+t.bez]))}</label>${bIn(R,P+'.von',p.von,{t:'time',l:'Beginn',cls:'w05'})}${bIn(R,P+'.bis',p.bis,{t:'time',l:'Ende',cls:'w05'})}${bIn(R,P+'.pause',p.pause,{t:'number',l:'Pause min',cls:'w05'})}
       ${ber?`<label class="w05">Std.<input value="${fmtQ(btbStd(p))}" disabled title="aus Beginn, Ende und Pause"></label>`:bIn(R,P+'.stunden',p.stunden,{t:'number',l:'Std.',cls:'w05'})}${del('personal',i)}</div>`}).join('')
-    +`<div class="bar" style="margin:4px 0 0">${add('personal','btbp','+ Person')}${btbMaSel(r)}<span class="sp"></span><b>Summe ${fmtQ(btbSumme(r))} h</b></div>`;
-  const taet=(r.taet||[]).map((t,i)=>`<div class="row btbz">${bTa(R,`taet.${i}.text`,t.text,{l:'Tätigkeit',ph:'ausgeführte Arbeiten'})}${bIn(R,`taet.${i}.ort`,t.ort,{l:'Bauteil / Geschoß / Raum'})}${del('taet',i)}</div>`).join('')
+    +`<div class="bar" style="margin:4px 0 0">${add('personal','btbp','+ Person')}${erw('btbTage')&&!btbFest(r)?`<button class="s" data-act="btbtag" data-id="${r.id}" title="Personen des letzten Tages für den nächsten Tag übernehmen">+ Tag</button>`:''}${btbMaSel(r)}<span class="sp"></span><b>Summe ${fmtQ(btbSumme(r))} h</b></div>`;
+  const taet=(r.taet||[]).map((t,i)=>`<div class="row btbz">${btbTagF(r,R,`taet.${i}.datum`,t.datum)}${bTa(R,`taet.${i}.text`,t.text,{l:'Tätigkeit',ph:'ausgeführte Arbeiten'})}${bIn(R,`taet.${i}.ort`,t.ort,{l:'Bauteil / Geschoß / Raum'})}${del('taet',i)}</div>`).join('')
     +`<div class="bar" style="margin:4px 0 0">${add('taet','btbt','+ Tätigkeit')}${DB.lvbib?.length?`<select data-act="btbbib" data-id="${r.id}" style="width:auto"><option value="">+ aus Textbausteinen …</option>${DB.lvbib.map(x=>opt(x.id,(x.gruppe?x.gruppe+' · ':'')+(x.kurz||suTxt(x.lang).slice(0,60)),'')).join('')}</select>`:''}</div>`;
   const mat=`<p class="mut" style="margin:0 0 4px">Material</p>${(r.material||[]).map((m,i)=>`<div class="row btbz">${bIn(R,`material.${i}.bez`,m.bez,{l:'Bezeichnung',cls:'w2',list:'dl-art'})}${bIn(R,`material.${i}.menge`,m.menge,{t:'number',l:'Menge',cls:'w05'})}<label class="w05">Einheit${fsel(R,`material.${i}.einh`,m.einh,S().einheiten.map(e=>[e,e]))}</label>${del('material',i)}</div>`).join('')}${add('material','btbm','+ Material')}
     <p class="mut" style="margin:10px 0 4px">Geräte</p>${(r.geraete||[]).map((g,i)=>`<div class="row btbz">${bIn(R,`geraete.${i}.bez`,g.bez,{l:'Gerät',cls:'w2'})}${bIn(R,`geraete.${i}.stunden`,g.stunden,{t:'number',l:'Std.',cls:'w05'})}${del('geraete',i)}</div>`).join('')}${add('geraete','btbg','+ Gerät')}`;
   const vk=r.vork||{},vork=VORK.map(([k,l])=>`<div class="row">${bTa(R,'vork.'+k,vk[k],{l})}</div>`).join('');
   const nMat=(r.material||[]).length+(r.geraete||[]).length,nVork=VORK.filter(([k])=>pT(vk[k])).length;
-  return bAbs('btb-kopf','Kopfdaten',kopf,{zusatz:esc(dAT(r.datum))})+bAbs('btb-wetter','Witterung',wetter,{zusatz:esc(btbWetter(r))})+bAbs('btb-pers','Personal und Zeiten',pers,{zusatz:fmtQ(btbSumme(r))+' h'})
+  return bAbs('btb-kopf','Kopfdaten',kopf,{zusatz:esc(btbDat(r))})+bAbs('btb-wetter','Witterung',btbMehr(r)?btbWetterTage(r,R):wetter,{zusatz:esc(btbWetter(r))})+bAbs('btb-pers','Personal und Zeiten',pers,{zusatz:fmtQ(btbSumme(r))+' h'})
     +bAbs('btb-taet','Tätigkeiten',taet,{zusatz:(r.taet||[]).filter(t=>pT(t.text)).length+''})+bAbs('btb-mat','Material und Geräte',mat,{offen:!!nMat,zusatz:nMat?nMat+'':'keine'})
     +bAbs('btb-vork','Besondere Vorkommnisse',vork,{offen:!!nVork,zusatz:nVork?nVork+'':'keine'})+BTB_ED.map(f=>f(r)).join('')}
 // Ansicht (abgeschlossen) und Grundlage des Drucks (Teil 4): nur Lesen
 function btbDoc(r){const w=r.wetter||{},vk=r.vork||{},root=btbRoot(r),k=kontakt(root?.kontaktId),zl=(l,v)=>v?`<tr><th>${l}</th><td>${v}</td></tr>`:'',nl=s=>esc(s).replace(/\n/g,'<br>');
   const P=(r.personal||[]).filter(p=>pT(p.name)||btbStd(p)),Tt=(r.taet||[]).filter(t=>pT(t.text)),M=(r.material||[]).filter(m=>pT(m.bez)),G=(r.geraete||[]).filter(g=>pT(g.bez));
-  return`<div class="btbd"><table class="btbk"><tbody>${zl('Bericht-Nr.',`${r.nr}${root?' · Auftrag '+esc(bNr(root)):''}`)}${zl('Datum',dAT(r.datum))}${zl('Auftraggeber',esc(k?.name||''))}${zl('Betreff',esc(root?.betreff||root?.projekt||''))}${zl('Baustelle',esc(r.ort))}${zl('Verfasser',esc(r.verfasser))}
+  return`<div class="btbd"><table class="btbk"><tbody>${zl('Bericht-Nr.',`${r.nr}${root?' · Auftrag '+esc(bNr(root)):''}`)}${zl('Datum',btbDat(r))}${zl('Auftraggeber',esc(k?.name||''))}${zl('Betreff',esc(root?.betreff||root?.projekt||''))}${zl('Baustelle',esc(r.ort))}${zl('Verfasser',esc(r.verfasser))}
     ${zl('Witterung',esc(btbWetter(r))+(w.beh?`<br><b>Behinderung:</b> ${w.behStd!==''&&w.behStd!=null?fmtQ(w.behStd)+' h ':''}${esc(w.behTxt||'')}`:''))}</tbody></table>
-  <h3>Personal und Zeiten</h3>${P.length?`<table class="btbt"><thead><tr><th>Name</th><th>Tarif</th><th>Beginn</th><th>Ende</th><th class="n">Pause</th><th class="n">Std.</th></tr></thead><tbody>${P.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.tarif)}</td><td>${esc(p.von||'')}</td><td>${esc(p.bis||'')}</td><td class="n">${p.pause!==''&&p.pause!=null?fmtQ(p.pause)+' min':''}</td><td class="n">${fmtQ(btbStd(p))}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="5"><b>Summe</b></td><td class="n"><b>${fmtQ(btbSumme(r))}</b></td></tr></tfoot></table>`:'<p class="mut">keine Angaben</p>'}
-  <h3>Tätigkeiten</h3>${Tt.length?`<table class="btbt"><tbody>${Tt.map(t=>`<tr><td>${nl(t.text)}</td><td>${esc(t.ort||'')}</td></tr>`).join('')}</tbody></table>`:'<p class="mut">keine Angaben</p>'}
+  ${btbMehr(r)?btbDocTage(r):`<h3>Personal und Zeiten</h3>${P.length?`<table class="btbt"><thead><tr><th>Name</th><th>Tarif</th><th>Beginn</th><th>Ende</th><th class="n">Pause</th><th class="n">Std.</th></tr></thead><tbody>${P.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.tarif)}</td><td>${esc(p.von||'')}</td><td>${esc(p.bis||'')}</td><td class="n">${p.pause!==''&&p.pause!=null?fmtQ(p.pause)+' min':''}</td><td class="n">${fmtQ(btbStd(p))}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="5"><b>Summe</b></td><td class="n"><b>${fmtQ(btbSumme(r))}</b></td></tr></tfoot></table>`:'<p class="mut">keine Angaben</p>'}
+  <h3>Tätigkeiten</h3>${Tt.length?`<table class="btbt"><tbody>${Tt.map(t=>`<tr><td>${nl(t.text)}</td><td>${esc(t.ort||'')}</td></tr>`).join('')}</tbody></table>`:'<p class="mut">keine Angaben</p>'}`}
   ${M.length||G.length?`<h3>Material und Geräte</h3><table class="btbt"><tbody>${M.map(m=>`<tr><td>${esc(m.bez)}</td><td class="n">${m.menge!==''&&m.menge!=null?fmtQ(m.menge)+' '+esc(m.einh||''):''}</td></tr>`).join('')}${G.map(g=>`<tr><td>Gerät: ${esc(g.bez)}</td><td class="n">${g.stunden!==''&&g.stunden!=null?fmtQ(g.stunden)+' h':''}</td></tr>`).join('')}</tbody></table>`:''}
   ${VORK.some(([x])=>pT(vk[x]))?`<h3>Besondere Vorkommnisse</h3><table class="btbk"><tbody>${VORK.map(([x,l])=>zl(l,pT(vk[x])?nl(vk[x]):'')).join('')}</tbody></table>`:''}
   ${BTB_DOC.map(f=>f(r)).join('')}</div>`}
@@ -6182,13 +6182,13 @@ V.berichte=()=>{const auf=btbAuftraege(),A=UI.btbA||'',L=DB.berichte.filter(r=>!
   return`<div class="bar"><h1 style="margin:0">Bautagesberichte</h1><span class="sp"></span><button class="p" data-act="btbneu"${A?` data-id="${A}"`:''}>+ Bericht</button></div>
   ${erw('btb')?'':'<p class="hint">Bautagesberichte sind ausgeschaltet (Einstellungen → Erweiterungen); vorhandene Berichte bleiben lesbar.</p>'}
   <div class="row" style="max-width:520px"><label class="w2">Auftrag<select data-o="ui" data-f="btbA"><option value="">alle Aufträge</option>${auf.map(a=>opt(a.id,auftragLabel(a.id),A)).join('')}</select></label></div>
-  ${tabelle('berichte',[{k:'nr',l:'Nr.',f:r=>'BTB '+r.nr},{k:'datum',l:'Datum',f:r=>dAT(r.datum)},{k:'auftrag',l:'Auftrag',f:r=>esc(auftragKurz(r.auftragId))},{k:'kunde',l:'Kunde',f:r=>esc(kName(btbRoot(r)?.kontaktId)),std:false},
+  ${tabelle('berichte',[{k:'nr',l:'Nr.',f:r=>'BTB '+r.nr},{k:'datum',l:'Datum',f:r=>btbDat(r)},{k:'auftrag',l:'Auftrag',f:r=>esc(auftragKurz(r.auftragId))},{k:'kunde',l:'Kunde',f:r=>esc(kName(btbRoot(r)?.kontaktId)),std:false},
     {k:'ort',l:'Baustelle',f:r=>esc(r.ort),std:false},{k:'taet',l:'Tätigkeit',f:r=>esc(suTxt((r.taet||[]).map(t=>t.text).filter(Boolean).join('; ')).slice(0,80))},{k:'wetter',l:'Witterung',f:r=>esc(btbWetter(r)),std:false},
     {k:'std',l:'Std.',n:1,f:r=>fmtQ(btbSumme(r))},{k:'status',l:'Status',f:btbStatus}],L,
     {zeile:r=>`class="click" onclick="nav('bericht/${r.id}')"`,leer:'Noch keine Bautagesberichte.',
-     mf:r=>karte({t:`BTB ${r.nr} · ${dAT(r.datum)}`,s:btbStatus(r),u:esc(suTxt((r.taet||[]).map(t=>t.text).filter(Boolean).join('; ')).slice(0,80)),z:esc(auftragKurz(r.auftragId)),b:fmtQ(btbSumme(r))+' h'})})}`};
+     mf:r=>karte({t:`BTB ${r.nr} · ${btbDat(r)}`,s:btbStatus(r),u:esc(suTxt((r.taet||[]).map(t=>t.text).filter(Boolean).join('; ')).slice(0,80)),z:esc(auftragKurz(r.auftragId)),b:fmtQ(btbSumme(r))+' h'})})}`};
 function btbAuftragKarte(aid){if(!erw('btb'))return'';const L=DB.berichte.filter(r=>r.auftragId===aid).sort((a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt));
-  const inh=`<div class="card">${kmp()?'':'<h2>Bautagesberichte</h2>'}${L.length?`<table><tbody>${L.map(r=>`<tr class="click" onclick="nav('bericht/${r.id}')"><td>BTB ${r.nr} · ${dAT(r.datum)}</td><td class="n">${fmtQ(btbSumme(r))} h</td><td>${btbStatus(r)}</td></tr>`).join('')}</tbody></table>`:'<p class="mut" style="margin:0">Noch kein Bautagesbericht zu diesem Auftrag.</p>'}
+  const inh=`<div class="card">${kmp()?'':'<h2>Bautagesberichte</h2>'}${L.length?`<table><tbody>${L.map(r=>`<tr class="click" onclick="nav('bericht/${r.id}')"><td>BTB ${r.nr} · ${btbDat(r)}</td><td class="n">${fmtQ(btbSumme(r))} h</td><td>${btbStatus(r)}</td></tr>`).join('')}</tbody></table>`:'<p class="mut" style="margin:0">Noch kein Bautagesbericht zu diesem Auftrag.</p>'}
     <div class="bar" style="margin:8px 0 0"><button class="s" data-act="btbneu" data-id="${aid}">+ Bautagesbericht</button></div></div>`;
   return kmp()?akk('a-btb','Bautagesberichte',inh,{offen:!!L.length,zusatz:L.length+''}):inh}
 Object.assign(ACT,{
@@ -6232,13 +6232,13 @@ ACT.btbre=async el=>{const r=ROOT.btb(el.dataset.id);if(!r||!btbFest(r)||btbRe(r
   const k=kontakt(root.kontaktId),b=neuBeleg('RE',{kontaktId:root.kontaktId,auftragId:r.auftragId,betreff:root.betreff||'',zahlungsziel:S().zahlungsziel,btbIds:W.map(x=>x.id)});if(k)konditionenUebernehmen(b,k);
   for(const x of W){const n0=b.pos.length;if(W.length>1)b.pos.push(neuPos({art:'G',bez:`Bautagesbericht ${x.nr} vom ${dAT(x.datum)}`}));
     if(o.std){if(DB.zeiten.some(z=>z.berichtId===x.id))zeitenInPos(b,DB.zeiten.filter(z=>z.berichtId===x.id&&btbZtFrei(z)&&BTB_ZOK.every(f=>f(z,o))));
-      else{const g={};for(const p of x.personal||[]){const h=btbStd(p);if(h)(g[p.tarif]??=[]).push([p,h])}
-        for(const[kz,P]of Object.entries(g)){const tf=S().tarife.find(t=>t.kz===kz)||{};b.pos.push(neuPos({art:'L',nr:kz,bez:tf.bez||kz,text:[dAT(x.datum),P.map(y=>y[0].name).filter(pT).join(', ')].filter(Boolean).join(' – '),menge:r2(sum(P,y=>y[1])),einheit:'h',ep:+tf.vk||0,ek:+tf.kosten||0}));lsAufteilen(b,b.pos[b.pos.length-1])}}}
+      else{const g={};for(const p of x.personal||[]){const h=btbStd(p);if(h)(g[p.tarif+'|'+btbPD(x,p)]??=[]).push([p,h])}
+        for(const[gk,P]of Object.entries(g)){const[kz,tg]=gk.split('|'),tf=S().tarife.find(t=>t.kz===kz)||{};b.pos.push(neuPos({art:'L',nr:kz,bez:tf.bez||kz,text:[dAT(tg),P.map(y=>y[0].name).filter(pT).join(', ')].filter(Boolean).join(' – '),menge:r2(sum(P,y=>y[1])),einheit:'h',ep:+tf.vk||0,ek:+tf.kosten||0}));lsAufteilen(b,b.pos[b.pos.length-1])}}}
     if(o.mat)for(const m of x.material||[]){if(!pT(m.bez))continue;const a=btbArt(m.bez),p=neuPos(),q=m.menge!==''&&m.menge!=null?+m.menge||0:1;b.pos.push(p);
       if(a&&(!m.einh||m.einh===a.einheit))artikelInPos(b,p,a);else Object.assign(p,{bez:m.bez,einheit:m.einh||'Stk',ep:0});p.menge=q}
     if(o.ger)for(const g of x.geraete||[])if(pT(g.bez))b.pos.push(neuPos({bez:'Gerät: '+g.bez,menge:g.stunden!==''&&g.stunden!=null?+g.stunden||0:1,einheit:g.stunden!==''&&g.stunden!=null?'h':'Stk',ep:0}));
     for(const f of BTB_RE)f(b,x,o);if(W.length>1&&b.pos.length===n0+1)b.pos.splice(n0,1)}
-  const ds=W.map(x=>x.datum).filter(Boolean).sort();if(ds.length)b.leistung=ds[0]===ds[ds.length-1]?dAT(ds[0]):`${dAT(ds[0])} – ${dAT(ds[ds.length-1])}`;
+  const ds=W.flatMap(x=>[x.datum,x.bis]).filter(Boolean).sort();if(ds.length)b.leistung=ds[0]===ds[ds.length-1]?dAT(ds[0]):`${dAT(ds[0])} – ${dAT(ds[ds.length-1])}`;
   log('Rechnung aus Bautagesbericht',`${auftragKurz(r.auftragId)}: ${W.map(x=>'BTB '+x.nr).join(', ')}`);persist();go('beleg/'+b.id)};
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');
@@ -6346,13 +6346,13 @@ const fahrtPausch=e=>{if(!(e>0))return null;const f=fahrtS(),L=(f.staffel||[]).f
 const btbKd=r=>kontakt(btbRoot(r)?.kontaktId),btbEntf=r=>r.entf!==''&&r.entf!=null?+r.entf||0:+btbKd(r)?.entfernung||0,btbAnf=r=>r.anf!==''&&r.anf!=null?+r.anf||0:1,btbReise=r=>r2(sum(r.personal||[],p=>+p.reise||0));
 BTB_ED.push(r=>{if(!erw('btbFahrt'))return'';const R='btb|'+r.id,k=btbKd(r),P=r.personal||[];
   const inh=`<div class="row">${bIn(R,'km',r.km,{t:'number',l:'gefahrene km (hin und zurück)'})}${bIn(R,'anf',r.anf,{t:'number',l:'Anfahrten',ph:'1',cls:'w05'})}${bIn(R,'entf',r.entf,{t:'number',l:'Entfernung km (einfach)',ph:+k?.entfernung?fmtQ(k.entfernung)+' (Kunde)':''})}</div>
-    ${P.length?`<p class="mut" style="margin:8px 0 4px">Reisezeit je Person (Std.)</p><div class="row">${P.map((p,i)=>bIn(R,`personal.${i}.reise`,p.reise,{t:'number',l:esc(p.name||'Person '+(i+1)),cls:'w05'})).join('')}</div>`:''}`;
+    ${P.length?`<p class="mut" style="margin:8px 0 4px">Reisezeit je Person (Std.)</p><div class="row">${P.map((p,i)=>bIn(R,`personal.${i}.reise`,p.reise,{t:'number',l:esc(p.name||'Person '+(i+1))+(btbMehr(r)?' · '+dAT(btbPD(r,p)).slice(0,6):''),cls:'w05'})).join('')}</div>`:''}`;
   return bAbs('btb-fahrt','Fahrt und Reisezeit',inh,{offen:!!(+r.km||btbReise(r)),zusatz:[+r.km?fmtQ(r.km)+' km':'',btbReise(r)?fmtQ(btbReise(r))+' h Reisezeit':''].filter(Boolean).join(' · ')||'keine'})});
 BTB_DOC.push(r=>{const re=btbReise(r),P=(r.personal||[]).filter(p=>+p.reise),z=(l,v)=>`<tr><th>${l}</th><td>${v}</td></tr>`;if(!+r.km&&!re&&!pT(r.anf)&&!pT(r.entf))return'';
-  return`<h3>Fahrt und Reisezeit</h3><table class="btbk"><tbody>${+r.km?z('Gefahrene km',fmtQ(r.km)+' km'):''}${pT(r.anf)?z('Anfahrten',fmtQ(btbAnf(r))):''}${btbEntf(r)?z('Entfernung',fmtQ(btbEntf(r))+' km'):''}${re?z('Reisezeit',`${fmtQ(re)} h (${P.map(p=>`${esc(p.name||'?')} ${fmtQ(p.reise)}`).join(', ')})`):''}</tbody></table>`});
+  return`<h3>Fahrt und Reisezeit</h3><table class="btbk"><tbody>${+r.km?z('Gefahrene km',fmtQ(r.km)+' km'):''}${pT(r.anf)?z('Anfahrten',fmtQ(btbAnf(r))):''}${btbEntf(r)?z('Entfernung',fmtQ(btbEntf(r))+' km'):''}${re?z('Reisezeit',`${fmtQ(re)} h (${P.map(p=>`${esc(p.name||'?')}${btbMehr(r)?' '+dAT(btbPD(r,p)).slice(0,6):''} ${fmtQ(p.reise)}`).join(', ')})`):''}</tbody></table>`});
 queueMicrotask(()=>BTB_NACH.push(r=>{if(!erw('btbFahrt')||!erw('btbZeit'))return;const f=fahrtS(),t=S().tarife.find(x=>x.kz===f.tarif)||{};let n=0;
   for(const p of r.personal||[]){const h=+p.reise||0;if(!h)continue;const m=p.maId&&DB.mitarbeiter?.find(x=>x.id===p.maId);
-    DB.zeiten.push({id:uid(),datum:r.datum,auftragId:r.auftragId,tarif:f.tarif,stunden:h,text:[`BTB ${r.nr}`,p.name,'Reisezeit'].filter(pT).join(' · '),kosten:m&&typeof maKosten==='function'?maKosten(m,t):+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id,reise:true,...(m?{maId:m.id}:{})});n++}
+    DB.zeiten.push({id:uid(),datum:btbPD(r,p),auftragId:r.auftragId,tarif:f.tarif,stunden:h,text:[`BTB ${r.nr}`,p.name,'Reisezeit'].filter(pT).join(' · '),kosten:m&&typeof maKosten==='function'?maKosten(m,t):+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id,reise:true,...(m?{maId:m.id}:{})});n++}
   if(n)log('Reisezeit aus Bautagesbericht',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${fmtQ(btbReise(r))} h`)}));
 BTB_REF.push((L,root)=>{if(!erw('btbFahrt'))return[];const k=kontakt(root.kontaktId)||{};return[{typ:'abschnitt',l:'Fahrt'},{k:'fahrt',l:'Fahrtkosten',wert:k.fahrtArt||'',opts:FAHRT_ART,neu:1},{k:'reise',typ:'checkbox',l:'Reisezeit verrechnen',wert:k.fahrtReise==='ja'}]});
 BTB_ZOK.push((z,o)=>!z.reise||!erw('btbFahrt')||!!o.reise);
@@ -6400,6 +6400,31 @@ function onPos(b,i,f,v){
   if(f==='epL'||f==='epS'){p.ep=rp((+p.epL||0)+(+p.epS||0),peW(p.pe));const e=document.querySelector(`[data-p="${i}"][data-f="ep"]`);if(e)e.value=peZ(p.ep,peE(p))}
   if(['art','pauschal','ohneEP','kz'].includes(f)&&(f!=='kz'||p.art==='G'))render();else updateCalc(b);
 }
+/* Bautagesbericht Teil 9 (P36, erw.btbTage): mehrere Tage in einem Bericht. Kopf „bis“ (r.bis); mehrtägig = btbMehr(r) (bis nach dem Datum; Tage btbTage(r), höchstens 31, samt verwendeter Tage btbTageAlle(r)).
+   Personal und Tätigkeiten mit Tag (p.datum, t.datum; leer = erster Tag, btbPD(r,x), Auswahl btbTagF()), Witterung je Tag r.wt[<Datum>]={vm,nm,tMin,tMax} (btbWetterTage(), Behinderung gemeinsam in r.wetter),
+   „+ Tag“ (ACT.btbtag) kopiert die Personen des letzten Tages. Ansicht/Druck nach Tagen (btbDocTage(): Witterung, Personal mit Stunden je Tag, Tätigkeiten, Summe aller Tage); Datum btbDat(r).
+   Zeiterfassung (Teil 5, Teil 8) mit dem Tag der Zeile; Rechnung (Teil 7) Leistungszeitraum bis r.bis, Personal je Tarif und Tag. Ohne „bis“ wie bisher */
+erwPlus({k:'btbTage',std:false,p:'Bautagesbericht (P36)',l:'Mehrere Tage in einem Bericht',info:'Im Bautagesbericht neben dem Datum das Feld „bis“: Bleibt es leer, ist es ein Tagesbericht wie bisher. Bei mehreren Tagen bekommen Personal und Tätigkeiten einen Tag, die Witterung wird je Tag erfasst; „+ Tag“ übernimmt die Personen des letzten Tages für den nächsten. Ansicht und Druck sind nach Tagen gegliedert, mit Stunden je Tag und gesamt. In die Zeiterfassung kommen die Stunden mit dem Tag der Zeile, die Rechnung aus dem Bericht nimmt den ganzen Zeitraum. Aus = kein Feld „bis“; mehrtägige Berichte bleiben lesbar.'});
+const btbMehr=r=>!!(r?.bis&&r.datum&&r.bis>r.datum);
+const btbTage=r=>{if(!btbMehr(r))return[r.datum];const L=[];for(let d=r.datum;d<=r.bis&&L.length<31;d=addDays(d,1))L.push(d);return L};
+const btbPD=(r,x)=>btbMehr(r)&&x?.datum?x.datum:r.datum;
+const btbTageAlle=r=>[...new Set([...btbTage(r),...[...(r.personal||[]),...(r.taet||[])].map(x=>btbPD(r,x))])].filter(Boolean).sort();
+const btbTagL=d=>d?`${['So','Mo','Di','Mi','Do','Fr','Sa'][new Date(d+'T12:00').getDay()]} ${dAT(d)}`:'';
+const btbDat=r=>btbMehr(r)?`${dAT(r.datum)} – ${dAT(r.bis)}`:dAT(r.datum);
+const btbTagF=(r,R,f,v)=>btbMehr(r)?`<label class="w05">Tag${fsel(R,f,btbPD(r,{datum:v}),btbTageAlle(r).map(d=>[d,btbTagL(d).slice(0,9)]))}</label>`:''; // kurz: „Do 15.10.“
+const btbWetterX=x=>{x=x||{};const t=[x.tMin,x.tMax].filter(y=>y!==''&&y!=null);return[[wTxt(x.vm),wTxt(x.nm)].filter(Boolean).filter((y,i,a)=>a.indexOf(y)===i).join(' / '),t.length?t.map(y=>fmtQ(y)).join(' bis ')+' °C':''].filter(Boolean).join(' · ')};
+function btbWetterTage(r,R){const w=r.wetter||{};
+  return btbTage(r).map(d=>{const x=r.wt?.[d]||{},F=`wt.${d}.`;return`<div class="row btbz"><b class="w05" style="align-self:center">${btbTagL(d)}</b><label>Vormittag${fsel(R,F+'vm',x.vm,WETTER)}</label><label>Nachmittag${fsel(R,F+'nm',x.nm,WETTER)}</label>${bIn(R,F+'tMin',x.tMin,{t:'number',l:'min °C',cls:'w05'})}${bIn(R,F+'tMax',x.tMax,{t:'number',l:'max °C',cls:'w05'})}</div>`}).join('')
+  +`<label class="chk"><input type="checkbox" data-o="path" data-r="${R}" data-f="wetter.beh"${w.beh?' checked':''}> Arbeit witterungsbedingt behindert / unterbrochen</label>
+  ${w.beh?`<div class="row" style="margin-top:6px">${bIn(R,'wetter.behStd',w.behStd,{t:'number',l:'Ausfall Std.',cls:'w05'})}${bIn(R,'wetter.behTxt',w.behTxt,{l:'Beschreibung',cls:'w2'})}</div>`:''}`}
+function btbDocTage(r){const nl=s=>esc(s).replace(/\n/g,'<br>');
+  return btbTageAlle(r).map(d=>{const P=(r.personal||[]).filter(p=>btbPD(r,p)===d&&(pT(p.name)||btbStd(p))),Tt=(r.taet||[]).filter(t=>btbPD(r,t)===d&&pT(t.text)),w=btbWetterX(r.wt?.[d]);if(!P.length&&!Tt.length&&!w)return'';
+    return`<h3>${btbTagL(d)}${w?` <span style="font-weight:400">· ${esc(w)}</span>`:''}</h3>${P.length?`<table class="btbt"><thead><tr><th>Name</th><th>Tarif</th><th>Beginn</th><th>Ende</th><th class="n">Pause</th><th class="n">Std.</th></tr></thead><tbody>${P.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.tarif)}</td><td>${esc(p.von||'')}</td><td>${esc(p.bis||'')}</td><td class="n">${p.pause!==''&&p.pause!=null?fmtQ(p.pause)+' min':''}</td><td class="n">${fmtQ(btbStd(p))}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="5">Summe ${btbTagL(d)}</td><td class="n">${fmtQ(r2(sum(P,btbStd)))}</td></tr></tfoot></table>`:''}
+    ${Tt.length?`<table class="btbt"><tbody>${Tt.map(t=>`<tr><td>${nl(t.text)}</td><td>${esc(t.ort||'')}</td></tr>`).join('')}</tbody></table>`:''}`}).join('')
+  +`<table class="btbt" style="margin-top:6px"><tbody><tr><td><b>Summe aller Tage</b></td><td class="n"><b>${fmtQ(btbSumme(r))} h</b></td></tr></tbody></table>`}
+ACT.btbtag=el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r)||!r.datum)return;const L=r.personal||(r.personal=[]),last=L.length?L.map(p=>btbPD(r,p)).sort().pop():r.datum,nd=addDays(last,1);
+  if(!r.bis||nd>r.bis)r.bis=nd;for(const p of L.filter(p=>btbPD(r,p)===last)){const{zid,...q}=p;L.push({...q,datum:nd,stunden:q.von&&q.bis?'':q.stunden})}
+  if(!L.some(p=>btbPD(r,p)===nd))L.push({...TPL.btbp(),datum:nd});persist();render()};
 /* Formatierungsleiste für Texte (fett, kursiv, unterstrichen, Listen) */
 (function(){
   const bar=document.createElement('div');bar.id='rtebar';
@@ -6537,17 +6562,17 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();if((e.ctr
    „Zeiten abrechnen“ wie bisher). „⏱ aus Zeiterfassung“ übernimmt offene, noch keinem Bericht zugeordnete Zeiten desselben Auftrags und Tages als Zeilen (p.zid, Eintrag bekommt berichtId);
    beim Unterschreiben werden diese nur angepasst (Stunden, Tarif, solange nicht abgerechnet), nicht neu angelegt. Einträge unterschriebener Berichte sind in der Zeiterfassung nicht löschbar */
 erwPlus({k:'btbZeit',std:false,p:'Bautagesbericht (P36)',l:'Stunden des Bautagesberichts in die Zeiterfassung',info:'Beim Unterschreiben des Monteurs werden die Stunden je Person und Tarif als Einträge in die Zeiterfassung übernommen (Text „BTB <Nr> · Name“); Nachkalkulation, DB je Stunde und „Zeiten abrechnen“ rechnen damit wie bisher. Bereits in der Zeiterfassung erfasste, offene Stunden desselben Auftrags und Tages holt „⏱ aus Zeiterfassung“ in den Bericht (keine Doppelerfassung). Einträge eines unterschriebenen Berichts lassen sich in der Zeiterfassung nicht löschen. Aus = keine Übernahme.'});
-const btbZeitFrei=r=>DB.zeiten.filter(z=>z.auftragId===r.auftragId&&z.datum===r.datum&&!z.belegId&&!(z.berichtId&&ROOT.btb(z.berichtId)));
+const btbZeitFrei=r=>DB.zeiten.filter(z=>z.auftragId===r.auftragId&&(btbMehr(r)?z.datum>=r.datum&&z.datum<=r.bis:z.datum===r.datum)&&!z.belegId&&!(z.berichtId&&ROOT.btb(z.berichtId)));
 BTB_KN.push(r=>erw('btbZeit')&&!btbFest(r)&&btbZeitFrei(r).length?`<button data-act="btbzeit" data-id="${r.id}" title="offene Zeiten dieses Auftrags vom ${dAT(r.datum)} übernehmen">⏱ aus Zeiterfassung (${btbZeitFrei(r).length})</button>`:'');
 BTB_NACH.push(r=>{if(!erw('btbZeit'))return;let n=0;
   for(const p of r.personal||[]){const h=btbStd(p),z=p.zid&&DB.zeiten.find(x=>x.id===p.zid);
     if(z){if(!z.belegId){z.stunden=h;z.tarif=p.tarif}z.berichtId=r.id;continue}
-    if(!h)continue;const t=S().tarife.find(x=>x.kz===p.tarif)||{};DB.zeiten.push({id:uid(),datum:r.datum,auftragId:r.auftragId,tarif:p.tarif,stunden:h,text:[`BTB ${r.nr}`,p.name].filter(pT).join(' · '),kosten:+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id});n++}
+    if(!h)continue;const t=S().tarife.find(x=>x.kz===p.tarif)||{};DB.zeiten.push({id:uid(),datum:btbPD(r,p),auftragId:r.auftragId,tarif:p.tarif,stunden:h,text:[`BTB ${r.nr}`,p.name].filter(pT).join(' · '),kosten:+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id});n++}
   if(n)log('Zeiten aus Bautagesbericht',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${n} Eintrag/Einträge`)});
 BTB_DOC.push(r=>{if(!r.gesperrt)return'';const Z=DB.zeiten.filter(z=>z.berichtId===r.id);return Z.length?`<p class="mut btbzt">In der Zeiterfassung: ${fmtQ(sum(Z,z=>z.stunden))} h${Z.some(z=>z.belegId)?' (teilweise abgerechnet)':''}</p>`:''});
 ACT.btbzeit=el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r))return;const L=btbZeitFrei(r);if(!L.length)return;
   r.personal=(r.personal||[]).filter(p=>pT(p.name)||btbStd(p)||p.zid);
-  for(const z of L){r.personal.push({name:'',tarif:z.tarif,von:'',bis:'',pause:'',stunden:+z.stunden||0,zid:z.id});z.berichtId=r.id;if(pT(z.text)&&!(r.taet||[]).some(t=>t.text===z.text))(r.taet||(r.taet=[])).push({text:z.text,ort:''})}
+  for(const z of L){r.personal.push({name:'',tarif:z.tarif,von:'',bis:'',pause:'',stunden:+z.stunden||0,zid:z.id,...(btbMehr(r)?{datum:z.datum}:{})});z.berichtId=r.id;if(pT(z.text)&&!(r.taet||[]).some(t=>t.text===z.text))(r.taet||(r.taet=[])).push({text:z.text,ort:''})}
   r.taet=r.taet.filter((t,i,a)=>pT(t.text)||pT(t.ort)||a.length===1);persist();render()};
 $('#menu').onclick=e=>{e.stopPropagation();document.body.classList.toggle('nav')};
 /* Bautagesbericht Teil 6 (P36, erw.btbVorschau): „Eingabe | Vorschau | Beides“ wie im Verkauf (dieselbe Wahl ansicht(), ACT.ansicht); Vorschau = Druckbild btbBlatt(r)

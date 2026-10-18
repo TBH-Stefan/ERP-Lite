@@ -2648,7 +2648,7 @@ function adrCtx(el){if(!erw('adrVorschlag')||el.tagName!=='INPUT')return null;co
     c={f:el.dataset.k,ex:'',el:q,fill:o=>{for(const x of ['strasse','plz','ort','land'])if(o[x]!=null&&o[x]!==''&&q(x))q(x).value=o[x]}}}
   else if(el.dataset.o==='k'&&['strasse','plz'].includes(el.dataset.f)){const id=el.dataset.id,q=x=>document.querySelector(`[data-o="k"][data-id="${id}"][data-f="${x}"]`);
     c={f:el.dataset.f,ex:id,el:q,fill:o=>{const k=kontakt(id);if(!k)return;document.activeElement?.blur?.();for(const x of ['strasse','plz','ort','land'])if(o[x]!=null&&o[x]!=='')k[x]=o[x];persist();render()}}}
-  if(c)c.g=x=>c.el(x)?.value||'';return c}
+  if(c){c.g=x=>c.el(x)?.value||'';el.setAttribute('autocomplete','off')}return c}
 let ADR=null,ADR_T=0; // offene Liste {el,box,l,i,c}
 function adrZu(){ADR?.box.remove();ADR=null}
 function adrZeigen(el,c,l){adrZu();if(!l.length||document.activeElement!==el)return;const box=document.createElement('div'),r=el.getBoundingClientRect(),w=Math.min(Math.max(r.width,300),innerWidth-16);
@@ -2676,9 +2676,6 @@ document.addEventListener('keydown',e=>{if(!ADR||e.target!==ADR.el)return;const 
   else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();adrZu()}},true);
 document.addEventListener('focusout',e=>{if(ADR&&e.target===ADR.el)setTimeout(()=>{if(ADR&&document.activeElement!==ADR.el)adrZu()},200)});
 document.addEventListener('scroll',e=>{if(ADR&&!ADR.box.contains(e.target))adrZu()},true);
-// Autofill des Browsers (Chrome-Adressen, legt sich über die Liste) aus: unbekannter autocomplete-Wert schon beim Einfügen der Felder (autocomplete="off" übergeht Chrome bei Adressen)
-const ADR_AF='.modal:has([data-k="name"]):has([data-k="ort"]) :is([data-k="strasse"],[data-k="plz"],[data-k="ort"],[data-k="land"]),[data-o="k"]:is([data-f="strasse"],[data-f="plz"],[data-f="ort"],[data-f="land"])';
-new MutationObserver(()=>{if(erw('adrVorschlag'))for(const e of document.querySelectorAll(ADR_AF))if(e.getAttribute('autocomplete')!=='erp-adr')e.setAttribute('autocomplete','erp-adr')}).observe(document.documentElement,{childList:true,subtree:true});
 // Listenpreis, Rabatt, EK: je zwei ergeben den dritten; berechnet wird das am längsten nicht bearbeitete Feld (r = Reihenfolge, zuletzt bearbeitet vorne, anfangs leere Felder
 // zuletzt); erste Eingabe von nur EK bzw. nur Listenpreis füllt die anderen (Listenpreis = EK, Rabatt 0). w = {lp,rab,ek} als Text, k = geändertes Feld → geänderte Werte
 const ekReihe=w=>{const v=k=>k==='rab'?pT(w.rab)!=='':!!num(w[k]);return[...['lp','rab','ek'].filter(v),...['lp','rab','ek'].filter(k=>!v(k))]},EKR={}; // EKR: Reihenfolge je Lieferantenzeile eines Artikels

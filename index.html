@@ -3781,10 +3781,11 @@ V.kontakte=typ=>{
 };
 // Felder eines Kontakts (Setter 'k'): Formular im Kontakt, in kompakt im Pop-up „Kontakt bearbeiten“ (P30)
 function kontaktFelder(k){
+  const kfA=erw('kontaktForm'),kfP=k.kundenart==='privat'; // P41 Teil 3: wie im Pop-up – Privat nur „Name“, ohne Zusatz/UID (Werte bleiben gespeichert)
   const f=(fl,l,cls='',type='text')=>`<label class="${cls}">${l}<input type="${type}" data-o="k" data-id="${k.id}" data-f="${fl}" value="${esc(k[fl])}"></label>`;
-  return`<div class="row">${f('nr',k.typ==='L'?'Lieferanten-Nr.':k.typ==='KL'?'Kunden-/Lief.-Nr.':'Kunden-Nr.','w05')}<label class="w05">Typ<select data-o="k" data-id="${k.id}" data-f="typ">${opt('K','Kunde',k.typ)}${opt('L','Lieferant',k.typ)}${opt('KL','Kunde + Lieferant',k.typ)}</select></label>${f('name','Name / Firma *','w2')}${f('zusatz','Zusatz / z. H.')}</div>${kontaktPers(k)}
+  return`<div class="row">${f('nr',k.typ==='L'?'Lieferanten-Nr.':k.typ==='KL'?'Kunden-/Lief.-Nr.':'Kunden-Nr.','w05')}<label class="w05">Typ<select data-o="k" data-id="${k.id}" data-f="typ">${opt('K','Kunde',k.typ)}${opt('L','Lieferant',k.typ)}${opt('KL','Kunde + Lieferant',k.typ)}</select></label>${f('name',kfA?kfP?'Name *':'Firma *':'Name / Firma *','w2')}${kfA&&kfP?'':f('zusatz','Zusatz / z. H.')}</div>${kontaktPers(k)}
   <div class="row">${f('strasse','Straße *','w2')}${f('plz','PLZ *','w05')}${f('ort','Ort *')}${f('land','Land *','w05')}</div>${adrHinweis(k)}
-  <div class="row"><label class="w05">Art<select data-o="k" data-id="${k.id}" data-f="kundenart">${opt('B2B','Unternehmen (B2B)',k.kundenart||'B2B')}${opt('privat','Privat (B2C)',k.kundenart||'B2B')}</select></label>${f('uid',k.kundenart==='privat'?'UID-Nr.':'UID-Nr. (B2B)')}${f('email','E-Mail')}${f('tel','Telefon')}</div>
+  <div class="row"><label class="w05">Art<select data-o="k" data-id="${k.id}" data-f="kundenart">${opt('B2B','Unternehmen (B2B)',k.kundenart||'B2B')}${opt('privat','Privat (B2C)',k.kundenart||'B2B')}</select></label>${kfA&&kfP?'':f('uid',k.kundenart==='privat'?'UID-Nr.':'UID-Nr. (B2B)')}${f('email','E-Mail')}${f('tel','Telefon')}</div>
   <div class="row">${f('zahlungsziel','Zahlungsziel Tage','w05','number')}${f('skonto','Skonto %','w05','number')}${f('skontoTage','Skonto Tage','w05','number')}${k.typ!=='L'?f('rabatt','Kundenrabatt %','w05','number'):''}${k.typ!=='K'?`<label class="w05" title="Unsere Kunden-Nr. beim Lieferanten – steht auf Bestellungen und anderen Einkaufsbelegen statt der internen Lieferanten-Nr.">Unsere Kunden-Nr.<input data-o="k" data-id="${k.id}" data-f="kdNrLief" value="${esc(k.kdNrLief||'')}"></label>`:''}<span style="flex:2" class="mut">Optional: werden in neue Belege übernommen.</span></div>
   ${kontaktFehlt(k).length?`<div class="hint">Pflichtangaben fehlen: ${kontaktFehlt(k).join(', ')} (für Rechnungen nötig).</div>`:''}
   <div class="row"><label>Notiz<textarea data-o="k" data-id="${k.id}" data-f="notiz">${esc(k.notiz)}</textarea></label></div>`}
@@ -7206,7 +7207,7 @@ document.addEventListener('change',e=>{
     case'k':{const k=kontakt(d.id);
       if(d.f==='nr'){const n=String(nv).trim();if(!n||DB.kontakte.some(x=>x!==k&&x.nr===n)){alert(n?`Nummer ${n} ist bereits vergeben.`:'Nummer darf nicht leer sein.');render();return}
         log('Kontakt-Nr. geändert',`${k.nr} → ${n} ${k.name}`);k.nr=n;const t=k.typ==='L'?'L':'K';if(/^\d+$/.test(n)&&+n>(S().knr[t]||0)&&+n<(S().knr[t]||0)+100000)S().knr[t]=+n;persist();render();return}
-      k[d.f]=nv;if(PERSF.includes(d.f))kbaAkt(k);break}
+      k[d.f]=nv;if(PERSF.includes(d.f))kbaAkt(k);if(d.f==='kundenart'&&erw('kontaktForm')){persist();render();return}break} // Felder je Kundenart neu zeichnen (P41 Teil 3)
     case'a':{const a=artikel(d.id);
       if(d.f==='lagerplatz'&&v==='__lp'){render();baumDialog(LP);return}
       if(d.f==='gruppe'&&(v==='__neu'||v==='__sub')){gruppeNeu(v==='__sub'?a.gruppe:'').then(g=>{if(g){a.gruppe=g;persist()}render()});return}if(d.f==='einheitenStr'){a.einheiten=String(v).split(/[;,]/).map(x=>x.split('=')).filter(x=>x.length===2&&x[0].trim()&&num(x[1])>0).map(([e,f])=>({e:e.trim(),f:num(f)}));for(const x of a.einheiten)if(!S().einheiten.includes(x.e))S().einheiten.push(x.e)}else a[d.f]=nv;if(['ek','hk','vk','vkAufschlag'].includes(d.f)){const e=$('#avkv');if(e)e.innerHTML=vkVorschlagHTML(a)}if(['nr','bez','aktiv'].includes(d.f))artDatalist();if(['lager','einheitenStr'].includes(d.f)){persist();render();return}break}

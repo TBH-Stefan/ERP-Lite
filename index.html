@@ -1913,9 +1913,9 @@ function render(){
   tabLeiste(); // iPhone: Tab-Leiste unten (P40)
 }
 /* Tab-Leiste (P40, erw.tabLeiste, nur iPhone mit iOS-Darstellung): #tabl am Ende von body, aus render() über tabLeiste(); aktiv = Eintrag der Seitenleiste (nav a.on), sonst „Mehr“ (öffnet die Seitenleiste).
-   erw.wischZurueck: in der App vom Home-Bildschirm (standalone) Wischen vom linken Rand = Zurück (history.back) */
+   erw.wischZurueck: siehe Block „Wischen vom Rand“ unten */
 erwPlus({k:'tabLeiste',std:false,p:'App iPhone/iPad (P40)',l:'iPhone: Tab-Leiste unten',info:'Am iPhone steht unten eine Leiste wie in iOS-Apps: Überblick, Verkauf, Einkauf, Berichte (bzw. Zeiten, wenn die Bautagesberichte aus sind) und Mehr (öffnet das Menü mit allen Bereichen). Im geöffneten Beleg und beim Tippen in ein Feld wird sie ausgeblendet. Wirkt nur mit der iOS-Darstellung.'},
-  {k:'wischZurueck',std:false,p:'App iPhone/iPad (P40)',l:'Wischen vom linken Rand = Zurück',info:'In der App vom Home-Bildschirm gibt es keine Zurück-Taste des Browsers. Mit diesem Schalter führt Wischen vom linken Bildschirmrand nach rechts zur vorigen Seite (wie in Safari). Nicht bei offenen Pop-ups.'});
+  {k:'wischZurueck',std:false,p:'App iPhone/iPad (P40)',l:'Wischen vom Rand = Zurück / Vorwärts',info:'In der App vom Home-Bildschirm gibt es keine Zurück-Taste des Browsers. Mit diesem Schalter führt Wischen vom linken Bildschirmrand nach rechts zur vorigen Seite, vom rechten Rand nach links wieder vorwärts (wie in Safari), auf allen Seiten, auch über Tabellen. Ist ein Pop-up, Menü oder die Seitenleiste offen, schließt Wischen von links dieses zuerst.'});
 const TB_I={dash:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',V:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',E:'<path d="M3 4h2l2.5 11h11L21 7H7"/><circle cx="10" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/>',
   btb:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/>',zt:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',mehr:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>'};
 function tabLeiste(){
@@ -1924,9 +1924,25 @@ function tabLeiste(){
   const L=[['dash','Überblick','dash'],['belege/V','Verkauf','V'],['belege/E','Einkauf','E'],erw('btb')?['berichte','Berichte','btb']:['zeiten','Zeiten','zt']],
     akt=$('nav a.on')?.dataset.n||'',hat=L.some(x=>x[0]===akt),sv=i=>`<svg viewBox="0 0 24 24" aria-hidden="true">${TB_I[i]}</svg>`;
   el.innerHTML=L.map(([n,l,i])=>`<a href="#/${n}" class="${n===akt?'on':''}">${sv(i)}${l}</a>`).join('')+`<a href="#" class="${hat?'':'on'}" onclick="event.preventDefault();event.stopPropagation();document.body.classList.toggle('nav')">${sv('mehr')}Mehr</a>`}
-{let w0=null;const app=()=>navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
-  document.addEventListener('touchstart',e=>{w0=null;if(!DB||!erw('wischZurueck')||e.touches.length!==1||!app())return;const p=e.touches[0];if(p.clientX>24||document.querySelector('.modal,.mpop')||document.body.classList.contains('nav'))return;w0=[p.clientX,p.clientY,Date.now()]},{passive:true});
-  document.addEventListener('touchend',e=>{if(!w0)return;const p=e.changedTouches[0],dx=p.clientX-w0[0],dy=Math.abs(p.clientY-w0[1]),dt=Date.now()-w0[2];w0=null;if(dx>80&&dy<60&&dt<800)history.back()},{passive:true});}
+/* Wischen vom Rand (erw.wischZurueck, nur App vom Home-Bildschirm; Safari hat die Geste selbst): links → rechts = Zurück, rechts → links = Vorwärts.
+   Start ≤ 28 px vom Rand, waagrecht > 70 px (oder schnell > 40 px); touchmove nicht passiv: verhindert dabei Bildlauf in Tabellen. Anzeige #wisch (Pfeil am Rand).
+   Offenes Pop-up/Menü/Seitenleiste: Wischen von links schließt es (wie Esc) statt zurückzugehen. */
+{let w0=null,wel=null;const app=()=>navigator.standalone===true||matchMedia('(display-mode: standalone)').matches,
+  zeig=(r,dx,ok)=>{if(!wel){wel=document.createElement('div');wel.id='wisch';wel.style.cssText='position:fixed;top:50%;z-index:99999;width:40px;height:40px;margin-top:-20px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font:600 22px/40px system-ui;text-align:center;pointer-events:none;transition:opacity .15s';document.body.appendChild(wel)}
+    const w=Math.min(Math.abs(dx),110);wel.textContent=r?'›':'‹';wel.style[r?'right':'left']=(w/2-30)+'px';wel.style[r?'left':'right']='';wel.style.opacity=Math.min(1,w/70);wel.style.background=ok?'rgba(0,122,255,.9)':'rgba(0,0,0,.55)'},
+  weg=()=>{wel?.remove();wel=null},
+  zu=()=>{const m=document.querySelector('.mpop');if(m){m.remove();document.querySelector('.mbg')?.remove();return true}
+    if(document.querySelector('.modal')){document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return true}
+    if(document.body.classList.contains('nav')){document.body.classList.remove('nav');return true}return false},
+  pop=()=>document.querySelector('.modal,.mpop')||document.body.classList.contains('nav');
+  document.addEventListener('touchstart',e=>{w0=null;weg();if(!DB||!erw('wischZurueck')||e.touches.length!==1||!app())return;const p=e.touches[0],r=p.clientX>=innerWidth-28;if(p.clientX>28&&!r)return;if(r&&pop())return;
+    w0={x:p.clientX,y:p.clientY,t:Date.now(),r,h:false}},{passive:true});
+  document.addEventListener('touchmove',e=>{if(!w0)return;const p=e.touches[0],dx=(p.clientX-w0.x)*(w0.r?-1:1),dy=Math.abs(p.clientY-w0.y);
+    if(!w0.h){if(dy>12&&dy>dx){w0=null;return}if(dx>8&&dx>dy)w0.h=true;else return}
+    if(e.cancelable)e.preventDefault();zeig(w0.r,dx,dx>70)},{passive:false});
+  const ende=e=>{if(!w0)return;const q=w0;w0=null;weg();if(!q.h||e.type==='touchcancel')return;const p=e.changedTouches[0],dx=(p.clientX-q.x)*(q.r?-1:1),dy=Math.abs(p.clientY-q.y),v=dx/Math.max(1,Date.now()-q.t);
+    if(!(dx>70||(dx>40&&v>.5))||dy>dx)return;if(q.r)history.forward();else if(!zu())history.back()};
+  document.addEventListener('touchend',ende,{passive:true});document.addEventListener('touchcancel',ende,{passive:true});}
 window.addEventListener('hashchange',async()=>{
   if(!DB)return;
   if(erw('strgP'))druckLeeren(); // Druckbereich gehört zur verlassenen Seite

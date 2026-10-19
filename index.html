@@ -249,6 +249,8 @@ label>input,label>select,label>textarea{margin-top:2px;color:var(--ink);font-siz
 .adri{padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--line)}.adri:hover,.adri.on{background:var(--acc2)}
 .adrq{padding:3px 10px;font-size:11px;color:var(--mut);text-align:right}
 body.ios .adri{min-height:44px;display:flex;align-items:center;flex-wrap:wrap;gap:0 4px}
+/* Formular Kunde/Lieferant (P41 Teil 3): am Handy PLZ | Ort und Straße | Hausnr. nebeneinander */
+@media(max-width:760px){.modal .row>label:is(.kf-plz,.kf-hnr){flex:0 0 32%!important;min-width:0!important}.modal .row>label:is(.kf-ort,.kf-str){flex:1 1 0!important;min-width:0!important}.modal .row>label.kf-land{flex:1 1 100%!important}}
 /* Bild je Artikel (P31) */
 .abild{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}.abild img{max-width:220px;max-height:220px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}
 /* Bedienung (P33): ⓘ als Fenster beim Darüberfahren (body.ihh), nur im Pop-up scrollen (body.ssp), Struktur-Auswahl in Spalten (#bw-l.bwk) */
@@ -712,6 +714,7 @@ const ERW=[
   {k:'gkAufsFeld',std:true,p:'Aufschlag (P11)',l:'Feld „Aufschlag %“ (auf die Herstellkosten) im Artikel-Pop-up einer Verkaufsposition',info:'Im Pop-up „Artikel bearbeiten“ (✎ an der Position) zeigt das Feld den Aufschlag des Verkaufspreises nach Kundenrabatt auf die Herstellkosten. Eine Eingabe berechnet den EP: EP = HK × (1 + Aufschlag/100) ÷ (1 − Rabatt/100); Änderungen von EP, Rabatt, EK oder Herstellkosten rechnen den Aufschlag neu. Der Aufschlag ist intern: er wird nicht gespeichert und nie gedruckt. Bei „Lohn / Sonstiges“ geht die Änderung auf Sonstiges. Aus: Feld ausgeblendet.'},
   {k:'vkVorschlag',std:true,p:'Aufschlag (P11)',l:'VK-Vorschlag aus dem Aufschlag je Artikel',info:'Im Artikel kann ein „VK-Aufschlag % auf HK“ eingetragen werden. Ändert sich beim Einlesen eines Belegs der EK, schlägt der Abgleich zusätzlich VK = (Herstellkosten bzw. EK) × (1 + Aufschlag/100) vor (übernommen wird nur, was angehakt ist); im Artikel erscheint bei abweichendem VK der Knopf „VK-Vorschlag … übernehmen“. Ohne eingetragenen Aufschlag ändert sich nichts. Aus: Feld und Vorschlag ausgeblendet, eingetragene Werte bleiben gespeichert.'},
   {k:'lfNeu',std:true,p:'Stammdaten (P31)',l:'„+ Neuer Lieferant …“ in der Lieferantenauswahl von Artikeln',info:'In „Neuer Artikel“, im Artikel-Pop-up einer Position (✎) und in der Lieferantenliste eines Artikels steht in der Auswahl „Lieferant“ der Eintrag „+ Neuer Lieferant …“. Er öffnet das Pop-up „Neuer Lieferant“, danach ist der neue Lieferant gleich gewählt. Der Lieferant bleibt angelegt, auch wenn der Artikel danach nicht angelegt wird. Aus = Lieferant vorher unter „Kunden & Lieferanten“ anlegen.'},
+  {k:'kontaktForm',std:false,p:'Adressen (P41)',l:'Formular „Neuer Kunde/Lieferant“ nach Unternehmen oder Privat, Adresse in der Folge PLZ, Ort, Straße, Hausnummer',info:'Im Pop-up „Neuer Kunde“ / „Neuer Lieferant“ (und „bearbeiten“): Art Unternehmen (Standard) oder Privat. Bei Unternehmen heißt das Feld „Firma“ und Zusatz / z. H. sowie UID-Nr. werden angezeigt, bei Privat heißt es „Name“ und diese Felder sind ausgeblendet (eingetragene Werte bleiben erhalten). Die Adresse wird in der Folge PLZ, Ort, Land, Straße und Hausnummer (eigenes Feld) eingegeben, gespeichert wird wie bisher „Straße Hausnummer“ in einem Feld.'},
   {k:'dublette',std:true,p:'Stammdaten (P31)',l:'Bei Neuanlage prüfen, ob Artikel bzw. Kontakt schon angelegt ist',info:'Beim Anlegen eines Artikels (Artikelstamm, aus einer Position, Artikel-Pop-up einer Position) meldet das Programm Artikel mit gleicher oder sehr ähnlicher Bezeichnung (Zahlen wie 3x1,5 müssen übereinstimmen) oder mit gleicher Art.-Nr. beim selben Lieferanten, auch deaktivierte. Beim Anlegen eines Kunden oder Lieferanten meldet es Kontakte mit gleichem oder ähnlichem Namen (ohne GmbH, KG …), gleicher UID-Nr. oder gleicher E-Mail, auch solche der anderen Art. Angelegt wird erst nach Rückfrage, sonst bleibt das Formular offen. Beim Einlesen von Belegen werden Zeilen wie bisher vorhandenen Artikeln zugeordnet.'},
   {k:'adrVorschlag',std:false,p:'Adressen (P41)',l:'Adressvorschläge beim Tippen von Straße und PLZ (Kunden und Lieferanten)',info:'In „Neuer Kunde“ / „Neuer Lieferant“, beim Bearbeiten und im geöffneten Kontakt erscheint ab 3 Zeichen in „Straße“ (bzw. 4 Ziffern in „PLZ“) eine Liste mit passenden Adressen. Antippen oder Pfeiltasten + Enter füllt Straße, PLZ, Ort und Land. Zuerst stehen Adressen aus den eigenen Kontakten (auch ohne Netz), danach Treffer aus OpenStreetMap (Dienst Photon von komoot, kostenlos, ohne Schlüssel). Gesendet wird nur der getippte Adresstext, kein Name, keine Firma, keine E-Mail.'},
   {k:'ekRechnen',std:true,p:'Stammdaten (P31)',l:'Listenpreis, Rabatt und EK: zwei Werte ergeben den dritten',info:'In „Neuer Artikel“, im Artikel-Pop-up einer Position (✎) und in der Lieferantenliste eines Artikels: Listenpreis und Rabatt ergeben den EK, EK und Listenpreis den Rabatt, EK und Rabatt den Listenpreis. Neu berechnet wird jeweils das Feld, das am längsten nicht bearbeitet wurde. Wird zuerst nur der EK oder nur der Listenpreis eingetragen, gilt Listenpreis = EK und Rabatt 0 – so sind immer alle drei Felder ausgefüllt. Aus = wie bisher (nur im Artikel-Pop-up einer Position: Listenpreis/Rabatt → EK, EK → Rabatt).'},
@@ -2699,13 +2702,26 @@ function formDialog({titel,felder,ok='Anlegen',breit=false,extra='',scroll=false
     d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#m-ok').onclick=okf;if(extra)d.querySelector('#m-x').onclick=()=>fin('extra');
   });
 }
+/* Formular „Kunde/Lieferant“ nach Kundenart (P41 Teil 3, erw.kontaktForm): kfFelder() ordnet die Felder von kontaktPopup() neu (Art, Firma/Name, Nr.; Zusatz und UID nur
+   Unternehmen = Klasse kf-b2b; PLZ, Ort, Land; Straße + eigenes Feld hnr), kfEin() blendet je Art ein/aus und beschriftet „Firma“/„Name“, kfHnr() fügt vor den Prüfungen
+   „Straße Hausnummer“ wieder zu einem Feld zusammen (Datenmodell unverändert). Ohne Schalter bleibt die Liste unverändert. */
+function kfFelder(src,F){if(!erw('kontaktForm'))return F;const g=k=>F.find(f=>f.k===k),o=(f,x)=>f&&{...f,neu:0,...x},st=pT(src.strasse),nr=adrNr(st),
+  P=F.filter(f=>PERSF.includes(f.k)||f.typ==='abschnitt'),pv=F.indexOf(P[0])<F.indexOf(g('zusatz')),b2b=(src.kundenart||'B2B')!=='privat'; // P = Person und Briefanrede (vorne ohne kompakt)
+  return[o(g('kundenart')),o(g('name'),{l:b2b?'Firma':'Name',cls:'w2'}),o(g('nr')),o(g('zusatz'),{neu:1,cls:'kf-b2b'}),o(g('uid'),{l:'UID-Nr.',cls:'kf-b2b'}),...(pv?P:[]),
+    o(g('plz'),{neu:1,cls:'w05 kf-plz',im:'numeric'}),o(g('ort'),{cls:'w2 kf-ort'}),o(g('strasse'),{neu:1,cls:'w2 kf-str',wert:pT(st.slice(0,st.length-nr.length))}),{k:'hnr',l:'Hausnr.',wert:nr,cls:'w05 kf-hnr',ph:'z. B. 25/3'},o(g('land'),{cls:'w05 kf-land'}),
+    o(g('email'),{neu:1,im:'email'}),o(g('tel'),{im:'tel'}),o(g('zahlungsziel'),{neu:1}),o(g('skonto')),o(g('skontoTage')),o(g('rabatt')),o(g('kdNrLief')),...(pv?[]:P)].filter(Boolean)}
+function kfEin(d){const art=d.querySelector('[data-k="kundenart"]'),nm=d.querySelector('[data-k="name"]');if(!erw('kontaktForm')||!art||!d.querySelector('[data-k="hnr"]'))return null;
+  const setz=()=>{const pv=art.value==='privat',t=nm?.closest('label')?.firstChild;d.querySelectorAll('.row').forEach(r=>{const c=[...r.children];if(c.some(x=>x.classList.contains('kf-b2b')))c.forEach(x=>{if(x.classList.contains('kf-b2b'))x.style.display=pv?'none':''}),r.style.display=pv&&c.every(x=>x.classList.contains('kf-b2b'))?'none':''});
+    if(t?.nodeType===3)t.nodeValue=(pv?'Name':'Firma')+' *';if(nm)nm.placeholder=pv?'z. B. Max Mustermann':'z. B. Muster GmbH'};
+  art.addEventListener('change',setz);setz();return null}
+const kfHnr=o=>{if('hnr' in o){o.strasse=[o.strasse,o.hnr].map(pT).filter(Boolean).join(' ');delete o.hnr}};
 // Kontakt anlegen oder bearbeiten (k = bestehender Kontakt). Pflicht: Name, Straße, PLZ, Ort, Land (§ 11 UStG: Name und Anschrift)
 async function kontaktPopup(typ,v={},k=null){ // typ K | L
   const s=S(),nrV=k?k.nr:String((s.knr[typ]||0)+1),src={...v,...(k||{})},istK=typ!=='L';
   const K_=kmp(),pers=[...(K_?[{typ:'abschnitt',l:'Person und Briefanrede',zu:!PERSF.some(f=>pT(src[f]))}]:[]),{k:'anrede',l:'Anrede',wert:src.anrede||'',opts:[['','–'],...Object.entries(ANR).map(([x,a])=>[x,a.a])],neu:1,cls:'w05'},{k:'titel',l:'Titel',wert:src.titel||'',cls:'w05',ph:'z. B. Ing.'},
     {k:'vorname',l:'Vorname',wert:src.vorname||''},{k:'nachname',l:'Nachname',wert:src.nachname||''},{k:'titelNach',l:'Titel nachgestellt',wert:src.titelNach||'',cls:'w05',ph:'z. B. BSc'},
     {k:'briefAnrede',l:'Briefanrede',wert:src.briefAnrede||'',neu:1,cls:'w2',ph:briefAnrede({...src,briefAnrede:''}),info:'leer = automatisch aus Anrede, Titel und Nachname (z. B. „Sehr geehrter Herr Ing. Mustermann,“), ohne Nachname „Sehr geehrte Damen und Herren,“'}]; // Anrede (P6): ohne kompakt nach „Name / Firma“, in kompakt als zuklappbarer Abschnitt am Ende
-  const o=await formDialog({titel:k?`${istK?'Kunde':'Lieferant'} bearbeiten`:(istK?'Neuer Kunde':'Neuer Lieferant'),ok:k?'Speichern':'Anlegen',breit:true,felder:[
+  const o=await formDialog({titel:k?`${istK?'Kunde':'Lieferant'} bearbeiten`:(istK?'Neuer Kunde':'Neuer Lieferant'),ok:k?'Speichern':'Anlegen',breit:true,felder:kfFelder(src,[
     {k:'kundenart',l:'Art',wert:src.kundenart||(src.uid||typ==='L'?'B2B':'B2B'),opts:[['B2B','Unternehmen (B2B)'],['privat','Privat (B2C)']],cls:'w05'},
     {k:'name',l:'Name / Firma',wert:src.name,cls:'w2',pflicht:true},{k:'nr',l:istK?'Kunden-Nr.':'Lieferanten-Nr.',wert:nrV,cls:'w05',pflicht:true},...(K_?[]:pers),
     {k:'zusatz',l:'Zusatz / z. H.',wert:src.zusatz,neu:1},{k:'strasse',l:'Straße',wert:src.strasse,cls:'w2',pflicht:true},
@@ -2713,7 +2729,7 @@ async function kontaktPopup(typ,v={},k=null){ // typ K | L
     {k:'uid',l:'UID-Nr. (B2B)',wert:src.uid,neu:1},{k:'email',l:'E-Mail',wert:src.email},{k:'tel',l:'Telefon',wert:src.tel},
     {k:'zahlungsziel',l:'Zahlungsziel Tage',typ:'number',wert:src.zahlungsziel??s.zahlungsziel,neu:1,cls:'w05'},{k:'skonto',l:'Skonto %',typ:'number',wert:src.skonto||'',cls:'w05'},{k:'skontoTage',l:'Skonto Tage',typ:'number',wert:src.skontoTage||'',cls:'w05'},
     ...(istK?[{k:'rabatt',l:'Kundenrabatt %',typ:'number',wert:src.rabatt||'',cls:'w05'}]:[]),
-    ...(!istK||src.typ==='KL'?[{k:'kdNrLief',l:'Unsere Kunden-Nr.',wert:src.kdNrLief||'',cls:'w05',ph:'beim Lieferanten'}]:[]),...(K_?pers:[])],pruef:async o=>await adrFrage(o,k)===false?false:kontaktPruef(o,k,typ)}); // steht auf Bestellungen statt der internen Lieferanten-Nr. (P6)
+    ...(!istK||src.typ==='KL'?[{k:'kdNrLief',l:'Unsere Kunden-Nr.',wert:src.kdNrLief||'',cls:'w05',ph:'beim Lieferanten'}]:[]),...(K_?pers:[])]),ein:kfEin,pruef:async o=>(kfHnr(o),await adrFrage(o,k)===false)?false:kontaktPruef(o,k,typ)}); // steht auf Bestellungen statt der internen Lieferanten-Nr. (P6)
   if(!o)return null;
   for(const f of ['kdNrLief',...PERSF])if(!pT(o[f])&&!(k&&f in k))delete o[f]; // leeres neues Feld nicht anlegen (Kontakte ohne Anrede bleiben unverändert, P6)
   if(/^\d+$/.test(o.nr)&&+o.nr>(s.knr[typ==='L'?'L':'K']||0)&&+o.nr<(s.knr[typ==='L'?'L':'K']||0)+100000)s.knr[typ==='L'?'L':'K']=+o.nr; // nächste automatische Nummer folgt
@@ -2783,7 +2799,7 @@ const adrLokal=(q,f,ex)=>{const n=f==='plz'?adrP(q):normT(q),r=[];if(!n)return r
 // Eingabefeld → Zusammenhang {f,ex,g(feld)=Wert,el(feld),fill(o)} oder null
 function adrCtx(el){if(!erw('adrVorschlag')||el.tagName!=='INPUT')return null;const m=el.closest('.modal');let c=null;
   if(m&&['strasse','plz'].includes(el.dataset.k)&&m.querySelector('[data-k="name"]')&&m.querySelector('[data-k="ort"]')){const q=x=>m.querySelector(`[data-k="${x}"]`);
-    c={f:el.dataset.k,ex:'',el:q,fill:o=>{for(const x of ['strasse','plz','ort','land'])if(o[x]!=null&&o[x]!==''&&q(x))q(x).value=o[x]}}}
+    c={f:el.dataset.k,ex:'',el:q,fill:o=>{for(const x of ['strasse','plz','ort','land'])if(o[x]!=null&&o[x]!==''&&q(x))q(x).value=o[x];const n=q('hnr')&&adrNr(o.strasse);if(n){q('hnr').value=n;q('strasse').value=pT(o.strasse.slice(0,-n.length))}}}}
   else if(el.dataset.o==='k'&&['strasse','plz'].includes(el.dataset.f)){const id=el.dataset.id,q=x=>document.querySelector(`[data-o="k"][data-id="${id}"][data-f="${x}"]`);
     c={f:el.dataset.f,ex:id,el:q,fill:o=>{const k=kontakt(id);if(!k)return;document.activeElement?.blur?.();for(const x of ['strasse','plz','ort','land'])if(o[x]!=null&&o[x]!=='')k[x]=o[x];persist();render()}}}
   if(c)c.g=x=>c.el(x)?.value||'';return c}
@@ -2800,7 +2816,7 @@ function adrZeigen(el,c,l){adrZu();if(!l.length||document.activeElement!==el)ret
 function adrWahl(i){const A=ADR,o=A?.l[i];if(!o)return;adrZu();
   if(!o.strasse){A.c.fill({plz:o.plz,ort:o.ort,land:o.land});return} // PLZ → Ort
   const nr=adrNr(A.el.value),st=!o.nr&&!o.lokal&&nr&&!adrNr(o.strasse)?o.strasse+' '+nr:o.strasse;A.c.fill({...o,strasse:st});
-  if(!adrNr(st)){const e=A.c.el('strasse');if(e){e.value=st+' ';e.focus();e.setSelectionRange(e.value.length,e.value.length)}}} // Hausnummer noch eintippen
+  const h=A.c.el('hnr');if(h){if(!adrNr(st)&&!pT(h.value))h.focus()}else if(!adrNr(st)){const e=A.c.el('strasse');if(e){e.value=st+' ';e.focus();e.setSelectionRange(e.value.length,e.value.length)}}} // Hausnummer noch eintippen
 async function adrSuchen(el,c,q){const land=c.g('land'),eind=l=>{const s=new Set();return l.filter(o=>{const k=adrKey(o);return!s.has(k)&&s.add(k)})},lok=adrLokal(q,c.f,c.ex);
   adrZeigen(el,c,eind(lok).slice(0,8));let f=[];
   if(c.f==='plz'){const l=await adrFetch(adrP(q)+(adrAT(land)?'':' '+land),land);f=(l||[]).map(adrAus).filter(o=>adrP(o.plz).startsWith(adrP(q))&&o.ort).map(o=>({plz:o.plz,ort:o.ort,land:o.land,strasse:''}))}

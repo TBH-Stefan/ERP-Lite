@@ -22,17 +22,12 @@ Auf GitHub laufen die Tests bei jedem Pull Request auf `main` (`.github/workflow
 |---|---|
 | `act.spec.js` / `act-duplikate.js` | Keine doppelten Schlüssel in `ACT`, `ACT_LV`, `ACT_LB`, `ACT_FB`, `ACT_KBW`, `MENUE`, `LIVE`, `FILTER`, `KM`, `V` – auch nicht über `Object.assign(ACT,…)` und `...ACT_KBW`. Erweiterungen eines Eintrags (`const m0=MENUE.beleg;MENUE.beleg=…m0(el)…`) gelten nicht als Duplikat. |
 | `schalter.spec.js` | Alle Erweiterungen aus → `#main` aller Ansichten (Belege in Eingabe, Vorschau und „Beides“), `docHTML` (Druck und Editor) und PDF (Inhalt und Datei-Info) gleich wie im Ausgangsstand `BASIS` (Vorgabe `origin/main`, im Pull Request die Spitze von `main`). Die Karte „Erweiterungen“ in den Einstellungen und Leerraum ohne Wirkung auf die Darstellung zählen nicht. Beabsichtigte Unterschiede: `erlaubte-abweichungen.json`. |
-| `fest.spec.js` | Festgeschriebene Belege: Druck, PDF-Inhalt und Summen bleiben nach Änderung von Firma, Bearbeiter, Steuersätzen, Texten, Druckprofilen, Kontakten, Artikeln und Tarifen gleich; Nummernkreise lückenlos (auch nach weiterem Festschreiben und „Zurück“); Rechnungsarten ohne Eingabefelder. |
+| `fest.spec.js` | Festgeschriebene Belege: Druck, PDF (Inhalt und Datei-Info) und Summen bleiben nach Änderung von Firma, Bearbeiter, Steuersätzen, Texten, Druckprofilen, Kontakten, Artikeln und Tarifen gleich; Nummernkreise lückenlos (auch nach weiterem Festschreiben und „Zurück“); Rechnungsarten ohne Eingabefelder. |
 | `ansichten.spec.js` | Jede Ansicht ohne Konsolenfehler, nicht leer und ohne waagrechten Überlauf, mit Standard-Schaltern und mit allen aus. |
 
 Der Vergleich mit dem Ausgangsstand setzt dieselben Testdaten in beide Fassungen; die Daten erzeugt der aktuelle Stand
 (`vorbereiten.js`, Ergebnis in `.tmp/`). Gegen weit zurückliegende Stände gibt es daher erwartete Unterschiede (z. B. Felder
 wie die Preiseinheit, die die alte Fassung nicht kennt, oder Entscheidungen „Standard neu“ wie der Infoblock vom 12.10.2026).
-
-## Bekannte Abweichung
-
-`fest.spec.js`, `BEKANNT_PDF_INFO`: Die Datei-Info der PDF (Titel mit Kunde, Autor = Firma) folgt bei festgeschriebenen
-Belegen den aktuellen Stammdaten. Nach einer Korrektur den Schalter auf `false` setzen.
 
 ## Neue Tests
 

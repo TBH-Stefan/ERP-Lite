@@ -6450,7 +6450,7 @@ async function pdfAusBeleg(b,o={}){
   if(lz.length){const o0=pg0+np*2,u16=t=>'<FEFF'+[...t].map(c=>{const x=c.codePointAt(0);return x>0xFFFF?[0xD800+((x-0x10000)>>10),0xDC00+((x-0x10000)&0x3FF)].map(v=>v.toString(16).padStart(4,'0')).join(''):x.toString(16).padStart(4,'0')}).join('').toUpperCase()+'>';
     obj(o0,`<< /Type /Outlines /First ${o0+1} 0 R /Last ${o0+lz.length} 0 R /Count ${lz.length} >>`);lz.forEach((x,j)=>obj(o0+1+j,`<< /Title ${u16(x.t)} /Parent ${o0} 0 R${j?` /Prev ${o0+j} 0 R`:''}${j<lz.length-1?` /Next ${o0+2+j} 0 R`:''} /Dest [${pg0+x.si*2} 0 R /XYZ 0 ${pt(0,x.y,seiten[x.si])[1]} null] >>`))} // Lesezeichen (P18)
   const n0=pg0+np*2+(lz.length?lz.length+1:0),xr=len;add(`xref\n0 ${n0}\n0000000000 65535 f \n`);for(let i=1;i<n0;i++)add(String(off[i]||0).padStart(10,'0')+' 00000 n \n');
-  add(`trailer\n<< /Size ${n0} /Root 1 0 R /Info << /Producer (ERP-Lite) /Title (${pdfStr(T[b.typ].bez+' '+bNr(b)+(o.dup?' DUPLIKAT':'')+' '+kName(b.kontaktId))}) /Author (${pdfStr(S().firma.name||'')}) /Subject (${pdfStr(T[b.typ].bez+' '+bNr(b))}) /CreationDate (${pdfDatum()}) /ModDate (${pdfDatum()}) >> >>\nstartxref\n${xr}\n%%EOF\n`);
+  add(`trailer\n<< /Size ${n0} /Root 1 0 R /Info << /Producer (ERP-Lite) /Title (${pdfStr(T[b.typ].bez+' '+bNr(b)+(o.dup?' DUPLIKAT':'')+' '+(b.fest&&b.adresse?.name?b.adresse.name:kName(b.kontaktId)))}) /Author (${pdfStr((fixAktiv(b)||S().firma).name||'')}) /Subject (${pdfStr(T[b.typ].bez+' '+bNr(b))}) /CreationDate (${pdfDatum()}) /ModDate (${pdfDatum()}) >> >>\nstartxref\n${xr}\n%%EOF\n`);
   return new Blob(teile,{type:'application/pdf'});
 }
 const pdfName=b=>`${T[b.typ].bez}-${bNr(b)}-${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_')+'.pdf';

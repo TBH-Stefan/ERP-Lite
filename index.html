@@ -1013,6 +1013,35 @@ async function geraetLeeren(){
   DIRTY=false;pending=false;location.hash='';location.reload();
 }
 queueMicrotask(()=>Object.assign(ACT,{geraetweg:()=>geraetLeeren()}));
+/* Abmelden-Knopf (erw.abmKnopf): Knopf „Abmelden“ unten in der Seitenleiste (am Handy/iPad im ☰- bzw. „Mehr“-Menü), auch für „Abmelden“ unter Export & Sicherung.
+   Löscht Anmeldung (Zugriffs-, Mail-Token, Kontoname, Sitzungsspeicher); Datenkopie im Browser und offline erfasste Änderungen (unsynced) bleiben und werden bei der nächsten Anmeldung abgeglichen.
+   Ohne Anmeldung startet das Programm nicht mehr ohne Netz (start() braucht ein Token). Optional zusätzlich Microsoft-Sitzung im Browser beenden (Abmeldeseite von Microsoft, zurück zu ERP-Lite) */
+erwPlus({k:'abmKnopf',std:true,p:'Sicherheit (P37)',l:'Knopf „Abmelden“ in der Seitenleiste',info:'Abmelden von Microsoft unten in der Seitenleiste (Handy/iPad: im Menü ☰ bzw. „Mehr“). Warnt bei ungespeicherten oder noch nicht abgeglichenen Änderungen; die Datenkopie in diesem Browser bleibt, offline erfasste Änderungen werden bei der nächsten Anmeldung nachgetragen. Wahlweise wird auch die Microsoft-Sitzung im Browser beendet (dann fragt Microsoft beim nächsten Mal wieder nach dem Passwort).'});
+const abmDa=()=>!!DB&&erw('abmKnopf')&&(STORE.art==='od'||!!AUTH.tok());
+async function abmelden(){
+  if(DIRTY){const w=await formDialog({titel:'Abmelden',felder:[{typ:'hinweis',l:'Es gibt ungespeicherte Änderungen.'}],ok:'Speichern und abmelden',extra:'Verwerfen und abmelden'});
+    if(w===null)return;if(w==='extra'){DIRTY=false;dirtyBar()}else await commit()}
+  if(pending&&!OFFSTART&&STORE.art==='od'&&navigator.onLine!==false)try{await saveNow()}catch(e){} // zuerst noch hochladen
+  const off=pending||OFFSTART||!!(await kvGet('unsynced').catch(()=>null))?.local,q=ablQ().length,u=lsGet('erp-user');
+  const o=await formDialog({titel:'Abmelden',ok:'Abmelden',felder:[
+    {typ:'hinweis',l:`Angemeldet${u?' als <b>'+esc(u)+'</b>':''}. Nach dem Abmelden ist für ERP-Lite eine neue Anmeldung nötig, auch ohne Netz.`},
+    ...(off?[{typ:'hinweis',l:'<span class="err">Änderungen sind noch nicht im OneDrive.</span> Sie bleiben in diesem Browser und werden bei der nächsten Anmeldung nachgetragen.'}]:[]),
+    ...(q?[{typ:'hinweis',l:`<span class="err">${q} Foto(s) bzw. Unterschrift(en) warten noch auf das Hochladen.</span> Sie bleiben auf diesem Gerät und werden nach der nächsten Anmeldung hochgeladen.`}]:[]),
+    {typ:'hinweis',l:'Die Datenkopie in diesem Browser bleibt erhalten (ganz entfernen: „Abmelden und Gerät leeren“ unter Export &amp; Sicherung).'},
+    {k:'ms',typ:'checkbox',l:'Auch bei Microsoft abmelden (andere Microsoft-Seiten in diesem Browser ebenfalls)',wert:false,neu:1}]});
+  if(!o)return;
+  if(pending&&STORE.art==='od'&&!(await kvGet('unsynced').catch(()=>null))?.local)await kvSet('unsynced',{local:JSON.stringify(DB),base:STORE.lastText,ts:Date.now()}).catch(()=>{}); // für den Abgleich bei der nächsten Anmeldung (odStart)
+  AUTH.setTok(null);lsSet('erp-tok-mail',null);lsSet('erp-user',null);try{sessionStorage.clear()}catch(e){}
+  const od=STORE.art==='od';if(od)lsSet('erp-modus',null);
+  if(o.ms){const c=odCfg();location.href=`https://login.microsoftonline.com/${encodeURIComponent(c.tenant)}/oauth2/v2.0/logout?${new URLSearchParams({post_logout_redirect_uri:redirectUri()})}`;return}
+  if(od){location.hash='';location.reload()}else{saveState(STORE.name);render()}
+}
+function abmZeigen(){let e=$('#abmbtn');if(!abmDa()){e?.remove();return}
+  if(!e){$('#savestate')?.insertAdjacentHTML('afterend','<button id="abmbtn" data-act="abmelden" title="Von Microsoft abmelden"><span>⏻ Abmelden</span></button>');e=$('#abmbtn')}
+  const u=lsGet('erp-user')||'';e.title=u?'Abmelden ('+u+')':'Abmelden'}
+{const st=document.createElement('style');st.textContent='nav #abmbtn{position:sticky;bottom:0;flex-shrink:0;background:var(--side);display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:0;border-top:1px solid #2c3446;border-radius:0;color:#cfd6e4;padding:8px 18px;font:inherit;min-height:40px}nav #abmbtn:hover{background:#2c3446;color:#fff}body.ios nav #abmbtn,body.ipad nav #abmbtn{min-height:44px;padding-bottom:max(8px,env(safe-area-inset-bottom))}@media(max-width:1100px){nav #abmbtn{position:static}body:has(#dirtybar) nav{padding-bottom:170px}}';document.head.appendChild(st);
+  const r0=render;render=function(...a){const x=r0.apply(this,a);abmZeigen();return x};
+  queueMicrotask(()=>{const a0=ACT.abmelden;ACT.abmelden=(...x)=>erw('abmKnopf')?abmelden():a0(...x)})}
 async function graph(path,opt={},nochmal=true){
   const t=await AUTH.token();
   if(!t)throw Object.assign(new Error('Anmeldung abgelaufen'),{login:true});
@@ -6535,7 +6564,7 @@ async function pdfAusBeleg(b,o={}){
   if(lz.length){const o0=pg0+np*2,u16=t=>'<FEFF'+[...t].map(c=>{const x=c.codePointAt(0);return x>0xFFFF?[0xD800+((x-0x10000)>>10),0xDC00+((x-0x10000)&0x3FF)].map(v=>v.toString(16).padStart(4,'0')).join(''):x.toString(16).padStart(4,'0')}).join('').toUpperCase()+'>';
     obj(o0,`<< /Type /Outlines /First ${o0+1} 0 R /Last ${o0+lz.length} 0 R /Count ${lz.length} >>`);lz.forEach((x,j)=>obj(o0+1+j,`<< /Title ${u16(x.t)} /Parent ${o0} 0 R${j?` /Prev ${o0+j} 0 R`:''}${j<lz.length-1?` /Next ${o0+2+j} 0 R`:''} /Dest [${pg0+x.si*2} 0 R /XYZ 0 ${pt(0,x.y,seiten[x.si])[1]} null] >>`))} // Lesezeichen (P18)
   const n0=pg0+np*2+(lz.length?lz.length+1:0),xr=len;add(`xref\n0 ${n0}\n0000000000 65535 f \n`);for(let i=1;i<n0;i++)add(String(off[i]||0).padStart(10,'0')+' 00000 n \n');
-  add(`trailer\n<< /Size ${n0} /Root 1 0 R /Info << /Producer (ERP-Lite) /Title (${pdfStr(T[b.typ].bez+' '+bNr(b)+(o.dup?' DUPLIKAT':'')+' '+kName(b.kontaktId))}) /Author (${pdfStr(S().firma.name||'')}) /Subject (${pdfStr(T[b.typ].bez+' '+bNr(b))}) /CreationDate (${pdfDatum()}) /ModDate (${pdfDatum()}) >> >>\nstartxref\n${xr}\n%%EOF\n`);
+  add(`trailer\n<< /Size ${n0} /Root 1 0 R /Info << /Producer (ERP-Lite) /Title (${pdfStr(T[b.typ].bez+' '+bNr(b)+(o.dup?' DUPLIKAT':'')+' '+(b.fest&&b.adresse?.name?b.adresse.name:kName(b.kontaktId)))}) /Author (${pdfStr((fixAktiv(b)||S().firma).name||'')}) /Subject (${pdfStr(T[b.typ].bez+' '+bNr(b))}) /CreationDate (${pdfDatum()}) /ModDate (${pdfDatum()}) >> >>\nstartxref\n${xr}\n%%EOF\n`);
   return new Blob(teile,{type:'application/pdf'});
 }
 const pdfName=b=>`${T[b.typ].bez}-${bNr(b)}-${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_')+'.pdf';
@@ -6558,7 +6587,7 @@ async function pdfTeilen(f){
    Wirksam nur mit body.dunkel (dkSetzen() aus render()). Blatt, Druck, PDF, K-Blätter und Unterschriftenfeld (DK_HELL) bleiben hell */
 erwPlus({k:'dunkel',std:false,p:'App iPhone/iPad (P40)',l:'Dunkelmodus (folgt der Geräteeinstellung)',info:'Ist am iPhone, iPad oder PC „Dunkel“ eingestellt (iOS: Einstellungen → Anzeige & Helligkeit, auch automatisch am Abend), erscheint ERP-Lite mit dunklem Hintergrund und heller Schrift. Belegvorschau, Druck, PDF, K-Blätter und das Unterschriftenfeld bleiben immer hell. Bei „Hell“ ändert sich nichts.'});
 const DKM=matchMedia('(prefers-color-scheme:dark)'),DK_HELL='.blatt,.doc,#print,.kbf,.sgf',DK_X=/\.blatt|\.doc\b|#print|\.kbf|\.sgf|@page/;
-let DKOK=false;
+let DKOK=false;const DKS=new WeakSet();
 DKM.addEventListener?.('change',()=>{if(DB&&erw('dunkel'))render()});
 function dkHSL(c){let r,g,b,a=1,m;c=c.trim().toLowerCase();if(c==='white')c='#fff';if(c==='black')c='#000';
   if((m=c.match(/^#([0-9a-f]{3,8})$/))){let h=m[1];if(h.length<6)h=[...h].map(x=>x+x).join('');r=parseInt(h.slice(0,2),16);g=parseInt(h.slice(2,4),16);b=parseInt(h.slice(4,6),16);if(h.length===8)a=parseInt(h.slice(6,8),16)/255}
@@ -6577,7 +6606,8 @@ function dkListe(L){for(let i=L.cssRules.length-1;i>=0;i--){const r=L.cssRules[i
       if(w==='t'?x.l<.5:x.l>.5)d+=`${k}:${dkFarbe(x,w==='t'?1:.55)}${r.style.getPropertyPriority(k)?'!important':''};`}
     if(!d)continue;const s=dkTeilen(r.selectorText).map(dkSel).filter(Boolean).join(',');if(!s)continue;
     try{L.insertRule(`${s}{${d}}`,i+1)}catch(e){}}}
-function dkRegeln(){if(DKOK)return;DKOK=true;const st=document.querySelector('head style');if(st?.sheet)dkListe(st.sheet);
+function dkRegeln(){for(const st of document.querySelectorAll('style:not(#dkcss)'))if(st.sheet&&!DKS.has(st.sheet)){DKS.add(st.sheet);dkListe(st.sheet)} // auch per JS angelegte Stylesheets (z. B. Suche in den Einstellungen P42)
+  if(DKOK)return;DKOK=true;
   const e=document.createElement('style');e.id='dkcss';e.textContent=`
 body.dunkel{--bg:#12151c;--card:#1b1f28;--ink:#e6e9ef;--mut:#9aa3b2;--line:#2c3240;--acc:#5b9cff;--acc2:#1d2b44;--ok:#4cc27e;--warn:#e0a23a;--err:#ff6b5e;--side:#0d1016;color-scheme:dark}
 html:has(body.dunkel){background:#12151c;color-scheme:dark}
@@ -6589,7 +6619,10 @@ body.dunkel [style*="background:#fafbfc"]:not(:is(${DK_HELL}) *),body.dunkel [st
 body.dunkel.ios .seg button.on,body.dunkel.ipad .seg button.on,body.dunkel .segr input:checked+span{background:#4a5162;color:#fff}
 body.dunkel.ios label.chk>input[type=checkbox]:not(:checked),body.dunkel.ipad label.chk>input[type=checkbox]:not(table.pos *):not(:checked){background:#39393d}
 body.dunkel.ios label.chk>input[type=checkbox]::before,body.dunkel.ipad label.chk>input[type=checkbox]:not(table.pos *)::before{background:#fff}
-body.dunkel img:not(:is(${DK_HELL}) *){filter:brightness(.92)}`;document.head.appendChild(e)}
+body.dunkel img:not(:is(${DK_HELL}) *){filter:brightness(.92)}
+body.dunkel .es-hit,body.dunkel tr.es-hit>td,body.dunkel .kk.es-hit{background:#4d4214;box-shadow:0 0 0 3px #4d4214}
+body.dunkel mark:not(:is(${DK_HELL}) *){background:#6b5a12;color:#fff}
+body.dunkel :is(.blink,.blink>td):not(:is(${DK_HELL}) *){animation-name:glblinkD}@keyframes glblinkD{0%,45%{background:#5a4c12}100%{background:transparent}}`;document.head.appendChild(e)}
 function dkSetzen(){const an=!!DB&&erw('dunkel')&&DKM.matches;if(an)dkRegeln();document.body.classList.toggle('dunkel',an);
   document.querySelector('meta[name=theme-color]')?.setAttribute('content',an?'#0d1016':'#1d2330')}
 {const r0=render;render=function(...a){dkSetzen();return r0.apply(this,a)}}

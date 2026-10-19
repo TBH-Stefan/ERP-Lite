@@ -1,0 +1,14 @@
+{
+  "name": "erp-lite-tests",
+  "private": true,
+  "description": "Regressionstests für ERP-Lite (nur Entwicklung, nicht Teil der App)",
+  "scripts": {
+    "test": "playwright test",
+    "act": "node act-duplikate.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "acorn": "^8.14.0",
+    "acorn-walk": "^8.3.4"
+  }
+}

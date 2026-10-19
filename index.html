@@ -5491,7 +5491,7 @@ function esLauf(w,filtern){const m=$('#main'),hits=[];if(!m)return hits;
   m.querySelectorAll('details[data-esa]').forEach(d=>{const a=d.dataset.esa;delete d.dataset.esa;if(d.dataset.akk!=null)d.dataset.auf=a;d.open=a==='1'});
   if(!w.length)return hits;
   const ok=t=>w.every(x=>t.includes(x)),hit=it=>{it.classList.add('es-hit');hits.push(it);esAufKette(it)};
-  for(const s of m.children){if(s.id==='esu'||s.tagName==='H1')continue;const st=ok(esN(esTitel(s))),G=new Map();let n=0;
+  for(const s of m.children){if(s.id==='esu'||s.id==='egn'||s.tagName==='H1')continue;const st=ok(esN(esTitel(s))),G=new Map();let n=0;
     for(const it of s.querySelectorAll(ES_F)){const g=esGruppe(it);if(!G.has(g))G.set(g,{t:ok(esN(esTitel(g))),n:0});const x=G.get(g);
       if(st||x.t){x.n++;n++}else if(ok(esTxt(it))){x.n++;n++;hit(it)}else if(filtern)it.classList.add('es-weg')}
     for(const[g,x]of G)if(!x.n){if(filtern)g.classList.add('es-weg')}else if(x.t&&!st){if(g.matches('details'))esAuf(g);esAufKette(g)}
@@ -7576,6 +7576,58 @@ erwPlus({k:'dashLeer',std:false,p:'Ansichten klarer (P44)',l:'Überblick ohne le
   const q=t.content.querySelector('.quick');if(q&&!kmpH()){q.className='quick dlq';q.innerHTML='<button class="p" data-act="menue" data-m="neu">+ Neu ▾</button><button data-act="menue" data-m="einlesen">📷 Einlesen ▾</button><a class="btn" href="#/zeiten">⏱ Zeit erfassen</a>'}
   return t.innerHTML+(leer.length?`<p class="mut dll">Nichts offen: ${leer.map(esc).join(' · ')}</p>`:'')}}
 {const st=document.createElement('style');st.textContent='.quick.dlq{display:flex;gap:8px;grid-template-columns:none}.quick.dlq>*{flex:0 0 auto;display:inline-flex;align-items:center}.dll{margin:14px 2px 0}';document.head.appendChild(st)}
+
+/* Einstellungen gruppieren (P46, erw.einstGruppen): Wrapper um V.einstellungen (nach allen anderen Wrappern). Die Bereiche (Kinder von #main) werden nach Verwendungszweck EB
+   geordnet (Karten über data-akk bzw. Überschrift EB_KARTE, Schalter über EB_K, sonst „Weitere“); die Karte „Erweiterungen“ wird je Bereich als „Funktionen“ (egFunk) neu
+   aufgebaut, Paketnummer nur in ⓘ. Breit (> 1100 px): Liste #egn.egw links (Raster per :has), rechts nur der gewählte Bereich (EB_AKT, erp-einstB); schmal: Bereiche als Karten
+   (#egn.egl), Tippen öffnet (EB_N), ◂ zurück (#egn.egz). Mit Suche (#esq gefüllt) bzw. Sprung aus der globalen Suche alle Bereiche. Gespeicherte Werte bleiben unverändert. */
+erwPlus({k:'einstGruppen',std:false,p:'Einstellungen gruppieren (P46)',l:'Einstellungen nach Bereichen (Firma, Belege, Kalkulation …)',info:'Die Einstellungen werden nach Verwendungszweck in Bereiche geteilt: Firma & Grunddaten, Belege & Druck, Kalkulation & Preise, Einkauf & Lieferungen, Kunden, Lieferanten & Artikel, Baustelle & Personal, Ansicht & Bedienung, App & Geräte, Sicherheit & Datensicherung. Am Bildschirm links die Liste der Bereiche, rechts der gewählte Bereich; am Handy und am iPad hochkant zuerst die Liste. Jeder Bereich zeigt seine Einstellungen und darunter die passenden Funktionen (Schalter; Paketnummer in ⓘ). Die Suche oben findet weiterhin alles. Gespeicherte Werte bleiben unverändert. Aus = eine lange Seite wie bisher.'});
+const EB=[['firma','🏢','Firma & Grunddaten'],['belege','🧾','Belege & Druck'],['kalk','🧮','Kalkulation & Preise'],['einkauf','📦','Einkauf & Lieferungen'],['kontakte','👥','Kunden, Lieferanten & Artikel'],
+  ['bau','🏗️','Baustelle & Personal'],['ansicht','🖥️','Ansicht & Bedienung'],['app','📱','App & Geräte'],['sicher','🔒','Sicherheit & Datensicherung'],['weitere','⋯','Weitere']];
+const EB_K=Object.fromEntries(Object.entries({belege:'strgP snapshot duplikat druckprofil abAbschluss gliederung zuschlag pe',
+  kalk:'gkalk gkMerken dbStd gkLohn k3Tarif tarifPos gkAufsFeld vkVorschlag ekRechnen kbVorlage kbDruck kbProjekt kbBeleg',einkauf:'scanPE lfTermin lfListe lfErinnern lfVerkauf lfNeu',
+  kontakte:'kFilter navKL kontaktForm adrVorschlag adrPruef dublette kDok artBild',bau:'btb btbBild btbSig btbDruck btbVorschau btbZeit btbNrDatum btbRechnung btbFahrt btbTage regie regieAntrag mitarbeiter maLohn unterschrift',
+  ansicht:'kompakt kompaktBeleg einstGruppen kundeProjekt auftragKP belegFilterKurz belegInfo kontaktSchlank dashLeer navKlapp pfeile speicherLeiste dashFlex ihHover scrollSperre baumHover kontext statuszeile kopfFix zuletzt suche einstSuche suEinst',
+  app:'ios appOffline netStatus ipad tabLeiste wischZurueck langDruck iosTeilen dunkel',sicher:'abmKnopf geraetLoeschen mfaPflicht sicherung archiv vollsicherung'}).flatMap(([b,s])=>s.split(' ').map(k=>[k,b])));
+const EB_KARTE=[[/^e-(firma|kfm|st|nk)\||\|(Firma|Kaufmännisch|Steuersätze|Nummernkreise)/,'firma'],[/^e-(mail|druck)\||\|(E-Mail-Vorlage|Druck)/,'belege'],[/^e-(tf|kv|ger)\||\|(Stundentarife|Kollektivvertr|Geräteliste)/,'kalk'],
+  [/^e-(ein|lf)\||\|(Belege einlesen|Liefertermine)/,'einkauf'],[/^e-(regie|fahrt)\||\|(Regiepreise|Fahrtkosten)/,'bau']];
+let EB_AKT=lsGet('erp-einstB')||'firma',EB_N='';
+const EB_SM=matchMedia('(max-width:1100px)'),ebB=x=>EB_K[x.k]||'weitere',ebPN=p=>(String(p).match(/\((P[^)]*)\)/)||[])[1]||'',ebPL=p=>String(p).replace(/\s*\(P[^)]*\)/,'');
+EB_SM.addEventListener?.('change',()=>{if(erw('einstGruppen')&&/^#\/?einstellungen$/.test(location.hash))render()});
+addEventListener('hashchange',()=>{if(!/^#\/?einstellungen$/.test(location.hash))EB_N=''});
+function egFunk(b){const L=ERW.filter(x=>ebB(x)===b);if(!L.length)return'';const ab=L.filter(x=>erw(x.k)!==x.std).length,P=[...new Set(L.map(x=>x.p))];
+  return`<div class="card egf"><h2>Funktionen</h2><div class="bar" style="margin:0"><span class="mut">${L.filter(x=>erw(x.k)).length} von ${L.length} eingeschaltet</span>${ab?tag(ab+' vom Standard abweichend','warn'):''}<span class="sp"></span><button class="s" data-act="egstd" data-b="${b}" ${ab?'':'disabled'}>Standard wiederherstellen</button></div>
+  ${P.map(p=>`<div class="egp"><div class="bar"><b>${esc(ebPL(p))}</b></div>${L.filter(x=>x.p===p).map(x=>`<label class="chk erwz"><input type="checkbox" data-o="s" data-f="erw.${x.k}" ${erw(x.k)?'checked':''}> <span><b>${esc(x.l)}</b>${erw(x.k)!==x.std?' '+tag('geändert','warn'):''} ${hilfe(`${esc(x.info)}<br><span class="mut">Standard: ${x.std?'ein':'aus'}${ebPN(p)?' · Paket '+esc(ebPN(p)):''}</span>`)}</span></label>`).join('')}</div>`).join('')}</div>`}
+{const v0=V.einstellungen;V.einstellungen=()=>{const h=v0();if(ES_IDX||!erw('einstGruppen'))return h;
+  const t=document.createElement('template'),el=x=>{t.innerHTML=x;return t.content.firstElementChild},eng=EB_SM.matches,alle=!!ES_ZIEL&&!ES_ZIEL.f?.startsWith('erw.'),G={},kopf=[];
+  if(ES_ZIEL?.f?.startsWith('erw.')){const b=EB_K[ES_ZIEL.f.slice(4)]||'weitere';if(eng)EB_N=b;else EB_AKT=b}
+  t.innerHTML=h;
+  for(const s of [...t.content.children]){if(s.tagName==='H1'||s.id==='esu'){kopf.push(s.outerHTML);continue}
+    if(s.id==='erw'||s.dataset.akk==='e-erw')continue; // ersetzt durch „Funktionen“ je Bereich
+    const k=(s.dataset.akk||'')+'|'+esTitel(s).trim();(G[(EB_KARTE.find(([r])=>r.test(k))||[,'weitere'])[1]]??=[]).push(s)}
+  if(!kmp())(G.belege??=[]).push(el(`<div class="card egdp">${dpKarte()}</div>`)); // Druckprofil steckt ohne kompakt in der Karte „Erweiterungen“
+  (G.sicher??=[]).push(el(`<div class="card"><h2>Speicherort &amp; Sicherungen</h2><p class="mut" style="margin-top:0">Speicherort, Tagessicherungen, Export, Import und Papierkorb stehen unter „Export &amp; Sicherung“.</p><button data-act="egexp">Export &amp; Sicherung öffnen</button></div>`));
+  const inf={};for(const[b]of EB){const f=egFunk(b),n=(G[b]||[]).map(s=>esTitel(s).trim().replace(/\s*\(.*$/,'')).filter(Boolean),L=ERW.filter(x=>ebB(x)===b);if(f)(G[b]??=[]).push(el(f));
+    inf[b]={txt:[...new Set(n)].slice(0,3).join(', ')+(L.length?`${n.length?' · ':''}${L.filter(x=>erw(x.k)).length} von ${L.length} Funktionen ein`:''),ab:L.some(x=>erw(x.k)!==x.std)}}
+  const B=EB.filter(([b])=>G[b]?.length),akt=eng?(B.some(x=>x[0]===EB_N)?EB_N:''):(B.some(x=>x[0]===EB_AKT)?EB_AKT:B[0][0]),dot=b=>inf[b].ab?'<span class="egd" title="Funktionen vom Standard abweichend"></span>':'';
+  const nv=!eng?`<div id="egn" class="egn egw">${B.map(([b,ic,ti])=>`<button class="egb${b===akt?' on':''}" data-act="egb" data-b="${b}"><span class="egi">${ic}</span><span>${esc(ti)}</span>${dot(b)}</button>`).join('')}</div>`
+    :akt?`<div id="egn" class="egn egz"><button class="s" data-act="egzur">◂ Alle Bereiche</button><b>${B.find(x=>x[0]===akt).slice(1).map(esc).join(' ')}</b></div>`
+    :`<div id="egn" class="egn egl">${B.map(([b,ic,ti])=>`<button class="egk" data-act="egb" data-b="${b}"><span class="egi">${ic}</span><span class="egt"><b>${esc(ti)}</b><small>${esc(inf[b].txt)}</small></span>${dot(b)}<span class="egr">›</span></button>`).join('')}</div>`;
+  return kopf.join('')+nv+B.map(([b])=>G[b].map(s=>{s.classList.add('egs');s.dataset.eb=b;if(!alle&&b!==akt)s.classList.add('eg-aus');return s.outerHTML}).join('')).join('')}}
+queueMicrotask(()=>Object.assign(ACT,{egb:el=>{const b=el.dataset.b;if(EB_SM.matches)EB_N=b;else{EB_AKT=b;lsSet('erp-einstB',b)}render();scrollTo(0,0)},egzur:()=>{EB_N='';render();scrollTo(0,0)},egexp:()=>nav('export'),
+  egstd:el=>{const e=S().erw||{},b=el.dataset.b;for(const x of ERW)if(ebB(x)===b)delete e[x.k];log('Erweiterungen',`${EB.find(x=>x[0]===b)?.[2]||b}: Standard wiederhergestellt`);persist();render()}}));
+function egMain(){const m=$('#main');if(!m)return;const n=m.querySelector(':scope>#egn');m.classList.toggle('eg',!!n?.classList.contains('egw'));m.classList.toggle('egq',!!n&&!!$('#esq')?.value.trim())} // Raster bzw. alle Bereiche bei Suche (Klassen statt :has)
+{const r0=render;render=function(...a){const x=r0.apply(this,a);egMain();return x}}
+document.addEventListener('input',e=>{if(e.target.id==='esq')egMain()});document.addEventListener('keydown',e=>{if(e.target.id==='esq')setTimeout(egMain)});document.addEventListener('click',e=>{if(e.target.closest?.('[data-act=esx]'))setTimeout(egMain)});
+{const st=document.createElement('style');st.textContent=`#main.eg{display:grid;grid-template-columns:230px minmax(0,1fr);column-gap:20px;align-items:start}#main.eg>*{grid-column:2;min-width:0}
+#main.eg>:is(h1,#esu,#sleiste,#dirtybar){grid-column:1/-1}#main.eg>#egn{grid-column:1;grid-row:span 300;position:sticky;top:8px;display:flex;flex-direction:column;gap:2px}#main.eg>#esu~#egn{top:64px}
+#egn button.egb{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:8px 10px;color:var(--ink);font-size:14px;font-weight:400;cursor:pointer;min-height:38px}
+#egn button.egb:hover{background:var(--acc2)}#egn button.egb.on{background:var(--acc2);color:var(--acc);font-weight:600}.egn .egi{flex:none;width:24px;text-align:center}
+.egd{flex:none;width:8px;height:8px;border-radius:50%;background:var(--warn);margin-left:auto}.egk .egd{margin-left:0}
+.eg-aus{display:none}#main.egq .eg-aus{display:revert}
+#egn.egl{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}#egn button.egk{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--ink);font-weight:400;cursor:pointer;min-height:58px}
+.egk .egi{font-size:22px;width:30px}.egk .egt{flex:1 1 auto;min-width:0}.egk small{display:block;color:var(--mut);font-size:12.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.egk .egr{color:var(--mut);font-size:22px;flex:none}
+#egn.egz{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex-wrap:wrap}.egp{border-top:1px solid var(--line);margin-top:8px;padding-top:2px}.egp>.bar{margin:4px 0 0}.egdp>#dprof{border-top:0;margin-top:0;padding-top:0}`;document.head.appendChild(st)}
 
 start();
 </script>

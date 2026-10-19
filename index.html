@@ -1003,6 +1003,35 @@ async function geraetLeeren(){
   DIRTY=false;pending=false;location.hash='';location.reload();
 }
 queueMicrotask(()=>Object.assign(ACT,{geraetweg:()=>geraetLeeren()}));
+/* Abmelden-Knopf (erw.abmKnopf): Knopf „Abmelden“ unten in der Seitenleiste (am Handy/iPad im ☰- bzw. „Mehr“-Menü), auch für „Abmelden“ unter Export & Sicherung.
+   Löscht Anmeldung (Zugriffs-, Mail-Token, Kontoname, Sitzungsspeicher); Datenkopie im Browser und offline erfasste Änderungen (unsynced) bleiben und werden bei der nächsten Anmeldung abgeglichen.
+   Ohne Anmeldung startet das Programm nicht mehr ohne Netz (start() braucht ein Token). Optional zusätzlich Microsoft-Sitzung im Browser beenden (Abmeldeseite von Microsoft, zurück zu ERP-Lite) */
+erwPlus({k:'abmKnopf',std:true,p:'Sicherheit (P37)',l:'Knopf „Abmelden“ in der Seitenleiste',info:'Abmelden von Microsoft unten in der Seitenleiste (Handy/iPad: im Menü ☰ bzw. „Mehr“). Warnt bei ungespeicherten oder noch nicht abgeglichenen Änderungen; die Datenkopie in diesem Browser bleibt, offline erfasste Änderungen werden bei der nächsten Anmeldung nachgetragen. Wahlweise wird auch die Microsoft-Sitzung im Browser beendet (dann fragt Microsoft beim nächsten Mal wieder nach dem Passwort).'});
+const abmDa=()=>!!DB&&erw('abmKnopf')&&(STORE.art==='od'||!!AUTH.tok());
+async function abmelden(){
+  if(DIRTY){const w=await formDialog({titel:'Abmelden',felder:[{typ:'hinweis',l:'Es gibt ungespeicherte Änderungen.'}],ok:'Speichern und abmelden',extra:'Verwerfen und abmelden'});
+    if(w===null)return;if(w==='extra'){DIRTY=false;dirtyBar()}else await commit()}
+  if(pending&&!OFFSTART&&STORE.art==='od'&&navigator.onLine!==false)try{await saveNow()}catch(e){} // zuerst noch hochladen
+  const off=pending||OFFSTART||!!(await kvGet('unsynced').catch(()=>null))?.local,q=ablQ().length,u=lsGet('erp-user');
+  const o=await formDialog({titel:'Abmelden',ok:'Abmelden',felder:[
+    {typ:'hinweis',l:`Angemeldet${u?' als <b>'+esc(u)+'</b>':''}. Nach dem Abmelden ist für ERP-Lite eine neue Anmeldung nötig, auch ohne Netz.`},
+    ...(off?[{typ:'hinweis',l:'<span class="err">Änderungen sind noch nicht im OneDrive.</span> Sie bleiben in diesem Browser und werden bei der nächsten Anmeldung nachgetragen.'}]:[]),
+    ...(q?[{typ:'hinweis',l:`<span class="err">${q} Foto(s) bzw. Unterschrift(en) warten noch auf das Hochladen.</span> Sie bleiben auf diesem Gerät und werden nach der nächsten Anmeldung hochgeladen.`}]:[]),
+    {typ:'hinweis',l:'Die Datenkopie in diesem Browser bleibt erhalten (ganz entfernen: „Abmelden und Gerät leeren“ unter Export &amp; Sicherung).'},
+    {k:'ms',typ:'checkbox',l:'Auch bei Microsoft abmelden (andere Microsoft-Seiten in diesem Browser ebenfalls)',wert:false,neu:1}]});
+  if(!o)return;
+  if(pending&&STORE.art==='od'&&!(await kvGet('unsynced').catch(()=>null))?.local)await kvSet('unsynced',{local:JSON.stringify(DB),base:STORE.lastText,ts:Date.now()}).catch(()=>{}); // für den Abgleich bei der nächsten Anmeldung (odStart)
+  AUTH.setTok(null);lsSet('erp-tok-mail',null);lsSet('erp-user',null);try{sessionStorage.clear()}catch(e){}
+  const od=STORE.art==='od';if(od)lsSet('erp-modus',null);
+  if(o.ms){const c=odCfg();location.href=`https://login.microsoftonline.com/${encodeURIComponent(c.tenant)}/oauth2/v2.0/logout?${new URLSearchParams({post_logout_redirect_uri:redirectUri()})}`;return}
+  if(od){location.hash='';location.reload()}else{saveState(STORE.name);render()}
+}
+function abmZeigen(){let e=$('#abmbtn');if(!abmDa()){e?.remove();return}
+  if(!e){$('#savestate')?.insertAdjacentHTML('afterend','<button id="abmbtn" data-act="abmelden" title="Von Microsoft abmelden"><span>⏻ Abmelden</span></button>');e=$('#abmbtn')}
+  const u=lsGet('erp-user')||'';e.title=u?'Abmelden ('+u+')':'Abmelden'}
+{const st=document.createElement('style');st.textContent='nav #abmbtn{position:sticky;bottom:0;flex-shrink:0;background:var(--side);display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:0;border-top:1px solid #2c3446;border-radius:0;color:#cfd6e4;padding:8px 18px;font:inherit;min-height:40px}nav #abmbtn:hover{background:#2c3446;color:#fff}body.ios nav #abmbtn,body.ipad nav #abmbtn{min-height:44px;padding-bottom:max(8px,env(safe-area-inset-bottom))}@media(max-width:1100px){nav #abmbtn{position:static}body:has(#dirtybar) nav{padding-bottom:170px}}';document.head.appendChild(st);
+  const r0=render;render=function(...a){const x=r0.apply(this,a);abmZeigen();return x};
+  queueMicrotask(()=>{const a0=ACT.abmelden;ACT.abmelden=(...x)=>erw('abmKnopf')?abmelden():a0(...x)})}
 async function graph(path,opt={},nochmal=true){
   const t=await AUTH.token();
   if(!t)throw Object.assign(new Error('Anmeldung abgelaufen'),{login:true});

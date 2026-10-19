@@ -6439,6 +6439,47 @@ async function pdfTeilen(f){
     document.body.appendChild(d);d.querySelector('#m-no').onclick=()=>{d.remove();res(false)};
     d.querySelector('#m-ok').onclick=async()=>{d.remove();try{res(await los())}catch(e){alert('Teilen nicht möglich:\n'+e.message);res(false)}}})}
 
+/* Dunkelmodus (P40 Teil 5, erw.dunkel): folgt der Geräteeinstellung hell/dunkel (iPhone, iPad, Windows, macOS). dkRegeln() leitet einmal aus dem Stylesheet dunkle Regeln ab und setzt sie
+   direkt hinter die Vorlage (gleiche Spezifität über :where(), Reihenfolge bleibt): helle Hintergründe/Rahmen werden dunkel, dunkle Schrift hell; dunkle Flächen (Seitenleiste) und helle Schrift darauf bleiben.
+   Wirksam nur mit body.dunkel (dkSetzen() aus render()). Blatt, Druck, PDF, K-Blätter und Unterschriftenfeld (DK_HELL) bleiben hell */
+erwPlus({k:'dunkel',std:false,p:'App iPhone/iPad (P40)',l:'Dunkelmodus (folgt der Geräteeinstellung)',info:'Ist am iPhone, iPad oder PC „Dunkel“ eingestellt (iOS: Einstellungen → Anzeige & Helligkeit, auch automatisch am Abend), erscheint ERP-Lite mit dunklem Hintergrund und heller Schrift. Belegvorschau, Druck, PDF, K-Blätter und das Unterschriftenfeld bleiben immer hell. Bei „Hell“ ändert sich nichts.'});
+const DKM=matchMedia('(prefers-color-scheme:dark)'),DK_HELL='.blatt,.doc,#print,.kbf,.sgf',DK_X=/\.blatt|\.doc\b|#print|\.kbf|\.sgf|@page/;
+let DKOK=false;
+DKM.addEventListener?.('change',()=>{if(DB&&erw('dunkel'))render()});
+function dkHSL(c){let r,g,b,a=1,m;c=c.trim().toLowerCase();if(c==='white')c='#fff';if(c==='black')c='#000';
+  if((m=c.match(/^#([0-9a-f]{3,8})$/))){let h=m[1];if(h.length<6)h=[...h].map(x=>x+x).join('');r=parseInt(h.slice(0,2),16);g=parseInt(h.slice(2,4),16);b=parseInt(h.slice(4,6),16);if(h.length===8)a=parseInt(h.slice(6,8),16)/255}
+  else if((m=c.match(/^rgba?\(([^)]*)\)$/))){const v=m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat);[r,g,b]=v;if(v.length>3)a=v[3]}else return null;
+  r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn;let h=0,s=0;
+  if(d){s=d/(1-Math.abs(2*l-1));h=mx===r?((g-b)/d+6)%6:mx===g?(b-r)/d+2:(r-g)/d+4}return{h:h*60,s,l,a}}
+const dkFarbe=(x,f)=>`hsla(${x.h.toFixed(0)},${(Math.min(x.s,1)*f*100).toFixed(0)}%,${((.08+(1-x.l)*.84)*100).toFixed(1)}%,${x.a})`;
+const DKP={'color':'t','background-color':'h','border-top-color':'h','border-right-color':'h','border-bottom-color':'h','border-left-color':'h','outline-color':'h','caret-color':'t'};
+function dkSel(s){if(DK_X.test(s)||/^(html|:root)\b/.test(s))return'';const p=s.search(/::|:(before|after|placeholder|-webkit-)/);const a=p<0?s:s.slice(0,p),e=p<0?'':s.slice(p);
+  return(/^body\b/.test(a)?a.replace(/^body/,'body:where(.dunkel)'):':where(body.dunkel) '+a)+`:where(:not(:is(${DK_HELL}) *))`+e}
+function dkTeilen(t){const o=[];let d=0,z='';for(const ch of t){if(ch==='('||ch==='[')d++;if(ch===')'||ch===']')d--;if(ch===','&&!d){o.push(z.trim());z=''}else z+=ch}if(z.trim())o.push(z.trim());return o}
+function dkListe(L){for(let i=L.cssRules.length-1;i>=0;i--){const r=L.cssRules[i];
+    if(!r.selectorText&&r.cssRules&&!(r.media&&/print/.test(r.media.mediaText))&&!r.name){dkListe(r);continue}
+    if(!r.selectorText||!r.style)continue;let d='';
+    for(const[k,w]of Object.entries(DKP)){const v=r.style.getPropertyValue(k);if(!v||/var\(|transparent|inherit|currentcolor|initial|unset/i.test(v))continue;const x=dkHSL(v);if(!x||x.a===0)continue;
+      if(w==='t'?x.l<.5:x.l>.5)d+=`${k}:${dkFarbe(x,w==='t'?1:.55)}${r.style.getPropertyPriority(k)?'!important':''};`}
+    if(!d)continue;const s=dkTeilen(r.selectorText).map(dkSel).filter(Boolean).join(',');if(!s)continue;
+    try{L.insertRule(`${s}{${d}}`,i+1)}catch(e){}}}
+function dkRegeln(){if(DKOK)return;DKOK=true;const st=document.querySelector('head style');if(st?.sheet)dkListe(st.sheet);
+  const e=document.createElement('style');e.id='dkcss';e.textContent=`
+body.dunkel{--bg:#12151c;--card:#1b1f28;--ink:#e6e9ef;--mut:#9aa3b2;--line:#2c3240;--acc:#5b9cff;--acc2:#1d2b44;--ok:#4cc27e;--warn:#e0a23a;--err:#ff6b5e;--side:#0d1016;color-scheme:dark}
+html:has(body.dunkel){background:#12151c;color-scheme:dark}
+body.dunkel :is(${DK_HELL}){--bg:#f4f5f7;--card:#fff;--ink:#1d2330;--mut:#6b7280;--line:#e2e5ea;--acc:#1f5fbf;--acc2:#e8f0fc;--ok:#1e7a46;--warn:#9a5b00;--err:#b42318;color-scheme:light}
+body.dunkel .blatt{border-color:#2c3240;box-shadow:0 2px 14px rgba(0,0,0,.6)}
+:where(body.dunkel) a:where(:not(:is(${DK_HELL}) *)){color:var(--acc)}
+body.dunkel [style*="color:#555"]:not(:is(${DK_HELL}) *){color:#a7adb8!important}
+body.dunkel [style*="background:#fafbfc"]:not(:is(${DK_HELL}) *),body.dunkel [style*="background:#f6f8fb"]:not(:is(${DK_HELL}) *){background:#1b1f28!important}
+body.dunkel.ios .seg button.on,body.dunkel.ipad .seg button.on,body.dunkel .segr input:checked+span{background:#4a5162;color:#fff}
+body.dunkel.ios label.chk>input[type=checkbox]:not(:checked),body.dunkel.ipad label.chk>input[type=checkbox]:not(table.pos *):not(:checked){background:#39393d}
+body.dunkel.ios label.chk>input[type=checkbox]::before,body.dunkel.ipad label.chk>input[type=checkbox]:not(table.pos *)::before{background:#fff}
+body.dunkel img:not(:is(${DK_HELL}) *){filter:brightness(.92)}`;document.head.appendChild(e)}
+function dkSetzen(){const an=!!DB&&erw('dunkel')&&DKM.matches;if(an)dkRegeln();document.body.classList.toggle('dunkel',an);
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content',an?'#0d1016':'#1d2330')}
+{const r0=render;render=function(...a){dkSetzen();return r0.apply(this,a)}}
+
 /* ---------- Versand per E-Mail über Office 365 (Microsoft Graph, Mail.Send) ---------- */
 const MAILSCOPE='https://graph.microsoft.com/Mail.Send offline_access';
 async function mailToken(){

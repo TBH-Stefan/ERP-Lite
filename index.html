@@ -2424,6 +2424,15 @@ queueMicrotask(()=>Object.assign(ACT,{kpsicht:el=>{lsSet('erp-sicht-'+el.dataset
 h1:has(+.seg.kps){display:inline-block}
 @media(max-width:760px){.kpk button.s{display:none}.kpk{flex-wrap:wrap;gap:4px 10px}.kpz{margin-left:24px;width:100%;gap:0 12px;flex-wrap:wrap}.kpp>.kpk{padding-left:28px}.kpp>.kpk .kpz{margin-left:16px}.kpb td:first-child,.kpb th:first-child{padding-left:28px}.kpb .kph{display:none}.kpsb .seg.kps{margin:0;display:flex;width:100%}.kpsb .seg.kps button{flex:1;padding:9px 10px}}`;document.head.appendChild(st)}
 
+/* Pfeile wie in Outlook (P44 G, erw.pfeile): Auf-/Zuklappen überall mit ◢ (offen) und ▷ (zu) statt +/− bzw. ▸/▾ – Belegliste (Gruppenknöpfe, „alle auf/zu“) über Wrapper um V.belege,
+   Akkordeons (details.akk) und Gliederung (.gl) per CSS unter body.pfe (gesetzt nach render()) */
+erwPlus({k:'pfeile',std:false,p:'Ansichten klarer (P44)',l:'Auf- und Zuklappen mit Pfeilen wie in Outlook',info:'Überall, wo sich etwas auf- und zuklappen lässt (zusammengehörige Belege in der Belegliste, aufklappbare Abschnitte, Gliederung im Beleg), stehen statt + und − bzw. ▸ und ▾ die Pfeile wie in Outlook: ◢ = aufgeklappt, ▷ = zugeklappt.'});
+{const v0=V.belege;V.belege=(bereich='V')=>{const h=v0(bereich);if(!erw('pfeile'))return h;
+  return h.replace(/(title="Alle aufklappen">)\+(<\/button>)/,'$1◢$2').replace(/(title="Alle zuklappen">)−(<\/button>)/,'$1▷$2').replace(/(<button class="s grpk"[^>]*>)([+−])(\d+)/g,(m,a,z,n)=>`${a}${z==='−'?'◢':'▷'} ${n}`)}}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);document.body.classList.toggle('pfe',!!DB&&erw('pfeile'));return x}}
+{const st=document.createElement('style');st.textContent=`body.pfe details.akk>summary::before,body.pfe .gl details>summary::before{content:'▷';transform:none;font-size:9px;color:#8a929e}
+body.pfe details.akk[open]>summary::before,body.pfe .gl details[open]>summary::before{content:'◢';transform:none}body.pfe .grpk{font-size:12px}`;document.head.appendChild(st)}
+
 /* ---------- Offene Lieferungen (P35 Teil 2, erw.lfListe): je offene Position festgeschriebener Bestellungen (lfPos) Lieferant, Bestellung, Artikel, offen, Termin (bestätigt,
    sonst gewünscht) und Status; Filter UI.lfSt (Status, LF_F), UI.lfK (Lieferant), UI.lfQ (Suche); Spalten LF_SP über tabelle() mit Spaltenauswahl, am Handy Karten;
    Zeile → Bestellung, „📦 WE“ → lfWE() (Folgebeleg BE → WE mit den offenen Mengen). Seitenleiste „Offene Lieferungen“ unter „Einkauf“, lfNav() aus render() ---------- */

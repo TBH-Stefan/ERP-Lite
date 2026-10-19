@@ -3655,6 +3655,11 @@ function kontaktPers(k){const a=`data-o="k" data-id="${k.id}"`,f=(fl,l,cls='',ph
   <div class="row">${f('briefAnrede','Briefanrede','w2',briefAnrede({...k,briefAnrede:''}))}<span style="flex:2;align-self:center;font-size:13px" class="mut" id="kba">${kbaTxt(k)}</span></div>`,{offen:PERSF.some(x=>pT(k[x])),zusatz:esc(briefAnrede(k))})}
 const kbaTxt=k=>`leer = automatisch: „${esc(briefAnrede({...k,briefAnrede:''}))}“${persName(k)?` · Person: ${esc(persName(k))}`:''}`;
 const kbaAkt=k=>{const e=$('#kba');if(e)e.innerHTML=kbaTxt(k);const i=document.querySelector('[data-o="k"][data-f="briefAnrede"]');if(i)i.placeholder=briefAnrede({...k,briefAnrede:''})};
+/* Kontaktliste schlank (P44 F, erw.kontaktSchlank): Vorgabe-Spalten Nr, Name, Ort, Offene Posten (Typ nur bei „Alle“); Art und UID über ⚙ – eine eigene Spaltenwahl (S().spalten) gilt weiter */
+erwPlus({k:'kontaktSchlank',std:false,p:'Ansichten klarer (P44)',l:'Kunden & Lieferanten: weniger Spalten',info:'Die Liste der Kunden und Lieferanten zeigt standardmäßig nur Nummer, Name, Ort und offene Posten (die Spalte Typ nur bei „Alle“). Art, UID und alle weiteren Spalten lassen sich über ⚙ dazuschalten; eine schon gespeicherte eigene Spaltenwahl bleibt.'});
+{const v0=V.kontakte;V.kontakte=typ=>{if(!erw('kontaktSchlank'))return v0(typ);const t0=tabelle;
+  tabelle=(id,c,r,o)=>t0(id,id==='kontakte'?c.map(x=>['kart','uid'].includes(x.k)||x.k==='typ'&&erw('kFilter')&&UI.kTyp?{...x,std:false}:x):c,r,o);try{return v0(typ)}finally{tabelle=t0}}}
+
 V.kontakt=id=>{
   const k=kontakt(id);if(!k)return'<p>Nicht gefunden.</p>';
   const docs=DB.belege.filter(b=>b.kontaktId===k.id).sort((a,c)=>c.datum.localeCompare(a.datum));

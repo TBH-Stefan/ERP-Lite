@@ -33,6 +33,7 @@ Alternativ beim ersten Start in die Felder des Startbildschirms eingeben (dann p
 | Gerätewechsel | beim Zurückkehren in die App und jede Minute wird der neueste Stand geholt |
 | Gleichzeitige Änderung | wird je Datensatz zusammengeführt; nur wenn **derselbe** Beleg auf beiden Geräten geändert wurde, gilt die zuerst gespeicherte Version (Hinweis erscheint) |
 | Kein Netz (Keller, Baustelle) | Entwürfe, Zeiten, Kontakte können weiter erfasst werden und werden später nachgetragen – auch nach Schließen der App |
+| App ohne Netz starten | *Einstellungen → Erweiterungen → App iPhone/iPad (P40)*: „App: Start auch ohne Internet“ einschalten und die App einmal mit Internet öffnen. Danach startet sie auch im Funkloch mit den Daten des Geräts; abgeglichen wird automatisch, sobald wieder Netz da ist. „Online/Offline-Anzeige“ zeigt den Stand oben (Handy) bzw. in der Seitenleiste (PC) |
 | Festschreiben / Nummernvergabe | **nur mit Internet** – verhindert doppelte Rechnungsnummern zwischen PC und Handy |
 | Eingangsrechnung | Überblick → *📷 Eingangsrechnung* → Foto; wird verkleinert und unter `ERP-Lite/Belege/ER/<Jahr>/` abgelegt |
 | PDF am Handy | *Drucken / PDF* → im Druckdialog *Als PDF speichern* bzw. *Teilen* |

@@ -7391,6 +7391,17 @@ ACT.btbdruck=async el=>{const r=ROOT.btb(el.dataset.id);if(!r)return;document.ac
   const P=[...(r.bilder||[]).map(b=>b.pfad),...Object.values(r.sig||{}).map(s=>s?.pfad)].filter(Boolean);
   await Promise.all(P.map(async p=>{try{BURL[p]??=URL.createObjectURL(await bildBlob(p));const i=new Image();i.src=BURL[p];await i.decode()}catch(e){}}));saveState('');
   const a=btbRoot(r);druckHTML(`<div class="doc btbp">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">${btbTitel(r)} ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${btbDoc(r)}</div>`,`${btbTitel(r)} ${r.nr} ${a?.nr||''} ${dAT(r.datum)}`);bilderLaden()};
+/* Überblick ohne Leeres (P44 B, erw.dashLeer): Wrapper um V.dash (auch mit „Übersicht anpassen“) – Kennzahlen mit 0,00 € ohne Warnung und Karten mit „keine“ entfallen, ihre Titel stehen
+   gesammelt in einer Zeile „Nichts offen: …“; Schnellknöpfe als „+ Neu ▾“, „📷 Einlesen ▾“, „⏱ Zeit erfassen“ (wie am Handy) */
+erwPlus({k:'dashLeer',std:false,p:'Ansichten klarer (P44)',l:'Überblick ohne leere Kacheln',info:'Kennzahlen mit 0,00 € und Listen ohne Einträge („keine“) werden im Überblick nicht angezeigt; was leer ist, steht unten in einer Zeile „Nichts offen: …“. Die Schnellknöpfe oben werden zu „+ Neu ▾“, „📷 Einlesen ▾“ und „⏱ Zeit erfassen“.'});
+{const d0=V.dash;V.dash=()=>{const h=d0();if(!DB||!erw('dashLeer'))return h;const t=document.createElement('template');t.innerHTML=h;const leer=[];
+  for(const k of t.content.querySelectorAll('.kpi'))if(/^0,00\s*€/.test(k.querySelector('b')?.textContent.trim()||'')&&!k.querySelector('.err'))k.remove();
+  for(const c of t.content.querySelectorAll('.card'))if(c.querySelector(':scope>p.mut')?.textContent.trim()==='keine'&&!c.querySelector('table,.kk')){leer.push((c.querySelector('h2')?.textContent||'').replace(/→/g,'').replace(/\s+/g,' ').trim());c.remove()}
+  for(const c of t.content.querySelectorAll('.cols'))if(!c.children.length)c.remove();
+  const q=t.content.querySelector('.quick');if(q&&!kmpH()){q.className='quick dlq';q.innerHTML='<button class="p" data-act="menue" data-m="neu">+ Neu ▾</button><button data-act="menue" data-m="einlesen">📷 Einlesen ▾</button><a class="btn" href="#/zeiten">⏱ Zeit erfassen</a>'}
+  return t.innerHTML+(leer.length?`<p class="mut dll">Nichts offen: ${leer.map(esc).join(' · ')}</p>`:'')}}
+{const st=document.createElement('style');st.textContent='.quick.dlq{display:flex;gap:8px;grid-template-columns:none}.quick.dlq>*{flex:0 0 auto;display:inline-flex;align-items:center}.dll{margin:14px 2px 0}';document.head.appendChild(st)}
+
 start();
 </script>
 </body>

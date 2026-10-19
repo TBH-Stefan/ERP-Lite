@@ -2419,10 +2419,10 @@ queueMicrotask(()=>Object.assign(ACT,{kpsicht:el=>{lsSet('erp-sicht-'+el.dataset
 .kpk{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;user-select:none}.kpk:hover{background:#f6f8fb}.kpf{width:14px;color:#8a929e;flex:none;font-size:11px;text-align:center}.kpt{font-weight:600}.kpt .mut{font-weight:400}
 .kpk button.s{opacity:.55;padding:1px 6px}.kpk:hover button.s{opacity:1}.kpz{margin-left:auto;display:flex;gap:18px;color:#6b7280;font-size:13px;white-space:nowrap}.kpz b{color:#1f2937;font-weight:600}.kpz b.kpo{color:#b45309}
 .kpp{border-top:1px solid #eef1f5}.kpp>.kpk{padding:9px 14px 9px 38px;background:#fafbfc}.kpp>.kpk .kpt{font-weight:500}
-.kpb{width:100%;border-collapse:collapse}.kpb td{padding:7px 10px;border-top:1px solid #f0f2f5}.kpb td:first-child{padding-left:64px}.kpb tr.click:hover td{background:#f6f8fb}
+.kpb{width:100%;border-collapse:collapse}.kpb td{padding:7px 10px;border-top:1px solid #f0f2f5}.kpb td:first-child,.kpb th:first-child{padding-left:64px}.kpb th{padding:5px 10px;font-size:12px;font-weight:500;color:#6b7280;text-align:left;border-top:1px solid #f0f2f5}.kpb th.n{text-align:right}.kpb tr.click:hover td{background:#f6f8fb}
 .seg.kps{display:inline-flex;vertical-align:middle;margin-left:14px;border:1px solid #cfd6e0;border-radius:8px;overflow:hidden;font-size:14px}.seg.kps button{border:0;border-radius:0;margin:0;padding:6px 12px;background:#fff;min-height:0}.seg.kps button.on{background:#1f5fd1;color:#fff}
 h1:has(+.seg.kps){display:inline-block}
-@media(max-width:760px){.kpk button.s{display:none}.kpk{flex-wrap:wrap;gap:4px 10px}.kpz{margin-left:24px;width:100%;gap:0 12px;flex-wrap:wrap}.kpp>.kpk{padding-left:28px}.kpp>.kpk .kpz{margin-left:16px}.kpb td:first-child{padding-left:28px}.kpb .kph{display:none}.kpsb .seg.kps{margin:0;display:flex;width:100%}.kpsb .seg.kps button{flex:1;padding:9px 10px}}`;document.head.appendChild(st)}
+@media(max-width:760px){.kpk button.s{display:none}.kpk{flex-wrap:wrap;gap:4px 10px}.kpz{margin-left:24px;width:100%;gap:0 12px;flex-wrap:wrap}.kpp>.kpk{padding-left:28px}.kpp>.kpk .kpz{margin-left:16px}.kpb td:first-child,.kpb th:first-child{padding-left:28px}.kpb .kph{display:none}.kpsb .seg.kps{margin:0;display:flex;width:100%}.kpsb .seg.kps button{flex:1;padding:9px 10px}}`;document.head.appendChild(st)}
 
 /* ---------- Offene Lieferungen (P35 Teil 2, erw.lfListe): je offene Position festgeschriebener Bestellungen (lfPos) Lieferant, Bestellung, Artikel, offen, Termin (bestätigt,
    sonst gewünscht) und Status; Filter UI.lfSt (Status, LF_F), UI.lfK (Lieferant), UI.lfQ (Suche); Spalten LF_SP über tabelle() mit Spaltenauswahl, am Handy Karten;
@@ -3396,6 +3396,23 @@ V.auftraege=()=>{
     {zeile:a=>`class="click" onclick="nav('auftrag/${a.id}')"`,leer:'Noch keine Aufträge.',
      mf:a=>karte({t:esc(bNr(a.root)),s:phase(a.docs),u:[kName(a.root.kontaktId),a.root.betreff].filter(x=>x&&x!=='–').map(esc).join(' · '),z:[v(a)?'Vorkalk. '+dbTag(v(a).db2p):'',n(a).uN?'Ist '+dbTag(n(a).db2p):''].filter(Boolean).join(' '),b:n(a).uN?fmt(n(a).uN)+' €':v(a)?fmt(v(a).uS)+' €':''})})})()}`;
 };
+/* Aufträge nach Kunde › Projekt (P44 E, erw.auftragKP, nutzt kpSicht/kpSeg/kpZ/kpPrj aus P44 Teil 1): Umschalter wie im Verkauf (Ansicht 'A'); Kunde → Projekt → Aufträge mit
+   Auftrag, Betreff, Phase, Vorkalk. Umsatz, Ist-Umsatz, Ist-DB II (Spaltenfunktionen der Liste); Summen je Gruppe Ist-Umsatz und DB II (nachkalk) */
+erwPlus({k:'auftragKP',std:false,p:'Ansichten klarer (P44)',l:'Aufträge & DB II nach Kunde › Projekt',info:'In „Aufträge & DB II“ wählt ein Umschalter „Liste | Kunde › Projekt“. Gruppiert steht je Kunde und Projekt eine zuklappbare Zeile mit Ist-Umsatz und DB II (Betrag und %), aufgeklappt die Aufträge mit Phase, Vorkalkulation, Ist-Umsatz und Ist-DB II.'});
+function akListe(cols,L){const z=kpZ(),K=new Map(),c=k=>cols.find(x=>x.k===k);
+  for(const a of L){const kid=a.root.kontaktId||'',p=kpPrj(a.root);if(!K.has(kid))K.set(kid,new Map());const P=K.get(kid);if(!P.has(p))P.set(p,[]);P.get(p).push(a)}
+  if(!K.size)return'<div class="card"><p class="mut" style="margin:0">Noch keine Aufträge.</p></div>';
+  const su=A=>{const n=A.map(a=>nachkalk(a.id)),u=sum(n,x=>x.uN),d=sum(n,x=>x.db2);return`<span class="kpz">${u?`<span>Ist-Umsatz <b>${fmt(u)}</b></span><span>DB II <b>${fmt(d)}</b> ${dbTag(d/u)}</span>`:`<span>${A.length} ${A.length===1?'Auftrag':'Aufträge'}, noch nichts verrechnet</span>`}</span>`};
+  const kl=[...K.entries()].sort((a,b)=>kName(a[0]).localeCompare(kName(b[0]),'de'));
+  return`<div class="kpl">${kl.map(([kid,P])=>{const ka=!!z['ak:'+kid],np=[...P.keys()].filter(Boolean).length,pl=[...P.entries()].sort((a,b)=>(!a[0])-(!b[0])||a[0].localeCompare(b[0],'de'));
+    return`<div class="kpg"><div class="kpk" data-act="kpauf" data-id="ak:${esc(kid)}"><span class="kpf">${ka?'◢':'▷'}</span><span class="kpt">${esc(kName(kid))} <span class="mut">· ${np?np+(np===1?' Projekt':' Projekte'):'ohne Projekt'}</span></span>${su([...P.values()].flat())}</div>
+    ${ka?pl.map(([p,A])=>{const id='ap:'+kid+'|'+p,pa=!!z[id];
+      return`<div class="kpp"><div class="kpk" data-act="kpauf" data-id="${esc(id)}"><span class="kpf">${pa?'◢':'▷'}</span><span class="kpt">${p?esc(p):'<i class="mut">ohne Projekt</i>'} <span class="mut">· ${A.length} ${A.length===1?'Auftrag':'Aufträge'}</span></span>${su(A)}</div>
+      ${pa?`<table class="kpb"><thead><tr><th>Auftrag</th><th class="kph">Betreff</th><th>Phase</th><th class="n kph">Vorkalk.</th><th class="n">Ist-Umsatz</th><th class="n kph">Ist-DB II</th></tr></thead><tbody>${A.map(a=>`<tr class="click" onclick="nav('auftrag/${a.id}')"><td><span class="nw">${c('nr').f(a)}</span></td><td class="kph">${c('betreff').f(a)}</td><td>${c('phase').f(a)}</td><td class="n kph" title="Vorkalkulation Umsatz">${c('vu').f(a)}</td><td class="n" title="Ist-Umsatz">${c('iu').f(a)}</td><td class="n kph" title="Ist-DB II">${c('idb').f(a)}</td></tr>`).join('')}</tbody></table>`:''}</div>`}).join(''):''}</div>`}).join('')}</div>`}
+{const v0=V.auftraege;V.auftraege=()=>{if(!erw('auftragKP'))return v0();const kp=kpSicht('A')==='kp',t0=tabelle;let h;
+  if(kp)tabelle=(id,c,r,o)=>id==='auftraege'?akListe(c,r):t0(id,c,r,o);try{h=v0()}finally{tabelle=t0}
+  return h.replace(/(<h1>Aufträge &amp; Kalkulation DB II[\s\S]*?<\/h1>)/,'$1'+kpSeg('A'))}}
+
 V.auftrag=aid=>{
   const docs=DB.belege.filter(b=>b.auftragId===aid).sort((a,c)=>a.erstellt.localeCompare(c.erstellt));
   if(!docs.length)return'<p>Auftrag nicht gefunden.</p>';

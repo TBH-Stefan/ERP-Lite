@@ -6444,7 +6444,7 @@ async function pdfTeilen(f){
    Wirksam nur mit body.dunkel (dkSetzen() aus render()). Blatt, Druck, PDF, K-Blätter und Unterschriftenfeld (DK_HELL) bleiben hell */
 erwPlus({k:'dunkel',std:false,p:'App iPhone/iPad (P40)',l:'Dunkelmodus (folgt der Geräteeinstellung)',info:'Ist am iPhone, iPad oder PC „Dunkel“ eingestellt (iOS: Einstellungen → Anzeige & Helligkeit, auch automatisch am Abend), erscheint ERP-Lite mit dunklem Hintergrund und heller Schrift. Belegvorschau, Druck, PDF, K-Blätter und das Unterschriftenfeld bleiben immer hell. Bei „Hell“ ändert sich nichts.'});
 const DKM=matchMedia('(prefers-color-scheme:dark)'),DK_HELL='.blatt,.doc,#print,.kbf,.sgf',DK_X=/\.blatt|\.doc\b|#print|\.kbf|\.sgf|@page/;
-let DKOK=false;
+let DKOK=false;const DKS=new WeakSet();
 DKM.addEventListener?.('change',()=>{if(DB&&erw('dunkel'))render()});
 function dkHSL(c){let r,g,b,a=1,m;c=c.trim().toLowerCase();if(c==='white')c='#fff';if(c==='black')c='#000';
   if((m=c.match(/^#([0-9a-f]{3,8})$/))){let h=m[1];if(h.length<6)h=[...h].map(x=>x+x).join('');r=parseInt(h.slice(0,2),16);g=parseInt(h.slice(2,4),16);b=parseInt(h.slice(4,6),16);if(h.length===8)a=parseInt(h.slice(6,8),16)/255}
@@ -6463,7 +6463,8 @@ function dkListe(L){for(let i=L.cssRules.length-1;i>=0;i--){const r=L.cssRules[i
       if(w==='t'?x.l<.5:x.l>.5)d+=`${k}:${dkFarbe(x,w==='t'?1:.55)}${r.style.getPropertyPriority(k)?'!important':''};`}
     if(!d)continue;const s=dkTeilen(r.selectorText).map(dkSel).filter(Boolean).join(',');if(!s)continue;
     try{L.insertRule(`${s}{${d}}`,i+1)}catch(e){}}}
-function dkRegeln(){if(DKOK)return;DKOK=true;const st=document.querySelector('head style');if(st?.sheet)dkListe(st.sheet);
+function dkRegeln(){for(const st of document.querySelectorAll('style:not(#dkcss)'))if(st.sheet&&!DKS.has(st.sheet)){DKS.add(st.sheet);dkListe(st.sheet)} // auch per JS angelegte Stylesheets (z. B. Suche in den Einstellungen P42)
+  if(DKOK)return;DKOK=true;
   const e=document.createElement('style');e.id='dkcss';e.textContent=`
 body.dunkel{--bg:#12151c;--card:#1b1f28;--ink:#e6e9ef;--mut:#9aa3b2;--line:#2c3240;--acc:#5b9cff;--acc2:#1d2b44;--ok:#4cc27e;--warn:#e0a23a;--err:#ff6b5e;--side:#0d1016;color-scheme:dark}
 html:has(body.dunkel){background:#12151c;color-scheme:dark}
@@ -6475,7 +6476,10 @@ body.dunkel [style*="background:#fafbfc"]:not(:is(${DK_HELL}) *),body.dunkel [st
 body.dunkel.ios .seg button.on,body.dunkel.ipad .seg button.on,body.dunkel .segr input:checked+span{background:#4a5162;color:#fff}
 body.dunkel.ios label.chk>input[type=checkbox]:not(:checked),body.dunkel.ipad label.chk>input[type=checkbox]:not(table.pos *):not(:checked){background:#39393d}
 body.dunkel.ios label.chk>input[type=checkbox]::before,body.dunkel.ipad label.chk>input[type=checkbox]:not(table.pos *)::before{background:#fff}
-body.dunkel img:not(:is(${DK_HELL}) *){filter:brightness(.92)}`;document.head.appendChild(e)}
+body.dunkel img:not(:is(${DK_HELL}) *){filter:brightness(.92)}
+body.dunkel .es-hit,body.dunkel tr.es-hit>td,body.dunkel .kk.es-hit{background:#4d4214;box-shadow:0 0 0 3px #4d4214}
+body.dunkel mark:not(:is(${DK_HELL}) *){background:#6b5a12;color:#fff}
+body.dunkel :is(.blink,.blink>td):not(:is(${DK_HELL}) *){animation-name:glblinkD}@keyframes glblinkD{0%,45%{background:#5a4c12}100%{background:transparent}}`;document.head.appendChild(e)}
 function dkSetzen(){const an=!!DB&&erw('dunkel')&&DKM.matches;if(an)dkRegeln();document.body.classList.toggle('dunkel',an);
   document.querySelector('meta[name=theme-color]')?.setAttribute('content',an?'#0d1016':'#1d2330')}
 {const r0=render;render=function(...a){dkSetzen();return r0.apply(this,a)}}

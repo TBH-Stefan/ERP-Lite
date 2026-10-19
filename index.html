@@ -10,6 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ERP-Lite">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="data:image/png;base64,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">
 <title>ERP-Lite</title>
 <style>
@@ -185,6 +186,19 @@ body:not(.btb) nav a.navbtb{display:none!important} /* Bautagesberichte (P36 Tei
 #undobtn{margin:auto 18px 0;background:#2c3446;color:#fff;border:0}#undobtn:disabled{opacity:.4}
 #savestate.bad{color:#ffb4ab}
 main{flex:1;padding:20px 26px 60px;min-width:0}
+/* Sichere Bereiche ab 761 px (P40, Fehlerbehebung): App vom Home-Bildschirm mit durchsichtiger Statusleiste (iPad, iPhone quer) – Uhrzeit, Datum, Akku und WLAN stehen auf einem Streifen in Farbe der Seitenleiste, nie über Bedienelementen; am PC ist env() 0 */
+@media(min-width:761px){
+  body.loaded::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--side);z-index:99;pointer-events:none}
+  body.loaded #app{padding-top:env(safe-area-inset-top,0px)}
+  nav{top:env(safe-area-inset-top,0px);height:calc(100vh - env(safe-area-inset-top,0px));padding-left:env(safe-area-inset-left,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  main{padding-left:max(26px,env(safe-area-inset-left,0px));padding-right:max(26px,env(safe-area-inset-right,0px));padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
+  main>#sleiste{top:calc(8px + env(safe-area-inset-top,0px))}
+  .split .sticky,.glsp,body.kompakt .cols.bcol>:last-child{top:calc(10px + env(safe-area-inset-top,0px))}
+  .esu{top:env(safe-area-inset-top,0px)}
+  .modal{padding-top:max(10vh,calc(env(safe-area-inset-top,0px) + 12px))}
+  body.ipad.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(190px,1fr))} /* Übersicht am iPad: breitere Kennzahlen-Kacheln */
+}
+@media(min-width:761px) and (max-width:1100px){body.ipad.loaded .topbar{top:env(safe-area-inset-top,0px);padding-top:8px}body.ipad.loaded nav{height:100vh}body.ipad main>#sleiste{top:calc(68px + env(safe-area-inset-top,0px))}}
 h1{font-size:21px;margin:0 0 14px}h2{font-size:15px;margin:0 0 10px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:14px}
 /* Kompakt (P30) Beleg: Lese-Ansicht festgeschriebener Belege (dl.kvl, table.pos.pl ohne Eingabefelder), Zahlungsstatus oben (.zst) mit Zahlungen als Karten */
@@ -307,6 +321,17 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .hint{background:#fff8e6;border:1px solid #f3dca5;border-radius:6px;padding:8px 10px;margin-bottom:12px;font-size:13px}
 .bstat{font-size:13px;color:var(--mut);margin:-6px 0 12px;line-height:1.6}.bstat a{color:var(--acc);text-decoration:none}.bstat a:hover{text-decoration:underline}.bstat b{color:var(--ink)}.bstat .tag{margin-left:4px} /* Statuszeile im Beleg (P19 c) */
 .bstat.fix{position:sticky;z-index:25;background:var(--bg);margin:-6px -4px 12px;padding:4px;border-bottom:1px solid var(--line)}main:has(.bstat.fix) .split .sticky{top:48px;max-height:calc(100vh - 58px)}
+/* Tab-Leiste (P40, erw.tabLeiste): iPhone unten wie iOS-Apps; nicht im Beleg mit Aktionsleiste (.aktl) und nicht bei offener Tastatur */
+#tabl{display:none}
+@media(max-width:760px){
+  body.tl #tabl{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:36;background:rgba(249,249,251,.94);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid rgba(0,0,0,.22);padding:0 max(4px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(4px,env(safe-area-inset-left))}
+  #tabl a{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:50px;font-size:10px;font-weight:500;color:#8e8e93;text-decoration:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+  #tabl a svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  #tabl a.on{color:var(--acc)}
+  body.tl:has(.aktl) #tabl,body.tl:has(:is(input:not([type=checkbox]):not([type=radio]),textarea,select,[contenteditable="true"]):focus) #tabl{display:none}
+  body.tl:not(:has(.aktl)) main{padding-bottom:calc(140px + env(safe-area-inset-bottom))}
+  body.tl:not(:has(.aktl)) #dirtybar{bottom:calc(58px + env(safe-area-inset-bottom))}
+}
 #start{max-width:620px;margin:8vh auto;padding:0 16px}
 @media(max-width:760px){
   body.loaded #app{display:block}
@@ -458,6 +483,40 @@ body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150p
 }
 @media(pointer:coarse) and (min-width:761px){body.kompakt :is(main,.mbox) :is(button,.btn,select,input:not([type=checkbox]):not([type=radio]):not([type=file])):not(table.pos *){min-height:40px}}
 @media(min-width:761px) and (max-height:820px){body.kompakt nav a,body.kompakt nav button.zl{padding:4px 18px}body.kompakt nav .grp{padding:8px 18px 2px}body.kompakt nav .logo{padding:10px 18px 6px}}
+/* iPad (P40, erw.ipad): iOS-Gestaltung am Tablet mit Touch (ab 761 px, pointer:coarse) – Systemschrift, 44-pt-Tippziele, Schalter, Segmente; Hochformat bis 1100 px: Kopfleiste mit ☰, Seitenleiste als Menü */
+@media(min-width:761px){
+  body.ipad{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  body.ipad :is(a,button,input,select,textarea,label,summary,[data-act]){-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  body.ipad :is(button,.btn,summary,.mi){-webkit-user-select:none;user-select:none}
+  body.ipad :is(main,.mbox,.mpop,#dirtybar) :is(button,.btn):not(:disabled):not(table.pos *){min-height:44px}
+  body.ipad .mpop .mi{min-height:44px}
+  body.ipad :is(button,.btn,.mi,nav a):active{opacity:.55}
+  body.ipad nav a,body.ipad nav button.zl{min-height:44px;display:flex;align-items:center}
+  body.ipad :is(input,select,textarea,.rte){font-size:16px} /* kein Zoom beim Tippen in ein Feld */
+  body.ipad :is(main,.mbox) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select):not(table.pos *){min-height:44px;border-radius:10px}
+  body.ipad :is(main,.mbox) :is(textarea,.rte){border-radius:10px}
+  body.ipad :is(.card,.kk){border-radius:12px}
+  body.ipad .seg{background:#e9e9ee;border:0;border-radius:9px;padding:2px;gap:2px}
+  body.ipad .seg button{border:0!important;border-radius:7px;background:none}
+  body.ipad .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+  body.ipad label.chk>input[type=checkbox]:not(table.pos *){-webkit-appearance:none;appearance:none;flex:none;width:51px;height:31px;border-radius:16px;background:#e9e9ea;position:relative;transition:background .2s;margin:0;cursor:pointer}
+  body.ipad label.chk>input[type=checkbox]:not(table.pos *)::before{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:transform .2s}
+  body.ipad label.chk>input[type=checkbox]:not(table.pos *):checked{background:#34c759}
+  body.ipad label.chk>input[type=checkbox]:not(table.pos *):checked::before{transform:translateX(20px)}
+  body.ipad label.chk>input[type=checkbox]:disabled{opacity:.5}
+  body.ipad:has(.modal){overflow:hidden}
+  body.ipad :is(.modal,.mbox,.mpop){overscroll-behavior:contain}
+  body.ipad.lp :is(#main,nav) :is(tr,.kk,[onclick]){-webkit-touch-callout:none} /* langes Drücken: Kontextmenü statt iOS-Vorschau */
+}
+@media(min-width:761px) and (max-width:1100px){
+  body.ipad.loaded #app{display:block}
+  body.ipad .topbar{display:flex;position:sticky;top:0;z-index:35;background:var(--side);color:#fff;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 8px max(16px,env(safe-area-inset-left))}
+  body.ipad .topbar button{background:none;border:0;color:#fff;font-size:22px;padding:0 6px;min-width:44px;min-height:44px}
+  body.ipad .topbar #sync2{font-size:12px;color:#8fd3a8}body.ipad .topbar #sync2.bad{color:#ffb4ab}
+  body.ipad nav{position:fixed;left:-280px;top:0;z-index:40;transition:left .2s;width:270px;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  body.ipad.nav nav{left:0;box-shadow:0 0 0 100vmax rgba(0,0,0,.4)}
+  body.ipad nav a,body.ipad nav button.zl{padding:10px 20px}
+}
 /* iOS (P30, erw.ios): sichere Bereiche (Notch, Home-Indikator) immer; Gestaltung nach Apple-Vorgaben nur unter body.ios am Handy (Systemschrift, 44-pt-Tippziele, Blätter mit Griff, Segmente, Schalter) */
 @media(max-width:760px){
   .topbar{padding-top:calc(8px + env(safe-area-inset-top));padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
@@ -495,6 +554,13 @@ body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150p
   .segr span{display:flex;align-items:center;justify-content:center;min-height:40px;padding:0 2px;border-radius:7px;font-size:13px;color:var(--ink);cursor:pointer}
   .segr input:checked+span{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18);font-weight:600}
 }
+/* App (P40, erw.netStatus): Online/Offline-Anzeige in Kopfleiste und Seitenleiste */
+button.netz{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#c9d1dc;white-space:nowrap;padding:2px 6px;border-radius:10px}
+button.netz::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:#34c759}
+button.netz.off{color:#ffd27a}button.netz.off::before{background:#ff9f0a}
+button.netz.sync::before{background:#0a84ff;animation:netzp .8s infinite alternate}@keyframes netzp{to{opacity:.25}}
+nav button.netz{margin:0 12px 2px}
+@media(max-width:760px){.topbar button.netz{min-height:44px;justify-content:center}.topbar button.netz.on{font-size:0;gap:0;min-width:24px}.topbar button.netz .nzx{display:none}}
 </style>
 </head>
 <body>
@@ -790,7 +856,7 @@ async function kvGet(k){const db=await idbOpen();return new Promise(r=>{const q=
 async function kvSet(k,v){const db=await idbOpen();return new Promise(r=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>r();tx.onerror=()=>r()})}
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
-function saveState(t,bad){for(const e of [$('#savestate'),$('#sync2')]){if(e){e.textContent=t;e.className=bad?'bad':''}}}
+function saveState(t,bad){for(const e of [$('#savestate'),$('#sync2')]){if(e){e.textContent=t;e.className=bad?'bad':''}}netzZeigen()}
 /* Änderungen werden erst nach Bestätigung gespeichert (persist = vormerken, commit = speichern) */
 function persist(){merk();DIRTY=true;dirtyBar()}
 function snap(){SNAP=JSON.stringify(DB)}
@@ -937,6 +1003,35 @@ async function geraetLeeren(){
   DIRTY=false;pending=false;location.hash='';location.reload();
 }
 queueMicrotask(()=>Object.assign(ACT,{geraetweg:()=>geraetLeeren()}));
+/* Abmelden-Knopf (erw.abmKnopf): Knopf „Abmelden“ unten in der Seitenleiste (am Handy/iPad im ☰- bzw. „Mehr“-Menü), auch für „Abmelden“ unter Export & Sicherung.
+   Löscht Anmeldung (Zugriffs-, Mail-Token, Kontoname, Sitzungsspeicher); Datenkopie im Browser und offline erfasste Änderungen (unsynced) bleiben und werden bei der nächsten Anmeldung abgeglichen.
+   Ohne Anmeldung startet das Programm nicht mehr ohne Netz (start() braucht ein Token). Optional zusätzlich Microsoft-Sitzung im Browser beenden (Abmeldeseite von Microsoft, zurück zu ERP-Lite) */
+erwPlus({k:'abmKnopf',std:true,p:'Sicherheit (P37)',l:'Knopf „Abmelden“ in der Seitenleiste',info:'Abmelden von Microsoft unten in der Seitenleiste (Handy/iPad: im Menü ☰ bzw. „Mehr“). Warnt bei ungespeicherten oder noch nicht abgeglichenen Änderungen; die Datenkopie in diesem Browser bleibt, offline erfasste Änderungen werden bei der nächsten Anmeldung nachgetragen. Wahlweise wird auch die Microsoft-Sitzung im Browser beendet (dann fragt Microsoft beim nächsten Mal wieder nach dem Passwort).'});
+const abmDa=()=>!!DB&&erw('abmKnopf')&&(STORE.art==='od'||!!AUTH.tok());
+async function abmelden(){
+  if(DIRTY){const w=await formDialog({titel:'Abmelden',felder:[{typ:'hinweis',l:'Es gibt ungespeicherte Änderungen.'}],ok:'Speichern und abmelden',extra:'Verwerfen und abmelden'});
+    if(w===null)return;if(w==='extra'){DIRTY=false;dirtyBar()}else await commit()}
+  if(pending&&!OFFSTART&&STORE.art==='od'&&navigator.onLine!==false)try{await saveNow()}catch(e){} // zuerst noch hochladen
+  const off=pending||OFFSTART||!!(await kvGet('unsynced').catch(()=>null))?.local,q=ablQ().length,u=lsGet('erp-user');
+  const o=await formDialog({titel:'Abmelden',ok:'Abmelden',felder:[
+    {typ:'hinweis',l:`Angemeldet${u?' als <b>'+esc(u)+'</b>':''}. Nach dem Abmelden ist für ERP-Lite eine neue Anmeldung nötig, auch ohne Netz.`},
+    ...(off?[{typ:'hinweis',l:'<span class="err">Änderungen sind noch nicht im OneDrive.</span> Sie bleiben in diesem Browser und werden bei der nächsten Anmeldung nachgetragen.'}]:[]),
+    ...(q?[{typ:'hinweis',l:`<span class="err">${q} Foto(s) bzw. Unterschrift(en) warten noch auf das Hochladen.</span> Sie bleiben auf diesem Gerät und werden nach der nächsten Anmeldung hochgeladen.`}]:[]),
+    {typ:'hinweis',l:'Die Datenkopie in diesem Browser bleibt erhalten (ganz entfernen: „Abmelden und Gerät leeren“ unter Export &amp; Sicherung).'},
+    {k:'ms',typ:'checkbox',l:'Auch bei Microsoft abmelden (andere Microsoft-Seiten in diesem Browser ebenfalls)',wert:false,neu:1}]});
+  if(!o)return;
+  if(pending&&STORE.art==='od'&&!(await kvGet('unsynced').catch(()=>null))?.local)await kvSet('unsynced',{local:JSON.stringify(DB),base:STORE.lastText,ts:Date.now()}).catch(()=>{}); // für den Abgleich bei der nächsten Anmeldung (odStart)
+  AUTH.setTok(null);lsSet('erp-tok-mail',null);lsSet('erp-user',null);try{sessionStorage.clear()}catch(e){}
+  const od=STORE.art==='od';if(od)lsSet('erp-modus',null);
+  if(o.ms){const c=odCfg();location.href=`https://login.microsoftonline.com/${encodeURIComponent(c.tenant)}/oauth2/v2.0/logout?${new URLSearchParams({post_logout_redirect_uri:redirectUri()})}`;return}
+  if(od){location.hash='';location.reload()}else{saveState(STORE.name);render()}
+}
+function abmZeigen(){let e=$('#abmbtn');if(!abmDa()){e?.remove();return}
+  if(!e){$('#savestate')?.insertAdjacentHTML('afterend','<button id="abmbtn" data-act="abmelden" title="Von Microsoft abmelden"><span>⏻ Abmelden</span></button>');e=$('#abmbtn')}
+  const u=lsGet('erp-user')||'';e.title=u?'Abmelden ('+u+')':'Abmelden'}
+{const st=document.createElement('style');st.textContent='nav #abmbtn{position:sticky;bottom:0;flex-shrink:0;background:var(--side);display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:0;border-top:1px solid #2c3446;border-radius:0;color:#cfd6e4;padding:8px 18px;font:inherit;min-height:40px}nav #abmbtn:hover{background:#2c3446;color:#fff}body.ios nav #abmbtn,body.ipad nav #abmbtn{min-height:44px;padding-bottom:max(8px,env(safe-area-inset-bottom))}@media(max-width:1100px){nav #abmbtn{position:static}body:has(#dirtybar) nav{padding-bottom:170px}}';document.head.appendChild(st);
+  const r0=render;render=function(...a){const x=r0.apply(this,a);abmZeigen();return x};
+  queueMicrotask(()=>{const a0=ACT.abmelden;ACT.abmelden=(...x)=>erw('abmKnopf')?abmelden():a0(...x)})}
 async function graph(path,opt={},nochmal=true){
   const t=await AUTH.token();
   if(!t)throw Object.assign(new Error('Anmeldung abgelaufen'),{login:true});
@@ -1009,22 +1104,23 @@ async function saveNow(){
     do{
       saveAgain=false;txt=JSON.stringify(DB);
       try{localStorage.setItem('erp-lite-cache',txt)}catch(e){}
+      if(OFFSTART){pending=true;kvSet('unsynced',{local:txt,base:STORE.lastText,ts:Date.now()}).catch(()=>{});saveState('Offline – wird abgeglichen, sobald Internet da ist',true);setTimeout(nachholen,0);return} // ohne Netz gestartet (P40): nie ohne eTag hochladen, erst abgleichen
       if(STORE.art==='cache'){pending=false;saveState('Nur Browser-Cache – keine Synchronisierung!',true);return}
       if(ZUNEU){kvSet('unsynced',{local:txt,base:STORE.lastText,ts:Date.now()}).catch(()=>{});saveState('Neuere Programmversion – bitte neu laden',true);zuNeuHinweis();return} // P38: nichts überschreiben, Änderungen bleiben im Browser
       const heute=isoD();
       if(lastBackupDay!==heute&&STORE.lastText&&await tagSicherung(STORE.lastText,heute))lastBackupDay=heute;
       await STORE.save(txt);STORE.lastText=txt;
     }while(saveAgain);
-    pending=false;kvSet('unsynced',null).catch(()=>{});
+    pending=false;NETZFEHL=false;kvSet('unsynced',null).catch(()=>{});
     saveState('Gespeichert '+new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}));
     archivAuto(); // Monatsexport (P38), läuft im Hintergrund
   }catch(e){
     if(e.konflikt){saving=false;await zusammenfuehren();return}
     kvSet('unsynced',{local:txt||JSON.stringify(DB),base:STORE.lastText,ts:Date.now()}).catch(()=>{});
     if(e.login){saveState('Anmeldung abgelaufen – tippen zum Anmelden',true);loginHinweis()}
-    else if(e instanceof TypeError||!navigator.onLine){saveState('Offline – wird später gespeichert',true);clearTimeout(retryT);retryT=setTimeout(saveNow,30000)}
+    else if(e instanceof TypeError||!navigator.onLine){NETZFEHL=true;saveState('Offline – wird später gespeichert',true);clearTimeout(retryT);retryT=setTimeout(saveNow,30000)}
     else{saveState('FEHLER beim Speichern!',true);alert('Speichern fehlgeschlagen:\n'+e.message+'\n\nDie Änderungen bleiben in diesem Browser erhalten und werden beim nächsten Start nachgetragen.')}
-  }finally{saving=false}
+  }finally{saving=false;netzZeigen()}
 }
 window.addEventListener('online',()=>{if(pending)saveNow()});
 function loginHinweis(){for(const e of [$('#savestate'),$('#sync2')])if(e){e.style.cursor='pointer';e.onclick=()=>AUTH.login()}}
@@ -1176,6 +1272,7 @@ async function zusammenfuehren(){
 }
 /* Beim Zurückkehren zur App (Handy/PC) neuere Daten holen */
 async function aktualisieren(){
+  if(OFFSTART){nachholen();return} // ohne Netz gestartet (P40)
   if(STORE.art!=='od'||DIRTY||pending||saving||!DB)return;
   const a=document.activeElement;if(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))return;
   try{const m=await STORE.meta();if(m&&m.eTag!==STORE.etag){const txt=await STORE.load();DB=migrate(JSON.parse(txt));snap();undoBasis(true);artDatalist();render();saveState('Aktualisiert '+new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}))}}catch(e){}
@@ -1196,9 +1293,48 @@ async function start(){
   let neu=false;
   try{neu=await AUTH.redirectVerarbeiten()}catch(e){alert('Anmeldung: '+e.message)}
   if(neu)lsSet('erp-modus','od');
-  if(lsGet('erp-modus')==='od'&&AUTH.tok()){try{await odStart();return}catch(e){if(!e.login)alert('OneDrive nicht erreichbar:\n'+e.message)}}
+  if(lsGet('erp-modus')==='od'&&AUTH.tok()){try{await odStart();return}catch(e){if(!e.login&&(e instanceof TypeError||navigator.onLine===false)&&await offlineStart())return;if(!e.login)alert('OneDrive nicht erreichbar:\n'+e.message)}}
   startScreen();
 }
+/* App (P40): Start ohne Internet und Online/Offline-Anzeige.
+   erw.appOffline: Service Worker sw.js hält nur das Programm (index.html, Symbol) für den Start ohne Netz bereit, holt online immer zuerst die neueste Version; keine Daten.
+   Ohne Netz gestartet (OFFSTART): Daten aus der Browser-Kopie, Speichern nur lokal (unsynced), mit Netz nachholen() = 3-Wege-Abgleich wie zusammenfuehren(), erst dann Hochladen mit eTag.
+   erw.netStatus: Anzeige .netz vor #sync2/#savestate (Online, Abgleich …, Offline · Änderungen warten), Tippen gleicht ab */
+erwPlus({k:'appOffline',std:false,p:'App iPhone/iPad (P40)',l:'App: Start auch ohne Internet',info:'Die App vom Home-Bildschirm (bzw. die Seite im Browser) startet auch ohne Internetverbindung, z. B. im Keller oder auf der Baustelle. Gearbeitet wird dann mit den Daten auf diesem Gerät; sobald wieder Internet da ist, werden die Änderungen mit dem OneDrive abgeglichen. Festschreiben (Nummernvergabe) bleibt nur mit Internet möglich. Online lädt die App immer die neueste Programmversion.'},
+  {k:'netStatus',std:false,p:'App iPhone/iPad (P40)',l:'Online/Offline-Anzeige mit Abgleich',info:'Zeigt oben in der Kopfleiste (Handy) bzw. in der Seitenleiste (PC) an, ob eine Verbindung zum OneDrive besteht: grün = online, blau = Abgleich läuft, orange = offline (mit Hinweis, wenn Änderungen auf den Abgleich warten). Tippen gleicht sofort ab.'});
+var OFFSTART=false,NETZFEHL=false,NHL=false,SWZ=null;
+const appOffAn=()=>lsGet('erp-app')==='1'; // Schalter beim Start, bevor Daten geladen sind
+function swPruefen(){const an=!!DB&&STORE.art!=='cache'&&!!erw('appOffline');if(an===SWZ)return;SWZ=an;lsSet('erp-app',an?'1':null);
+  if(!('serviceWorker' in navigator)||!window.isSecureContext)return;
+  if(an)navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{});
+  else navigator.serviceWorker.getRegistrations().then(L=>{for(const r of L)if(/\/sw\.js$/.test(r.active?.scriptURL||r.installing?.scriptURL||r.waiting?.scriptURL||''))r.unregister();if(window.caches)caches.keys().then(k=>k.filter(x=>x.startsWith('erp-app')).forEach(x=>caches.delete(x)))}).catch(()=>{})}
+async function offlineStart(){
+  if(!appOffAn())return false;
+  const c=cacheLaden(),u=await kvGet('unsynced').catch(()=>null),d=c||(u?.local?JSON.parse(u.local):null);if(!d)return false;
+  STORE=ODSTORE;STORE.etag=null;STORE.lastText=u?u.base:JSON.stringify(d);OFFSTART=true;NETZFEHL=true;pending=!!u;
+  laden(d);saveState('Offline – Daten von diesem Gerät',true);return true}
+async function nachholen(){
+  if(!OFFSTART||NHL||saving||DIRTY||navigator.onLine===false)return;NHL=true;netzZeigen();
+  try{const base=STORE.lastText?JSON.parse(STORE.lastText):null,txt=await STORE.load();
+    let konfl=[],verdr=null;if(txt){const r=migrate(JSON.parse(txt));if(r.settings?.erw?.mfaPflicht&&!mfaOk()){mfaSperre();return}const m=merge3(base,DB,r);DB=migrate(m.db);konfl=m.konfl;verdr=m.verdr}
+    OFFSTART=false;NETZFEHL=false;undoBasis(true);artDatalist();render();pending=true;await saveNow();
+    if(konfl.length){const kp=await konfliktKopie(verdr);alert('Diese Datensätze wurden gleichzeitig auf einem anderen Gerät geändert – es gilt die Version des anderen Geräts:\n\n• '+[...new Set(konfl)].join('\n• ')+kkHinweis(kp))}}
+  catch(e){if(e.login){saveState('Anmeldung abgelaufen – tippen zum Anmelden',true);loginHinweis()}}
+  finally{NHL=false;netzZeigen()}}
+window.addEventListener('online',()=>{nachholen();netzZeigen()});
+window.addEventListener('offline',()=>netzZeigen());
+setInterval(()=>{if(OFFSTART&&document.visibilityState==='visible')nachholen()},30000);
+function netzZeigen(){
+  let an=false;try{an=!!DB&&STORE.art==='od'&&!!erw('netStatus')}catch(e){return}
+  let L=document.querySelectorAll('button.netz');if(!an){L.forEach(e=>e.remove());return}
+  if(!L.length){for(const r of [$('#sync2'),$('#savestate')])if(r){const e=document.createElement('button');e.type='button';e.className='netz';e.dataset.act='netz';r.before(e)}L=document.querySelectorAll('button.netz')}
+  const off=navigator.onLine===false||OFFSTART||NETZFEHL,sync=!off&&(pending||saving||NHL),k=off?'off':sync?'sync':'on',
+    t=off?'Offline'+(pending?' · Änderungen warten':''):sync?'Abgleich …':'Online',h=off&&pending?'Offline<span class="nzx"> · Änderungen warten</span>':esc(t),
+    ti=off?'Keine Verbindung zum OneDrive. Änderungen bleiben auf diesem Gerät und werden abgeglichen, sobald wieder Internet da ist. Festschreiben erst wieder online.':'Verbunden mit dem OneDrive – tippen zum Abgleichen';
+  L.forEach(e=>{e.className='netz '+k;e.innerHTML=h;e.title=ti;e.setAttribute('aria-label',t)})}
+queueMicrotask(()=>Object.assign(ACT,{netz:()=>{
+  if(navigator.onLine===false){alert('Offline: keine Internetverbindung.\n\nDu kannst weiterarbeiten. Die Änderungen bleiben auf diesem Gerät und werden mit dem OneDrive abgeglichen, sobald wieder Internet da ist. Festschreiben ist erst dann wieder möglich.');return}
+  if(OFFSTART){if(DIRTY){alert('Bitte zuerst speichern, dann wird abgeglichen.');return}nachholen()}else if(pending)saveNow();else{NETZFEHL=false;aktualisieren().then(()=>saveState('Abgeglichen '+new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})))}}}));
 /* Zweiter Faktor (P37, erw.mfaPflicht, Standard aus): Microsoft trägt im Zugriffstoken unter „amr“ ein, wie angemeldet wurde ("pwd", "mfa").
    Mit Schalter lädt das Programm die Daten aus dem OneDrive nur, wenn die Anmeldung einen zweiten Faktor hatte (Authenticator, SMS …).
    Einschalten nur in einer solchen Anmeldung (mfaFrei), damit man sich nicht selbst aussperrt. Ersetzt nicht die MFA-Pflicht in Microsoft Entra */
@@ -1752,9 +1888,11 @@ function render(){
   document.body.classList.toggle('navkl',!!(erw('navKL')&&erw('kFilter'))); // Untereinträge Kunden/Lieferanten (P6)
   document.body.classList.toggle('btb',erw('btb')); // Bautagesberichte (P36)
   const f=V[view]||V.dash;
+  document.body.classList.toggle('ipad',kmp()&&erw('ipad')&&IPAD.matches);document.body.classList.toggle('lp',!!erw('langDruck')); // iPad, langes Drücken (P40)
   document.body.classList.toggle('ma',erw('mitarbeiter')); // Personal (P36 b)
   document.body.classList.toggle('kompakt',kmp()); // Kompakte Ansicht (P30): CSS für bestehende Elemente nur unter body.kompakt
   document.body.classList.toggle('ios',kmp()&&erw('ios')); // iOS-Darstellung am Handy (CSS nur unter body.ios in @media max-width 760px)
+  swPruefen();netzZeigen(); // App (P40): Service Worker an/ab, Online/Offline-Anzeige
   $('#main').innerHTML=f(arg);
   document.body.classList.toggle('zlaus',!erw('zuletzt'));if(arg&&ZL_V.includes(view))zuletztMerk(view+'/'+arg); // Zuletzt geöffnet (P19 a)
   requestAnimationFrame(vorschauSeiten);
@@ -1762,7 +1900,23 @@ function render(){
   document.body.classList.toggle('ihh',erw('ihHover')&&HOVER.matches);document.body.classList.toggle('ssp',erw('scrollSperre')); // Bedienung (P33)
   document.querySelectorAll('.modal').forEach(m=>{try{if(m._gilt&&!m._gilt()){(m._weg||(()=>m.remove()))();return}m._zeich?.()}catch(e){}}); // offene Bearbeiten-Pop-ups (P30) zeigen den neuen Stand; Pop-ups eines verlassenen oder ersetzten Belegs (Navigation, Abgleich, Verwerfen) schließen
   lfNav(); // Seitenleiste: „Offene Lieferungen“ (P35)
+  tabLeiste(); // iPhone: Tab-Leiste unten (P40)
 }
+/* Tab-Leiste (P40, erw.tabLeiste, nur iPhone mit iOS-Darstellung): #tabl am Ende von body, aus render() über tabLeiste(); aktiv = Eintrag der Seitenleiste (nav a.on), sonst „Mehr“ (öffnet die Seitenleiste).
+   erw.wischZurueck: in der App vom Home-Bildschirm (standalone) Wischen vom linken Rand = Zurück (history.back) */
+erwPlus({k:'tabLeiste',std:false,p:'App iPhone/iPad (P40)',l:'iPhone: Tab-Leiste unten',info:'Am iPhone steht unten eine Leiste wie in iOS-Apps: Überblick, Verkauf, Einkauf, Berichte (bzw. Zeiten, wenn die Bautagesberichte aus sind) und Mehr (öffnet das Menü mit allen Bereichen). Im geöffneten Beleg und beim Tippen in ein Feld wird sie ausgeblendet. Wirkt nur mit der iOS-Darstellung.'},
+  {k:'wischZurueck',std:false,p:'App iPhone/iPad (P40)',l:'Wischen vom linken Rand = Zurück',info:'In der App vom Home-Bildschirm gibt es keine Zurück-Taste des Browsers. Mit diesem Schalter führt Wischen vom linken Bildschirmrand nach rechts zur vorigen Seite (wie in Safari). Nicht bei offenen Pop-ups.'});
+const TB_I={dash:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',V:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',E:'<path d="M3 4h2l2.5 11h11L21 7H7"/><circle cx="10" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/>',
+  btb:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/>',zt:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',mehr:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>'};
+function tabLeiste(){
+  const an=!!DB&&kmpH()&&erw('ios')&&erw('tabLeiste');document.body.classList.toggle('tl',!!an);let el=$('#tabl');if(!an){el?.remove();return}
+  if(!el){el=document.createElement('div');el.id='tabl';el.setAttribute('role','tablist');document.body.appendChild(el)}
+  const L=[['dash','Überblick','dash'],['belege/V','Verkauf','V'],['belege/E','Einkauf','E'],erw('btb')?['berichte','Berichte','btb']:['zeiten','Zeiten','zt']],
+    akt=$('nav a.on')?.dataset.n||'',hat=L.some(x=>x[0]===akt),sv=i=>`<svg viewBox="0 0 24 24" aria-hidden="true">${TB_I[i]}</svg>`;
+  el.innerHTML=L.map(([n,l,i])=>`<a href="#/${n}" class="${n===akt?'on':''}">${sv(i)}${l}</a>`).join('')+`<a href="#" class="${hat?'':'on'}" onclick="event.preventDefault();event.stopPropagation();document.body.classList.toggle('nav')">${sv('mehr')}Mehr</a>`}
+{let w0=null;const app=()=>navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
+  document.addEventListener('touchstart',e=>{w0=null;if(!DB||!erw('wischZurueck')||e.touches.length!==1||!app())return;const p=e.touches[0];if(p.clientX>24||document.querySelector('.modal,.mpop')||document.body.classList.contains('nav'))return;w0=[p.clientX,p.clientY,Date.now()]},{passive:true});
+  document.addEventListener('touchend',e=>{if(!w0)return;const p=e.changedTouches[0],dx=p.clientX-w0[0],dy=Math.abs(p.clientY-w0[1]),dt=Date.now()-w0[2];w0=null;if(dx>80&&dy<60&&dt<800)history.back()},{passive:true});}
 window.addEventListener('hashchange',async()=>{
   if(!DB)return;
   if(erw('strgP'))druckLeeren(); // Druckbereich gehört zur verlassenen Seite
@@ -1866,6 +2020,19 @@ document.querySelector('nav button.zl')?.insertAdjacentHTML('afterend','<button 
 const HANDY=matchMedia('(max-width:760px)');
 const kmp=()=>!!erw('kompakt'),kmpH=()=>kmp()&&HANDY.matches;
 HANDY.addEventListener?.('change',()=>{if(!DB||!kmp()||document.querySelector('.modal'))return;document.activeElement?.blur?.();render()}); // Handy gedreht bzw. Fenster über die Grenze: neu zeichnen
+/* iPad (P40): erw.ipad = iOS-Gestaltung am Tablet mit Touch (body.ipad, CSS ab 761 px; Hochformat bis 1100 px Seitenleiste als Menü), Apple Pencil in sigPop() (Handballen ignoriert, Strichstärke nach Druck).
+   erw.langDruck = langes Drücken (iPhone/iPad) öffnet das Kontextmenü (P33, erw.kontext) über ein contextmenu-Ereignis, der Klick danach wird verschluckt */
+erwPlus({k:'ipad',std:false,p:'App iPhone/iPad (P40)',l:'iPad: Bedienung für Finger und Apple Pencil',info:'Am iPad (bzw. jedem Tablet mit Touch) gelten dieselben Bedienregeln wie am iPhone: große Tippflächen, Schalter, Segmente, Systemschrift, kein Zoom beim Tippen in Felder. Im Hochformat wird die Seitenleiste zum Menü (☰ oben links), damit mehr Platz für den Inhalt bleibt; im Querformat bleibt sie stehen. Beim Unterschreiben mit dem Apple Pencil wird der Handballen ignoriert und die Strichstärke folgt dem Druck. Wirkt nur mit „Kompakte Ansicht“.'},
+  {k:'langDruck',std:false,p:'App iPhone/iPad (P40)',l:'Langes Drücken öffnet das Kontextmenü',info:'Am iPhone und iPad öffnet langes Drücken auf einen Beleg, Kontakt, Artikel oder eine Position dasselbe Menü wie die rechte Maustaste am PC (Öffnen, Neuer Beleg, Löschen …). Voraussetzung: Schalter „Kontextmenü“ unter Bedienung (P33).'});
+const IPAD=matchMedia('(pointer:coarse) and (min-width:761px)');
+IPAD.addEventListener?.('change',()=>{if(!DB||!erw('ipad')||document.querySelector('.modal'))return;document.activeElement?.blur?.();render()});
+{let lpT=null,lp0=null,lpWeg=false;const LP_AUS='input,textarea,select,[contenteditable="true"],.modal,.mpop,canvas';
+  document.addEventListener('touchstart',e=>{clearTimeout(lpT);lpWeg=false;if(!DB||!erw('langDruck')||!erw('kontext')||e.touches.length!==1)return;const t=e.target;if(!t.closest||t.closest(LP_AUS))return;
+    const p=e.touches[0];lp0=[p.clientX,p.clientY];
+    lpT=setTimeout(()=>{lpT=null;const ev=new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:lp0[0],clientY:lp0[1]});t.dispatchEvent(ev);if(ev.defaultPrevented){lpWeg=true;navigator.vibrate?.(10)}},550)},{passive:true});
+  document.addEventListener('touchmove',e=>{if(lpT&&lp0){const p=e.touches[0];if(Math.hypot(p.clientX-lp0[0],p.clientY-lp0[1])>10){clearTimeout(lpT);lpT=null}}},{passive:true});
+  document.addEventListener('touchend',e=>{clearTimeout(lpT);lpT=null;if(lpWeg){e.preventDefault();setTimeout(()=>{lpWeg=false},400)}}); // Klick nach dem Menü nicht auslösen
+  document.addEventListener('click',e=>{if(lpWeg&&!e.target.closest('.mpop')){lpWeg=false;e.preventDefault();e.stopPropagation()}},true);}
 const MENUE={},LIVE={};let MPOP=null;
 function menuePop(btn,eintraege){
   closePop();MPOP=btn;const blatt=HANDY.matches,d=document.createElement('div');d.className='pop mpop'+(blatt?' unten':'');let bg=null;
@@ -1997,7 +2164,7 @@ const quickK=()=>kmpH()?'<div class="quick"><button class="p" data-act="menue" d
 /* Übersicht anpassen (P39 Teil 3, erw.dashFlex): Bausteine DASH (ein/aus, Reihenfolge), Kennzahlen DASH_KPI, Zeitraum DASH_ZEIT; Einstellung je Gerätart S().dash.<pc|handy> {reihe,sicht:{k:bool},kpi:{k:bool},zeit} nur Abweichungen; Zahnrad ⚙ → LIVE.dash, Aktionen dashauf/dashstd */
 erwPlus({k:'dashFlex',std:false,p:'Bedienung (P33)',l:'Übersicht anpassen',info:'Im Überblick das Zahnrad ⚙: Bausteine ein- und ausschalten, Reihenfolge ändern, Kennzahlen wählen und den Zeitraum für Umsatz und DB II (Jahr, Quartal, Monat, letzte 12 Monate). Zusätzliche Bausteine: Offene Arbeiten, Berichte, Regieanträge, Umsatz je Monat. Gespeichert getrennt für Handy und Bildschirm. Ohne Änderung sieht der Überblick aus wie bisher.'});
 const DASH_ZEIT={jahr:'Jahr',quartal:'Quartal',monat:'Monat','12m':'Letzte 12 Monate'};
-const dashG=()=>HANDY.matches?'handy':'pc',dashS=()=>S().dash?.[dashG()]||{};
+const dashG=()=>HANDY.matches?'handy':erw('ipad')&&IPAD.matches?'tablet':'pc',dashS=()=>S().dash?.[dashG()]||(dashG()==='tablet'&&S().dash?.pc)||{}; // iPad (P40): eigene Einstellung „tablet“, bis dahin wie der Bildschirm
 function dashZeit(){const h=isoD(),j=h.slice(0,4),m=+h.slice(5,7),z=dashS().zeit||'jahr',q=Math.ceil(m/3);
   if(z==='quartal')return{von:`${j}-${String(q*3-2).padStart(2,'0')}-01`,bis:h,t:`Q${q} ${j}`};
   if(z==='monat')return{von:h.slice(0,8)+'01',bis:h,t:`${MONATE[m-1]} ${j}`};
@@ -2071,9 +2238,9 @@ function dashFlex(){const heute=isoD(),Z=dashZeit();
   for(const x of B){if(x.arr){G.push(x);continue}grp();out+=x.f(c)}grp();
   return`<div class="bar dkopf"><h1 style="margin:0">Überblick ${Z.t}</h1><span class="sp"></span><button data-act="lpop" data-lp="dash" title="Übersicht anpassen" aria-label="Übersicht anpassen">⚙</button></div>
   ${!S().firma.name?'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>':''}${out}`}
-LIVE.dash=()=>livePop('Übersicht anpassen',()=>{const g=dashG(),s=dashS(),R=dashReihe(),f=`dash.${g}`,K=s.kpi||{};
+LIVE.dash=()=>livePop('Übersicht anpassen',()=>{if(dashG()==='tablet'&&!S().dash?.tablet&&S().dash?.pc)S().dash.tablet=structuredClone(S().dash.pc);const g=dashG(),s=dashS(),R=dashReihe(),f=`dash.${g}`,K=s.kpi||{};
   const ch=(p,an,l)=>`<label class="chk"><input type="checkbox" data-o="s" data-f="${f}.${p}"${an?' checked':''}> ${l}</label>`;
-  return`<p class="mut" style="margin-top:0">Gilt für ${g==='handy'?'das Handy':'den Bildschirm'} auf allen Geräten dieser Art.</p>
+  return`<p class="mut" style="margin-top:0">Gilt für ${g==='handy'?'das Handy':g==='tablet'?'das iPad (Tablet)':'den Bildschirm'} auf allen Geräten dieser Art.</p>
   <div class="row"><label>Zeitraum für Umsatz und DB II<select data-o="s" data-f="${f}.zeit">${Object.entries(DASH_ZEIT).map(([k,l])=>`<option value="${k}"${(s.zeit||'jahr')===k?' selected':''}>${l}</option>`).join('')}</select></label></div>
   <table class="dcfg"><tbody>${R.map((k,i)=>{const x=DASH.find(y=>y.k===k),nein=x.nur&&!x.nur();return`<tr${nein?' class="mut"':''}><td>${ch('sicht.'+k,s.sicht?.[k]??x.std!==false,esc(x.l))}${nein?' <small>(Erweiterung aus)</small>':''}
     ${k==='kpi'?`<div class="dkpi">${DASH_KPI.map(y=>ch('kpi.'+y.k,K[y.k]??y.std!==false,esc(y.l))).join('')}</div>`:''}</td>
@@ -2332,7 +2499,7 @@ V.beleg=id=>{
     <button data-act="druck">PDF / Drucken</button>
     ${!b.storno&&t.folge.length&&b.status!=='ersetzt'?`${['AN','AB','LS','PR'].includes(b.typ)?`<button data-act="folgere">→ Rechnung</button>`:''}<select data-act="folge" title="${b.fest?'':'Wird vorher festgeschrieben'}">${opt('','Folgebeleg …','')}${t.folge.map(f=>opt(f,T[f].bez,'')).join('')}</select>`:''}
     ${b.typ==='LS'&&!b.storno?`<button data-act="sammelre">Sammelrechnung …</button>`:''}
-    <button data-act="senden" title="Als PDF per E-Mail versenden">✉ Senden …</button><button data-act="pdfdl" title="PDF-Datei speichern">PDF speichern</button>
+    <button data-act="senden" title="Als PDF per E-Mail versenden">✉ Senden …</button><button data-act="pdfdl" title="PDF-Datei speichern">${pdfL()}</button>
     ${b.fest&&!b.storno&&b.typ==='AN'&&b.status!=='ersetzt'?`<button data-act="anrev" title="Erstellt eine neue Revision zum Bearbeiten – dieser Stand bleibt unverändert gespeichert">✎ Bearbeiten (Revision)</button><button data-act="anfolge">Folgeangebot</button><button data-act="anst" data-v="${b.status==='abgelehnt'?'':'abgelehnt'}">${b.status==='abgelehnt'?'wieder offen':'abgelehnt'}</button>`:''}
     ${abZu(b)?`<button data-act="abauf" title="Ausgegeben am ${dAT(b.abgeschlossen.slice(0,10))} – Status wieder auf offen bzw. nach Lieferung und Rechnung">Status wieder offen</button>`:''}${b.fest&&!b.storno&&REOPEN.includes(b.typ)&&b.status!=='ersetzt'?`<button data-act="reopen">Bearbeiten</button>`:''}
     <button data-act="dup">Duplizieren</button>
@@ -2414,7 +2581,7 @@ function belegKopfbarK(b,ans){const t=T[b.typ],H=HANDY.matches,h=belegHaupt(b);
       ${H?'':`${h.act!=='druck'?'<button data-act="druck">PDF / Drucken</button>':''}${zuRE(b)&&h.act!=='folgere'?`<button data-act="folgere"${b.fest?'':' title="Wird vorher festgeschrieben"'}>→ Rechnung</button>`:''}`}<button class="p" data-act="${h.act}"${h.value?` value="${h.value}"`:''}>${esc(H&&h.lh||h.l)}</button><button class="mehr" data-act="menue" data-m="beleg" title="Weitere Aktionen: PDF speichern, Senden, Folgebeleg, Duplizieren …">⋯</button></div>
   </div>${belegStatus(b)}${b.status==='ersetzt'?`<div class="hint">Dieses Angebot wurde durch eine Revision ersetzt.</div>`:''}`}
 MENUE.beleg=()=>{const b=curBeleg();if(!b)return[];const t=T[b.typ],H=HANDY.matches,h=belegHaupt(b),fo=!b.storno&&t.folge.length&&b.status!=='ersetzt',vf=b.fest?'':'Wird vorher festgeschrieben',anF=b.fest&&!b.storno&&b.typ==='AN'&&b.status!=='ersetzt';
-  const L=[H&&h.act!=='druck'&&{l:'PDF / Drucken',ic:'🖨',act:'druck'},{l:'PDF speichern',ic:'⤓',act:'pdfdl',titel:'PDF-Datei speichern'},{l:'Senden …',ic:'✉',act:'senden',titel:'Als PDF per E-Mail versenden'},{trenn:1},
+  const L=[H&&h.act!=='druck'&&{l:'PDF / Drucken',ic:'🖨',act:'druck'},{l:pdfL(),ic:'⤓',act:'pdfdl',titel:'PDF-Datei speichern'},{l:'Senden …',ic:'✉',act:'senden',titel:'Als PDF per E-Mail versenden'},{trenn:1},
     H&&zuRE(b)&&h.act!=='folgere'&&{l:'→ Rechnung',ic:BICON.RE,act:'folgere',titel:vf},fo&&{l:'Folgebeleg',ic:'➜',sub:t.folge.map(f=>({l:T[f].bez,ic:BICON[f],act:'folge',value:f,titel:vf}))},
     b.typ==='LS'&&!b.storno&&{l:'Sammelrechnung …',ic:'🧾',act:'sammelre'},{trenn:1},
     glZeigen(b)&&{l:'Gliederung …',ic:'≡',act:'glpop',titel:'Gruppen und Positionen im Überblick – Sprung zur Stelle'},
@@ -6185,7 +6352,7 @@ function ausgabeZaehlen(b,a,speichern=true){if(!a?.z)return;b.ausgaben=a.n+1;if(
 const abZu=b=>!!(erw('abAbschluss')&&b?.typ==='AB'&&b.abgeschlossen&&!b.storno);
 function abAbschluss(b,s=2){if(!erw('abAbschluss')||b?.typ!=='AB'||!b.fest||b.storno||b.abgeschlossen)return;b.abgeschlossen=new Date().toISOString();log('Auftragsbestätigung abgeschlossen',`${b.nr} (ausgegeben)`);if(s)commit();if(s>1&&curBeleg()?.id===b.id)render()}
 async function belegDrucken(b){const a=await dupFrage(b);if(!a)return;drucken(b,a);ausgabeZaehlen(b,a);abAbschluss(b)}
-async function belegPDF(b){const a=await dupFrage(b);if(!a)return;await pdfHerunterladen(b,a);ausgabeZaehlen(b,a);abAbschluss(b)}
+async function belegPDF(b){const a=await dupFrage(b);if(!a)return;if(await pdfHerunterladen(b,a)===false)return;ausgabeZaehlen(b,a);abAbschluss(b)}
 window.addEventListener('afterprint',()=>{if(DRUCK&&!DRUCK.an&&DRUCK.t!=null){document.title=DRUCK.t;DRUCK.t=null}});
 /* Regie (P36 Teil 10, erw.regie): Regiebericht = Bericht mit r.art='RB' (Auswahl beim Anlegen über ACT.btbneu, eigene Nummer je Auftrag in btbNeu(aid,art), Titel btbTitel(r), Kürzel btbKz(r) „RB“).
    Regiepreise je Stundentarif t.regie (leer = Verkauf; regiePreis(kz), Karte regieEinst() über Wrapper um V.einstellungen). Kundenunterschrift Pflicht: verrechenbar nur mit Unterschrift des Kunden
@@ -6287,7 +6454,64 @@ async function pdfAusBeleg(b,o={}){
   return new Blob(teile,{type:'application/pdf'});
 }
 const pdfName=b=>`${T[b.typ].bez}-${bNr(b)}-${kName(b.kontaktId)}`.replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_')+'.pdf';
-async function pdfHerunterladen(b,o={}){const bl=await pdfAusBeleg(b,o),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=pdfName(b);document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+async function pdfHerunterladen(b,o={}){const bl=await pdfAusBeleg(b,o);if(pdfTeilenOk())return pdfTeilen(new File([bl],pdfName(b),{type:'application/pdf'}));const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=pdfName(b);document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+/* PDF teilen (P40, erw.iosTeilen): am iPhone/iPad (Touch, navigator.canShare mit Datei) öffnet „PDF speichern“ das Teilen-Blatt (Mail, WhatsApp, Dateien, AirDrop, Drucken).
+   Ist die Tippgeste nach dem Erzeugen abgelaufen (NotAllowedError), fragt ein kleines Fenster noch einmal; abgebrochen = false (belegPDF() zählt dann keine Ausgabe) */
+erwPlus({k:'iosTeilen',std:false,p:'App iPhone/iPad (P40)',l:'PDF teilen statt speichern (iPhone/iPad)',info:'Am iPhone und iPad öffnet „PDF teilen“ das iOS-Teilen-Blatt: direkt an Mail, WhatsApp, Nachrichten, AirDrop, in „Dateien“ sichern oder drucken. Abbrechen zählt nicht als Ausgabe (Vermerk DUPLIKAT, Abschluss der Auftragsbestätigung). Am PC bleibt es beim Speichern der Datei.'});
+const pdfTeilenOk=()=>{try{return!!DB&&erw('iosTeilen')&&matchMedia('(pointer:coarse)').matches&&!!navigator.canShare?.({files:[new File([''],'x.pdf',{type:'application/pdf'})]})}catch(e){return false}};
+const pdfL=()=>pdfTeilenOk()?'PDF teilen …':'PDF speichern';
+async function pdfTeilen(f){
+  const los=async()=>{try{await navigator.share({files:[f],title:f.name.replace(/\.pdf$/i,'')});return true}catch(e){if(e.name==='AbortError')return false;throw e}};
+  try{return await los()}catch(e){if(e.name!=='NotAllowedError'){alert('Teilen nicht möglich:\n'+e.message);return false}}
+  return new Promise(res=>{const d=document.createElement('div');d.className='modal';
+    d.innerHTML=`<div class="mbox" style="max-width:420px"><h2>PDF ist bereit</h2><p>${esc(f.name)}</p><div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Teilen …</button></div></div>`;
+    document.body.appendChild(d);d.querySelector('#m-no').onclick=()=>{d.remove();res(false)};
+    d.querySelector('#m-ok').onclick=async()=>{d.remove();try{res(await los())}catch(e){alert('Teilen nicht möglich:\n'+e.message);res(false)}}})}
+
+/* Dunkelmodus (P40 Teil 5, erw.dunkel): folgt der Geräteeinstellung hell/dunkel (iPhone, iPad, Windows, macOS). dkRegeln() leitet einmal aus dem Stylesheet dunkle Regeln ab und setzt sie
+   direkt hinter die Vorlage (gleiche Spezifität über :where(), Reihenfolge bleibt): helle Hintergründe/Rahmen werden dunkel, dunkle Schrift hell; dunkle Flächen (Seitenleiste) und helle Schrift darauf bleiben.
+   Wirksam nur mit body.dunkel (dkSetzen() aus render()). Blatt, Druck, PDF, K-Blätter und Unterschriftenfeld (DK_HELL) bleiben hell */
+erwPlus({k:'dunkel',std:false,p:'App iPhone/iPad (P40)',l:'Dunkelmodus (folgt der Geräteeinstellung)',info:'Ist am iPhone, iPad oder PC „Dunkel“ eingestellt (iOS: Einstellungen → Anzeige & Helligkeit, auch automatisch am Abend), erscheint ERP-Lite mit dunklem Hintergrund und heller Schrift. Belegvorschau, Druck, PDF, K-Blätter und das Unterschriftenfeld bleiben immer hell. Bei „Hell“ ändert sich nichts.'});
+const DKM=matchMedia('(prefers-color-scheme:dark)'),DK_HELL='.blatt,.doc,#print,.kbf,.sgf',DK_X=/\.blatt|\.doc\b|#print|\.kbf|\.sgf|@page/;
+let DKOK=false;const DKS=new WeakSet();
+DKM.addEventListener?.('change',()=>{if(DB&&erw('dunkel'))render()});
+function dkHSL(c){let r,g,b,a=1,m;c=c.trim().toLowerCase();if(c==='white')c='#fff';if(c==='black')c='#000';
+  if((m=c.match(/^#([0-9a-f]{3,8})$/))){let h=m[1];if(h.length<6)h=[...h].map(x=>x+x).join('');r=parseInt(h.slice(0,2),16);g=parseInt(h.slice(2,4),16);b=parseInt(h.slice(4,6),16);if(h.length===8)a=parseInt(h.slice(6,8),16)/255}
+  else if((m=c.match(/^rgba?\(([^)]*)\)$/))){const v=m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat);[r,g,b]=v;if(v.length>3)a=v[3]}else return null;
+  r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn;let h=0,s=0;
+  if(d){s=d/(1-Math.abs(2*l-1));h=mx===r?((g-b)/d+6)%6:mx===g?(b-r)/d+2:(r-g)/d+4}return{h:h*60,s,l,a}}
+const dkFarbe=(x,f)=>`hsla(${x.h.toFixed(0)},${(Math.min(x.s,1)*f*100).toFixed(0)}%,${((.08+(1-x.l)*.84)*100).toFixed(1)}%,${x.a})`;
+const DKP={'color':'t','background-color':'h','border-top-color':'h','border-right-color':'h','border-bottom-color':'h','border-left-color':'h','outline-color':'h','caret-color':'t'};
+function dkSel(s){if(DK_X.test(s)||/^(html|:root)\b/.test(s))return'';const p=s.search(/::|:(before|after|placeholder|-webkit-)/);const a=p<0?s:s.slice(0,p),e=p<0?'':s.slice(p);
+  return(/^body\b/.test(a)?a.replace(/^body/,'body:where(.dunkel)'):':where(body.dunkel) '+a)+`:where(:not(:is(${DK_HELL}) *))`+e}
+function dkTeilen(t){const o=[];let d=0,z='';for(const ch of t){if(ch==='('||ch==='[')d++;if(ch===')'||ch===']')d--;if(ch===','&&!d){o.push(z.trim());z=''}else z+=ch}if(z.trim())o.push(z.trim());return o}
+function dkListe(L){for(let i=L.cssRules.length-1;i>=0;i--){const r=L.cssRules[i];
+    if(!r.selectorText&&r.cssRules&&!(r.media&&/print/.test(r.media.mediaText))&&!r.name){dkListe(r);continue}
+    if(!r.selectorText||!r.style)continue;let d='';
+    for(const[k,w]of Object.entries(DKP)){const v=r.style.getPropertyValue(k);if(!v||/var\(|transparent|inherit|currentcolor|initial|unset/i.test(v))continue;const x=dkHSL(v);if(!x||x.a===0)continue;
+      if(w==='t'?x.l<.5:x.l>.5)d+=`${k}:${dkFarbe(x,w==='t'?1:.55)}${r.style.getPropertyPriority(k)?'!important':''};`}
+    if(!d)continue;const s=dkTeilen(r.selectorText).map(dkSel).filter(Boolean).join(',');if(!s)continue;
+    try{L.insertRule(`${s}{${d}}`,i+1)}catch(e){}}}
+function dkRegeln(){for(const st of document.querySelectorAll('style:not(#dkcss)'))if(st.sheet&&!DKS.has(st.sheet)){DKS.add(st.sheet);dkListe(st.sheet)} // auch per JS angelegte Stylesheets (z. B. Suche in den Einstellungen P42)
+  if(DKOK)return;DKOK=true;
+  const e=document.createElement('style');e.id='dkcss';e.textContent=`
+body.dunkel{--bg:#12151c;--card:#1b1f28;--ink:#e6e9ef;--mut:#9aa3b2;--line:#2c3240;--acc:#5b9cff;--acc2:#1d2b44;--ok:#4cc27e;--warn:#e0a23a;--err:#ff6b5e;--side:#0d1016;color-scheme:dark}
+html:has(body.dunkel){background:#12151c;color-scheme:dark}
+body.dunkel :is(${DK_HELL}){--bg:#f4f5f7;--card:#fff;--ink:#1d2330;--mut:#6b7280;--line:#e2e5ea;--acc:#1f5fbf;--acc2:#e8f0fc;--ok:#1e7a46;--warn:#9a5b00;--err:#b42318;color-scheme:light}
+body.dunkel .blatt{border-color:#2c3240;box-shadow:0 2px 14px rgba(0,0,0,.6)}
+:where(body.dunkel) a:where(:not(:is(${DK_HELL}) *)){color:var(--acc)}
+body.dunkel [style*="color:#555"]:not(:is(${DK_HELL}) *){color:#a7adb8!important}
+body.dunkel [style*="background:#fafbfc"]:not(:is(${DK_HELL}) *),body.dunkel [style*="background:#f6f8fb"]:not(:is(${DK_HELL}) *){background:#1b1f28!important}
+body.dunkel.ios .seg button.on,body.dunkel.ipad .seg button.on,body.dunkel .segr input:checked+span{background:#4a5162;color:#fff}
+body.dunkel.ios label.chk>input[type=checkbox]:not(:checked),body.dunkel.ipad label.chk>input[type=checkbox]:not(table.pos *):not(:checked){background:#39393d}
+body.dunkel.ios label.chk>input[type=checkbox]::before,body.dunkel.ipad label.chk>input[type=checkbox]:not(table.pos *)::before{background:#fff}
+body.dunkel img:not(:is(${DK_HELL}) *){filter:brightness(.92)}
+body.dunkel .es-hit,body.dunkel tr.es-hit>td,body.dunkel .kk.es-hit{background:#4d4214;box-shadow:0 0 0 3px #4d4214}
+body.dunkel mark:not(:is(${DK_HELL}) *){background:#6b5a12;color:#fff}
+body.dunkel :is(.blink,.blink>td):not(:is(${DK_HELL}) *){animation-name:glblinkD}@keyframes glblinkD{0%,45%{background:#5a4c12}100%{background:transparent}}`;document.head.appendChild(e)}
+function dkSetzen(){const an=!!DB&&erw('dunkel')&&DKM.matches;if(an)dkRegeln();document.body.classList.toggle('dunkel',an);
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content',an?'#0d1016':'#1d2330')}
+{const r0=render;render=function(...a){dkSetzen();return r0.apply(this,a)}}
 
 /* ---------- Versand per E-Mail über Office 365 (Microsoft Graph, Mail.Send) ---------- */
 const MAILSCOPE='https://graph.microsoft.com/Mail.Send offline_access';
@@ -6938,13 +7162,13 @@ function sigPop(titel,{name='',ohne=false,hinweis=''}={}){return new Promise(res
     <p class="err" id="m-err" style="margin:6px 0 0"></p>
     <div class="bar" style="margin:12px 0 0"><button id="sg-x">Löschen</button><span class="sp"></span><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Übernehmen</button></div></div>`;
   document.body.appendChild(d);
-  const c=d.querySelector('#sg-c'),x=c.getContext('2d'),q=s=>d.querySelector(s);let leer=true,zieh=false,lp=null,bb=null;const bbP=p=>{bb=bb?[Math.min(bb[0],p[0]),Math.min(bb[1],p[1]),Math.max(bb[2],p[0]),Math.max(bb[3],p[1])]:[p[0],p[1],p[0],p[1]]};
+  const c=d.querySelector('#sg-c'),x=c.getContext('2d'),q=s=>d.querySelector(s);let leer=true,zieh=false,lp=null,bb=null,stift=false;const bbP=p=>{bb=bb?[Math.min(bb[0],p[0]),Math.min(bb[1],p[1]),Math.max(bb[2],p[0]),Math.max(bb[3],p[1])]:[p[0],p[1],p[0],p[1]]};
   const neu=()=>{const r=c.getBoundingClientRect(),k=devicePixelRatio||1;c.width=Math.max(1,Math.round(r.width*k));c.height=Math.max(1,Math.round(r.height*k));x.setTransform(k,0,0,k,0,0);
     x.lineWidth=2.2;x.lineCap='round';x.lineJoin='round';x.strokeStyle=x.fillStyle='#0b1f4d';leer=true;bb=null;q('.sgl').hidden=false};
   requestAnimationFrame(neu);const rs=()=>{if(leer)neu()};addEventListener('resize',rs);
   const pt=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
-  c.addEventListener('pointerdown',e=>{if(q('#sg-o')?.checked)return;e.preventDefault();c.setPointerCapture?.(e.pointerId);zieh=true;lp=pt(e);bbP(lp);x.beginPath();x.arc(lp[0],lp[1],1.1,0,7);x.fill();leer=false;q('.sgl').hidden=true});
-  c.addEventListener('pointermove',e=>{if(!zieh)return;e.preventDefault();for(const v of e.getCoalescedEvents?.()||[e]){const p=pt(v);x.beginPath();x.moveTo(lp[0],lp[1]);x.lineTo(p[0],p[1]);x.stroke();lp=p;bbP(p)}});
+  c.addEventListener('pointerdown',e=>{if(q('#sg-o')?.checked)return;if(erw('ipad')){if(e.pointerType==='pen')stift=true;else if(stift&&e.pointerType==='touch')return} /* Apple Pencil (P40): Handballen ignorieren */e.preventDefault();c.setPointerCapture?.(e.pointerId);zieh=true;lp=pt(e);bbP(lp);x.beginPath();x.arc(lp[0],lp[1],1.1,0,7);x.fill();leer=false;q('.sgl').hidden=true});
+  c.addEventListener('pointermove',e=>{if(!zieh)return;e.preventDefault();for(const v of e.getCoalescedEvents?.()||[e]){const p=pt(v);if(stift&&v.pointerType==='pen')x.lineWidth=1.2+2.4*(v.pressure||.5);x.beginPath();x.moveTo(lp[0],lp[1]);x.lineTo(p[0],p[1]);x.stroke();lp=p;bbP(p)}});
   for(const t of['pointerup','pointercancel','pointerleave'])c.addEventListener(t,()=>{zieh=false});
   q('#sg-x').onclick=neu;q('#sg-o')?.addEventListener('change',e=>{q('#sg-or').hidden=!e.target.checked;q('.sgf').classList.toggle('aus',e.target.checked)});
   const fin=v=>{d.remove();document.removeEventListener('keydown',kd);removeEventListener('resize',rs);res(v)};

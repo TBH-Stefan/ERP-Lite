@@ -2374,6 +2374,50 @@ V.belege=(bereich='V')=>{
      vor:mitGr?{kopf:`<span style="white-space:nowrap"><button class="s" onclick="grpAuf('*')" title="Alle aufklappen">+</button><button class="s" onclick="grpAuf('-')" title="Alle zuklappen">−</button></span>`,
        zelle:b=>KIND.has(b.id)?'<td class="mut" style="text-align:right;padding-right:2px">└</td>':`<td>${ANZ.get(b.id)?`<button class="s grpk" onclick="event.stopPropagation();grpAuf('${b.id}')" title="${ANZ.get(b.id)} zugehörige(r) Beleg(e) (Revisionen, Folgebelege) ${UI.auf[b.id]?'zuklappen':'aufklappen'}">${UI.auf[b.id]?'−':'+'}${ANZ.get(b.id)}</button>${beleg(PRJ.get(b.id))?.projekt?'':`<button class="s" onclick="event.stopPropagation();projektName('${PRJ.get(b.id)}')" title="Projektname als Überschrift vergeben">🏷</button>`}`:''}</td>`}:null})}`;
 };
+/* ---------- Vorgänge nach Kunde › Projekt (P44 Teil 1, erw.kundeProjekt): Umschalter „Liste | Kunde › Projekt“ (kpSicht(), localStorage erp-sicht-V/-E, Standard = Kunde › Projekt);
+   gleiche Filter wie die Liste (V.belege zeichnet, tabelle() für 'belege<bereich>' liefert stattdessen kpListe() mit allen gefilterten Belegen, UI.auf dafür kurz „alles offen“);
+   Gruppen: Kunde bzw. Lieferant des Ausgangsbelegs (belegGruppen) → Projekt = kpPrj() (Projektname am Ausgangsbeleg bzw. am Auftrag), Ketten ohne Namen „ohne Projekt“;
+   Summen kpSum(): Verkauf Auftragswert (AB, sonst Angebot je Kette), verrechnet (nachkalk().uN je Auftrag), offen; Einkauf bestellt, Eingangsrechnungen, offen.
+   Auf/Zu je Gerät in erp-kp ({'k:<id>':1,'p:<id>|<projekt>':1}), Aktionen kpauf/kpalle/kpsicht/kpname ---------- */
+erwPlus({k:'kundeProjekt',std:false,p:'Ansichten klarer (P44)',l:'Verkauf und Einkauf nach Kunde › Projekt',info:'Oben in Verkauf und Einkauf wählt ein Umschalter „Liste | Kunde › Projekt“. In „Kunde › Projekt“ steht je Kunde (im Einkauf je Lieferant) eine zuklappbare Zeile mit Auftragswert, verrechnetem und offenem Betrag, darunter je Projekt dieselben Summen und aufgeklappt die Belege mit Nummer, Art, Datum, Netto und Status. Projekt = Projektname am Ausgangsbeleg; Belegketten mit gleichem Namen (z. B. Nachtrag) stehen im selben Projekt, Ketten ohne Namen unter „ohne Projekt“. Suche und Filter wirken weiter. Die gewählte Ansicht und was auf- oder zugeklappt ist, merkt sich jedes Gerät.'});
+const kpSicht=bereich=>lsGet('erp-sicht-'+bereich)||'kp';
+const kpZ=()=>{try{return JSON.parse(lsGet('erp-kp')||'{}')||{}}catch(e){return{}}};
+const kpPrj=r=>r.projekt||(r.auftragId&&r.auftragId!==r.id&&beleg(r.auftragId)?.projekt)||'';
+function kpSum(bereich,G){const re=G.flatMap(g=>[g.kopf,...g.kinder]).filter(b=>T[b.typ].re&&b.fest&&!b.storno),o=sum(re,offen);
+  if(bereich==='E')return{a:sum(G,g=>{const be=[g.kopf,...g.kinder].filter(b=>b.typ==='BE'&&!b.storno);return sum(be,b=>summen(b).netto)}),v:sum(re,b=>sgn(b)*summen(b).netto),o};
+  const A=new Set(G.map(g=>g.kopf.auftragId).filter(Boolean));
+  return{a:sum(G,g=>{const d=[g.kopf,...g.kinder].filter(b=>!b.storno),ab=d.find(b=>b.typ==='AB'),an=d.find(b=>b.typ==='AN'&&b.status!=='abgelehnt'&&b.status!=='ersetzt');return(ab||an)?summen(ab||an).netto:0}),v:sum([...A],a=>nachkalk(a).uN),o}}
+const kpZahl=(bereich,s)=>`<span class="kpz">${s.a?`<span>${bereich==='E'?'bestellt':'Auftragswert'} <b>${fmt(s.a)}</b></span>`:''}${s.v||bereich==='V'&&s.a?`<span>${bereich==='E'?'Rechnungen':'verrechnet'} <b>${fmt(s.v)}</b></span>`:''}${Math.abs(s.o)>0.005?`<span>offen <b class="kpo">${fmt(s.o)}</b></span>`:''}</span>`;
+function kpListe(bereich,L){const ids=new Set(L.map(b=>b.id)),G=belegGruppen(L),K=new Map(),z=kpZ();
+  for(const g of G){const r=beleg(g.rid)||g.kopf,kid=r.kontaktId||'',p=kpPrj(r);if(!K.has(kid))K.set(kid,new Map());const P=K.get(kid);if(!P.has(p))P.set(p,[]);P.get(p).push(g)}
+  const neu=G=>G.flatMap(g=>[g.kopf,...g.kinder]).reduce((m,b)=>b.datum>m?b.datum:m,''),kl=[...K.entries()].sort((a,c)=>kName(a[0]).localeCompare(kName(c[0]),'de'));
+  if(!kl.length)return`<div class="card"><p class="mut" style="margin:0">Keine Belege.</p></div>`;
+  const zeile=(b,root)=>`<tr class="click" onclick="nav('beleg/${b.id}')"><td><span class="nw">${BICON[b.typ]||''} ${esc(bNr(b))}</span>${root?` <button class="s" onclick="event.stopPropagation();projektName('${b.id}')" title="Projektname vergeben">🏷</button>`:''}</td><td class="kph">${T[b.typ].bez}</td><td class="kph">${dAT(b.datum)}</td><td class="n">${OHNE_PREIS.includes(b.typ)?'':fmt(sgn(b)*summen(b).netto)}</td><td>${statusTag(b)}</td></tr>`;
+  return`<div class="kpl">${kl.map(([kid,P])=>{const alle=[...P.values()].flat(),ka=!!z['k:'+kid],np=[...P.keys()].filter(Boolean).length;
+    const pl=[...P.entries()].sort((a,c)=>(!a[0])-(!c[0])||neu(c[1]).localeCompare(neu(a[1])));
+    return`<div class="kpg"><div class="kpk" data-act="kpauf" data-id="k:${esc(kid)}"><span class="kpf">${ka?'◢':'▷'}</span><span class="kpt">${esc(kName(kid))} <span class="mut">· ${np?np+(np===1?' Projekt':' Projekte'):'ohne Projekt'}</span></span>${kpZahl(bereich,kpSum(bereich,alle))}</div>
+    ${ka?pl.map(([p,Gp])=>{const id='p:'+kid+'|'+p,pa=!!z[id],bs=Gp.flatMap(g=>[g.kopf,...g.kinder]).filter(b=>ids.has(b.id)).sort((a,c)=>a.datum.localeCompare(c.datum)||(a.nr||'~').localeCompare(c.nr||'~'));
+      return`<div class="kpp"><div class="kpk" data-act="kpauf" data-id="${esc(id)}"><span class="kpf">${pa?'◢':'▷'}</span><span class="kpt">${p?esc(p):'<i class="mut">ohne Projekt</i>'} <span class="mut">· ${bs.length} ${bs.length===1?'Beleg':'Belege'}</span>${p?` <button class="s" data-act="kpname" data-k="${esc(kid)}" data-p="${esc(p)}" title="Projektname ändern">✎</button>`:''}</span>${kpZahl(bereich,kpSum(bereich,Gp))}</div>
+      ${pa?`<table class="kpb"><tbody>${bs.map(b=>zeile(b,!p&&Gp.some(g=>g.rid===b.id))).join('')}</tbody></table>`:''}</div>`}).join(''):''}</div>`}).join('')}</div>`}
+const kpSeg=bereich=>`<span class="seg kps" role="group" aria-label="Ansicht"><button class="${kpSicht(bereich)==='kp'?'':'on'}" data-act="kpsicht" data-b="${bereich}" data-v="liste">Liste</button><button class="${kpSicht(bereich)==='kp'?'on':''}" data-act="kpsicht" data-b="${bereich}" data-v="kp">${bereich==='E'?'Lieferant':'Kunde'} › Projekt</button></span>`;
+const vBel44=V.belege;V.belege=(bereich='V')=>{if(!erw('kundeProjekt'))return vBel44(bereich);
+  const kp=kpSicht(bereich)==='kp',t0=tabelle,a0=UI.auf;let h;
+  if(kp){UI.auf=new Proxy({},{get:()=>1});tabelle=(id,c,r,o)=>id==='belege'+bereich?kpListe(bereich,r):t0(id,c,r,o)}
+  try{h=vBel44(bereich)}finally{tabelle=t0;if(kp)UI.auf=a0}
+  return kmpH()?h.replace('<div class="bar fs">',`<div class="bar kpsb">${kpSeg(bereich)}</div><div class="bar fs">`):h.replace(/(<h1[^>]*>(Verkauf|Einkauf)<\/h1>)/,'$1'+kpSeg(bereich))};
+queueMicrotask(()=>Object.assign(ACT,{kpsicht:el=>{lsSet('erp-sicht-'+el.dataset.b,el.dataset.v==='kp'?null:'liste');render()},
+  kpauf:(el,e)=>{if(e?.target?.closest?.('button'))return;const z=kpZ(),k=el.dataset.id;if(z[k])delete z[k];else z[k]=1;lsSet('erp-kp',Object.keys(z).length?JSON.stringify(z):null);render()},
+  kpname:el=>{const{k,p}=el.dataset,R=DB.belege.filter(b=>!b.vorgaengerId&&!b.stornoVon&&b.kontaktId===k&&b.projekt===p);const n=prompt('Projektname (leer = keiner):',p);if(n===null||!R.length)return;
+    for(const r of R)r.projekt=n.trim();log('Projektname',`${p} → ${n.trim()||'(entfernt)'}`);commit();render()}}));
+{const st=document.createElement('style');st.textContent=`.kpl{display:flex;flex-direction:column;gap:10px}.kpg{background:#fff;border:1px solid #e3e7ee;border-radius:10px;overflow:hidden}
+.kpk{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;user-select:none}.kpk:hover{background:#f6f8fb}.kpf{width:14px;color:#8a929e;flex:none;font-size:11px;text-align:center}.kpt{font-weight:600}.kpt .mut{font-weight:400}
+.kpk button.s{opacity:.55;padding:1px 6px}.kpk:hover button.s{opacity:1}.kpz{margin-left:auto;display:flex;gap:18px;color:#6b7280;font-size:13px;white-space:nowrap}.kpz b{color:#1f2937;font-weight:600}.kpz b.kpo{color:#b45309}
+.kpp{border-top:1px solid #eef1f5}.kpp>.kpk{padding:9px 14px 9px 38px;background:#fafbfc}.kpp>.kpk .kpt{font-weight:500}
+.kpb{width:100%;border-collapse:collapse}.kpb td{padding:7px 10px;border-top:1px solid #f0f2f5}.kpb td:first-child{padding-left:64px}.kpb tr.click:hover td{background:#f6f8fb}
+.seg.kps{display:inline-flex;vertical-align:middle;margin-left:14px;border:1px solid #cfd6e0;border-radius:8px;overflow:hidden;font-size:14px}.seg.kps button{border:0;border-radius:0;margin:0;padding:6px 12px;background:#fff;min-height:0}.seg.kps button.on{background:#1f5fd1;color:#fff}
+h1:has(+.seg.kps){display:inline-block}
+@media(max-width:760px){.kpk button.s{display:none}.kpk{flex-wrap:wrap;gap:4px 10px}.kpz{margin-left:24px;width:100%;gap:0 12px;flex-wrap:wrap}.kpp>.kpk{padding-left:28px}.kpp>.kpk .kpz{margin-left:16px}.kpb td:first-child{padding-left:28px}.kpb .kph{display:none}.kpsb .seg.kps{margin:0;display:flex;width:100%}.kpsb .seg.kps button{flex:1;padding:9px 10px}}`;document.head.appendChild(st)}
+
 /* ---------- Offene Lieferungen (P35 Teil 2, erw.lfListe): je offene Position festgeschriebener Bestellungen (lfPos) Lieferant, Bestellung, Artikel, offen, Termin (bestätigt,
    sonst gewünscht) und Status; Filter UI.lfSt (Status, LF_F), UI.lfK (Lieferant), UI.lfQ (Suche); Spalten LF_SP über tabelle() mit Spaltenauswahl, am Handy Karten;
    Zeile → Bestellung, „📦 WE“ → lfWE() (Folgebeleg BE → WE mit den offenen Mengen). Seitenleiste „Offene Lieferungen“ unter „Einkauf“, lfNav() aus render() ---------- */

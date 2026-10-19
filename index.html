@@ -3250,8 +3250,22 @@ function anhKarte(b){return`<div class="card"><h2>Anhänge${b.typ==='ER'?' (Rech
     ${(b.anhaenge||[]).map((a,i)=>`<div class="att"><a href="javascript:void 0" data-act="attopen" data-i="${i}">📄 ${esc(a.name)}</a><span class="mut">${a.groesse?Math.round(a.groesse/1024)+' kB':''}</span><span class="sp"></span><button class="s d" data-act="attdel" data-i="${i}">✕</button></div>`).join('')||'<p class="mut" style="margin:0 0 6px">keine</p>'}
     ${STORE.art==='cache'?'<p class="mut">Test-Modus: Anhänge liegen nur in diesem Browser.</p>':''}<label class="btn" style="margin-top:8px">📷 Foto / Datei hinzufügen<input type="file" id="att" accept="image/*,application/pdf,.xml" multiple hidden></label>
   </div>`}
+/* Beleg-Info mit Reitern (P44 D, erw.belegInfo, kompakt am Bildschirm): die Karten Belegkette, Versand, Kunde/Lieferant und Anhänge rechts im Beleg als eine Karte „Infos“ mit Reitern
+   (bInfo(html) ordnet das fertige HTML um, Inhalte und IDs unverändert); gewählter Reiter UI.bInfo (Sitzung), Umschalten ACT.binfo ohne Neuzeichnen */
+erwPlus({k:'belegInfo',std:false,p:'Ansichten klarer (P44)',l:'Beleg: Infos rechts in einer Karte mit Reitern',info:'Am Bildschirm stehen rechts im Beleg Belegkette, Kunde bzw. Lieferant, Anhänge und Versand nicht mehr als vier einzelne Karten untereinander, sondern in einer Karte „Infos“ mit Reitern. Summen und Kalkulation bleiben wie bisher.'});
+const BI_R=[['kette',/^Belegkette/,'Belegkette'],['kontakt',/^(Kunde|Lieferant)$/,null],['anh',/^Anhänge/,'Anhänge'],['versand',/^Versand$/,'Versand']];
+function bInfo(h,b){const t=document.createElement('template');t.innerHTML=h;const R=[];
+  for(const c of [...t.content.children].filter(c=>c.matches('.card'))){const h2=c.querySelector(':scope>h2'),x=(h2?.textContent||'').trim(),r=BI_R.find(r=>r[1].test(x));if(!r)continue;
+    const l=r[2]||x,z=r[0]==='anh'?(b.anhaenge||[]).length:r[0]==='kette'?c.querySelectorAll('.chain a').length:0,kopf=r[0]==='kette'&&h2.querySelector('a')?' '+h2.querySelector('a').outerHTML:'';h2.remove();R.push({k:r[0],l,z,kopf,html:c.innerHTML});c.remove()}
+  if(R.length<2)return h;R.sort((a,c)=>BI_R.findIndex(r=>r[0]===a.k)-BI_R.findIndex(r=>r[0]===c.k));const w=R.some(r=>r.k===UI.bInfo)?UI.bInfo:b.typ==='ER'&&R.some(r=>r.k==='anh')?'anh':R[0].k;
+  const card=`<div class="card binfo"><div class="bir" role="tablist">${R.map(r=>`<button class="${r.k===w?'on':''}" data-act="binfo" data-k="${r.k}" role="tab">${esc(r.l)}${r.z>1||r.k==='anh'&&r.z?` <span class="mut">${r.z}</span>`:''}</button>`).join('')}</div>${R.map(r=>`<div class="bip${r.k===w?' on':''}" data-k="${r.k}">${r.kopf?`<div class="mut" style="margin-bottom:6px">${r.kopf.replace('>Auftrag<','>Auftrag öffnen<')}</div>`:''}${r.html}</div>`).join('')}</div>`;
+  return t.innerHTML+card}
+queueMicrotask(()=>Object.assign(ACT,{binfo:el=>{UI.bInfo=el.dataset.k;const c=el.closest('.binfo');for(const x of c.querySelectorAll('[data-k]'))x.classList.toggle('on',x.dataset.k===UI.bInfo)}}));
+{const st=document.createElement('style');st.textContent=`.binfo .bir{display:flex;gap:2px;border-bottom:1px solid #e3e7ee;margin:-4px 0 12px;flex-wrap:wrap}.binfo .bir button{border:0;background:none;border-radius:0;padding:6px 10px;margin:0 0 -1px;border-bottom:2px solid transparent;color:#4b5563;min-height:0}
+.binfo .bir button.on{border-bottom-color:#1f5fd1;color:#1f2937;font-weight:600}.binfo .bip{display:none}.binfo .bip.on{display:block}`;document.head.appendChild(st)}
+
 function belegSeiteK(b,side,kette){const n=(b.anhaenge||[]).length,v=(b.versand||[]).length;
-  if(!HANDY.matches)return b.typ==='ER'?anhKarte(b)+side:side+anhKarte(b);
+  if(!HANDY.matches){const h=b.typ==='ER'?anhKarte(b)+side:side+anhKarte(b);return erw('belegInfo')?bInfo(h,b):h}
   return akk('b-info','Beleg-Info',anhKarte(b)+side,{offen:b.typ==='ER',zusatz:[n?`${n} Anhang${n>1?'e':''}`:'keine Anhänge',kette.length>1?`Belegkette ${kette.length}`:'',v?`${v}× versendet`:''].filter(Boolean).join(' · ')})}
 function aktLeiste(b){if(!kmpBH())return'';const n=b.pos.filter(p=>!isInfo(p)).length;
   return`<div class="aktl">${OHNE_PREIS.includes(b.typ)?`<span class="aks mut">${n} Position${n===1?'':'en'}</span>`:`<button class="aks" data-act="sumpop" title="Summen und Kalkulation"><span class="mut">netto</span> <b id="aktsum">${fmt(summen(b).netto)} €</b> <span class="mut">Σ</span></button>`}<span class="sp"></span>

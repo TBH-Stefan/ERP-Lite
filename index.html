@@ -7577,6 +7577,61 @@ erwPlus({k:'dashLeer',std:false,p:'Ansichten klarer (P44)',l:'Überblick ohne le
   return t.innerHTML+(leer.length?`<p class="mut dll">Nichts offen: ${leer.map(esc).join(' · ')}</p>`:'')}}
 {const st=document.createElement('style');st.textContent='.quick.dlq{display:flex;gap:8px;grid-template-columns:none}.quick.dlq>*{flex:0 0 auto;display:inline-flex;align-items:center}.dll{margin:14px 2px 0}';document.head.appendChild(st)}
 
+/* Schnellfunktionen (P45, Paket „Schnellfunktionen (P45)“, Schalter Standard aus): Teil 1 erw.schnell – Direktlinks #/schnell/<k> (Liste SF) für Kurzbefehle/Widgets am iPhone und Lesezeichen,
+   V.schnell = Kachelseite (sfSeite), sfLink(k) ersetzt den Verlaufseintrag durch #/schnell und führt sfAus(k) aus (Kamera braucht ein Tippen: Kachel wird markiert); Auswahl S().schnell.aus, Karte sfKarte() in den Einstellungen.
+   Teil 2 erw.schnellStart – Kachelseite beim Programmstart ohne Adresse (SF_H0, einmal über SFST). Teil 3 erw.stoppuhr – laufende Uhr S().uhr {von,a,t,m,x} (über die Einstellungen auf allen Geräten), uhrStart()/uhrStopp() (Rundung S().uhrRund Minuten, Standard 15, mindestens eine Einheit), Anzeige #uhrp aus render() */
+erwPlus({k:'schnell',std:false,p:'Schnellfunktionen (P45)',l:'Schnellfunktionen und Direktlinks (iPhone-Widgets)',info:'Seite „Schnellfunktionen“ mit großen Kacheln (Adresse …/#/schnell) und je Funktion ein eigener Link …/#/schnell/<funktion>, der die Funktion sofort ausführt. Die Links legt man am iPhone in der Kurzbefehle-App als „URL öffnen“ an und zieht das Kurzbefehle-Widget auf den Home-Bildschirm (auch Aktionstaste, Kontrollzentrum). Links, Auswahl der Funktionen und Anleitung: Einstellungen → Karte „Schnellfunktionen“. Aus = Seite und Karte ausgeblendet.'},
+  {k:'schnellStart',std:false,p:'Schnellfunktionen (P45)',l:'Beim Start die Schnellfunktionen zeigen',info:'Wird ERP-Lite ohne bestimmte Adresse geöffnet (z. B. über das Symbol am Home-Bildschirm), erscheint zuerst die Seite mit den Kacheln statt der Übersicht. „🏠 Übersicht“ führt weiter. Wirkt nur mit „Schnellfunktionen und Direktlinks“.'},
+  {k:'stoppuhr',std:false,p:'Schnellfunktionen (P45)',l:'Stoppuhr für die Zeiterfassung',info:'Kachel „Zeit starten / stoppen“: Start fragt Auftrag, Tarif (und Mitarbeiter) mit der letzten Auswahl vorbelegt; Stopp schlägt die Stunden gerundet vor (Standard 15 Minuten, mindestens 15 Minuten; einstellbar in der Karte „Schnellfunktionen“) und legt den Eintrag in der Zeiterfassung an. Die laufende Uhr steht unten rechts und gilt auf allen Geräten (wird mit gespeichert). Auch in der Zeiterfassung.'});
+const SF=[{k:'zeit',ic:'⏱',l:'Zeit starten / stoppen',nur:()=>erw('stoppuhr')},{k:'erfassen',ic:'🕒',l:'Zeit erfassen'},{k:'bericht',ic:'📋',l:'Neuer Bautagesbericht',nur:()=>erw('btb')},
+  {k:'foto',ic:'📸',l:'Foto zum Bericht',nur:()=>erw('btb')&&erw('btbBild')},{k:'rechnung',ic:'📄',l:'Rechnung einlesen'},{k:'angebot',ic:'📝',l:'Neues Angebot'},{k:'suche',ic:'🔍',l:'Suchen',nur:()=>erw('suche')},
+  {k:'dash',ic:'🏠',l:'Übersicht'},{k:'lief',ic:'🚚',l:'Offene Lieferungen',nur:()=>erw('lfListe')},{k:'kontakt',ic:'👤',l:'Neuer Kunde'}];
+const sfOk=x=>!x.nur||x.nur(),sfL=()=>SF.filter(x=>sfOk(x)&&!(S().schnell?.aus||[]).includes(x.k)),SF_H0=location.hash;let SFST=false;
+const uhrRund=()=>Math.max(1,+S().uhrRund||15),uhrMin=u=>Math.max(0,Math.round((Date.now()-new Date(u.von))/60000)),hm=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
+function sfSeite(a){if(!erw('schnell'))return'<h1>Schnellfunktionen</h1><p class="mut">Ausgeschaltet (Einstellungen → Erweiterungen → Schnellfunktionen).</p>';const u=erw('stoppuhr')&&S().uhr;
+  return`<h1>Schnellfunktionen</h1><div class="sfk">${sfL().map(x=>{const hl=x.k===a?' sfhl':'',t=x.k==='zeit'&&u?`⏹ Zeit stoppen<small>${esc(auftragKurz(u.a))} · läuft ${hm(uhrMin(u))} h</small>`:esc(x.l)+(x.k===a&&x.k==='rechnung'?'<small>Tippen zum Fotografieren</small>':'');
+    return x.k==='rechnung'?`<label class="btn sfb${hl}"><span>${x.ic}</span>${t}<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>`:`<button class="sfb${hl}${x.k==='zeit'&&u?' sfl':''}" data-act="sf" data-k="${x.k}"><span>${x.ic}</span>${t}</button>`}).join('')}</div>`}
+V.schnell=a=>{if(a&&erw('schnell'))queueMicrotask(()=>sfLink(a));return sfSeite(a)};
+function sfLink(k){history.replaceState(null,'','#/schnell');CURHASH=location.hash;if(k!=='rechnung')sfAus(k)} // Eintrag ersetzen: Zurück führt nicht noch einmal in die Aktion
+async function sfAus(k){const A=btbAuftraege();
+  switch(k){
+    case'zeit':return S().uhr?uhrStopp():uhrStart();
+    case'erfassen':go('zeiten');return setTimeout(()=>$('#zt-h')?.focus(),50);
+    case'bericht':return ACT.btbneu({dataset:{}});
+    case'foto':{const r=DB.berichte.filter(x=>x.datum===isoD()&&!btbFest(x)).sort((a,c)=>(c.erstellt||'').localeCompare(a.erstellt||''))[0];if(!r)return ACT.btbneu({dataset:{}});go('bericht/'+r.id);return setTimeout(()=>$('input[data-btbfoto]')?.closest('label')?.scrollIntoView({block:'center'}),80)}
+    case'rechnung':return render();
+    case'angebot':return ACT.neu({value:'AN'});
+    case'suche':return suPop();
+    case'dash':return go('dash');
+    case'lief':return go('lieferungen');
+    case'kontakt':return ACT.knew({dataset:{t:'K'}});
+  }}
+async function uhrStart(){const A=btbAuftraege();if(!A.length){alert('Zuerst ein Angebot oder einen Auftrag anlegen.');return}const lA=lsGet('erp-lastA'),lT=lsGet('erp-lastT'),ma=erw('mitarbeiter');
+  const o=await formDialog({titel:'Zeit starten',ok:'▶ Starten',felder:[{k:'a',l:'Auftrag',wert:A.some(x=>x.id===lA)?lA:A[0].id,opts:A.map(a=>[a.id,auftragLabel(a.id)]),cls:'w2',pflicht:true},
+    {k:'t',l:'Tarif',wert:lT||S().tarife[0]?.kz||'',opts:S().tarife.map(t=>[t.kz,t.kz+' – '+t.bez])},...(ma?[{k:'m',l:'Mitarbeiter',wert:lsGet('erp-lastM')||'',opts:[['','–'],...maAkt().map(m=>[m.id,m.name])]}]:[]),{k:'x',l:'Tätigkeit',wert:'',cls:'w2'}]});
+  if(!o)return;lsSet('erp-lastA',o.a);if(o.t)lsSet('erp-lastT',o.t);if(o.m)lsSet('erp-lastM',o.m);S().uhr={von:new Date().toISOString(),a:o.a,t:o.t||'',...(o.m?{m:o.m}:{}),x:o.x||''};await commit();render()}
+async function uhrStopp(){const u=S().uhr;if(!u)return;const min=uhrMin(u),r=uhrRund(),h=Math.max(r,Math.round(min/r)*r)/60;
+  const o=await formDialog({titel:'Zeit stoppen',ok:'⏹ Eintragen',extra:'Verwerfen',felder:[{typ:'hinweis',l:`${esc(auftragLabel(u.a))} · ${esc(u.t)} · gestartet ${dAT(isoD(new Date(u.von)))} ${new Date(u.von).toTimeString().slice(0,5)}, Dauer ${hm(min)} h (gerundet auf ${r} min).`},
+    {k:'h',l:'Stunden',typ:'number',wert:+h.toFixed(2),cls:'w05',im:'decimal',pflicht:true},{k:'x',l:'Tätigkeit',wert:u.x||'',cls:'w2'}]});
+  if(!o)return;if(o==='extra'){if(!confirm('Laufende Zeit verwerfen, ohne Eintrag?'))return;delete S().uhr;await commit();render();return}
+  const tf=S().tarife.find(x=>x.kz===u.t)||{kosten:0,vk:0},m=u.m&&erw('mitarbeiter')&&maVon(u.m),hh=num(o.h);if(!(hh>0)){alert('Bitte Stunden angeben.');return}
+  DB.zeiten.push({id:uid(),datum:isoD(new Date(u.von)),auftragId:u.a,tarif:u.t,stunden:hh,text:o.x||'',kosten:+tf.kosten||0,vk:+tf.vk||0,belegId:'',...(m?{maId:m.id,kosten:maKosten(m,tf)}:{})});
+  delete S().uhr;await commit();render()}
+function uhrPill(){const u=DB&&erw('stoppuhr')&&S().uhr;let el=$('#uhrp');if(!u){el?.remove();return}
+  if(!el){el=document.createElement('button');el.id='uhrp';el.dataset.act='sf';el.dataset.k='zeit';document.body.appendChild(el)}el.title='Zeit stoppen';el.textContent='⏱ '+hm(uhrMin(u))+' · '+auftragKurz(u.a)}
+setInterval(uhrPill,30000);
+{const r0=render;render=function(){if(DB&&!SFST){SFST=true;if(erw('schnell')&&erw('schnellStart')&&!/^#\/?[^/]/.test(SF_H0)&&/^(#\/?(dash)?)?$/.test(location.hash)){history.replaceState(null,'','#/schnell');CURHASH=location.hash}}r0();uhrPill()}}
+function sfKarte(){const s=S(),aus=s.schnell?.aus||[],basis=location.href.split('#')[0];
+  return`<div class="card" id="sfkarte"><h2>Schnellfunktionen (iPhone-Widgets)</h2><p class="mut">Am iPhone: Kurzbefehle-App → „+“ → Aktion „URL öffnen“ mit dem Link der Funktion → Name und Symbol wählen. Dann am Home-Bildschirm lange drücken → „Bearbeiten“ → „Widget hinzufügen“ → „Kurzbefehle“ (klein 1, mittel 4, groß 8 Kurzbefehle). Dieselben Kurzbefehle passen auch auf die Aktionstaste und ins Kontrollzentrum. Öffnet iOS den Link in Safari statt in der App, gilt dort die eigene Anmeldung von Safari.</p>
+  <table class="sft"><tr><th>Zeigen</th><th>Funktion</th><th>Link</th><th></th></tr>${SF.filter(sfOk).map(x=>`<tr><td><input type="checkbox" data-act="sfaus" data-k="${x.k}"${aus.includes(x.k)?'':' checked'}></td><td>${x.ic} ${esc(x.l)}</td><td><code>${esc(basis)}#/schnell/${x.k}</code></td><td><button class="s" data-act="sfkopie" data-u="${esc(basis)}#/schnell/${x.k}">Kopieren</button></td></tr>`).join('')}</table>
+  <div class="row"><label class="w05">Kachelseite<input readonly value="${esc(basis)}#/schnell"></label>${erw('stoppuhr')?`<label class="w05">Stoppuhr runden auf (Minuten)<input type="number" step="1" min="1" inputmode="numeric" data-o="s" data-f="uhrRund" value="${uhrRund()}"></label>`:''}</div></div>`}
+{const z0=V.zeiten;V.zeiten=(...x)=>{const h=z0(...x);if(!DB||!erw('stoppuhr'))return h;const u=S().uhr;return h.replace('<h1>Zeiterfassung</h1>',`<div class="bar"><h1 style="margin:0">Zeiterfassung</h1><span class="sp"></span><button class="${u?'':'p'}" data-act="sf" data-k="zeit">${u?'⏹ Zeit stoppen ('+hm(uhrMin(u))+' h)':'▶ Zeit starten'}</button></div>`)}}
+{const e0=V.einstellungen;V.einstellungen=(...x)=>{const h=e0(...x);return DB&&erw('schnell')?h+sfKarte():h}}
+Object.assign(ACT,{sf:el=>sfAus(el.dataset.k),
+  sfaus:el=>{const s=S(),L=(s.schnell??={}).aus??=[],i=L.indexOf(el.dataset.k);if(el.checked&&i>=0)L.splice(i,1);else if(!el.checked&&i<0)L.push(el.dataset.k);persist()},
+  sfkopie:async el=>{try{await navigator.clipboard.writeText(el.dataset.u);el.textContent='✓ Kopiert'}catch(e){prompt('Link kopieren:',el.dataset.u)}}});
+{const st=document.createElement('style');st.textContent='.sfk{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:10px}.sfk .sfb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:104px;padding:12px;font-size:15px;font-weight:600;text-align:center;border-radius:14px;cursor:pointer}.sfk .sfb span{font-size:30px;line-height:1}.sfk .sfb small{font-weight:400;font-size:12px;opacity:.8}.sfk .sfhl{outline:3px solid #2f6fdf;outline-offset:2px}.sfk .sfl{background:#c0392b;color:#fff;border-color:#c0392b}@media(max-width:760px){.sfk{grid-template-columns:1fr 1fr}}.sft code{font-size:12px;word-break:break-all}.sft td{vertical-align:middle;padding:4px 6px}#uhrp{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:900;background:#c0392b;color:#fff;border:0;border-radius:20px;padding:8px 14px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.25)}body.tl #uhrp{bottom:calc(76px + env(safe-area-inset-bottom))}';document.head.appendChild(st)}
+
 /* Einstellungen gruppieren (P46, erw.einstGruppen): Wrapper um V.einstellungen (nach allen anderen Wrappern). Die Bereiche (Kinder von #main) werden nach Verwendungszweck EB
    geordnet (Karten über data-akk bzw. Überschrift EB_KARTE, Schalter über EB_K, sonst „Weitere“); die Karte „Erweiterungen“ wird je Bereich als „Funktionen“ (egFunk) neu
    aufgebaut, Paketnummer nur in ⓘ. Breit (> 1100 px): Liste #egn.egw links (Raster per :has), rechts nur der gewählte Bereich (EB_AKT, erp-einstB); schmal: Bereiche als Karten
@@ -7588,9 +7643,9 @@ const EB_K=Object.fromEntries(Object.entries({belege:'strgP snapshot duplikat dr
   kalk:'gkalk gkMerken dbStd gkLohn k3Tarif tarifPos gkAufsFeld vkVorschlag ekRechnen kbVorlage kbDruck kbProjekt kbBeleg',einkauf:'scanPE lfTermin lfListe lfErinnern lfVerkauf lfNeu',
   kontakte:'kFilter navKL kontaktForm adrVorschlag adrPruef dublette kDok artBild',bau:'btb btbBild btbSig btbDruck btbVorschau btbZeit btbNrDatum btbRechnung btbFahrt btbTage regie regieAntrag mitarbeiter maLohn unterschrift',
   ansicht:'kompakt kompaktBeleg einstGruppen kundeProjekt auftragKP belegFilterKurz belegInfo kontaktSchlank dashLeer navKlapp pfeile speicherLeiste dashFlex ihHover scrollSperre baumHover kontext statuszeile kopfFix zuletzt suche einstSuche suEinst',
-  app:'ios appOffline netStatus ipad tabLeiste wischZurueck langDruck iosTeilen dunkel',sicher:'abmKnopf geraetLoeschen mfaPflicht sicherung archiv vollsicherung'}).flatMap(([b,s])=>s.split(' ').map(k=>[k,b])));
+  app:'ios appOffline netStatus ipad tabLeiste wischZurueck langDruck iosTeilen dunkel schnell schnellStart stoppuhr',sicher:'abmKnopf geraetLoeschen mfaPflicht sicherung archiv vollsicherung'}).flatMap(([b,s])=>s.split(' ').map(k=>[k,b])));
 const EB_KARTE=[[/^e-(firma|kfm|st|nk)\||\|(Firma|Kaufmännisch|Steuersätze|Nummernkreise)/,'firma'],[/^e-(mail|druck)\||\|(E-Mail-Vorlage|Druck)/,'belege'],[/^e-(tf|kv|ger)\||\|(Stundentarife|Kollektivvertr|Geräteliste)/,'kalk'],
-  [/^e-(ein|lf)\||\|(Belege einlesen|Liefertermine)/,'einkauf'],[/^e-(regie|fahrt)\||\|(Regiepreise|Fahrtkosten)/,'bau']];
+  [/^e-(ein|lf)\||\|(Belege einlesen|Liefertermine)/,'einkauf'],[/^e-(regie|fahrt)\||\|(Regiepreise|Fahrtkosten)/,'bau'],[/\|Schnellfunktionen/,'app']];
 let EB_AKT=lsGet('erp-einstB')||'firma',EB_N='';
 const EB_SM=matchMedia('(max-width:1100px)'),ebB=x=>EB_K[x.k]||'weitere',ebPN=p=>(String(p).match(/\((P[^)]*)\)/)||[])[1]||'',ebPL=p=>String(p).replace(/\s*\(P[^)]*\)/,'');
 EB_SM.addEventListener?.('change',()=>{if(erw('einstGruppen')&&/^#\/?einstellungen$/.test(location.hash))render()});

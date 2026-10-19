@@ -747,7 +747,7 @@ const ERW=[
   {k:'k3Tarif',std:true,p:'Lohnstunden (P12)',l:'K3-Blatt: „als Stundentarif übernehmen …“',info:'Im K3-Blatt eigener K-Blätter (ÖNORM B 2061) übernimmt der Knopf die Lohnkosten je Stunde als Kostensatz und den Mittellohnpreis als Verkauf in einen bestehenden oder neuen Stundentarif. Bereits erfasste Zeiten behalten ihre Sätze. Es kommt nur eine Schaltfläche dazu. Aus: Knopf ausgeblendet.'},
 ];
 const ERW_STD=Object.fromEntries(ERW.map(x=>[x.k,x.std]));
-const erw=k=>DB?.settings?.erw?.[k]??ERW_STD[k];
+let ERW_X=null;const erw=k=>{const v=DB?.settings?.erw?.[k]??ERW_STD[k];return ERW_X?ERW_X(k,v):v}; // ERW_X: Vorgabe je Gerät (P45 erw.appHandy)
 const kontakt=id=>DB.kontakte.find(k=>k.id===id);
 const artikel=id=>id?DB.artikel.find(a=>a.id===id):null;
 const beleg=id=>id?DB.belege.find(b=>b.id===id):null;
@@ -7583,6 +7583,9 @@ erwPlus({k:'dashLeer',std:false,p:'Ansichten klarer (P44)',l:'Überblick ohne le
 erwPlus({k:'schnell',std:false,p:'Schnellfunktionen (P45)',l:'Schnellfunktionen und Direktlinks (iPhone-Widgets)',info:'Seite „Schnellfunktionen“ mit großen Kacheln (Adresse …/#/schnell) und je Funktion ein eigener Link …/#/schnell/<funktion>, der die Funktion sofort ausführt. Die Links legt man am iPhone in der Kurzbefehle-App als „URL öffnen“ an und zieht das Kurzbefehle-Widget auf den Home-Bildschirm (auch Aktionstaste, Kontrollzentrum). Links, Auswahl der Funktionen und Anleitung: Einstellungen → Karte „Schnellfunktionen“. Aus = Seite und Karte ausgeblendet.'},
   {k:'schnellStart',std:false,p:'Schnellfunktionen (P45)',l:'Beim Start die Schnellfunktionen zeigen',info:'Wird ERP-Lite ohne bestimmte Adresse geöffnet (z. B. über das Symbol am Home-Bildschirm), erscheint zuerst die Seite mit den Kacheln statt der Übersicht. „🏠 Übersicht“ führt weiter. Wirkt nur mit „Schnellfunktionen und Direktlinks“.'},
   {k:'stoppuhr',std:false,p:'Schnellfunktionen (P45)',l:'Stoppuhr für die Zeiterfassung',info:'Kachel „Zeit starten / stoppen“: Start fragt Auftrag, Tarif (und Mitarbeiter) mit der letzten Auswahl vorbelegt; Stopp schlägt die Stunden gerundet vor (Standard 15 Minuten, mindestens 15 Minuten; einstellbar in der Karte „Schnellfunktionen“) und legt den Eintrag in der Zeiterfassung an. Die laufende Uhr steht unten rechts und gilt auf allen Geräten (wird mit gespeichert). Auch in der Zeiterfassung.'});
+erwPlus({k:'appHandy',std:true,p:'Schnellfunktionen (P45)',l:'Am Handy automatisch App-Darstellung',info:'Am Handy (Touch, bis 760 px Breite) gelten immer die kompakte Ansicht, der kompakte Beleg-Editor, die iOS-Darstellung und die Tab-Leiste unten, auch wenn ERP-Lite über einen Link in Safari aufgeht oder diese Schalter aus sind. Am PC und iPad gelten weiter die einzelnen Schalter. Aus = nur die einzelnen Schalter.'});
+const APP_H=['kompakt','kompaktBeleg','ios','tabLeiste'],APP_HM=matchMedia('(max-width:760px) and (pointer:coarse)');
+ERW_X=(k,v)=>v||(APP_H.includes(k)&&APP_HM.matches&&!!(DB?.settings?.erw?.appHandy??ERW_STD.appHandy)); // erw.appHandy liest den Schalter direkt (keine Schleife über erw())
 const SF=[{k:'zeit',ic:'⏱',l:'Zeit starten / stoppen',nur:()=>erw('stoppuhr')},{k:'erfassen',ic:'🕒',l:'Zeit erfassen'},{k:'bericht',ic:'📋',l:'Neuer Bautagesbericht',nur:()=>erw('btb')},
   {k:'foto',ic:'📸',l:'Foto zum Bericht',nur:()=>erw('btb')&&erw('btbBild')},{k:'rechnung',ic:'📄',l:'Rechnung einlesen'},{k:'angebot',ic:'📝',l:'Neues Angebot'},{k:'suche',ic:'🔍',l:'Suchen',nur:()=>erw('suche')},
   {k:'dash',ic:'🏠',l:'Übersicht'},{k:'lief',ic:'🚚',l:'Offene Lieferungen',nur:()=>erw('lfListe')},{k:'kontakt',ic:'👤',l:'Neuer Kunde'}];

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheit (P37 S3): erlaubte Ziele für Skripte und Verbindungen. Neue externe Verbindung → hier ergänzen. frame-ancestors wirkt per meta nicht → Prüfung im Script (P37) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: blob: https://login.microsoftonline.com https://graph.microsoft.com https://*.sharepoint.com https://*.1drv.com https://*.livefilestore.com https://api.anthropic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: blob: https://login.microsoftonline.com https://graph.microsoft.com https://*.sharepoint.com https://*.1drv.com https://*.livefilestore.com https://api.anthropic.com https://cdn.jsdelivr.net https://openplzapi.org https://photon.komoot.io; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' data: blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d2330">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -244,6 +244,13 @@ label>input,label>select,label>textarea{margin-top:2px;color:var(--ink);font-siz
 .vk>div{margin-top:3px}.vk .vkl{display:flex;flex-wrap:wrap;gap:4px 16px}.vk .vkl a{color:var(--acc);text-decoration:none;padding:6px 0;display:inline-block}.vk .vkn{white-space:pre-wrap;color:var(--ink);background:#fafbfc;border-radius:6px;padding:6px 8px;margin-top:6px}
 .kkl>.kkf{border-top:1px solid var(--line)}.kkl>.kkf>button{margin:0 10px 0 0}.tag.warn{background:#fdf1dc;color:var(--warn)}.tag.err{background:#fde8e6;color:var(--err)}.tag.acc{background:var(--acc2);color:var(--acc)}
 .pfehlt,.pfehlt .bwfeld{border-color:var(--err)!important;box-shadow:0 0 0 2px rgba(180,35,24,.22)!important}
+/* Adressvorschläge (P41) */
+.adrv{position:fixed;z-index:300;background:var(--card,#fff);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:45vh;overflow:auto;font-size:14px}
+.adri{padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--line)}.adri:hover,.adri.on{background:var(--acc2)}
+.adrq{padding:3px 10px;font-size:11px;color:var(--mut);text-align:right}
+body.ios .adri{min-height:44px;display:flex;align-items:center;flex-wrap:wrap;gap:0 4px}
+/* Formular Kunde/Lieferant (P41 Teil 3): am Handy PLZ | Ort und Straße | Hausnr. nebeneinander */
+@media(max-width:760px){.modal .row>label:is(.kf-plz,.kf-hnr){flex:0 0 32%!important;min-width:0!important}.modal .row>label:is(.kf-ort,.kf-str){flex:1 1 0!important;min-width:0!important}.modal .row>label.kf-land{flex:1 1 100%!important}}
 /* Bild je Artikel (P31) */
 .abild{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}.abild img{max-width:220px;max-height:220px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}
 /* Bedienung (P33): ⓘ als Fenster beim Darüberfahren (body.ihh), nur im Pop-up scrollen (body.ssp), Struktur-Auswahl in Spalten (#bw-l.bwk) */
@@ -707,8 +714,11 @@ const ERW=[
   {k:'gkAufsFeld',std:true,p:'Aufschlag (P11)',l:'Feld „Aufschlag %“ (auf die Herstellkosten) im Artikel-Pop-up einer Verkaufsposition',info:'Im Pop-up „Artikel bearbeiten“ (✎ an der Position) zeigt das Feld den Aufschlag des Verkaufspreises nach Kundenrabatt auf die Herstellkosten. Eine Eingabe berechnet den EP: EP = HK × (1 + Aufschlag/100) ÷ (1 − Rabatt/100); Änderungen von EP, Rabatt, EK oder Herstellkosten rechnen den Aufschlag neu. Der Aufschlag ist intern: er wird nicht gespeichert und nie gedruckt. Bei „Lohn / Sonstiges“ geht die Änderung auf Sonstiges. Aus: Feld ausgeblendet.'},
   {k:'vkVorschlag',std:true,p:'Aufschlag (P11)',l:'VK-Vorschlag aus dem Aufschlag je Artikel',info:'Im Artikel kann ein „VK-Aufschlag % auf HK“ eingetragen werden. Ändert sich beim Einlesen eines Belegs der EK, schlägt der Abgleich zusätzlich VK = (Herstellkosten bzw. EK) × (1 + Aufschlag/100) vor (übernommen wird nur, was angehakt ist); im Artikel erscheint bei abweichendem VK der Knopf „VK-Vorschlag … übernehmen“. Ohne eingetragenen Aufschlag ändert sich nichts. Aus: Feld und Vorschlag ausgeblendet, eingetragene Werte bleiben gespeichert.'},
   {k:'lfNeu',std:true,p:'Stammdaten (P31)',l:'„+ Neuer Lieferant …“ in der Lieferantenauswahl von Artikeln',info:'In „Neuer Artikel“, im Artikel-Pop-up einer Position (✎) und in der Lieferantenliste eines Artikels steht in der Auswahl „Lieferant“ der Eintrag „+ Neuer Lieferant …“. Er öffnet das Pop-up „Neuer Lieferant“, danach ist der neue Lieferant gleich gewählt. Der Lieferant bleibt angelegt, auch wenn der Artikel danach nicht angelegt wird. Aus = Lieferant vorher unter „Kunden & Lieferanten“ anlegen.'},
+  {k:'kontaktForm',std:false,p:'Adressen (P41)',l:'Formular „Neuer Kunde/Lieferant“ nach Unternehmen oder Privat, Adresse in der Folge PLZ, Ort, Straße, Hausnummer',info:'Im Pop-up „Neuer Kunde“ / „Neuer Lieferant“ (und „bearbeiten“): Art Unternehmen (Standard) oder Privat. Bei Unternehmen heißt das Feld „Firma“ und Zusatz / z. H. sowie UID-Nr. werden angezeigt, bei Privat heißt es „Name“ und diese Felder sind ausgeblendet (eingetragene Werte bleiben erhalten). Die Adresse wird in der Folge PLZ, Ort, Land, Straße und Hausnummer (eigenes Feld) eingegeben, gespeichert wird wie bisher „Straße Hausnummer“ in einem Feld.'},
   {k:'dublette',std:true,p:'Stammdaten (P31)',l:'Bei Neuanlage prüfen, ob Artikel bzw. Kontakt schon angelegt ist',info:'Beim Anlegen eines Artikels (Artikelstamm, aus einer Position, Artikel-Pop-up einer Position) meldet das Programm Artikel mit gleicher oder sehr ähnlicher Bezeichnung (Zahlen wie 3x1,5 müssen übereinstimmen) oder mit gleicher Art.-Nr. beim selben Lieferanten, auch deaktivierte. Beim Anlegen eines Kunden oder Lieferanten meldet es Kontakte mit gleichem oder ähnlichem Namen (ohne GmbH, KG …), gleicher UID-Nr. oder gleicher E-Mail, auch solche der anderen Art. Angelegt wird erst nach Rückfrage, sonst bleibt das Formular offen. Beim Einlesen von Belegen werden Zeilen wie bisher vorhandenen Artikeln zugeordnet.'},
+  {k:'adrVorschlag',std:false,p:'Adressen (P41)',l:'Adressvorschläge beim Tippen von Straße und PLZ (Kunden und Lieferanten)',info:'In „Neuer Kunde“ / „Neuer Lieferant“, beim Bearbeiten und im geöffneten Kontakt erscheint ab 3 Zeichen in „Straße“ (bzw. 4 Ziffern in „PLZ“) eine Liste mit passenden Adressen. Antippen oder Pfeiltasten + Enter füllt Straße, PLZ, Ort und Land. Zuerst stehen Adressen aus den eigenen Kontakten (auch ohne Netz), danach Treffer aus OpenStreetMap (Dienst Photon von komoot, kostenlos, ohne Schlüssel). Gesendet wird nur der getippte Adresstext, kein Name, keine Firma, keine E-Mail.'},
   {k:'ekRechnen',std:true,p:'Stammdaten (P31)',l:'Listenpreis, Rabatt und EK: zwei Werte ergeben den dritten',info:'In „Neuer Artikel“, im Artikel-Pop-up einer Position (✎) und in der Lieferantenliste eines Artikels: Listenpreis und Rabatt ergeben den EK, EK und Listenpreis den Rabatt, EK und Rabatt den Listenpreis. Neu berechnet wird jeweils das Feld, das am längsten nicht bearbeitet wurde. Wird zuerst nur der EK oder nur der Listenpreis eingetragen, gilt Listenpreis = EK und Rabatt 0 – so sind immer alle drei Felder ausgefüllt. Aus = wie bisher (nur im Artikel-Pop-up einer Position: Listenpreis/Rabatt → EK, EK → Rabatt).'},
+  {k:'adrPruef',std:false,p:'Adressen (P41)',l:'Adresse prüfen: Straße, Hausnummer, PLZ und Ort (Kunden und Lieferanten)',info:'Beim Anlegen und Speichern in „Neuer Kunde“ / „Neuer Lieferant“ fragt das Programm einmal bei OpenStreetMap (Photon) nach, ob Straße mit Hausnummer, PLZ und Ort existieren. Bei einer Abweichung kommt eine Rückfrage (Vorschlag übernehmen bzw. trotzdem speichern), gesperrt wird nie. Im geöffneten Kontakt steht ein Hinweis unter der Adresse. Aus der Vorschlagsliste gewählte und unveränderte Adressen werden nicht erneut geprüft. Ohne Netz: „nicht geprüft“. Gesendet wird nur die Adresse.'},
   {k:'artBild',std:true,p:'Bilder (P24)',l:'Bild je Artikel',info:'Im Artikel (Karte „Bild“) und in „Neuer Artikel“ lässt sich ein Foto oder Bild einfügen, am Handy auch direkt mit der Kamera. Das Bild liegt als Datei in der Ablage unter „bilder/“ (OneDrive bzw. Ordner, im Test nur in diesem Browser) – als Vorschau mit höchstens 320 Pixeln und in voller Größe (große Bilder verkleinert); die Daten (erp-daten.json) enthalten nur den Dateinamen. Ein Klick auf die Vorschau öffnet das Bild. Belege und Ausdrucke bleiben unverändert (Bilder im Druck folgen mit P24). Aus = Karte und Feld ausgeblendet, gespeicherte Bilder bleiben erhalten.'},
   {k:'abAbschluss',std:true,p:'Belegstatus (P32)',l:'Auftragsbestätigung nach der Ausgabe „abgeschlossen“',info:'Sobald eine festgeschriebene Auftragsbestätigung gedruckt, als PDF gespeichert oder per E-Mail versendet wird, steht ihr Status auf „abgeschlossen“ (nicht mehr unter „offen“). „Status wieder offen“ im Beleg nimmt das zurück, „Bearbeiten“ ebenfalls. Aus = Status wie bisher nach Lieferung und Rechnung (offen, teilweise, erledigt).'},
   {k:'ihHover',std:true,p:'Bedienung (P33)',l:'Erläuterungen ⓘ beim Darüberfahren mit der Maus',info:'Am Bildschirm mit Maus erscheint die Erläuterung, solange der Mauszeiger auf dem ⓘ steht, als kleines Fenster – ohne Klick und ohne dass sich die Seite verschiebt. Am Handy und Tablet weiter durch Antippen. Aus = Aufklappen per Klick.'},
@@ -2710,7 +2720,7 @@ function formDialog({titel,felder,ok='Anlegen',breit=false,extra='',scroll=false
     const abschn=Z=>{let o='',auf=0;for(let r of Z){if(r[0].typ==='abschnitt'){o+=(auf?'</div></details>':'')+`<details class="akk fa"${r[0].zu?'':' open'}><summary><span class="akt">${r[0].l}</span></summary><div class="akb">`;auf=1;r=r.slice(1);if(!r.length)continue}o+=`<div class="row">${r.map(fld).join('')}</div>`}return o+(auf?'</div></details>':'')};
     d.innerHTML=`<div class="mbox" style="${breit?'max-width:760px':''}${scroll?';max-height:84vh;overflow:auto':''}"><h2>${titel}</h2>${K&&felder.some(f=>f.typ==='abschnitt')?abschn(zeilen):zeilen.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('')}
       <p class="err" id="m-err" style="margin:6px 0 0"></p><div class="bar" style="justify-content:flex-end;margin:12px 0 0">${extra?`<button id="m-x">${esc(extra)}</button><span class="sp"></span>`:''}<button id="m-no">Abbrechen</button><button class="p" id="m-ok">${ok}</button></div></div>`;
-    document.body.appendChild(d);setTimeout(()=>d.querySelector('input:not([disabled]),select:not([disabled])')?.focus(),0);
+    document.body.appendChild(d);setTimeout(()=>d.querySelector(matchMedia('(pointer:coarse)').matches?'input:not([disabled]):not([type=checkbox]):not([type=radio]):not([type=file])':'input:not([disabled]),select:not([disabled])')?.focus(),0); // Touch (Handy/Tablet): keine Auswahlliste fokussieren, iOS öffnet sie sonst sofort
     const fin=v=>{d.remove();document.removeEventListener('keydown',kd);res(v)},einH=ein?.(d);
     d.addEventListener('click',async e=>{const t=e.target.closest('[data-bw]');if(!t||t.disabled)return;e.preventDefault();const box=t.closest('[data-k]'),f=felder.find(x=>x.k===box.dataset.k),v=await baumWahl(f.baum,box.dataset.wert);
       if(v!==null){box.dataset.wert=v;box.innerHTML=ketteHTML(f.baum,v,'data-fk="1"')}});
@@ -2721,13 +2731,26 @@ function formDialog({titel,felder,ok='Anlegen',breit=false,extra='',scroll=false
     d.querySelector('#m-no').onclick=()=>fin(null);d.querySelector('#m-ok').onclick=okf;if(extra)d.querySelector('#m-x').onclick=()=>fin('extra');
   });
 }
+/* Formular „Kunde/Lieferant“ nach Kundenart (P41 Teil 3, erw.kontaktForm): kfFelder() ordnet die Felder von kontaktPopup() neu (Art, Firma/Name, Nr.; Zusatz und UID nur
+   Unternehmen = Klasse kf-b2b; PLZ, Ort, Land; Straße + eigenes Feld hnr), kfEin() blendet je Art ein/aus und beschriftet „Firma“/„Name“, kfHnr() fügt vor den Prüfungen
+   „Straße Hausnummer“ wieder zu einem Feld zusammen (Datenmodell unverändert). Ohne Schalter bleibt die Liste unverändert. */
+function kfFelder(src,F){if(!erw('kontaktForm'))return F;const g=k=>F.find(f=>f.k===k),o=(f,x)=>f&&{...f,neu:0,...x},st=pT(src.strasse),nr=adrNr(st),
+  P=F.filter(f=>PERSF.includes(f.k)||f.typ==='abschnitt'),pv=F.indexOf(P[0])<F.indexOf(g('zusatz')),b2b=(src.kundenart||'B2B')!=='privat'; // P = Person und Briefanrede (vorne ohne kompakt)
+  return[o(g('kundenart')),o(g('name'),{l:b2b?'Firma':'Name',cls:'w2'}),o(g('nr')),o(g('zusatz'),{neu:1,cls:'kf-b2b'}),o(g('uid'),{l:'UID-Nr.',cls:'kf-b2b'}),...(pv?P:[]),
+    o(g('plz'),{neu:1,cls:'w05 kf-plz',im:'numeric'}),o(g('ort'),{cls:'w2 kf-ort'}),o(g('strasse'),{neu:1,cls:'w2 kf-str',wert:pT(st.slice(0,st.length-nr.length))}),{k:'hnr',l:'Hausnr.',wert:nr,cls:'w05 kf-hnr',ph:'z. B. 25/3'},o(g('land'),{cls:'w05 kf-land'}),
+    o(g('email'),{neu:1,im:'email'}),o(g('tel'),{im:'tel'}),o(g('zahlungsziel'),{neu:1}),o(g('skonto')),o(g('skontoTage')),o(g('rabatt')),o(g('kdNrLief')),...(pv?[]:P)].filter(Boolean)}
+function kfEin(d){const art=d.querySelector('[data-k="kundenart"]'),nm=d.querySelector('[data-k="name"]');if(!erw('kontaktForm')||!art||!d.querySelector('[data-k="hnr"]'))return null;
+  const setz=()=>{const pv=art.value==='privat',t=nm?.closest('label')?.firstChild;d.querySelectorAll('.row').forEach(r=>{const c=[...r.children];if(c.some(x=>x.classList.contains('kf-b2b')))c.forEach(x=>{if(x.classList.contains('kf-b2b'))x.style.display=pv?'none':''}),r.style.display=pv&&c.every(x=>x.classList.contains('kf-b2b'))?'none':''});
+    if(t?.nodeType===3)t.nodeValue=(pv?'Name':'Firma')+' *';if(nm)nm.placeholder=pv?'z. B. Max Mustermann':'z. B. Muster GmbH'};
+  art.addEventListener('change',setz);setz();return null}
+const kfHnr=o=>{if('hnr' in o){o.strasse=[o.strasse,o.hnr].map(pT).filter(Boolean).join(' ');delete o.hnr}};
 // Kontakt anlegen oder bearbeiten (k = bestehender Kontakt). Pflicht: Name, Straße, PLZ, Ort, Land (§ 11 UStG: Name und Anschrift)
 async function kontaktPopup(typ,v={},k=null){ // typ K | L
   const s=S(),nrV=k?k.nr:String((s.knr[typ]||0)+1),src={...v,...(k||{})},istK=typ!=='L';
   const K_=kmp(),pers=[...(K_?[{typ:'abschnitt',l:'Person und Briefanrede',zu:!PERSF.some(f=>pT(src[f]))}]:[]),{k:'anrede',l:'Anrede',wert:src.anrede||'',opts:[['','–'],...Object.entries(ANR).map(([x,a])=>[x,a.a])],neu:1,cls:'w05'},{k:'titel',l:'Titel',wert:src.titel||'',cls:'w05',ph:'z. B. Ing.'},
     {k:'vorname',l:'Vorname',wert:src.vorname||''},{k:'nachname',l:'Nachname',wert:src.nachname||''},{k:'titelNach',l:'Titel nachgestellt',wert:src.titelNach||'',cls:'w05',ph:'z. B. BSc'},
     {k:'briefAnrede',l:'Briefanrede',wert:src.briefAnrede||'',neu:1,cls:'w2',ph:briefAnrede({...src,briefAnrede:''}),info:'leer = automatisch aus Anrede, Titel und Nachname (z. B. „Sehr geehrter Herr Ing. Mustermann,“), ohne Nachname „Sehr geehrte Damen und Herren,“'}]; // Anrede (P6): ohne kompakt nach „Name / Firma“, in kompakt als zuklappbarer Abschnitt am Ende
-  const o=await formDialog({titel:k?`${istK?'Kunde':'Lieferant'} bearbeiten`:(istK?'Neuer Kunde':'Neuer Lieferant'),ok:k?'Speichern':'Anlegen',breit:true,felder:[
+  const o=await formDialog({titel:k?`${istK?'Kunde':'Lieferant'} bearbeiten`:(istK?'Neuer Kunde':'Neuer Lieferant'),ok:k?'Speichern':'Anlegen',breit:true,felder:kfFelder(src,[
     {k:'kundenart',l:'Art',wert:src.kundenart||(src.uid||typ==='L'?'B2B':'B2B'),opts:[['B2B','Unternehmen (B2B)'],['privat','Privat (B2C)']],cls:'w05'},
     {k:'name',l:'Name / Firma',wert:src.name,cls:'w2',pflicht:true},{k:'nr',l:istK?'Kunden-Nr.':'Lieferanten-Nr.',wert:nrV,cls:'w05',pflicht:true},...(K_?[]:pers),
     {k:'zusatz',l:'Zusatz / z. H.',wert:src.zusatz,neu:1},{k:'strasse',l:'Straße',wert:src.strasse,cls:'w2',pflicht:true},
@@ -2735,7 +2758,7 @@ async function kontaktPopup(typ,v={},k=null){ // typ K | L
     {k:'uid',l:'UID-Nr. (B2B)',wert:src.uid,neu:1},{k:'email',l:'E-Mail',wert:src.email},{k:'tel',l:'Telefon',wert:src.tel},
     {k:'zahlungsziel',l:'Zahlungsziel Tage',typ:'number',wert:src.zahlungsziel??s.zahlungsziel,neu:1,cls:'w05'},{k:'skonto',l:'Skonto %',typ:'number',wert:src.skonto||'',cls:'w05'},{k:'skontoTage',l:'Skonto Tage',typ:'number',wert:src.skontoTage||'',cls:'w05'},
     ...(istK?[{k:'rabatt',l:'Kundenrabatt %',typ:'number',wert:src.rabatt||'',cls:'w05'}]:[]),
-    ...(!istK||src.typ==='KL'?[{k:'kdNrLief',l:'Unsere Kunden-Nr.',wert:src.kdNrLief||'',cls:'w05',ph:'beim Lieferanten'}]:[]),...(K_?pers:[])],pruef:o=>kontaktPruef(o,k,typ)}); // steht auf Bestellungen statt der internen Lieferanten-Nr. (P6)
+    ...(!istK||src.typ==='KL'?[{k:'kdNrLief',l:'Unsere Kunden-Nr.',wert:src.kdNrLief||'',cls:'w05',ph:'beim Lieferanten'}]:[]),...(K_?pers:[])]),ein:kfEin,pruef:async o=>(kfHnr(o),await adrFrage(o,k)===false)?false:kontaktPruef(o,k,typ)}); // steht auf Bestellungen statt der internen Lieferanten-Nr. (P6)
   if(!o)return null;
   for(const f of ['kdNrLief',...PERSF])if(!pT(o[f])&&!(k&&f in k))delete o[f]; // leeres neues Feld nicht anlegen (Kontakte ohne Anrede bleiben unverändert, P6)
   if(/^\d+$/.test(o.nr)&&+o.nr>(s.knr[typ==='L'?'L':'K']||0)&&+o.nr<(s.knr[typ==='L'?'L':'K']||0)+100000)s.knr[typ==='L'?'L':'K']=+o.nr; // nächste automatische Nummer folgt
@@ -2765,10 +2788,101 @@ function kontDubletten(o){const n=normF(o.name),u=normN(o.uid),m=pT(o.email).toL
     if(g.length)r.push(`${k.nr} ${k.name}${k.ort?' · '+k.ort:''} (${{K:'Kunde',L:'Lieferant',KL:'Kunde und Lieferant'}[k.typ]||'Kontakt'}) – ${g.join(', ')}`)}
   return r}
 const dubFrage=(r,was)=>!r.length||confirm(`${was} ist möglicherweise schon angelegt:\n• ${r.slice(0,8).join('\n• ')}${r.length>8?`\n… und ${r.length-8} weitere`:''}\n\nTrotzdem neu anlegen?\n(Abbrechen = zurück zum Formular)`);
+/* Adressprüfung (P41, erw.adrPruef, nutzt adrFetch() aus erw.adrVorschlag): Pop-up „Kunde/Lieferant“ → adrFrage() beim Anlegen/Speichern (Rückfrage, nie gesperrt),
+   geöffneter Kontakt → Hinweis adrHinweis(k) unter der Adresse. adrPruefen(o) → {st:'ok'|'nr'|'ohne'|'plz'|'str'|'aus',v} (v = Vorschlag mit PLZ/Ort des Treffers).
+   Nicht geprüft werden unveränderte Adressen, Adressen anderer Kontakte und schon abgefragte Treffer (Vorschlagsliste, ADR_C). Ort wird nicht verglichen (Ortschaft ≠ Gemeinde). */
+const ADR_ST={ok:'✓ Adresse gefunden',nr:'⚠ Hausnummer nicht gefunden',ohne:'⚠ ohne Hausnummer',plz:'⚠ PLZ passt nicht zur Straße',str:'⚠ Straße in diesem Ort unbekannt',aus:'○ Adresse nicht geprüft (kein Netz oder Dienst nicht erreichbar)'},ADR_R=new Map();
+const adrStr=x=>normT(x).replace(/stra(ß|ss)e\b/g,'str').replace(/\s+/g,''),adrHn=x=>String(x||'').split(/[\/-]/)[0].replace(/\s+/g,'').toLowerCase(); // Hausnummer ohne Stiege/Tür
+const adrBek=o=>{const key=adrKey(o);return DB.kontakte.some(k=>k!==o&&adrKey(k)===key)||[...ADR_C.values()].some(l=>l.some(p=>p.housenumber&&adrKey(adrAus(p))===key))};
+async function adrPruefen(o){const nr=adrNr(o.strasse),name=pT(o.strasse).slice(0,pT(o.strasse).length-nr.length).trim(),P=adrP(o.plz),hn=adrHn(nr);
+  const l=await adrFetch([o.strasse,[o.plz,o.ort].map(pT).filter(Boolean).join(' ')].filter(Boolean).join(', '),o.land,5);if(!l)return{st:'aus'};
+  const H=l.map(p=>({...adrAus(p),sn:adrStr(p.street||p.name),hn:adrHn(p.housenumber)})).filter(x=>x.sn===adrStr(name));if(!H.length)return{st:'str'};
+  const vor=x=>({strasse:o.strasse,plz:x.plz,ort:x.ort,land:o.land}),pl=x=>!x.plz||adrP(x.plz)===P;
+  if(!hn)return H.some(pl)?{st:'ohne'}:{st:'plz',v:vor(H.find(x=>x.plz))};
+  const g=H.filter(x=>x.hn===hn);if(!g.length)return{st:'nr'};return g.some(pl)?{st:'ok'}:{st:'plz',v:vor(g[0])}}
+async function adrFrage(o,k){if(!erw('adrPruef')||!pT(o.strasse)||k&&adrKey(k)===adrKey(o)||adrBek(o))return;
+  const r=await adrPruefen(o),a=`${o.strasse}, ${o.plz} ${o.ort}`;if(r.st==='ok'||r.st==='aus')return;
+  if(r.v&&confirm(`${ADR_ST[r.st]}:\n${a}\n\nVorschlag laut OpenStreetMap: ${r.v.plz} ${r.v.ort}\nÜbernehmen? (Abbrechen = Eingabe lassen)`)){
+    const d=[...document.querySelectorAll('.modal')].pop();for(const x of ['plz','ort']){const e=d?.querySelector(`[data-k="${x}"]`);if(e)e.value=r.v[x]}return false} // Formular bleibt offen, nochmals „Anlegen“
+  if(!confirm(`${ADR_ST[r.st]}:\n${a}\n\nTrotzdem speichern?\n(Abbrechen = zurück zum Formular)`))return false}
+function adrHinweis(k){if(!erw('adrPruef')||!pT(k.strasse))return'';const key=adrKey(k),r=ADR_R.get(key)||(adrBek(k)?{st:'ok'}:null);
+  if(!r)setTimeout(async()=>{const x=await adrPruefen(k);if(x.st!=='aus')ADR_R.set(key,x);document.querySelectorAll('.adrp').forEach(e=>{if(e.dataset.a===key)e.outerHTML=adrHinweis2(k,x)})},0);
+  return adrHinweis2(k,r)}
+const adrHinweis2=(k,r)=>`<div class="adrp mut" data-a="${esc(adrKey(k))}" style="font-size:12px;margin:-2px 0 6px">${r?esc(ADR_ST[r.st])+(r.v?` – laut OpenStreetMap ${esc(r.v.plz+' '+r.v.ort)} <button class="s" data-act="adrv" data-id="${k.id}" data-plz="${esc(r.v.plz)}" data-ort="${esc(r.v.ort)}">Übernehmen</button>`:''):'Adresse wird geprüft …'}</div>`;
+queueMicrotask(()=>Object.assign(ACT,{adrv:el=>{const k=kontakt(el.dataset.id);if(!k)return;k.plz=el.dataset.plz;k.ort=el.dataset.ort;persist();render()}}));
 // Prüfung im Formular „Kunde/Lieferant“ (false = Formular bleibt offen): Nummer frei, Dublette (nur Neuanlage), UID-Nr. bei Unternehmenskunden
 function kontaktPruef(o,k,typ){const istK=typ!=='L';if(DB.kontakte.some(x=>x!==k&&x.nr===o.nr)){alert('Nummer '+o.nr+' ist bereits vergeben.');return false}
   if(!k&&erw('dublette')&&!dubFrage(kontDubletten(o),istK?'Der Kunde':'Der Lieferant'))return false;
   if(o.kundenart==='B2B'&&!o.uid&&istK&&!confirm('Für Unternehmenskunden ist die UID-Nr. bei Rechnungen über 10.000 € brutto und bei Reverse Charge Pflicht.\nOhne UID-Nr. speichern?'))return false}
+/* Adressvorschläge (P41, erw.adrVorschlag): Liste über bzw. unter „PLZ“, „Ort“ und „Straße“ im Pop-up „Neuer Kunde/Lieferant“ (formDialog, data-k) und im geöffneten Kontakt
+   (Setter 'k', auch LIVE.kontakt), live mit jedem Zeichen enger: PLZ → Orte, Ort → Orte (bei PLZ nur dieser), Straße → Straßen der PLZ bzw. des Orts; Wahl springt ins nächste Feld.
+   Zuerst Adressen aus den eigenen Kontakten (auch ohne Netz); Österreich: OpenPLZ API (amtliche Orte und Straßen, oplz()), sonst bzw. ohne Treffer Photon (komoot, OpenStreetMap);
+   beide in CSP connect-src. Gesendet wird nur der Adresstext; ohne Netz oder bei Fehler nur die eigenen. Wahl füllt Straße, PLZ, Ort, Land (Straße ohne Hausnummer). */
+const ADR_URL='https://photon.komoot.io/api/',ADR_C=new Map(),adrP=x=>String(x||'').replace(/\D/g,''),adrAT=l=>['','österreich','oesterreich','austria','at','a'].includes(pT(l).toLowerCase());
+const adrNr=s=>(pT(s).match(/\s(\d+\s*[a-z]?(?:\s*[\/-]\s*\d+\s*[a-z]?)*)$/i)||[])[1]||''; // Hausnummer am Ende („25“, „3/2/7“, „12a“)
+const adrKey=o=>[normT(o.strasse),adrP(o.plz),normT(o.ort)].join('|');
+async function adrFetch(q,land,n=8){const at=adrAT(land),u=`${ADR_URL}?q=${encodeURIComponent(q)}&limit=${at?n*2:n}&lang=de${at?'&bbox=9.5,46.35,17.2,49.05':''}`; // Österreich: Rahmen + nur countrycode AT
+  if(ADR_C.has(u))return ADR_C.get(u);if(!navigator.onLine)return null;
+  try{const r=await fetch(u,{signal:AbortSignal.timeout(5000)});if(!r.ok)return null;const j=await r.json(),l=(j.features||[]).map(f=>f.properties||{}).filter(p=>!at||p.countrycode==='AT');ADR_C.set(u,l);return l}catch(e){return null}}
+// OpenPLZ API (Österreich): Localities {name,postalCode}, Streets {name,postalCode,locality}; Filter sind reguläre Ausdrücke (Name ohne Groß-/Kleinschreibung), höchstens 50 je Abfrage
+const OPLZ='https://openplzapi.org/at/',oRx=s=>'^'+[...s].map(c=>/[äöü]/i.test(c)?`[${c.toLowerCase()}${c.toUpperCase()}]`:c.replace(/[.*+?^${}()|[\]\\\/-]/g,'\\$&')).join('');
+async function oplz(p,par){const u=OPLZ+p+'?'+new URLSearchParams({...par,page:1,pageSize:50});if(ADR_C.has(u))return ADR_C.get(u);if(!navigator.onLine)return null;
+  try{const r=await fetch(u,{signal:AbortSignal.timeout(5000)});if(!r.ok)return null;const j=await r.json(),l=Array.isArray(j)?j:[];ADR_C.set(u,l);return l}catch(e){return null}}
+const adrAus=p=>{const st=p.street||(p.osm_key==='highway'||p.type==='street'?p.name:'');return{strasse:st?[st,p.housenumber].filter(Boolean).join(' '):'',plz:p.postcode||'',ort:p.city||p.locality||p.district||(p.type==='city'?p.name:'')||'',land:p.country||'',nr:!!p.housenumber}};
+const adrLokal=(q,f,ex)=>{const n=f==='plz'?adrP(q):normT(q),r=[];if(!n&&f==='plz')return r;for(const k of DB.kontakte)if(k.id!==ex&&pT(k[f])&&(f==='plz'?adrP(k.plz):normT(k[f])).startsWith(n))r.push({strasse:f==='strasse'?k.strasse||'':'',plz:k.plz||'',ort:k.ort||'',land:k.land||'',lokal:1});return r};
+// Eingabefeld → Zusammenhang {f,ex,g(feld)=Wert,el(feld),fill(o)} oder null
+const ADR_F=['strasse','plz','ort'];
+function adrCtx(el){if(!erw('adrVorschlag')||el.tagName!=='INPUT')return null;const m=el.closest('.modal');let c=null;
+  if(m&&ADR_F.includes(el.dataset.k)&&m.querySelector('[data-k="name"]')&&m.querySelector('[data-k="ort"]')){const q=x=>m.querySelector(`[data-k="${x}"]`);
+    c={f:el.dataset.k,ex:'',el:q,fill:o=>{for(const x of ['strasse','plz','ort','land'])if(o[x]!=null&&o[x]!==''&&q(x))q(x).value=o[x];const n=q('hnr')&&adrNr(o.strasse);if(n){q('hnr').value=n;q('strasse').value=pT(o.strasse.slice(0,-n.length))}}}}
+  else if(el.dataset.o==='k'&&ADR_F.includes(el.dataset.f)){const id=el.dataset.id,q=x=>document.querySelector(`[data-o="k"][data-id="${id}"][data-f="${x}"]`);
+    c={f:el.dataset.f,ex:id,el:q,fill:o=>{const k=kontakt(id);if(!k)return;document.activeElement?.blur?.();for(const x of ['strasse','plz','ort','land'])if(o[x]!=null&&o[x]!=='')k[x]=o[x];persist();render()}}}
+  if(c)c.g=x=>c.el(x)?.value||'';return c}
+let ADR=null,ADR_T=0; // offene Liste {el,box,l,i,c}
+function adrZu(){ADR?.box.remove();ADR=null}
+function adrZeigen(el,c,l){adrZu();if(!l.length||document.activeElement!==el)return;const box=document.createElement('div'),r=el.getBoundingClientRect(),w=Math.min(Math.max(r.width,300),innerWidth-16);
+  box.className='adrv';box.style.cssText=`left:${Math.max(8,Math.min(r.left,innerWidth-w-8))}px;top:0;width:${w}px;visibility:hidden`;
+  const qu=[l.some(o=>o.q==='o')&&'Daten: OpenPLZ API',l.some(o=>!o.lokal&&o.q!=='o')&&'© OpenStreetMap'].filter(Boolean).join(' · ');
+  box.innerHTML=l.map((o,i)=>{const po=esc([o.plz,o.ort].filter(Boolean).join(' '))+(o.land&&!adrAT(o.land)?', '+esc(o.land):'');return`<div class="adri" data-i="${i}">${o.lokal?'👤 ':''}${o.strasse?`${esc(o.strasse)}<span class="mut"> · ${po}</span>`:po}</div>`}).join('')+(qu?`<div class="adrq">${qu}</div>`:'');
+  box.addEventListener('mousedown',e=>e.preventDefault()); // Fokus bleibt im Feld
+  box.addEventListener('click',e=>{const t=e.target.closest('.adri');if(t)adrWahl(+t.dataset.i)});
+  document.body.appendChild(box);ADR={el,box,l,i:-1,c};
+  // über dem Feld, damit das Autofill des Browsers (Chrome/Edge am Bildschirm, unter dem Feld) frei bleibt; zu wenig Platz oben → darunter (Handy/Tablet: Autofill in der Leiste über der Tastatur)
+  const ob=r.top-6>=Math.min(box.offsetHeight,140);if(ob)box.style.maxHeight=Math.min(box.offsetHeight,r.top-6)+'px';box.style.top=(ob?r.top-2-box.offsetHeight:r.bottom+2)+'px';box.style.visibility=''}
+// nach der Wahl ins nächste Feld: PLZ/Ort → Ort (falls leer) bzw. Straße mit Liste; Straße → Hausnummer
+function adrWeiter(c,f){const n=()=>c.el(f)?.focus();c.ex?setTimeout(n,0):n()} // focusin zeigt die Liste
+function adrWahl(i){const A=ADR,o=A?.l[i];if(!o)return;adrZu();
+  if(!o.strasse){A.c.fill({plz:o.plz,ort:o.ort,land:o.land});adrWeiter(A.c,pT(A.c.g('ort'))?'strasse':'ort');return} // PLZ/Ort → Straße
+  const nr=adrNr(A.el.value),st=!o.nr&&!o.lokal&&nr&&!adrNr(o.strasse)?o.strasse+' '+nr:o.strasse;A.c.fill({...o,strasse:st});
+  const h=A.c.el('hnr');if(h){if(!adrNr(st)&&!pT(h.value))h.focus()}else if(!adrNr(st)){const e=A.c.el('strasse');if(e){e.value=st+' ';e.focus();e.setSelectionRange(e.value.length,e.value.length)}}} // Hausnummer noch eintippen
+// genug eingegeben? Österreich: PLZ ab 1 Ziffer, Ort ab 1 Zeichen, Straße ab 1 Zeichen mit PLZ oder Ort (sonst 3); andere Länder (nur Photon): PLZ 4 Ziffern, Ort/Straße ab 3 Zeichen
+function adrGenug(c,q){const at=adrAT(c.g('land'));if(c.f==='plz')return adrP(q).length>=(at?1:4);if(!at)return q.length>=3;
+  if(c.f==='ort')return q.length>=1||adrP(c.g('plz')).length===4;return q.length>=(adrP(c.g('plz')).length===4||pT(c.g('ort'))?1:3)}
+async function adrSuchen(el,c,q){const land=c.g('land'),at=adrAT(land),plz=adrP(c.g('plz')),p4=plz.length===4,ort=pT(c.g('ort')),eind=l=>{const s=new Set();return l.filter(o=>{const k=adrKey(o);return!s.has(k)&&s.add(k)})};
+  const lok=adrLokal(q,c.f,c.ex).filter(o=>c.f==='plz'||adrP(o.plz).startsWith(plz)),max=30;
+  adrZeigen(el,c,eind(lok).slice(0,max));let f=[],l;
+  const ph=async(t,fl)=>(await adrFetch(t,land)||[]).map(adrAus).filter(fl); // Photon
+  if(c.f==='plz'){const d=adrP(q);l=at?await oplz('Localities',{postalCode:'^'+d}):null;
+    if(l)f=l.map(x=>({plz:x.postalCode,ort:x.name,land:'Österreich',strasse:'',q:'o'}));
+    if(!f.length&&d.length===4)f=(await ph(d+(at?'':' '+land),o=>adrP(o.plz).startsWith(d)&&o.ort)).map(o=>({plz:o.plz,ort:o.ort,land:o.land,strasse:''}))}
+  else if(c.f==='ort'){const par={};if(q)par.name=oRx(q);if(plz)par.postalCode='^'+plz+(p4?'$':'');l=at&&(q||p4)?await oplz('Localities',par):null;
+    if(l)f=l.map(x=>({plz:x.postalCode,ort:x.name,land:'Österreich',strasse:'',q:'o'}));
+    if(!f.length&&q.length>=3)f=(await ph(q+(p4?' '+plz:''),o=>o.ort&&normT(o.ort).startsWith(normT(q))&&(!p4||adrP(o.plz)===plz))).map(o=>({plz:o.plz,ort:o.ort,land:o.land,strasse:''}))}
+  else{const s=pT(q.slice(0,q.length-adrNr(q).length)),par={};if(s)par.name=oRx(s);if(p4)par.postalCode='^'+plz+'$';else if(ort)par.locality=oRx(ort)+'$';
+    l=at&&(p4||ort)?await oplz('Streets',par):null;if(l)f=l.map(x=>({strasse:x.name,plz:x.postalCode,ort:x.locality,land:'Österreich',nr:false,q:'o'}));if(ort&&p4)f.sort((x,y)=>(normT(y.ort)===normT(ort))-(normT(x.ort)===normT(ort))); // Ortschaft der PLZ zuerst
+    if(!f.length&&q.length>=3){const zu=[c.g('plz'),ort].map(pT).filter(Boolean).join(' ');f=zu?await ph(q+', '+zu,o=>o.strasse):[];if(!f.length)f=await ph(q,o=>o.strasse)}} // mit PLZ/Ort, sonst ohne
+  if(pT(el.value)!==q||document.activeElement!==el)return; // inzwischen weitergetippt
+  if(f.length)adrZeigen(el,c,eind([...lok,...f]).slice(0,max))}
+document.addEventListener('input',e=>{const el=e.target,c=adrCtx(el);if(!c)return;clearTimeout(ADR_T);const q=pT(el.value);
+  if(!adrGenug(c,q)){adrZu();return}ADR_T=setTimeout(()=>adrSuchen(el,c,q),250)});
+// leeres Feld „Ort“/„Straße“ bei bekannter PLZ (Österreich): Liste schon beim Hineintippen
+document.addEventListener('focusin',e=>{const el=e.target,c=adrCtx(el);if(!c||c.f==='plz'||pT(el.value)||ADR?.el===el||!adrAT(c.g('land'))||adrP(c.g('plz')).length!==4)return;adrSuchen(el,c,'')});
+document.addEventListener('keydown',e=>{if(!ADR||e.target!==ADR.el)return;const n=ADR.l.length; // vor dem Enter/Esc der Pop-ups (capture)
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();ADR.i=e.key==='ArrowDown'?(ADR.i+1)%n:ADR.i<=0?n-1:ADR.i-1;ADR.box.querySelectorAll('.adri').forEach((x,i)=>x.classList.toggle('on',i===ADR.i));ADR.box.children[ADR.i]?.scrollIntoView({block:'nearest'})}
+  else if(e.key==='Enter'){if(ADR.i>=0){e.preventDefault();e.stopPropagation();adrWahl(ADR.i)}else adrZu()}
+  else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();adrZu()}},true);
+document.addEventListener('focusout',e=>{if(ADR&&e.target===ADR.el)setTimeout(()=>{if(ADR&&document.activeElement!==ADR.el)adrZu()},200)});
+document.addEventListener('scroll',e=>{if(ADR&&!ADR.box.contains(e.target))adrZu()},true);
 // Listenpreis, Rabatt, EK: je zwei ergeben den dritten; berechnet wird das am längsten nicht bearbeitete Feld (r = Reihenfolge, zuletzt bearbeitet vorne, anfangs leere Felder
 // zuletzt); erste Eingabe von nur EK bzw. nur Listenpreis füllt die anderen (Listenpreis = EK, Rabatt 0). w = {lp,rab,ek} als Text, k = geändertes Feld → geänderte Werte
 const ekReihe=w=>{const v=k=>k==='rab'?pT(w.rab)!=='':!!num(w[k]);return[...['lp','rab','ek'].filter(v),...['lp','rab','ek'].filter(k=>!v(k))]},EKR={}; // EKR: Reihenfolge je Lieferantenzeile eines Artikels
@@ -3563,7 +3677,7 @@ V.kontakte=typ=>{
 function kontaktFelder(k){
   const f=(fl,l,cls='',type='text')=>`<label class="${cls}">${l}<input type="${type}" data-o="k" data-id="${k.id}" data-f="${fl}" value="${esc(k[fl])}"></label>`;
   return`<div class="row">${f('nr',k.typ==='L'?'Lieferanten-Nr.':k.typ==='KL'?'Kunden-/Lief.-Nr.':'Kunden-Nr.','w05')}<label class="w05">Typ<select data-o="k" data-id="${k.id}" data-f="typ">${opt('K','Kunde',k.typ)}${opt('L','Lieferant',k.typ)}${opt('KL','Kunde + Lieferant',k.typ)}</select></label>${f('name','Name / Firma *','w2')}${f('zusatz','Zusatz / z. H.')}</div>${kontaktPers(k)}
-  <div class="row">${f('strasse','Straße *','w2')}${f('plz','PLZ *','w05')}${f('ort','Ort *')}${f('land','Land *','w05')}</div>
+  <div class="row">${f('strasse','Straße *','w2')}${f('plz','PLZ *','w05')}${f('ort','Ort *')}${f('land','Land *','w05')}</div>${adrHinweis(k)}
   <div class="row"><label class="w05">Art<select data-o="k" data-id="${k.id}" data-f="kundenart">${opt('B2B','Unternehmen (B2B)',k.kundenart||'B2B')}${opt('privat','Privat (B2C)',k.kundenart||'B2B')}</select></label>${f('uid',k.kundenart==='privat'?'UID-Nr.':'UID-Nr. (B2B)')}${f('email','E-Mail')}${f('tel','Telefon')}</div>
   <div class="row">${f('zahlungsziel','Zahlungsziel Tage','w05','number')}${f('skonto','Skonto %','w05','number')}${f('skontoTage','Skonto Tage','w05','number')}${k.typ!=='L'?f('rabatt','Kundenrabatt %','w05','number'):''}${k.typ!=='K'?`<label class="w05" title="Unsere Kunden-Nr. beim Lieferanten – steht auf Bestellungen und anderen Einkaufsbelegen statt der internen Lieferanten-Nr.">Unsere Kunden-Nr.<input data-o="k" data-id="${k.id}" data-f="kdNrLief" value="${esc(k.kdNrLief||'')}"></label>`:''}<span style="flex:2" class="mut">Optional: werden in neue Belege übernommen.</span></div>
   ${kontaktFehlt(k).length?`<div class="hint">Pflichtangaben fehlen: ${kontaktFehlt(k).join(', ')} (für Rechnungen nötig).</div>`:''}

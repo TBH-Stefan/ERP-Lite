@@ -1,0 +1,13 @@
+{
+  "name": "ERP-Lite",
+  "short_name": "ERP-Lite",
+  "description": "ERP-Lite – TBH GmbH",
+  "lang": "de-AT",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1d2330",
+  "theme_color": "#1d2330",
+  "icons": [{"src": "icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any"}]
+}

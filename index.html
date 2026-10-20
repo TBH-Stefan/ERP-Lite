@@ -528,6 +528,7 @@ body.kompakt .grid:has(>.kpi){grid-template-columns:repeat(auto-fill,minmax(150p
 @media(max-width:760px){
   .topbar{padding-top:calc(8px + env(safe-area-inset-top));padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
   nav{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  @media(display-mode:browser){html{background:var(--side)}.topbar{padding-top:calc(20px + env(safe-area-inset-top))}} /* Safari: Überblendung unter der Statusleiste verdeckt sonst das Logo; dunkler Seitenhintergrund = dunkle Statusleiste mit heller Uhrzeit */
   main{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
   #dirtybar{bottom:calc(8px + env(safe-area-inset-bottom))}
   body.ios{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}

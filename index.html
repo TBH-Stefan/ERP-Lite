@@ -156,7 +156,6 @@ body.kompakt td>.nw+br,body.kompakt td>.nw+br+.mut{display:none}
   body.kompakt .kk :is(.kku,.kkz):has(a){padding:10px 0;margin:-10px 0}
 }
 @media(max-width:430px){body.kompakt table.kbg th,body.kompakt table.kbg td{white-space:normal;hyphens:auto}body.kompakt table.kbg input,body.kompakt table.kbg td:first-child input{width:50px!important}body.kompakt table.kbg td:first-child select{width:92px!important}}
-
 @media(max-width:760px){ /* K2 am Handy: Bezeichnung über die volle Breite, darunter die vier Spalten (Kopfzeile = Beschriftung) */
   body.kompakt table.k2k,body.kompakt table.k2k>:is(thead,tbody,tfoot){display:block;width:100%!important}body.kompakt table.k2k tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 40px;gap:4px 6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
   body.kompakt table.k2k :is(td,th){padding:0!important;border:0;white-space:normal!important}body.kompakt table.k2k :is(td,th):first-child{grid-column:1/-1}body.kompakt table.k2k thead th:first-child{display:none}body.kompakt table.k2k.kbg td input{width:100%!important}
@@ -3510,8 +3509,8 @@ function auftragsListe(){
   const g={};for(const b of DB.belege)if(b.auftragId&&T[b.typ].b==='V')(g[b.auftragId]=g[b.auftragId]||[]).push(b);
   return Object.entries(g).map(([id,docs])=>({id,docs,root:beleg(id)||docs[0]})).sort((a,c)=>c.root.datum.localeCompare(a.root.datum));
 }
-const auftragKurz=aid=>{const r=beleg(aid)||DB.belege.find(b=>b.auftragId===aid);return r?`${bNr(r)} · ${kName(r.kontaktId)}`:'–'}; // Nr. · Kunde (P30)
-function auftragLabel(aid){const r=beleg(aid)||DB.belege.find(b=>b.auftragId===aid);return r?`${bNr(r)} · ${kName(r.kontaktId)}${r.betreff?' · '+r.betreff:''}`:'–'}
+const auftragKurz=aid=>{if(!aid)return'ohne Auftrag';const r=beleg(aid)||DB.belege.find(b=>b.auftragId===aid);return r?`${bNr(r)} · ${kName(r.kontaktId)}`:'–'}; // Nr. · Kunde (P30)
+function auftragLabel(aid){if(!aid)return'ohne Auftrag';const r=beleg(aid)||DB.belege.find(b=>b.auftragId===aid);return r?`${bNr(r)} · ${kName(r.kontaktId)}${r.betreff?' · '+r.betreff:''}`:'–'}
 function phase(docs){
   const ok=docs.filter(d=>!d.storno);
   if(ok.some(d=>d.typ==='SR'&&d.fest))return tag('schlussgerechnet','ok');
@@ -7704,6 +7703,44 @@ document.addEventListener('input',e=>{if(e.target.id==='esq')egMain()});document
 #egn.egl{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}#egn button.egk{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--ink);font-weight:400;cursor:pointer;min-height:58px}
 .egk .egi{font-size:22px;width:30px}.egk .egt{flex:1 1 auto;min-width:0}.egk small{display:block;color:var(--mut);font-size:12.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.egk .egr{color:var(--mut);font-size:22px;flex:none}
 #egn.egz{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex-wrap:wrap}.egp{border-top:1px solid var(--line);margin-top:8px;padding-top:2px}.egp>.bar{margin:4px 0 0}.egdp>#dprof{border-top:0;margin-top:0;padding-top:0}`;document.head.appendChild(st)}
+
+/* Zeiten ohne Auftrag (P47, erw.zeitOhneA): Zeiterfassung und Stoppuhr (P45) auch ohne Auftrag (auftragId ''), Liste „Nicht zugeordnet“ in V.zeiten,
+   Zuordnen einzeln oder mehrere (ACT.zoazu). Zeiten ohne Auftrag kommen in keine Rechnung/Nachkalkulation (dort Filter je Auftrag). auftragKurz()/auftragLabel('') = „ohne Auftrag“. */
+erwPlus({k:'zeitOhneA',std:false,p:'Zeiten ohne Auftrag (P47)',l:'Zeiten auch ohne Auftrag erfassen, später zuordnen',info:'In der Zeiterfassung und bei der Stoppuhr gibt es die Auswahl „– ohne Auftrag –“; die Stoppuhr startet auch, wenn noch kein Angebot oder Auftrag angelegt ist, und fragt beim Stoppen noch einmal nach dem Auftrag. Zeiten ohne Auftrag stehen in der Zeiterfassung oben unter „Nicht zugeordnet“ und lassen sich dort einzeln oder mehrere auf einmal (Häkchen) einem Auftrag zuordnen. Bis dahin kommen sie in keine Rechnung und keine Nachkalkulation. Der Überblick zeigt einen Hinweis, solange welche offen sind.'});
+EB_K.zeitOhneA='bau';
+const zoaL=()=>DB.zeiten.filter(z=>!z.auftragId&&!z.belegId).sort((a,c)=>c.datum.localeCompare(a.datum)),zoaOpts=(A,a)=>[['','– ohne Auftrag –'],...(a&&!A.some(x=>x.id===a)?[[a,auftragLabel(a)]]:[]),...A.map(x=>[x.id,auftragLabel(x.id)])];
+{const s0=uhrStart;uhrStart=async function(){if(!erw('zeitOhneA'))return s0();const A=btbAuftraege(),lA=lsGet('erp-lastA'),lT=lsGet('erp-lastT'),ma=erw('mitarbeiter');
+  const o=await formDialog({titel:'Zeit starten',ok:'▶ Starten',felder:[{k:'a',l:'Auftrag',wert:A.some(x=>x.id===lA)?lA:'',opts:zoaOpts(A),cls:'w2'},
+    {k:'t',l:'Tarif',wert:lT||S().tarife[0]?.kz||'',opts:S().tarife.map(t=>[t.kz,t.kz+' – '+t.bez])},...(ma?[{k:'m',l:'Mitarbeiter',wert:lsGet('erp-lastM')||'',opts:[['','–'],...maAkt().map(m=>[m.id,m.name])]}]:[]),{k:'x',l:'Tätigkeit',wert:'',cls:'w2'}]});
+  if(!o)return;lsSet('erp-lastA',o.a||'');if(o.t)lsSet('erp-lastT',o.t);if(o.m)lsSet('erp-lastM',o.m);S().uhr={von:new Date().toISOString(),a:o.a||'',t:o.t||'',...(o.m?{m:o.m}:{}),x:o.x||''};await commit();render()}}
+{const p0=uhrStopp;uhrStopp=async function(){if(!erw('zeitOhneA'))return p0();const u=S().uhr;if(!u)return;const A=btbAuftraege(),min=uhrMin(u),r=uhrRund(),h=Math.max(r,Math.round(min/r)*r)/60;
+  const o=await formDialog({titel:'Zeit stoppen',ok:'⏹ Eintragen',extra:'Verwerfen',felder:[{typ:'hinweis',l:`${esc(u.t)} · gestartet ${dAT(isoD(new Date(u.von)))} ${new Date(u.von).toTimeString().slice(0,5)}, Dauer ${hm(min)} h (gerundet auf ${r} min).`},
+    {k:'a',l:'Auftrag',wert:u.a||'',opts:zoaOpts(A,u.a),cls:'w2'},{k:'h',l:'Stunden',typ:'number',wert:+h.toFixed(2),cls:'w05',im:'decimal',pflicht:true},{k:'x',l:'Tätigkeit',wert:u.x||'',cls:'w2'}]});
+  if(!o)return;if(o==='extra'){if(!confirm('Laufende Zeit verwerfen, ohne Eintrag?'))return;delete S().uhr;await commit();render();return}
+  const tf=S().tarife.find(x=>x.kz===u.t)||{kosten:0,vk:0},m=u.m&&erw('mitarbeiter')&&maVon(u.m),hh=num(o.h);if(!(hh>0)){alert('Bitte Stunden angeben.');return}
+  if(o.a)lsSet('erp-lastA',o.a);
+  DB.zeiten.push({id:uid(),datum:isoD(new Date(u.von)),auftragId:o.a||'',tarif:u.t,stunden:hh,text:o.x||'',kosten:+tf.kosten||0,vk:+tf.vk||0,belegId:'',...(m?{maId:m.id,kosten:maKosten(m,tf)}:{})});
+  delete S().uhr;await commit();render()}}
+{const z0=ACT.ztadd;ACT.ztadd=el=>{if(!erw('zeitOhneA')||$('#zt-a').value)return z0(el);const t=$('#zt-t').value,h=num($('#zt-h').value);if(!h){alert('Stunden angeben.');return}
+  const tf=S().tarife.find(x=>x.kz===t)||{kosten:0,vk:0};lsSet('erp-lastA','');lsSet('erp-lastT',t);
+  DB.zeiten.push({id:uid(),datum:$('#zt-d').value||isoD(),auftragId:'',tarif:t,stunden:h,text:$('#zt-x').value,kosten:+tf.kosten||0,vk:+tf.vk||0,belegId:'',...maZt(tf)});commit();render()}}
+{const m0=MENUE.zeit;MENUE.zeit=el=>{const L=m0(el),z=DB.zeiten.find(x=>x.id===el.dataset.id);return z&&!z.auftragId&&erw('zeitOhneA')?[{l:'Auftrag zuordnen …',ic:'📌',act:'zoazu',d:{id:z.id}},...L.filter(x=>x.act)]:L}}
+function zoaKarte(){const Z=zoaL();if(!Z.length)return'';const ma=erw('mitarbeiter'),sh=fmtQ(Z.reduce((s,z)=>s+(+z.stunden||0),0)),alle='<label class="chk"><input type="checkbox" data-act="zoalle"> Alle</label>';
+  return`<div class="card zoa"><div class="bar" style="margin:0 0 8px"><h2 style="margin:0">Nicht zugeordnet ${tag(Z.length,'warn')}</h2><span class="mut">${sh} h</span><span class="sp"></span><button class="p" data-act="zoazu">Auftrag zuordnen …</button></div>
+  ${kmpH()?`${alle}${Z.map(z=>`<label class="chk zoak"><input type="checkbox" class="zoaw" data-id="${z.id}"> <span><b>${dAT(z.datum)} · ${esc(z.tarif)} · ${fmtQ(z.stunden)} h</b>${z.text||(ma&&z.maId)?`<small class="mut">${esc([z.text,ma?maName(z.maId):''].filter(Boolean).join(' · '))}</small>`:''}</span></label>`).join('')}`
+  :`<table class="zoat"><tr><th>${alle}</th><th>Datum</th><th>Tarif</th><th style="text-align:right">Std.</th><th>Tätigkeit</th>${ma?'<th>Mitarbeiter</th>':''}<th></th></tr>${Z.map(z=>`<tr><td><input type="checkbox" class="zoaw" data-id="${z.id}"></td><td>${dAT(z.datum)}</td><td>${esc(z.tarif)}</td><td style="text-align:right">${fmtQ(z.stunden)}</td><td>${esc(z.text)}</td>${ma?`<td>${esc(maName(z.maId))}</td>`:''}<td><button class="s" data-act="zoazu" data-id="${z.id}">Zuordnen</button></td></tr>`).join('')}</table>`}</div>`}
+{const v0=V.zeiten;V.zeiten=(...x)=>{let h=v0(...x);if(!DB||!erw('zeitOhneA'))return h;
+  h=h.replace('<select id="zt-a">','<select id="zt-a"><option value="">– ohne Auftrag –</option>').replace('<p class="hint">Zuerst ein Angebot oder einen Auftrag anlegen.</p>','').replace(/<a href="#\/auftrag\/"[^>]*>ohne Auftrag<\/a>/g,tag('ohne Auftrag','warn'));
+  const i=h.indexOf('<div class="card">');return i<0?h:h.slice(0,i)+zoaKarte()+h.slice(i)}}
+{const d0=V.dash;V.dash=(...x)=>{const h=d0(...x);if(!DB||!erw('zeitOhneA'))return h;const n=zoaL().length;if(!n)return h;const p=`<p class="hint zoah"><a href="#/zeiten">⏱ ${n} ${n===1?'Zeit':'Zeiten'} ohne Auftrag</a> – bitte einem Auftrag zuordnen.</p>`,
+  i=h.includes('dkopf')?h.indexOf('</div>')+6:h.indexOf('</h1>')+5;return i<5?p+h:h.slice(0,i)+p+h.slice(i)}}
+Object.assign(ACT,{zoalle:el=>document.querySelectorAll('.zoaw').forEach(c=>c.checked=el.checked),
+  zoazu:async el=>{const ids=el.dataset.id?[el.dataset.id]:[...document.querySelectorAll('.zoaw:checked')].map(c=>c.dataset.id),Z=DB.zeiten.filter(z=>ids.includes(z.id)&&!z.auftragId&&!z.belegId);
+    if(!Z.length){alert('Bitte zuerst die Zeiten anhaken.');return}const A=btbAuftraege();if(!A.length){alert('Zuerst ein Angebot oder einen Auftrag anlegen.');return}const lA=lsGet('erp-lastA');
+    const o=await formDialog({titel:Z.length===1?'Zeit zuordnen':`${Z.length} Zeiten zuordnen`,ok:'Zuordnen',felder:[{typ:'hinweis',l:`${Z.length===1?`${dAT(Z[0].datum)} · ${esc(Z[0].tarif)} · `:''}${fmtQ(Z.reduce((s,z)=>s+(+z.stunden||0),0))} h`},
+      {k:'a',l:'Auftrag',wert:A.some(x=>x.id===lA)?lA:A[0].id,opts:A.map(a=>[a.id,auftragLabel(a.id)]),cls:'w2',pflicht:true}]});
+    if(!o?.a)return;for(const z of Z)z.auftragId=o.a;lsSet('erp-lastA',o.a);log('Zeiten zugeordnet',`${Z.length} Eintrag/Einträge (${fmtQ(Z.reduce((s,z)=>s+(+z.stunden||0),0))} h) → ${auftragKurz(o.a)}`);await commit();render()}});
+{const st=document.createElement('style');st.textContent='.zoat{width:100%}.zoat td,.zoat th{padding:4px 6px;vertical-align:middle}.zoak{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.zoak small{display:block}.zoa .bar{flex-wrap:wrap;gap:8px}body:has(>.modal) #uhrp{display:none}';document.head.appendChild(st)}
 
 start();
 </script>

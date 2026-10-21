@@ -3749,13 +3749,13 @@ V.zeiten=()=>{
     <button class="p" data-act="ztadd">Erfassen</button></div>
     ${auf.length?'':'<p class="hint">Zuerst ein Angebot oder einen Auftrag anlegen.</p>'}</div>
   ${tabelle('zeiten',[
-    {k:'datum',l:'Datum',f:z=>dAT(z.datum)},{k:'auftrag',l:'Auftrag',f:z=>kmp()?`<a href="#/auftrag/${z.auftragId}" title="${esc(auftragLabel(z.auftragId))}">${esc(auftragKurz(z.auftragId))}</a>`:`<a href="#/auftrag/${z.auftragId}">${esc(auftragLabel(z.auftragId))}</a>`},{k:'kunde',l:'Kunde',f:z=>esc(kName((beleg(z.auftragId)||{}).kontaktId)),std:false},
+    {k:'datum',l:'Datum',f:z=>dAT(z.datum)},...(erw('zeitStempel')?zsSp():[]),{k:'auftrag',l:'Auftrag',f:z=>kmp()?`<a href="#/auftrag/${z.auftragId}" title="${esc(auftragLabel(z.auftragId))}">${esc(auftragKurz(z.auftragId))}</a>`:`<a href="#/auftrag/${z.auftragId}">${esc(auftragLabel(z.auftragId))}</a>`},{k:'kunde',l:'Kunde',f:z=>esc(kName((beleg(z.auftragId)||{}).kontaktId)),std:false},
     {k:'tarif',l:'Tarif',f:z=>esc(z.tarif)},{k:'text',l:'Tätigkeit',f:z=>esc(z.text)},...(erw('mitarbeiter')?[{k:'ma',l:'Mitarbeiter',f:z=>esc(maName(z.maId))}]:[]),...(erw('btbZeit')?[{k:'btb',l:'Bericht',f:z=>{const r=z.berichtId&&ROOT.btb(z.berichtId);return r?`<a href="#/bericht/${r.id}">BTB ${r.nr}</a>`:''}}]:[]), // Bautagesbericht (P36 Teil 5)
     {k:'std',l:'Std.',n:1,f:z=>fmtQ(z.stunden)},{k:'kosten',l:'Kosten/h',n:1,f:z=>fmt(z.kosten)},{k:'vk',l:'VK/h',n:1,f:z=>fmt(z.vk)},
     {k:'kges',l:'Kosten gesamt',n:1,f:z=>fmt(z.stunden*z.kosten),std:false},{k:'vges',l:'VK gesamt',n:1,f:z=>fmt(z.stunden*z.vk),std:false},
     {k:'status',l:'Status',f:z=>z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn')}],L,
     {nach:kmpH()?z=>`<td>${z.belegId?'':`<button class="mehr" data-act="menue" data-m="zeit" data-id="${z.id}" title="Weitere Aktionen">⋯</button>`}</td>`:z=>`<td>${z.belegId?'':`<button class="s d" data-act="ztdel" data-id="${z.id}">✕</button>`}</td>`,leer:'Keine Einträge.',
-     mf:z=>karte({t:`${esc(z.tarif)} · ${fmtQ(z.stunden)} h`,s:z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn'),u:esc(z.text),z:`<a href="#/auftrag/${z.auftragId}">${esc(auftragKurz(z.auftragId))}</a>`,b:fmt(z.stunden*z.vk)+' €'}),
+     mf:z=>karte({t:`${esc(z.tarif)} · ${fmtQ(z.stunden)} h`,s:z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn'),u:(erw('zeitStempel')&&z.von?zsVB(z)+' · ':'')+esc(z.text),z:`<a href="#/auftrag/${z.auftragId}">${esc(auftragKurz(z.auftragId))}</a>`,b:fmt(z.stunden*z.vk)+' €'}),
      zwischen:kmpH()?(z,n)=>{if(z.datum===lz)return'';lz=z.datum;return`<tr class="prjz"><td colspan="${n}"><b>${dAT(z.datum)}</b> <span class="mut">· ${fmtQ(tagH[z.datum])} h</span></td></tr>`}:null})}`;
 };
 MENUE.zeit=el=>{const z=DB.zeiten.find(x=>x.id===el.dataset.id);return z?[{l:'Auftrag öffnen',ic:'📊',href:'#/auftrag/'+z.auftragId},{l:'Löschen',ic:'🗑',act:'ztdel',d:{id:z.id},gefahr:1}]:[]};
@@ -7477,8 +7477,8 @@ const btbZeitFrei=r=>DB.zeiten.filter(z=>z.auftragId===r.auftragId&&(btbMehr(r)?
 BTB_KN.push(r=>erw('btbZeit')&&!btbFest(r)&&btbZeitFrei(r).length?`<button data-act="btbzeit" data-id="${r.id}" title="offene Zeiten dieses Auftrags vom ${dAT(r.datum)} übernehmen">⏱ aus Zeiterfassung (${btbZeitFrei(r).length})</button>`:'');
 BTB_NACH.push(r=>{if(!erw('btbZeit'))return;let n=0;
   for(const p of r.personal||[]){const h=btbStd(p),z=p.zid&&DB.zeiten.find(x=>x.id===p.zid);
-    if(z){if(!z.belegId){z.stunden=h;z.tarif=p.tarif}z.berichtId=r.id;continue}
-    if(!h)continue;const t=S().tarife.find(x=>x.kz===p.tarif)||{};DB.zeiten.push({id:uid(),datum:btbPD(r,p),auftragId:r.auftragId,tarif:p.tarif,stunden:h,text:[`${btbKz(r)} ${r.nr}`,p.name].filter(pT).join(' · '),kosten:+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id});n++}
+    if(z){if(!z.belegId){z.stunden=h;z.tarif=p.tarif;Object.assign(z,zsBtb(btbPD(r,p),p))}z.berichtId=r.id;continue}
+    if(!h)continue;const t=S().tarife.find(x=>x.kz===p.tarif)||{};DB.zeiten.push({id:uid(),datum:btbPD(r,p),auftragId:r.auftragId,tarif:p.tarif,stunden:h,text:[`${btbKz(r)} ${r.nr}`,p.name].filter(pT).join(' · '),kosten:+t.kosten||0,vk:+t.vk||0,belegId:'',berichtId:r.id,...zsBtb(btbPD(r,p),p)});n++}
   if(n)log('Zeiten aus Bautagesbericht',`BTB ${r.nr} ${auftragKurz(r.auftragId)}: ${n} Eintrag/Einträge`)});
 BTB_DOC.push(r=>{if(!r.gesperrt)return'';const Z=DB.zeiten.filter(z=>z.berichtId===r.id);return Z.length?`<p class="mut btbzt">In der Zeiterfassung: ${fmtQ(sum(Z,z=>z.stunden))} h${Z.some(z=>z.belegId)?' (teilweise abgerechnet)':''}</p>`:''});
 ACT.btbzeit=el=>{const r=ROOT.btb(el.dataset.id);if(!r||btbFest(r))return;const L=btbZeitFrei(r);if(!L.length)return;
@@ -7533,7 +7533,7 @@ V.mitarbeiter=id=>{const m=maVon(id);if(!m)return'<p>Mitarbeiter nicht gefunden.
     <div class="row">${bIn(R,'strasse',m.strasse,{l:'Straße',cls:'w2'})}${bIn(R,'plz',m.plz,{l:'PLZ',cls:'w05'})}${bIn(R,'ort',m.ort,{l:'Ort'})}</div><div class="row">${bTa(R,'notiz',m.notiz,{l:'Notiz'})}</div>`;
   const zeit=`<div class="bar" style="margin:0 0 8px"><label style="max-width:180px">Monat<select data-o="ui" data-f="maMon">${opt('','alle Monate',mon)}${Ms.map(x=>opt(x,x.slice(5)+'/'+x.slice(0,4),mon)).join('')}</select></label><span class="sp"></span>
     ${erw('mitarbeiter')&&m.aktiv!==false?`<button class="p" data-act="mazeit" data-id="${m.id}">+ Stunden buchen</button>`:''}</div>
-    ${tabelle('mazeiten',[{k:'datum',l:'Datum',f:z=>dAT(z.datum)},{k:'auftrag',l:'Auftrag',f:z=>`<a href="#/auftrag/${z.auftragId}">${esc(auftragKurz(z.auftragId))}</a>`},{k:'tarif',l:'Tarif',f:z=>esc(z.tarif)},{k:'text',l:'Tätigkeit',f:z=>esc(z.text)},
+    ${tabelle('mazeiten',[{k:'datum',l:'Datum',f:z=>dAT(z.datum)},...(erw('zeitStempel')?zsSp():[]),{k:'auftrag',l:'Auftrag',f:z=>`<a href="#/auftrag/${z.auftragId}">${esc(auftragKurz(z.auftragId))}</a>`},{k:'tarif',l:'Tarif',f:z=>esc(z.tarif)},{k:'text',l:'Tätigkeit',f:z=>esc(z.text)},
       {k:'std',l:'Std.',n:1,f:z=>fmtQ(z.stunden)},{k:'kges',l:'Kosten',n:1,f:z=>fmt(z.stunden*z.kosten)},{k:'status',l:'Status',f:z=>z.belegId?`<a href="#/beleg/${z.belegId}">${esc(bNr(beleg(z.belegId)))}</a>`:tag('offen','warn')}],Z,
       {leer:'Keine Stunden in diesem Zeitraum.',mf:z=>karte({t:`${dAT(z.datum)} · ${fmtQ(z.stunden)} h`,s:z.belegId?'':tag('offen','warn'),u:esc(z.text),z:esc(auftragKurz(z.auftragId)),b:fmt(z.stunden*z.kosten)+' €'})})}
     <p style="margin:8px 0 0"><b>Summe ${fmtQ(sum(Z,z=>+z.stunden||0))} h</b> · Kosten ${fmt(sum(Z,z=>z.stunden*z.kosten))} € · ${new Set(Z.map(z=>z.auftragId)).size} Auftrag/Aufträge</p>`;
@@ -7607,7 +7607,7 @@ const SF=[{k:'zeit',ic:'⏱',l:'Zeit starten / stoppen',nur:()=>erw('stoppuhr')}
   {k:'foto',ic:'📸',l:'Foto zum Bericht',nur:()=>erw('btb')&&erw('btbBild')},{k:'rechnung',ic:'📄',l:'Rechnung einlesen'},{k:'angebot',ic:'📝',l:'Neues Angebot'},{k:'suche',ic:'🔍',l:'Suchen',nur:()=>erw('suche')},
   {k:'dash',ic:'🏠',l:'Übersicht'},{k:'lief',ic:'🚚',l:'Offene Lieferungen',nur:()=>erw('lfListe')},{k:'kontakt',ic:'👤',l:'Neuer Kunde'}];
 const sfOk=x=>!x.nur||x.nur(),sfL=()=>SF.filter(x=>sfOk(x)&&!(S().schnell?.aus||[]).includes(x.k)),SF_H0=location.hash;let SFST=false;
-const uhrRund=()=>Math.max(1,+S().uhrRund||15),uhrMin=u=>Math.max(0,Math.round((Date.now()-new Date(u.von))/60000)),hm=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
+const uhrRund=()=>Math.max(1,+S().uhrRund||15),uhrMin=u=>Math.max(0,Math.round(((u.pz?+new Date(u.pz):Date.now())-new Date(u.von))/60000)-(u.pm||0)),hm=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
 function sfSeite(a){if(!erw('schnell'))return'<h1>Schnellfunktionen</h1><p class="mut">Ausgeschaltet (Einstellungen → Erweiterungen → Schnellfunktionen).</p>';const u=erw('stoppuhr')&&S().uhr;
   return`<h1>Schnellfunktionen</h1><div class="sfk">${sfL().map(x=>{const hl=x.k===a?' sfhl':'',t=x.k==='zeit'&&u?`⏹ Zeit stoppen<small>${esc(auftragKurz(u.a))} · läuft ${hm(uhrMin(u))} h</small>`:esc(x.l)+(x.k===a&&x.k==='rechnung'?'<small>Tippen zum Fotografieren</small>':'');
     return x.k==='rechnung'?`<label class="btn sfb${hl}"><span>${x.ic}</span>${t}<input type="file" id="erfoto" accept="image/*,application/pdf,.xml,text/xml" multiple hidden></label>`:`<button class="sfb${hl}${x.k==='zeit'&&u?' sfl':''}" data-act="sf" data-k="${x.k}"><span>${x.ic}</span>${t}</button>`}).join('')}</div>`}
@@ -7638,7 +7638,7 @@ async function uhrStopp(){const u=S().uhr;if(!u)return;const min=uhrMin(u),r=uhr
   DB.zeiten.push({id:uid(),datum:isoD(new Date(u.von)),auftragId:u.a,tarif:u.t,stunden:hh,text:o.x||'',kosten:+tf.kosten||0,vk:+tf.vk||0,belegId:'',...(m?{maId:m.id,kosten:maKosten(m,tf)}:{})});
   delete S().uhr;await commit();render()}
 function uhrPill(){const u=DB&&erw('stoppuhr')&&S().uhr;let el=$('#uhrp');if(!u){el?.remove();return}
-  if(!el){el=document.createElement('button');el.id='uhrp';el.dataset.act='sf';el.dataset.k='zeit';document.body.appendChild(el)}el.title='Zeit stoppen';el.textContent='⏱ '+hm(uhrMin(u))+' · '+auftragKurz(u.a)}
+  if(!el){el=document.createElement('button');el.id='uhrp';el.dataset.act='sf';el.dataset.k='zeit';document.body.appendChild(el)}el.title='Zeit stoppen';el.textContent=(u.pz?'⏸ ':'⏱ ')+hm(uhrMin(u))+' · '+auftragKurz(u.a)}
 setInterval(uhrPill,30000);
 {const r0=render;render=function(){if(DB&&!SFST){SFST=true;if(erw('schnell')&&erw('schnellStart')&&!/^#\/?[^/]/.test(SF_H0)&&/^(#\/?(dash)?)?$/.test(location.hash)){history.replaceState(null,'','#/schnell');CURHASH=location.hash}}r0();uhrPill()}}
 function sfKarte(){const s=S(),aus=s.schnell?.aus||[],basis=location.href.split('#')[0];
@@ -7651,6 +7651,8 @@ Object.assign(ACT,{sf:el=>sfAus(el.dataset.k),
   sfaus:el=>{const s=S(),L=(s.schnell??={}).aus??=[],i=L.indexOf(el.dataset.k);if(el.checked&&i>=0)L.splice(i,1);else if(!el.checked&&i<0)L.push(el.dataset.k);persist()},
   sfkopie:async el=>{try{await navigator.clipboard.writeText(el.dataset.u);el.textContent='✓ Kopiert'}catch(e){prompt('Link kopieren:',el.dataset.u)}}});
 {const st=document.createElement('style');st.textContent='.sfk{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:10px}.sfk .sfb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:104px;padding:12px;font-size:15px;font-weight:600;text-align:center;border-radius:14px;cursor:pointer}.sfk .sfb span{font-size:30px;line-height:1}.sfk .sfb small{font-weight:400;font-size:12px;opacity:.8}.sfk .sfhl{outline:3px solid #2f6fdf;outline-offset:2px}.sfk .sfl{background:#c0392b;color:#fff;border-color:#c0392b}@media(max-width:760px){.sfk{grid-template-columns:1fr 1fr}}.sft code{font-size:12px;word-break:break-all}.sft td{vertical-align:middle;padding:4px 6px}#uhrp{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:900;background:#c0392b;color:#fff;border:0;border-radius:20px;padding:8px 14px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.25)}body.tl #uhrp{bottom:calc(76px + env(safe-area-inset-bottom))}@media(max-width:760px){nav{height:100dvh;padding-bottom:calc(24px + env(safe-area-inset-bottom));overscroll-behavior:contain}}@media(max-width:760px) and (display-mode:browser){nav{padding-bottom:calc(110px + env(safe-area-inset-bottom))}}';/* Menü am Handy: 100vh reicht in Safari hinter die Werkzeugleiste, untere Einträge waren nicht erreichbar */document.head.appendChild(st)}
+
+{const e0=V.einstellungen;V.einstellungen=(...x)=>{const h=e0(...x);return DB&&erw('zeitStempel')?h+zsKarte():h}} // Zeiterfassung mit Beginn/Ende (P48)
 
 /* Einstellungen gruppieren (P46, erw.einstGruppen): Wrapper um V.einstellungen (nach allen anderen Wrappern). Die Bereiche (Kinder von #main) werden nach Verwendungszweck EB
    geordnet (Karten über data-akk bzw. Überschrift EB_KARTE, Schalter über EB_K, sonst „Weitere“); die Karte „Erweiterungen“ wird je Bereich als „Funktionen“ (egFunk) neu
@@ -7741,6 +7743,67 @@ Object.assign(ACT,{zoalle:el=>document.querySelectorAll('.zoaw').forEach(c=>c.ch
       {k:'a',l:'Auftrag',wert:A.some(x=>x.id===lA)?lA:A[0].id,opts:A.map(a=>[a.id,auftragLabel(a.id)]),cls:'w2',pflicht:true}]});
     if(!o?.a)return;for(const z of Z)z.auftragId=o.a;lsSet('erp-lastA',o.a);log('Zeiten zugeordnet',`${Z.length} Eintrag/Einträge (${fmtQ(Z.reduce((s,z)=>s+(+z.stunden||0),0))} h) → ${auftragKurz(o.a)}`);await commit();render()}});
 {const st=document.createElement('style');st.textContent='.zoat{width:100%}.zoat td,.zoat th{padding:4px 6px;vertical-align:middle}.zoak{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.zoak small{display:block}.zoa .bar{flex-wrap:wrap;gap:8px}body:has(>.modal) #uhrp{display:none}';document.head.appendChild(st)}
+
+/* Zeiten mit Beginn/Ende (P48, erw.zeitStempel): Zeiteinträge bekommen von/bis (lokale Zeit „JJJJ-MM-TTTHH:MM“) und pause (min); stunden = (bis − von − Pause) gerundet
+   auf S().uhrRund Minuten (zsR(), 0 = minutengenau, mindestens eine Einheit). Ende vor Beginn = nächster Tag. Erfassung (#zt-v/#zt-b/#zt-p, live zsLive()), Stoppuhr (P45)
+   mit Beginn/Ende/Pause im Stopp-Dialog und Unterbrechen/Weiter (S().uhr.pz/pm, ACT.uhrpause), Bearbeiten ACT.ztbear, Spalten zsSp(), Bautagesbericht zsBtb().
+   Überschneidung (gleicher Mitarbeiter) und > 12 h nur Rückfrage (zsPruef). Einträge ohne von/bis bleiben wie sie sind; ohne Beginn/Ende Stunden direkt. */
+erwPlus({k:'zeitStempel',std:false,p:'Zeiten mit Beginn/Ende (P48)',l:'Zeiterfassung mit Beginn und Ende (Start/Stopp)',info:'Zeiten werden mit Beginn und Ende (Datum und Uhrzeit) gespeichert, die Stunden daraus berechnet: Ende − Beginn − Pause, gerundet (Standard 15 Minuten, einstellbar in der Karte „Zeiterfassung“, 0 = minutengenau). Liegt das Ende vor dem Beginn, gilt es als nächster Tag (über Mitternacht). Die Stoppuhr speichert Start- und Stoppzeit, lässt sich unterbrechen und fortsetzen (Unterbrechung zählt als Pause) und Beginn, Ende und Pause sind beim Stoppen noch korrigierbar. Einträge lassen sich nachträglich bearbeiten (✎ bzw. ⋯), solange sie nicht verrechnet sind. Hinweis bei Überschneidung mit einem anderen Eintrag desselben Mitarbeiters und bei mehr als 12 Stunden. Beginn und Ende leer = Stunden wie bisher direkt eingeben (z. B. Pauschalen); bestehende Einträge bleiben unverändert.'});
+EB_K.zeitStempel='bau';EB_KARTE.push([/\|Zeiterfassung/,'bau']);
+const zsAn=()=>erw('zeitStempel'),zsR=()=>{const v=S().uhrRund;return v==null||v===''?15:Math.max(0,+v||0)},
+  zsLok=d=>{d=new Date(d);const n=x=>String(x).padStart(2,'0');return`${d.getFullYear()}-${n(d.getMonth()+1)}-${n(d.getDate())}T${n(d.getHours())}:${n(d.getMinutes())}`},
+  zsMin=(v,b,p)=>Math.round((new Date(b)-new Date(v))/60000)-(+p||0),
+  zsH=m=>{const r=zsR();return m<=0?0:Math.round((r?Math.max(r,Math.round(m/r)*r):m)/60*10000)/10000},
+  zsVB=z=>z.von?z.von.slice(11,16)+'–'+(z.bis||'').slice(11,16)+(z.bis&&z.bis.slice(0,10)!==z.von.slice(0,10)?' (+1)':''):'',
+  zsSp=()=>[{k:'von',l:'Beginn',f:z=>z.von?z.von.slice(11,16):''},{k:'bis',l:'Ende',f:z=>z.bis?z.bis.slice(11,16)+(z.bis.slice(0,10)!==(z.von||'').slice(0,10)?' <span class="mut">+1 Tag</span>':''):''},{k:'pause',l:'Pause',n:1,f:z=>z.pause?z.pause+' min':'',std:false}];
+function zsSpan(d,v,b,p){const m=b<=v,bd=m?isoD(new Date(new Date(d+'T12:00').getTime()+864e5)):d,von=`${d}T${v}`,bis=`${bd}T${b}`,min=zsMin(von,bis,p);
+  return{von,bis,min,h:zsH(min),mn:m,z:{von,bis,...(+p?{pause:+p}:{})}}}
+function zsBtb(d,p){return zsAn()&&btbMin(p.von)!=null&&btbMin(p.bis)!=null?zsSpan(d,p.von,p.bis,+p.pause||0).z:{}}
+async function zsPruef(x,id,maId){const U=DB.zeiten.filter(z=>z.von&&z.bis&&z.id!==id&&(z.maId||'')===(maId||'')&&z.von<x.bis&&x.von<z.bis),w=[];
+  if(U.length)w.push('Überschneidung mit: '+U.slice(0,3).map(z=>`${dAT(z.datum)} ${zsVB(z)} ${z.tarif} (${auftragKurz(z.auftragId)})`).join(', '));
+  if(x.min>720)w.push(`Dauer ${hm(x.min)} h (über 12 Stunden).`);return!w.length||confirm(w.join('\n')+'\n\nTrotzdem eintragen?')}
+function zsMit(x,fn){const Z=DB.zeiten;Z.push=function(...a){return Array.prototype.push.apply(this,a.map(z=>({...z,...x})))};const weg=()=>delete Z.push; // nur für den einen Eintrag von ACT.ztadd
+  try{const r=fn();if(r?.finally)return r.finally(weg);weg();return r}catch(e){weg();throw e}}
+const zsTxt=x=>x.min<=0?'Ende muss nach dem Beginn liegen (Pause beachten).':`= ${fmtQ(x.h)} h (${hm(x.min)} h${zsR()?`, gerundet auf ${zsR()} min`:''})${x.mn?' · Ende am nächsten Tag':''}${x.min>720?' · über 12 h':''}`;
+function zsLive(){const v=$('#zt-v')?.value,b=$('#zt-b')?.value,h=$('#zt-h'),i=$('#zt-i');if(!h)return;
+  if(v&&b){const x=zsSpan($('#zt-d').value||isoD(),v,b,num($('#zt-p').value));h.value=x.min>0?x.h:'';h.readOnly=true;if(i)i.textContent=zsTxt(x)}else{h.readOnly=false;if(i)i.textContent=''}}
+document.addEventListener('input',e=>{if(['zt-v','zt-b','zt-p','zt-d'].includes(e.target.id)&&zsAn())zsLive()});
+{const v0=V.zeiten;V.zeiten=(...x)=>{let h=v0(...x);if(!DB||!zsAn())return h;const u=erw('stoppuhr')&&S().uhr,jz=k=>kmpH()?`<span class="qh"><button type="button" class="s" data-act="ztjetzt" data-z="${k}">jetzt</button></span>`:'';
+  h=h.replace(/<label class="w(05|2)">Stunden/,`<label class="w05">Beginn<input type="time" id="zt-v">${jz('zt-v')}</label><label class="w05">Ende<input type="time" id="zt-b">${jz('zt-b')}</label><label class="w05">Pause (min)<input type="number" step="5" min="0" inputmode="numeric" id="zt-p"></label>$&`)
+   .replace('data-act="ztadd">Erfassen</button></div>',`$&<p class="mut zsh"><span id="zt-i"></span> Beginn und Ende eintragen, die Stunden werden berechnet. Ohne Uhrzeit: Stunden direkt eingeben.</p>`)
+   .replace(/<button class="s d" data-act="ztdel" data-id="([^"]+)">✕<\/button>/g,(m,id)=>{const z=DB.zeiten.find(x=>x.id===id);return z&&!z.berichtId?`<button class="s" data-act="ztbear" data-id="${id}" title="Bearbeiten">✎</button> `+m:m});
+  if(u)h=h.replace(/(data-k="zeit">⏹ Zeit stoppen[^<]*<\/button>)/,`$1<button data-act="uhrpause">${u.pz?'▶ Weiter':'⏸ Unterbrechen'}</button>`);return h}}
+{const s0=V.schnell;V.schnell=(...x)=>{const h=s0(...x),u=DB&&zsAn()&&erw('stoppuhr')&&S().uhr;return u?h.replace(/(<button class="sfb[^"]*sfl"[^>]*>[\s\S]*?<\/button>)/,`$1<button class="sfb" data-act="uhrpause"><span>${u.pz?'▶':'⏸'}</span>${u.pz?'Weiter':'Unterbrechen'}</button>`):h}}
+{const m0=MENUE.zeit;MENUE.zeit=el=>{const L=m0(el),z=DB.zeiten.find(x=>x.id===el.dataset.id);return z&&zsAn()&&!z.belegId&&!z.berichtId?[{l:'Bearbeiten …',ic:'✎',act:'ztbear',d:{id:z.id}},...L]:L}}
+{const z0=ACT.ztadd;ACT.ztadd=async el=>{if(!zsAn())return z0(el);const d=$('#zt-d').value||isoD(),v=$('#zt-v')?.value,b=$('#zt-b')?.value;if(!v&&!b)return z0(el);
+  if(!v||!b){alert('Beginn und Ende angeben (oder beide leer lassen und die Stunden eintragen).');return}const x=zsSpan(d,v,b,num($('#zt-p').value));
+  if(x.min<=0){alert(zsTxt(x));return}if(!await zsPruef(x,null,erw('mitarbeiter')?$('#zt-m')?.value||'':''))return;$('#zt-h').value=x.h;return zsMit(x.z,()=>z0(el))}}
+{const p0=uhrStopp;uhrStopp=async function(){if(!zsAn())return p0();const u=S().uhr;if(!u)return;const oa=erw('zeitOhneA'),A=btbAuftraege(),ma=u.m&&erw('mitarbeiter')?u.m:'',
+  wx=o=>({von:o.v,bis:o.b,min:o.v&&o.b?zsMin(o.v,o.b,num(o.p)):0,mn:(o.b||'').slice(0,10)!==(o.v||'').slice(0,10)}),
+  o=await formDialog({titel:'Zeit stoppen',ok:'⏹ Eintragen',extra:'Verwerfen',felder:[{typ:'hinweis',l:`${oa?'':esc(auftragLabel(u.a))+' · '}${esc(u.t)}${u.pz?' · unterbrochen':''}`},
+    ...(oa?[{k:'a',l:'Auftrag',wert:u.a||'',opts:zoaOpts(A,u.a),cls:'w2'}]:[]),{k:'v',l:'Beginn',typ:'datetime-local',wert:zsLok(u.von),neu:1},{k:'b',l:'Ende',typ:'datetime-local',wert:zsLok(u.pz||Date.now())},
+    {k:'p',l:'Pause (min)',typ:'number',wert:u.pm||'',cls:'w05',im:'numeric'},{typ:'hinweis',l:'<span id="zs-d"></span>'},{k:'x',l:'Tätigkeit',wert:u.x||'',cls:'w2',neu:1}],
+    ein:d=>{const f=()=>{const g=k=>d.querySelector(`[data-k="${k}"]`)?.value||'',x=wx({v:g('v'),b:g('b'),p:g('p')}),e=d.querySelector('#zs-d');x.h=zsH(x.min);if(e)e.textContent=zsTxt(x)};setTimeout(f);return f},
+    pruef:async o=>{if(!o.v||!o.b){alert('Beginn und Ende angeben.');return false}const x=wx(o);if(x.min<=0){alert('Das Ende muss nach dem Beginn liegen (Pause beachten).');return false}return zsPruef(x,null,ma)}});
+  if(!o)return;if(o==='extra'){if(!confirm('Laufende Zeit verwerfen, ohne Eintrag?'))return;delete S().uhr;await commit();render();return}
+  const tf=S().tarife.find(x=>x.kz===u.t)||{kosten:0,vk:0},m=ma&&maVon(ma),p=num(o.p),a=oa?o.a||'':u.a;if(a)lsSet('erp-lastA',a);
+  DB.zeiten.push({id:uid(),datum:o.v.slice(0,10),auftragId:a,tarif:u.t,stunden:zsH(zsMin(o.v,o.b,p)),text:o.x||'',kosten:+tf.kosten||0,vk:+tf.vk||0,belegId:'',von:o.v,bis:o.b,...(p?{pause:p}:{}),...(m?{maId:m.id,kosten:maKosten(m,tf)}:{})});
+  delete S().uhr;await commit();render()}}
+function zsKarte(){return`<div class="card" id="zskarte"><h2>Zeiterfassung</h2><div class="row"><label class="w05">Runden auf (Minuten, 0 = minutengenau)<input type="number" step="1" min="0" inputmode="numeric" data-o="s" data-f="uhrRund" value="${zsR()}"></label></div>
+  <p class="mut">Gilt für die Stoppuhr und für Zeiten mit Beginn und Ende; gerundet wird auf die nächste Einheit, mindestens eine Einheit.</p></div>`}
+Object.assign(ACT,{ztjetzt:el=>{const i=$('#'+el.dataset.z);if(i){i.value=zsLok(Date.now()).slice(11);zsLive()}},
+  uhrpause:async()=>{const u=S().uhr;if(!u)return;if(u.pz){u.pm=(u.pm||0)+Math.max(0,Math.round((Date.now()-new Date(u.pz))/60000));delete u.pz}else u.pz=new Date().toISOString();await commit();render()},
+  ztbear:async el=>{const z=DB.zeiten.find(x=>x.id===el.dataset.id);if(!z)return;if(z.belegId){alert('Der Eintrag ist schon verrechnet und kann nicht mehr geändert werden.');return}
+    if(z.berichtId){alert('Der Eintrag kommt aus einem Bautagesbericht – bitte dort ändern.');return}
+    const xo=o=>o.v&&o.b?zsSpan(o.d||isoD(),o.v,o.b,num(o.p)):null,
+    o=await formDialog({titel:'Zeit bearbeiten',ok:'Speichern',felder:[{typ:'hinweis',l:`${esc(auftragLabel(z.auftragId))} · ${esc(z.tarif)}`},{k:'d',l:'Datum',typ:'date',wert:z.datum,neu:1,cls:'w05'},
+      {k:'v',l:'Beginn',typ:'time',wert:(z.von||'').slice(11,16),cls:'w05'},{k:'b',l:'Ende',typ:'time',wert:(z.bis||'').slice(11,16),cls:'w05'},{k:'p',l:'Pause (min)',typ:'number',wert:z.pause||'',cls:'w05',im:'numeric'},
+      {k:'h',l:'Stunden (ohne Beginn/Ende)',typ:'number',wert:z.stunden,cls:'w05',im:'decimal',neu:1},{typ:'hinweis',l:'<span id="zs-d"></span>'},{k:'x',l:'Tätigkeit',wert:z.text||'',cls:'w2',neu:1}],
+      ein:d=>{const f=()=>{const g=k=>d.querySelector(`[data-k="${k}"]`)?.value||'',x=xo({d:g('d'),v:g('v'),b:g('b'),p:g('p')}),e=d.querySelector('#zs-d'),h=d.querySelector('[data-k="h"]');if(e)e.textContent=x?zsTxt(x):'';if(h){h.disabled=!!x;if(x&&x.min>0)h.value=x.h}};setTimeout(f);return f},
+      pruef:async o=>{if(!!o.v!==!!o.b){alert('Beginn und Ende angeben oder beide leer lassen.');return false}const x=xo(o);if(x){if(x.min<=0){alert(zsTxt(x));return false}return zsPruef(x,z.id,z.maId||'')}if(!(o.h>0)){alert('Bitte Stunden angeben.');return false}}});
+    if(!o)return;const x=xo(o);z.datum=o.d||z.datum;z.text=o.x;if(x){z.von=x.von;z.bis=x.bis;if(x.z.pause)z.pause=x.z.pause;else delete z.pause;z.stunden=x.h}else{delete z.von;delete z.bis;delete z.pause;z.stunden=o.h}
+    await commit();render()}});
+{const st=document.createElement('style');st.textContent='.zsh{margin:6px 0 0;font-size:12.5px}.zsh span:not(:empty){color:var(--ink);font-weight:600;margin-right:6px}';document.head.appendChild(st)}
 
 start();
 </script>

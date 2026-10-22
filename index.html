@@ -7915,6 +7915,17 @@ document.addEventListener('dragend',e=>{const d=P49D;P49D=null;if(!d||d.drin||!p
 #p49 .p49m{flex:none;margin:0 0 4px 4px;padding:3px 9px;background:none;border:0;color:var(--mut);font-size:15px;cursor:pointer}
 body.p49 main>#sleiste{top:48px}body.p49 .split .sticky,body.p49 .glsp,body.p49.kompakt .cols.bcol>:last-child{top:52px;max-height:calc(100vh - 62px)}body.p49 .esu{top:41px}body.p49 #main.eg>#egn{top:50px}body.p49 #main.eg>#esu~#egn{top:106px}
 @media print{#p49{display:none}}`;document.head.appendChild(st)}
+/* Kontrast hell (P51, erw.kontrast, Standard ein): body.kon (gesetzt nach render()) – Hintergrund dunkler als Karten, kräftigere Ränder, Tabs, Eingabefelder, Knöpfe.
+   Nur im hellen Modus (:not(.dunkel)); Blatt, Druck und K-Blätter behalten die bisherigen Farben */
+erwPlus({k:'kontrast',std:true,p:'Kontrast hell (P51)',l:'Mehr Kontrast im hellen Modus',info:'Hintergrund etwas dunkler, Karten, Eingabefelder, Knöpfe, Tabellenköpfe und Tabs mit deutlicheren Rändern. Gilt nur für die helle Darstellung; Belegblatt, Druck und PDF bleiben unverändert. Aus: Farben wie bisher.'});EB_K.kontrast='app';
+{const r0=render;render=function(...a){const x=r0.apply(this,a);document.body.classList.toggle('kon',!!DB&&erw('kontrast'));return x}}
+{const st=document.createElement('style'),k='body.kon:not(.dunkel)',w=':where(:not(.blatt *,.doc *,#print *,.kbf *))';st.textContent=`${k}{--bg:#e1e5eb;--line:#c6ccd6;--mut:#565e6c}
+${k} .blatt,${k} .doc,${k} #print,${k} .kbf{--bg:#f4f5f7;--line:#e2e5ea;--mut:#6b7280}
+${k} .card{border-color:#c2c9d3;box-shadow:0 1px 3px rgba(20,30,50,.08)}
+${k} input:not([type=checkbox]):not([type=radio])${w},${k} select${w},${k} textarea${w}{border-color:#9ea7b5}
+${k} button:not(.p,.gef)${w},${k} .btn${w},${k} .seg${w}{border-color:#aeb6c2}${k} button:not(.p,.gef)${w}:hover{border-color:#6f7988}
+${k} th${w}{background:#edf0f4;color:#4a5260}
+${k} #p49{border-bottom-color:#b9c1cc}${k} #p49 .p49t{background:#d2d8e0;border-color:#c1c8d2}${k} #p49 .p49t:hover{background:#c7ced8}${k} #p49 .p49t.on{background:var(--card);border-color:#b9c1cc}`;document.head.appendChild(st)}
 start();
 </script>
 </body>

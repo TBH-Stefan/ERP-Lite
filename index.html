@@ -394,7 +394,7 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .pgsp>td{padding:0!important;border:0!important;background:none!important}
 .pgband{margin:0 -14mm 0 -20mm;font:7.5pt/1.3 Arial,Helvetica,sans-serif;color:#000;text-align:center;position:relative}
 .pgband .pf{margin:0 18.7mm 0 17.8mm;height:17.3mm;box-sizing:border-box;padding-top:1mm}.pgband .pf.l{border-top:1mm solid #80704d}
-.pgband .pz{position:absolute;right:15mm;top:9.8mm;white-space:nowrap}.pgband .gap{height:7mm;background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 -1px}.pgband .pt{height:10mm}
+.pgband .pz{position:absolute;right:15mm;top:9.8mm;white-space:nowrap}.pgband .gap{height:9mm;background:#8b929c;box-shadow:inset 0 4px 5px -3px rgba(0,0,0,.5),inset 0 -4px 5px -3px rgba(0,0,0,.5);margin:0 -1px} /* Seitengrenze deutlich (hell: grau, dunkel: fast schwarz) */ body.dunkel .blatt .pgband .gap{background:#0b0d12;box-shadow:inset 0 4px 6px -3px #000,inset 0 -4px 6px -3px #000}.pgband .pt{height:10mm}
 .doc{position:relative;font:9.5pt/1.4 Arial,Helvetica,sans-serif;color:#000}
 .doc .hd{position:relative;height:35mm}
 /* Briefkopf wie Vorlage: Bild 42,4 × 31,5 mm, links 150,2 mm / oben 11 mm vom Blattrand (Ränder 20/10/14 mm), Anschrift ab 47 mm */
@@ -6510,12 +6510,16 @@ function vorschauSeiten(){
     const band=(fill,letzte)=>`<div style="height:${Math.max(0,fill).toFixed(1)}px"></div><div class="pgband"><div class="pf${fz.length?' l':''}">${fz.map(esc).join('<br>')}</div><span class="pz"></span>${letzte?'':'<div class="gap"></div><div class="pt"></div>'}</div>`;
     const bloecke=[];for(const c of doc.children){if(c.matches('.wm,.ft,.pgsp'))continue;const R=c.matches('table.p')?[...c.querySelectorAll(':scope>tbody>tr')]:[]; // nur Positionstabellen zeilenweise teilen; Summenblock bleibt ganz (wie im Druck)
       if(R.length)R.forEach((r,i)=>bloecke.push({el:r,tab:c,erst:i===0}));else bloecke.push({el:c})}
+    const P=bloecke.map((x,k)=>x.tab&&!x.el.matches('.grpz,.ltz,.gsum')?k:-1).filter(k=>k>=0),oben=k=>{const Z=bloecke[k];return(Z.erst?Z.tab:Z.el).getBoundingClientRect().top-t0()}; // Positionsanfänge
     const t0=()=>bl.getBoundingClientRect().top+parseFloat(getComputedStyle(bl).paddingTop);
     let start=0,n=1;
     for(let i=0;i<bloecke.length;i++){const B=bloecke[i],unten=B.el.getBoundingClientRect().bottom-t0();
       if(unten-start<=H+0.5)continue;
       let j=i;if(j>0&&B.tab&&bloecke[j-1].tab===B.tab&&B.el.classList.contains('ltz'))j--; // Langtext über die volle Breite (P4) mit seiner Position
       while(j>0&&bloecke[j-1].tab&&bloecke[j-1].tab===B.tab&&bloecke[j-1].el.classList.contains('grpz'))j--; // Gruppenkopf mitnehmen
+      // letzte Seite: nicht nur Schluss (Summe, Texte, Unterschrift) oder eine einzelne Position – die letzten zwei Positionen mitnehmen, wenn der Rest dann noch auf eine Seite passt
+      const need=Math.min(2,P.length);if(P.filter(k=>k>=j).length<need){let k=P[P.length-need];while(k>0&&bloecke[k-1].tab===bloecke[k].tab&&bloecke[k-1].el.classList.contains('grpz'))k--;
+        const tk=oben(k),kh=bloecke[k].erst?0:bloecke[k].tab.tHead?.getBoundingClientRect().height||0;if(k<j&&tk>start+1&&doc.getBoundingClientRect().bottom-t0()-tk+kh<=H)j=k}
       const Z=bloecke[j],el=Z.erst?Z.tab:Z.el,zt=el.getBoundingClientRect().top-t0();
       if(zt<=start+1){start+=H;n++;i--;continue} // Block größer als eine Seite: wird geteilt
       const fill=start+H-zt;let sp;
@@ -6633,10 +6637,13 @@ async function pdfAusBeleg(b,o={}){
   // Umbruch nur nach ganzen Zeilen (Position = Bezeichnung + Langtext), nicht nach Tabellen- oder Gruppenkopf; Summenblock (.tot) bleibt ein Block wie im Druck
   const brk=[...box.querySelectorAll('table.p tbody>tr:not(.grpz):not(.mlt),.doc>div:not(.hd),.doc>table,.txt,.sig')].map(e=>Y(e.getBoundingClientRect().bottom)).sort((a,c)=>a-c);
   const tab=box.querySelector('table.p'),tR=tab?.getBoundingClientRect(),thR=tab?.querySelector('thead')?.getBoundingClientRect(),thH=thR?thR.height:0,thTop=thR?Y(thR.top):0;
+  const pA=[...box.querySelectorAll('table.p tbody>tr:not(.grpz):not(.ltz):not(.gsum)')].map(e=>{while(e.previousElementSibling?.classList.contains('grpz'))e=e.previousElementSibling;return Y(e.getBoundingClientRect().top)}).sort((a,c)=>a-c); // Positionsanfänge (mit Gruppenkopf)
   const hoehe=Math.max(...[...it].map(x=>x.t==='text'?x.y+4:x.t==='line'?Math.max(x.y1,x.y2):x.y+x.h),0);
   const seiten=[];let st=0;
   while(st<hoehe-1&&seiten.length<50){const off=seiten.length&&tR&&st>Y(tR.top)&&st<Y(tR.bottom)?thH:0,cap=HC-off;
-    let en=brk.filter(y=>y>st+20&&y<=st+cap).pop();if(!en||st+cap>=hoehe)en=Math.min(st+cap,hoehe+1);seiten.push({st,en,off});st=en}
+    let en=brk.filter(y=>y>st+20&&y<=st+cap).pop();if(!en||st+cap>=hoehe)en=Math.min(st+cap,hoehe+1);
+    else{const need=Math.min(2,pA.length);if(pA.filter(y=>y>=en-1).length<need){const y=pA[pA.length-need];if(y<en&&y>st+20&&hoehe-y<=HC-thH)en=y}} // wie Vorschau: letzte Seite nicht nur Schluss oder eine Position
+    seiten.push({st,en,off});st=en}
   if(!seiten.length)seiten.push({st:0,en:hoehe+1,off:0});
   const bilder=[],bildNr=new Map();
   const pt=(x,y,s)=>[(MX+x*PX).toFixed(2),(PH-MT-(y-s.st+s.off)*PX).toFixed(2)];
@@ -7940,6 +7947,23 @@ document.addEventListener('dragend',e=>{const d=P49D;P49D=null;if(!d||d.drin||!p
 #p49 .p49m{flex:none;margin:0 0 4px 4px;padding:3px 9px;background:none;border:0;color:var(--mut);font-size:15px;cursor:pointer}
 body.p49 main>#sleiste{top:48px}body.p49 .split .sticky,body.p49 .glsp,body.p49.kompakt .cols.bcol>:last-child{top:52px;max-height:calc(100vh - 62px)}body.p49 .esu{top:41px}body.p49 #main.eg>#egn{top:50px}body.p49 #main.eg>#esu~#egn{top:106px}
 @media print{#p49{display:none}}`;document.head.appendChild(st)}
+/* Kontrast (P51, erw.kontrast, Standard ein): body.kon (gesetzt nach render()) – Hintergrund deutlich anders als Karten, kräftigere Ränder, Tabs, Eingabefelder, Knöpfe.
+   Hell über :not(.dunkel), dunkel über .dunkel (nach den Regeln aus dkRegeln(), höhere Spezifität); Blatt, Druck und K-Blätter behalten die bisherigen Farben */
+erwPlus({k:'kontrast',std:true,p:'Kontrast (P51)',l:'Mehr Kontrast (hell und dunkel)',info:'Hintergrund etwas dunkler, Karten, Eingabefelder, Knöpfe, Tabellenköpfe und Tabs mit deutlicheren Rändern. Im Dunkelmodus ebenso: dunklerer Hintergrund, hellere Karten und Ränder. Belegblatt, Druck und PDF bleiben unverändert. Aus: Farben wie bisher.'});EB_K.kontrast='app';
+{const r0=render;render=function(...a){const x=r0.apply(this,a);document.body.classList.toggle('kon',!!DB&&erw('kontrast'));return x}}
+{const st=document.createElement('style'),k='body.kon:not(.dunkel)',n='body.kon.dunkel',w=':where(:not(.blatt *,.doc *,#print *,.kbf *))';st.textContent=`${k}{--bg:#e1e5eb;--line:#c6ccd6;--mut:#565e6c}
+${k} .blatt,${k} .doc,${k} #print,${k} .kbf{--bg:#f4f5f7;--line:#e2e5ea;--mut:#6b7280}
+${k} .card{box-shadow:0 1px 3px rgba(20,30,50,.08)}
+${k} input:not([type=checkbox]):not([type=radio])${w},${k} select${w},${k} textarea${w}{border-color:#9ea7b5}
+${k} button:not(.p,.gef)${w},${k} .btn${w},${k} .seg${w}{border-color:#aeb6c2}${k} button:not(.p,.gef)${w}:hover{border-color:#6f7988}
+${k} th${w}{background:#edf0f4;color:#4a5260}
+${k} #p49{border-bottom-color:#b9c1cc}${k} #p49 .p49t{background:#d2d8e0;border-color:#c1c8d2}${k} #p49 .p49t:hover{background:#c7ced8}${k} #p49 .p49t.on{background:var(--card);border-color:#b9c1cc}
+${n}{--bg:#0c0e13;--card:#1f242e;--line:#3b4352;--mut:#adb5c2}
+${n} .card{box-shadow:0 1px 3px rgba(0,0,0,.45)}${n} nav{box-shadow:inset -1px 0 #2a303c}
+${n} input:not([type=checkbox]):not([type=radio])${w},${n} select${w},${n} textarea${w}{background:#12151b;border-color:#5a6478}
+${n} button:not(.p,.gef)${w},${n} .btn${w},${n} .seg${w}{border-color:#535d70}${n} button:not(.p,.gef)${w}:hover{border-color:#8a95a8}
+${n} th${w}{background:#272d38;color:#c3cad5}
+${n} #p49{border-bottom-color:#3e4757}${n} #p49 .p49t{background:#262b35;border-color:#353c4a}${n} #p49 .p49t:hover{background:#2f3542}${n} #p49 .p49t.on{background:var(--card);border-color:#3e4757}`;document.head.appendChild(st)}
 start();
 </script>
 </body>

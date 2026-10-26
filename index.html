@@ -7662,6 +7662,36 @@ Object.assign(ACT,{sf:el=>sfAus(el.dataset.k),
 
 {const e0=V.einstellungen;V.einstellungen=(...x)=>{const h=e0(...x);return DB&&erw('zeitStempel')?h+zsKarte():h}} // Zeiterfassung mit Beginn/Ende (P48)
 
+/* Live-Betrieb (P52 Etappe 1, erw.liveCheck, Standard ein): Karte „Live-Check“ oben in den Einstellungen (lcPunkte() → Ampel je Punkt, nur Anzeige, ändert nichts),
+   Programmstand aus document.lastModified (GitHub Pages: Zeitpunkt der Veröffentlichung), Hinweis #testb „TESTBETRIEB“ bei Speicherort „nur dieser Browser“ (body.testb, nach render()). */
+erwPlus({k:'liveCheck',std:true,p:'Live-Betrieb (P52)',l:'Live-Check in den Einstellungen und Hinweis „Testbetrieb“',info:'Oben in den Einstellungen prüft eine Karte, ob alles für den Echtbetrieb bereit ist (Speicherort, Anmeldung, Firmenangaben, Nummernkreise, Testdaten, Sicherung, Archiv) und zeigt den Programmstand. Läuft das Programm mit „Nur im Browser testen“, steht oben ein Hinweis „TESTBETRIEB“.'});
+queueMicrotask(()=>{EB_K.liveCheck='sicher';EB_KARTE.push([/\|Live-Check/,'firma'])}); // EB_K/EB_KARTE entstehen erst im Block P46 darunter
+const LC_TEST=/\b(test|muster|demo|beispiel|dummy)/i,lcStand=()=>{const d=new Date(document.lastModified);return isNaN(d)?'–':d.toLocaleString('de-AT',{dateStyle:'medium',timeStyle:'short'})};
+function lcPunkte(){const s=S(),f=s.firma||{},P=[],j=String(new Date().getFullYear()),p=(t,st,d)=>P.push({t,st,d});
+  const a=STORE.art;p('Speicherort',a==='od'?'ok':a==='dir'?'warn':'err',a==='od'?esc(STORE.name):a==='dir'?'Lokaler Ordner – kein Abgleich mit Handy und Tablet':'Nur dieser Browser (Test) – Daten gehen beim Leeren des Browsers verloren');
+  if(a==='od')p('Anmeldung',mfaOk()?'ok':'warn',mfaOk()?'Mit zweitem Faktor (MFA) angemeldet':'Ohne zweiten Faktor angemeldet – Microsoft-Konto mit MFA absichern');
+  const fF=[[f.name,'Firmenname'],[f.strasse,'Straße'],[f.plz,'PLZ'],[f.ort,'Ort']].filter(x=>!String(x[0]||'').trim()).map(x=>x[1]).concat(pflichtFehlt(f));
+  p('Firmenangaben',fF.length?'err':'ok',fF.length?'Fehlt: '+fF.join(', '):'Name, Anschrift, UID, Firmenbuch vollständig');
+  p('Bankverbindung',String(f.iban||'').trim()?'ok':'warn',String(f.iban||'').trim()?esc(f.iban):'IBAN fehlt (steht auf Rechnungen)');
+  const nk=s.nk||{},nx=t=>nk[t]?`${nk[t].prefix}-${j}-${String((nk[t].zaehler?.[j]||0)+1).padStart(4,'0')}`:'';
+  p('Nummernkreise','ok','Nächste Nummern '+j+': '+['AN','AB','LS','RE','GS'].map(nx).filter(Boolean).join(', '));
+  const tK=(DB.kontakte||[]).filter(k=>LC_TEST.test(k.name||'')).length,tB=(DB.belege||[]).filter(b=>LC_TEST.test(b.adresse?.name||'')).length;
+  p('Testdaten',tK||tB?'warn':'ok',tK||tB?`${tK} Kontakte und ${tB} Belege mit „Test“, „Muster“ o. Ä. im Namen – vor dem Echtbetrieb prüfen`:'Keine Kontakte oder Belege mit „Test“, „Muster“ o. Ä. im Namen');
+  const sf=sichFehler(),ss=sichStand();
+  p('Tagessicherung',!erw('sicherung')?'warn':sf?'err':'ok',!erw('sicherung')?'Ausgeschaltet (Erweiterungen → Datensicherung)':sf?'Letzter Versuch fehlgeschlagen: '+esc(sf.t):ss.ts?'Ein, letzte neue Sicherung von diesem Gerät: '+new Date(ss.ts).toLocaleDateString('de-AT'):'Ein, noch keine Sicherung von diesem Gerät');
+  p('Archiv',erw('archiv')?'ok':'warn',erw('archiv')?'Ein (PDF beim Abschließen, Monatsexport)':'Ausgeschaltet (Erweiterungen → Datensicherung)');
+  return P}
+function lcKarte(){const P=lcPunkte(),T={ok:['✓','ok'],warn:['!','warn'],err:['✕','err']},n=P.filter(x=>x.st!=='ok').length;
+  return akk('e-live','Live-Check',`<div class="card lc"><h2>Live-Check ${n?tag(n+' offen',P.some(x=>x.st==='err')?'err':'warn'):tag('bereit','ok')}</h2>
+  <table class="lct">${P.map(x=>`<tr><td>${tag(T[x.st][0],T[x.st][1])}</td><td><b>${x.t}</b></td><td>${x.d}</td></tr>`).join('')}</table>
+  <p class="mut" title="Zeitpunkt der Veröffentlichung – am Handy und am PC sollte derselbe Stand stehen">Programmstand: ${lcStand()}</p></div>`,{offen:n>0,zusatz:n?tag(n+' offen','warn'):tag('bereit','ok')})}
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{const h=v0(...x);return DB&&erw('liveCheck')&&!ES_IDX?h.replace('</h1>','</h1>'+lcKarte()):h}}
+{const r0=render;render=function(...a){const x=r0.apply(this,a),an=!!DB&&erw('liveCheck')&&STORE===CACHESTORE;document.body.classList.toggle('testb',an);let e=$('#testb');
+  if(an&&!e){e=document.createElement('div');e.id='testb';e.textContent='TESTBETRIEB – Daten nur in diesem Browser';document.body.append(e)}else if(!an)e?.remove();return x}}
+{const st=document.createElement('style');st.textContent=`.lct{width:100%;border-collapse:collapse}.lct td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}.lct td:first-child{width:28px}.lct td:nth-child(2){white-space:nowrap}
+#testb{position:fixed;top:env(safe-area-inset-top);left:50%;transform:translateX(-50%);z-index:9999;background:#d97706;color:#fff;font:600 11px/1.6 system-ui,sans-serif;letter-spacing:.04em;padding:1px 10px;border-radius:0 0 6px 6px;pointer-events:none;opacity:.92;white-space:nowrap}
+@media print{#testb{display:none}}`;document.head.append(st)}
+
 /* Einstellungen gruppieren (P46, erw.einstGruppen): Wrapper um V.einstellungen (nach allen anderen Wrappern). Die Bereiche (Kinder von #main) werden nach Verwendungszweck EB
    geordnet (Karten über data-akk bzw. Überschrift EB_KARTE, Schalter über EB_K, sonst „Weitere“); die Karte „Erweiterungen“ wird je Bereich als „Funktionen“ (egFunk) neu
    aufgebaut, Paketnummer nur in ⓘ. Breit (> 1100 px): Liste #egn.egw links (Raster per :has), rechts nur der gewählte Bereich (EB_AKT, erp-einstB); schmal: Bereiche als Karten

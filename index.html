@@ -8347,6 +8347,30 @@ function esZeile(){const q=$('#main>#esu'),h=$('#main>h1'),i=q?.querySelector('#
 #main.eg>#sleiste{justify-self:end}#main>.esu{padding-right:var(--slw,0px)}body.p49 #main>.esu{top:41px!important}
 #esu>h1{margin:0 6px 0 0;flex:none}#esu .esf{position:relative;display:flex;flex:1 1 auto;min-width:140px;max-width:520px}#esu .esf input{width:100%;max-width:none;padding-left:32px}#esu .esl{position:absolute;left:10px;top:50%;transform:translateY(-50%);display:flex;color:var(--mut);pointer-events:none;line-height:1}
 #esu #esn[data-n=""],#esu #esn:not([data-n]){display:none}@media(max-width:760px){#esu{flex-wrap:wrap}#esu>h1{font-size:20px}#esu .esf{min-width:0;flex-basis:0}#esu>#esn{flex:1 0 100%;margin-top:-4px}}@media(min-width:1101px){#main.eg>#esu>h1{flex:0 0 242px;margin:0}#main.eg>#esu{grid-row:1}#main.eg>#sleiste{grid-row:1;grid-column:2;align-self:start;margin-top:0}}`;document.head.append(st)}
+/* Regie-Formular (P50, erw.regieForm, Standard aus; nach Mustern Regieantrag/Regieschein): Regieantrag b.angeordnet („Angeordnet durch“) und b.arbeitsstelle in den Kopfdaten (Wrapper um kbBelegFeld),
+   im Druck unter der Überschrift; Unterschriftsfelder Auftragnehmer/Auftraggeber mit Name und Datum vor der Fußzeile (raSigF, Wrapper um docHTML); Vorgabe-Fußtext RA_SATZ einmal in S().texte.RA (Merker satzP50).
+   Regiebericht r.angeordnet (BTB_ED, Zeile in btbDoc), ACT.rarb übernimmt angeordnet und Arbeitsstelle (→ r.ort) aus dem Regieantrag; offene Unterschriftsfelder mit Name/Datum-Zeile */
+erwPlus({k:'regieForm',std:false,p:'Bautagesbericht (P36)',l:'Regie: Angeordnet durch, Arbeitsstelle, Unterschriftsfelder',info:'Wirkt mit Regieantrag und Regiebericht. Regieantrag: Felder „Angeordnet durch“ (wer beim Auftraggeber die Regiearbeit angeordnet hat) und „Arbeitsstelle“ in den Kopfdaten und im Druck, unten zwei Unterschriftsfelder „für den Auftragnehmer“ und „für den Auftraggeber“ mit Name und Datum, Vorgabe-Fußtext „gilt als Auftragsbestätigung … Abrechnung nach tatsächlichem Aufwand“ (Einstellungen → Texte, änderbar). Regiebericht: Feld „Angeordnet durch“, beim „+ Regiebericht“ aus dem Antrag übernommen (Arbeitsstelle → Baustelle); offene Unterschriftsfelder mit Name und Datum zum Ausfüllen auf Papier.'});
+EB_K.regieForm='bau';
+const RA_SATZ='Der vom Auftraggeber unterfertigte Regieantrag gilt als Auftragsbestätigung. Die Abrechnung der Arbeiten erfolgt nach tatsächlichem Aufwand laut Regieberichten.',rfAn=()=>erw('regieForm');
+const rfSatz=()=>{if(DB&&rfAn())raSync();const t=DB&&rfAn()&&S().texte?.RA;if(!t||t.satzP50)return;t.satzP50=1;if(!pT(t.fuss))t.fuss=RA_SATZ};
+const raSigF=b=>{const fx=fixAktiv(b)?b.fix:null,an=(fx?fx.zeichner||fx.bearbeiter:S().firma.zeichner||S().bearbeiter)||'',ra=b.ra||{},s=ra.wie==='sig'?ra.sig:null,
+  sp=(t,d,n,bild,u)=>`<div class="rasz"><div>${t}, Datum: ${d}</div><div>Name: ${esc(n)}</div><div class="rasb">${bild}</div><div class="rasu">${u}</div></div>`;
+  return`<div class="rasf">${sp('für den Auftragnehmer',dAT(b.datum),an,'','Unterschrift Aussteller')}${sp('für den Auftraggeber',ra.st==='gen'?dAT(ra.datum):'',s?.name||'',s?.pfad?`<img data-bild="${esc(s.pfad)}" alt="">`:ra.st==='gen'&&ra.wie==='schriftlich'?'schriftlich genehmigt':'','Unterschrift Auftraggeber')}</div>`};
+{const kb0=kbBelegFeld;kbBelegFeld=(b,dis)=>kb0(b,dis)+(b.typ==='RA'&&rfAn()?`<div class="row"><label>Angeordnet durch<input data-h="angeordnet" value="${esc(b.angeordnet||'')}" ${dis} placeholder="Name, Funktion beim Auftraggeber"></label><label>Arbeitsstelle<input data-h="arbeitsstelle" value="${esc(b.arbeitsstelle||'')}" ${dis} placeholder="z. B. Stiege 2, 3. OG, Technikraum"></label></div>`:'')}
+{const d0=docHTML;docHTML=function(b,edit=false,o={}){let h=d0(b,edit,o);if(b?.typ!=='RA'||!rfAn())return h;
+  const z=[b.arbeitsstelle&&`<div>Arbeitsstelle: ${esc(b.arbeitsstelle)}</div>`,b.angeordnet&&`<div>Angeordnet durch: ${esc(b.angeordnet)}</div>`].filter(Boolean).join(''),i=h.indexOf('</h3>');
+  if(z&&i>=0){const j=Math.min(...['<div class="txt">','<table class="p'].map(x=>h.indexOf(x,i)).filter(x=>x>=0));if(j<Infinity)h=h.slice(0,j)+z+h.slice(j)}
+  const f=h.lastIndexOf('<div class="ft" data-fz=');return f<0?h:h.slice(0,f)+raSigF(b)+h.slice(f)}}
+BTB_ED.push(r=>r.art!=='RB'||!rfAn()?'':bAbs('btb-ang','Anordnung',`<div class="row">${bIn('btb|'+r.id,'angeordnet',r.angeordnet,{l:'Angeordnet durch (Auftraggeber)',ph:'Name, Funktion',cls:'w2'})}</div>`,{zusatz:esc(r.angeordnet||'–')}));
+{const d0=btbDoc;btbDoc=function(r){let h=d0(r);if(r?.art!=='RB'||!rfAn())return h;
+  if(r.angeordnet){const z=`<tr><th>Angeordnet durch</th><td>${esc(r.angeordnet)}</td></tr>`,v=h.indexOf('<tr><th>Verfasser</th>');h=v>=0?h.slice(0,v)+z+h.slice(v):h.replace('</tbody></table>',z+'</tbody></table>')}
+  return h.replace('<div class="sigl">Monteur</div>',`<div class="sigl">Monteur · Name: ${esc(r.verfasser||'')} · Datum:</div>`).replace('<div class="sigl">Auftraggeber / Kunde</div>','<div class="sigl">Auftraggeber / Kunde · Name: ………………………… · Datum: ……………</div>')}}
+{const r0=render;render=(...a)=>{rfSatz();return r0(...a)}}
+queueMicrotask(()=>{const rb0=ACT.rarb;ACT.rarb=el=>{const b=beleg(el.dataset.id),alt=new Set(DB.berichte.map(r=>r.id));rb0(el);const r=rfAn()&&b&&DB.berichte.find(x=>!alt.has(x.id)&&x.raId===b.id);
+  if(!r)return;if(b.angeordnet)r.angeordnet=b.angeordnet;if(b.arbeitsstelle)r.ort=b.arbeitsstelle;persist()}});
+{const st=document.createElement('style');st.textContent=`.rasf{display:flex;gap:10mm;margin-top:10mm;break-inside:avoid;page-break-inside:avoid}.rasz{flex:1;font-size:9pt;line-height:1.5}
+.rasb{height:18mm;border-bottom:1px solid #333;display:flex;align-items:flex-end;font-size:8pt}.rasb img{max-height:17mm;max-width:100%}.rasu{font-size:8pt;text-align:center;margin-top:1mm}`;document.head.append(st)}
 start();
 </script>
 </body>

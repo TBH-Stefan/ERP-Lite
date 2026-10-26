@@ -7664,6 +7664,8 @@ Object.assign(ACT,{sf:el=>sfAus(el.dataset.k),
 
 {const v0=V.einstellungen;V.einstellungen=(...x)=>{const h=v0(...x);return DB&&erw('module')&&!ES_IDX?h.replace(/<h1>Einstellungen<\/h1>/,'$&'+modKarte()):h}} // Karte „Module“ (P52 Etappe 2, Code am Ende vor start()), vor P46 eingesetzt, damit sie im Bereich „Firma & Grunddaten“ steht
 
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{const h=v0(...x);return DB&&erw('benutzer')&&!ES_IDX?h+bnKarte():h}} // Karte „Benutzer & Gruppen“ (P52 Etappe 3, Code am Ende vor start())
+
 /* Live-Betrieb (P52 Etappe 1, erw.liveCheck, Standard ein): Karte „Live-Check“ oben in den Einstellungen (lcPunkte() → Ampel je Punkt, nur Anzeige, ändert nichts),
    Programmstand aus document.lastModified (GitHub Pages: Zeitpunkt der Veröffentlichung), Hinweis #testb „TESTBETRIEB“ bei Speicherort „nur dieser Browser“ (body.testb, nach render()). */
 erwPlus({k:'liveCheck',std:true,p:'Live-Betrieb (P52)',l:'Live-Check in den Einstellungen und Hinweis „Testbetrieb“',info:'Oben in den Einstellungen prüft eine Karte, ob alles für den Echtbetrieb bereit ist (Speicherort, Anmeldung, Firmenangaben, Nummernkreise, Testdaten, Sicherung, Archiv) und zeigt den Programmstand. Läuft das Programm mit „Nur im Browser testen“, steht oben ein Hinweis „TESTBETRIEB“.'});
@@ -8013,7 +8015,7 @@ const MODULE=[{k:'verkauf',ic:'🧾',l:'Verkauf',i:'Angebote, Auftragsbestätigu
   {k:'personal',ic:'👷',l:'Personal & Lohn',i:'Mitarbeiter, Lohnbuchung',n:['personal'],eb:['bau'],sw:'mitarbeiter maLohn'},
   {k:'buch',ic:'📒',l:'Buchhaltung',i:'Finanzbuchhaltung, laufende Kosten, UVA, Auswertungen',n:['kosten','auswertung','fibu'],su:['kosten']}];
 const MOD_SW={};for(const m of MODULE)for(const k of (m.sw||'').split(' ').filter(Boolean))MOD_SW[k]=m.k;
-const modAn=()=>!!(DB?.settings?.erw?.module??ERW_STD.module),mod=k=>!modAn()||DB?.settings?.module?.[k]!==false; // liest den Schalter direkt (ERW_X ruft mod())
+let MOD_X=null;const modAn=()=>!!(DB?.settings?.erw?.module??ERW_STD.module),mod=k=>(!modAn()||DB?.settings?.module?.[k]!==false)&&(!MOD_X||MOD_X(k)); // liest den Schalter direkt (ERW_X ruft mod()); MOD_X: Rechte je Benutzer (P52 Etappe 3)
 const modAus=()=>MODULE.filter(m=>!mod(m.k)),ebAus=b=>{const L=MODULE.filter(m=>m.eb?.includes(b));return L.length>0&&L.every(m=>!mod(m.k))};
 {const x0=ERW_X;ERW_X=(k,v)=>{v=x0?x0(k,v):v;return v&&(!(k in MOD_SW)||mod(MOD_SW[k]))}}
 const modAusHTML=m=>`<h1>${m.ic} ${esc(m.l)}</h1><div class="card"><p>Das Modul „${esc(m.l)}“ ist ausgeschaltet. Gespeicherte Daten bleiben erhalten.</p><div class="bar"><a class="btn" href="#/einstellungen">Einstellungen → Module</a></div></div>`;
@@ -8042,6 +8044,68 @@ function modEinst(h){const t=document.createElement('template');t.innerHTML=h;co
   if(erw('module')){if(ebAus(EB_AKT))EB_AKT='firma';if(EB_N&&ebAus(EB_N))EB_N=''}
   const h=v0(...x);return erw('module')||erw('geraetFilter')?modEinst(h):h}}
 {const st=document.createElement('style');st.textContent=`.mweg{display:none!important}.modl{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 16px}`;document.head.append(st)}
+
+/* Benutzer & Gruppen (P52 Etappe 3, erw.benutzer, Standard ein; wirkt erst nach „Benutzerverwaltung einrichten“ und mit aktivem Admin-Benutzer):
+   S().gruppen [{id,name,admin?,r:{basis|<Modul>:'k'|'l'|'b'},fest,einst}] (Vorlagen GRP_STD, eigene Gruppen frei benennbar), S().benutzer [{id,name,konto,gruppe,aktiv}].
+   Angemeldet = bnIch() über erp-user (Microsoft-Konto, nur OneDrive; Ordner/Browser = alle Rechte; Konto nicht eingetragen = fremd, kein Zugriff). Rechte recht(m), bnDarf('fest'), bnAdmin().
+   Bedienschutz, kein Datenschutz (alles in erp-daten.json): 'k' → MOD_X (Menü/Suche/Ansicht wie ausgeschaltetes Modul) und #main „Kein Zugriff“; 'l' → Felder in #main gesperrt (bnSperren()),
+   Wächter in der capture-Phase für change/input/click (BN_FREI = Aktionen zum Ansehen), fest = Abschließen/Stornieren (Wrapper festschreiben, ACT fest/storno/fbstorno),
+   einst = Einstellungen ändern, Felder erw./module./gruppen./benutzer. und Aktionen bnein/bnneu/bndel/grneu/grdel nur Admin. log() merkt den Benutzer (wer). Karte bnKarte() über Wrapper vor P46. */
+erwPlus({k:'benutzer',std:true,p:'Live-Betrieb (P52)',l:'Benutzer und Benutzergruppen mit Rechten je Modul',info:'Einstellungen → „Benutzer & Gruppen“: Benutzer (Microsoft-Konto) eintragen, Benutzergruppen selbst benennen und je Modul „kein Zugriff“, „lesen“ oder „bearbeiten“ festlegen, dazu „Abschließen und Stornieren“ und „Einstellungen ändern“. Nur der Admin ändert Module, Schalter, Benutzer und Gruppen. Bedienschutz: Die Datendatei im OneDrive bleibt für alle mit Zugriff auf den Ordner lesbar.'});
+EB_K.benutzer='sicher';EB_KARTE.push([/^e-bn\||\|Benutzer & Gruppen/,'sicher']);
+const BN_M=()=>[{k:'basis',ic:'🏠',l:'Basis (Übersicht, Kontakte, Artikel)'},...MODULE],BN_R=[['k','kein Zugriff'],['l','lesen'],['b','bearbeiten']];
+const GRP_STD=[{id:'admin',name:'Admin',admin:true,r:{},fest:true,einst:true},
+  {id:'buero',name:'Büro',r:{basis:'b',verkauf:'b',einkauf:'b',lager:'b',auftraege:'b',kalk:'b',bau:'b',personal:'l',buch:'b'},fest:true,einst:true},
+  {id:'techniker',name:'Techniker',r:{basis:'l',verkauf:'k',einkauf:'k',lager:'l',auftraege:'b',kalk:'k',bau:'b',personal:'k',buch:'k'},fest:false,einst:false},
+  {id:'lesen',name:'Nur lesen',r:{basis:'l',verkauf:'l',einkauf:'l',lager:'l',auftraege:'l',kalk:'l',bau:'l',personal:'k',buch:'l'},fest:false,einst:false}];
+const bnL=()=>S().benutzer||[],grL=()=>S().gruppen||[],bnEin=()=>!!DB&&erw('benutzer')&&bnL().length>0,bnKto=x=>String(x||'').trim().toLowerCase();
+function bnIch(){if(!bnEin()||STORE.art!=='od')return null;const L=bnL().filter(u=>u.aktiv!==false);if(!L.some(u=>grL().find(g=>g.id===u.gruppe)?.admin))return null; // ohne aktiven Admin keine Einschränkung
+  const k=bnKto(lsGet('erp-user'));return L.find(u=>bnKto(u.konto)===k)||{name:k||'unbekannt',gruppe:'',fremd:true}}
+const bnGr=()=>{const u=bnIch();return u?grL().find(g=>g.id===u.gruppe)||{id:'',name:'kein Zugang',r:{}}:null};
+const recht=m=>{const g=bnGr();return!g||g.admin?'b':!g.id?'k':m==='einst'?(g.einst?'b':'l'):g.r?.[m]||'k'},bnDarf=x=>{const g=bnGr();return!g||!!g.admin||!!g[x]},bnAdmin=()=>{const g=bnGr();return!g||!!g.admin};
+MOD_X=k=>recht(k)!=='k';
+function bnRoute(){const[v,id]=location.hash.slice(2).split('/');if(v==='beleg'){const b=DB.belege.find(x=>x.id===id);return b?(T[b.typ]?.b==='E'?'einkauf':'verkauf'):'basis'}
+  if(v==='belege')return id==='E'?'einkauf':'verkauf';const z={auftrag:'auftraege',bericht:'bau',mitarbeiter:'personal',einstellungen:'einst'}[v];if(z)return z;
+  return(MODULE.find(m=>m.n.some(n=>n.split('/')[0]===v))||{k:'basis'}).k}
+const bnFeld=el=>{const d=el.dataset||{};return(!!d.o&&d.o!=='ui')||d.p!=null||d.h!=null||d.r!=null},bnAdmF=el=>el.dataset?.o==='s'&&/^(erw|module|gruppen|benutzer)\./.test(el.dataset.f||'');
+function bnSperren(M){for(const el of M.querySelectorAll('input,select,textarea'))if(bnFeld(el))el.disabled=true;for(const el of M.querySelectorAll('[contenteditable="true"]'))el.contentEditable='false'}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);if(!DB)return x;const r=recht(bnRoute()),u=bnIch(),M=$('#main');document.body.classList.toggle('rl',r==='l');
+  if(M&&r==='k')M.innerHTML=`<h1>Kein Zugriff</h1><div class="card"><p>${u?.fremd?`Das Konto „${esc(u.name)}“ ist nicht freigeschaltet.`:'Deine Benutzergruppe hat für diesen Bereich keine Berechtigung.'} Der Admin schaltet das in den Einstellungen unter „Benutzer &amp; Gruppen“ frei.</p></div>`;
+  else if(M&&r==='l')bnSperren(M);return x}}
+const BN_FREI=/^(menue|filter|fweg|such|suopen|sulist|zuletzt|zlleer|spring|glpop|sumpop|binfo|kpauf|kpsicht|egb|egzur|egexp|esx|lpop|navanp|netz|zurueck|vor|geralle|druck|pdf|ansicht|grpauf|ktyp|lfst|bzeit|dashauf|kmo)/;
+const bnStopp=(e,t)=>{e.stopImmediatePropagation();e.preventDefault();if(t)alert(t)};
+for(const t of['change','input'])window.addEventListener(t,e=>{const el=e.target;if(!bnEin()||!el?.dataset||!bnFeld(el))return;const adm=bnAdmF(el);
+  if(adm?!bnAdmin():recht(bnRoute())!=='b'){bnStopp(e,t==='change'?(adm?'Nur der Admin kann das ändern.':'Nur Leserecht – die Änderung wird nicht gespeichert.'):'');if(t==='change')render()}},true);
+window.addEventListener('click',e=>{const a=e.target.closest?.('[data-act]');if(!a||!bnEin())return;const k=a.dataset.act;
+  if(['fest','storno','fbstorno'].includes(k)&&!bnDarf('fest'))return bnStopp(e,'Abschließen und Stornieren darf deine Benutzergruppe nicht.');
+  if(/^(bn|gr)(ein|neu|del)$/.test(k)&&!bnAdmin())return bnStopp(e,'Nur der Admin kann Benutzer und Gruppen ändern.');
+  if(recht(bnRoute())==='l'&&!BN_FREI.test(k))bnStopp(e,'Nur Leserecht.')},true);
+{const f0=festschreiben;festschreiben=async function(...a){if(!bnDarf('fest')){alert('Abschließen darf deine Benutzergruppe nicht.');return false}return f0.apply(this,a)}}
+{const l0=log;log=function(...a){const x=l0.apply(this,a),u=bnIch();if(u&&DB.log.length)DB.log[DB.log.length-1].wer=u.name;return x}}
+function bnKarte(){const G=grL(),M=BN_M(),u=bnIch(),g=bnGr(),adm=bnAdmin(),dis=adm?'':' disabled',ich=bnKto(lsGet('erp-user'));
+  if(!bnL().length)return akk('e-bn','Benutzer &amp; Gruppen',`<div class="card"><h2>Benutzer &amp; Gruppen</h2><p class="mut" style="margin-top:0">Für weitere Personen: Benutzer (Microsoft-Konto) eintragen, Benutzergruppen selbst benennen und je Modul „kein Zugriff“, „lesen“ oder „bearbeiten“ festlegen. Solange nur du eingetragen bist, ändert sich nichts. Bedienschutz: Die Datendatei im OneDrive bleibt für alle mit Zugriff auf den Ordner lesbar.</p><div class="bar"><button class="p" data-act="bnein">Benutzerverwaltung einrichten</button></div></div>`,{zusatz:'nicht eingerichtet'});
+  const bz=(x,i)=>{const self=!!ich&&bnKto(x.konto)===ich,d=dis||(self?' disabled':'');
+    return`<tr><td><input data-o="s" data-f="benutzer.${i}.name" value="${esc(x.name||'')}" placeholder="Name"${dis}></td><td><input data-o="s" data-f="benutzer.${i}.konto" value="${esc(x.konto||'')}" placeholder="name@firma.at" inputmode="email"${d}></td>
+    <td><select data-o="s" data-f="benutzer.${i}.gruppe"${d}>${G.map(y=>opt(y.id,y.name,x.gruppe)).join('')}</select></td><td><label class="chk"><input type="checkbox" data-o="s" data-f="benutzer.${i}.aktiv" ${x.aktiv!==false?'checked':''}${d}> <span>aktiv</span></label></td>
+    <td>${self||!adm?'':`<button class="s" data-act="bndel" data-i="${i}" title="Benutzer entfernen">✕</button>`}</td></tr>`};
+  const gk=(y,i)=>{const n=bnL().filter(x=>x.gruppe===y.id).length,d=dis||(y.admin?' disabled':'');
+    return`<div class="grk"><div class="bar" style="margin:0 0 6px"><input data-o="s" data-f="gruppen.${i}.name" value="${esc(y.name)}"${dis} style="flex:1;font-weight:600"><span class="mut">${n} Benutzer</span>${adm&&!y.admin&&!n?`<button class="s" data-act="grdel" data-i="${i}" title="Gruppe löschen">✕</button>`:''}</div>
+    ${y.admin?'<p class="mut">Alle Rechte; schaltet Module frei, verwaltet Benutzer und Gruppen.</p>':M.map(m=>`<label class="grz"><span>${m.ic} ${esc(m.l)}</span><select data-o="s" data-f="gruppen.${i}.r.${m.k}"${d}>${BN_R.filter(r=>m.k!=='basis'||r[0]!=='k').map(([k,l])=>opt(k,l,y.r?.[m.k]||(m.k==='basis'?'l':'k'))).join('')}</select></label>`).join('')
+      +`<label class="chk"><input type="checkbox" data-o="s" data-f="gruppen.${i}.fest" ${y.fest?'checked':''}${d}> <span>Abschließen und Stornieren</span></label><label class="chk"><input type="checkbox" data-o="s" data-f="gruppen.${i}.einst" ${y.einst?'checked':''}${d}> <span>Einstellungen ändern</span></label>`}</div>`};
+  return akk('e-bn','Benutzer &amp; Gruppen',`<div class="card"><h2>Benutzer &amp; Gruppen</h2>
+  <p class="mut" style="margin-top:0">${u?`Angemeldet als <b>${esc(u.name)}</b> – Gruppe ${esc(g?.name||'–')}.`:STORE.art==='od'?'Noch keine Einschränkung aktiv (kein aktiver Admin eingetragen).':'Ordner- bzw. Browser-Modus: alle Rechte.'} Bedienschutz: Die Datendatei im OneDrive bleibt für alle mit Zugriff auf den Ordner lesbar.</p>
+  <h3>Benutzer</h3><table class="bnt"><thead><tr><th>Name</th><th>Microsoft-Konto</th><th>Gruppe</th><th></th><th></th></tr></thead><tbody>${bnL().map(bz).join('')}</tbody></table>
+  ${adm?'<div class="bar"><button class="s" data-act="bnneu">+ Benutzer</button></div>':''}
+  <h3>Benutzergruppen</h3><div class="grl">${G.map(gk).join('')}</div>${adm?'<div class="bar"><button class="s" data-act="grneu">+ Gruppe</button></div>':''}</div>`,{zusatz:`${bnL().length} Benutzer · ${G.length} Gruppen`})}
+Object.assign(ACT,{
+  bnein:()=>{const s=S();s.gruppen=JSON.parse(JSON.stringify(GRP_STD));s.benutzer=[{id:uid(),name:s.firma?.zeichner||'Admin',konto:lsGet('erp-user')||'',gruppe:'admin',aktiv:true}];persist();render()},
+  bnneu:()=>{S().benutzer.push({id:uid(),name:'',konto:'',gruppe:(grL().find(g=>!g.admin)||grL()[0]).id,aktiv:true});persist();render()},
+  bndel:el=>{const L=S().benutzer,x=L[+el.dataset.i];if(!x||!confirm(`Benutzer „${x.name||x.konto||'ohne Namen'}“ entfernen?`))return;L.splice(+el.dataset.i,1);persist();render()},
+  grneu:()=>{S().gruppen.push({id:uid(),name:'Neue Gruppe',r:{basis:'l'},fest:false,einst:false});persist();render()},
+  grdel:el=>{const L=S().gruppen,y=L[+el.dataset.i];if(!y||y.admin||bnL().some(x=>x.gruppe===y.id)||!confirm(`Gruppe „${y.name}“ löschen?`))return;L.splice(+el.dataset.i,1);persist();render()}});
+{const st=document.createElement('style');st.textContent=`.bnt{width:100%;border-collapse:collapse}.bnt td{padding:3px 4px;vertical-align:middle}.bnt input:not([type=checkbox]),.bnt select{width:100%}
+.grl{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}.grk{border:1px solid var(--line);border-radius:8px;padding:8px 10px}.grz{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:3px 0}.grz select{width:auto;min-width:120px}
+@media(max-width:760px){.bnt thead{display:none}.bnt tr{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:6px 0;border-bottom:1px solid var(--line)}.bnt td{padding:0}}`;document.head.append(st)}
 
 start();
 </script>

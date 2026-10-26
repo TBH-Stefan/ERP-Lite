@@ -5509,7 +5509,7 @@ function esLauf(w,filtern){const m=$('#main'),hits=[];if(!m)return hits;
   m.querySelectorAll('details[data-esa]').forEach(d=>{const a=d.dataset.esa;delete d.dataset.esa;if(d.dataset.akk!=null)d.dataset.auf=a;d.open=a==='1'});
   if(!w.length)return hits;
   const ok=t=>w.every(x=>t.includes(x)),hit=it=>{it.classList.add('es-hit');hits.push(it);esAufKette(it)};
-  for(const s of m.children){if(s.id==='esu'||s.id==='egn'||s.tagName==='H1')continue;const st=ok(esN(esTitel(s))),G=new Map();let n=0;
+  for(const s of m.children){if(s.id==='esu'||s.id==='egn'||s.id==='sleiste'||s.tagName==='H1')continue;const st=ok(esN(esTitel(s))),G=new Map();let n=0;
     for(const it of s.querySelectorAll(ES_F)){const g=esGruppe(it);if(!G.has(g))G.set(g,{t:ok(esN(esTitel(g))),n:0});const x=G.get(g);
       if(st||x.t){x.n++;n++}else if(ok(esTxt(it))){x.n++;n++;hit(it)}else if(filtern)it.classList.add('es-weg')}
     for(const[g,x]of G)if(!x.n){if(filtern)g.classList.add('es-weg')}else if(x.t&&!st){if(g.matches('details'))esAuf(g);esAufKette(g)}
@@ -8334,6 +8334,19 @@ body.sk56 #main details.akk[open]:not(details.akk details.akk)>summary{position:
 body.sk56 #main tr.prjz>td{position:sticky;top:max(var(--sk56,0px),env(safe-area-inset-top,0px));z-index:4}
 body.sk56 #main .kpg>.kpk{position:sticky;top:max(var(--sk56,0px),env(safe-area-inset-top,0px));z-index:5;background:inherit}
 @media print{body.sk56 #main .card>h2,body.sk56 #main details.akk>summary,body.sk56 #main .kpg>.kpk,body.sk56 #main tr.prjz>td{position:static}}`;document.head.append(st)}
+/* Zurück/Speichern-Leiste (P39) in der Tab-Leiste (P49, erw.slTabs): #sleiste steht rechts in #p49 statt über dem Dokument; p49Leiste() zeichnet #p49 neu → danach sLeiste().
+   Einstellungssuche (P42) neben der schwebenden Leiste (Fehlerbehebung, ohne Schalter): Breite der Leiste in --slw, .esu hält rechts so viel frei; mit P46 (#main.eg) war die Leiste ganz breit und deckte das Suchfeld beim Bildlauf zu. */
+erwPlus({k:'slTabs',std:false,p:'Dokumente in Tabs (P49)',l:'Zurück/Speichern-Leiste in der Tab-Leiste',info:'Die Leiste mit Zurück, Vor, Verwerfen und Speichern schwebt nicht mehr über dem Dokument, sondern steht rechts oben in der Tab-Leiste. Nur am PC mit eingeschalteten Tabs. Aus = Leiste oben rechts über dem Dokument.'});
+queueMicrotask(()=>{EB_K.slTabs='ansicht'});
+{const s0=sLeiste;sLeiste=function(){const x=s0.apply(this,arguments),t=$('#p49'),e=$('#sleiste');if(e&&t&&erw('slTabs')&&!HANDY.matches&&document.body.classList.contains('p49')&&e.parentNode!==t)t.append(e);
+  esZeile();document.documentElement.style.setProperty('--slw',(e&&e.parentNode===$('#main')?Math.ceil(e.offsetWidth)+14:0)+'px');return x}}
+function esZeile(){const q=$('#main>#esu'),h=$('#main>h1'),i=q?.querySelector('#esq');if(!q||!h||!i)return;q.prepend(h); // Einstellungssuche (P42) in einer Zeile mit der Überschrift, Lupe als Piktogramm (P53)
+  const f=document.createElement('span');f.className='esf';f.innerHTML='<span class="esl">🔍</span>';i.before(f);f.append(i);i.placeholder='Einstellung suchen …'}
+{const p0=p49Leiste;p49Leiste=function(){const x=p0.apply(this,arguments);if(erw('slTabs'))sLeiste();return x}}
+{const st=document.createElement('style');st.textContent=`#p49>#sleiste{position:static;float:none;margin:0 0 4px auto;align-self:center;flex:none;background:none;border:0;box-shadow:none;padding:0}
+#main.eg>#sleiste{justify-self:end}#main>.esu{padding-right:var(--slw,0px)}body.p49 #main>.esu{top:41px!important}
+#esu>h1{margin:0 6px 0 0;flex:none}#esu .esf{position:relative;display:flex;flex:1 1 auto;min-width:140px;max-width:520px}#esu .esf input{width:100%;max-width:none;padding-left:32px}#esu .esl{position:absolute;left:10px;top:50%;transform:translateY(-50%);display:flex;color:var(--mut);pointer-events:none;line-height:1}
+#esu #esn[data-n=""],#esu #esn:not([data-n]){display:none}@media(max-width:760px){#esu{flex-wrap:wrap}#esu>h1{font-size:20px}#esu .esf{min-width:0;flex-basis:0}#esu>#esn{flex:1 0 100%;margin-top:-4px}}@media(min-width:1101px){#main.eg>#esu>h1{flex:0 0 242px;margin:0}#main.eg>#esu{grid-row:1}#main.eg>#sleiste{grid-row:1;grid-column:2;align-self:start;margin-top:0}}`;document.head.append(st)}
 start();
 </script>
 </body>

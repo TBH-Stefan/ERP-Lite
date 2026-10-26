@@ -8247,10 +8247,12 @@ body{--f53b:#0f6cbd;--f53g:#107c10;--f53o:#ca5010;--f53r:#c50f1f;--f53v:#5c2e91}
 details.ih>summary .i53{width:1.05em;height:1.05em;vertical-align:-.15em}
 ${s}{content:''!important;display:inline-block;width:12px;height:12px;font-size:inherit;vertical-align:-1px;background:currentColor;-webkit-mask:${rt};mask:${rt};transform:none!important;transition:transform .15s}
 body.ic53 details.akk[open]>summary::before,body.ic53 .gl details[open]>summary::before,body.ic53 nav.nk .grp:not(.nkzu)::before{transform:rotate(90deg)!important}`;document.head.appendChild(st)}
-/* Schnellfunktionen in der Seitenleiste (P52, Wunsch 26.10.2026): mit erw.schnell Eintrag „Schnellfunktionen“ (a.navsf, data-n="schnell") direkt nach „Überblick“ – Weg zurück zur Kachelseite, auch am Handy über „Mehr“. */
+/* Schnellfunktionen in der Seitenleiste (P52, Wunsch 26.10.2026): mit erw.schnell Eintrag „Schnellfunktionen“ (a.navsf, data-n="schnell") direkt nach „Überblick“ – Weg zurück zur Kachelseite, auch am Handy über „Mehr“; mit erw.schnellStart führt das Logo (a.home, a.logo) zur Kachelseite. */
 {const r0=render;render=function(...a){const x=r0.apply(this,a),N=document.querySelector('nav');if(!N)return x;let e=N.querySelector('a.navsf');const an=!!DB&&erw('schnell');
   if(an&&!e){N.querySelector('a[data-n="dash"]')?.insertAdjacentHTML('afterend','<a href="#/schnell" data-n="schnell" class="navsf">Schnellfunktionen</a>');e=N.querySelector('a.navsf')}else if(!an)e?.remove();
-  if(e){const on=location.hash.startsWith('#/schnell');e.classList.toggle('on',on);if(on)N.querySelector('a[data-n="dash"]')?.classList.remove('on')}return x}}
+  if(e){const on=location.hash.startsWith('#/schnell');e.classList.toggle('on',on);if(on)N.querySelector('a[data-n="dash"]')?.classList.remove('on')}
+  const st=an&&erw('schnellStart');for(const l of document.querySelectorAll('.topbar a.home,nav a.logo')){l.setAttribute('href',st?'#/schnell':'#/dash');l.title=st?'Schnellfunktionen (Startseite)':'Überblick'} // Logo = Startseite
+  return x}}
 
 start();
 </script>

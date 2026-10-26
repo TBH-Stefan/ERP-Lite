@@ -7938,6 +7938,24 @@ queueMicrotask(()=>Object.assign(ACT,{navanp:async()=>{const aus=nkL('erp-navaus
 {const st=document.createElement('style');st.textContent=`nav.nk .grp{cursor:pointer;user-select:none}nav.nk .grp::before{content:'◢';display:inline-block;width:14px;font-size:8px;vertical-align:1px}nav.nk .grp.nkzu::before{content:'▷'}nav.nk a.nkweg{display:none!important}
 nav .nkset{display:block;margin:10px 12px 4px;background:none;border:0;color:#8792a8;font-size:12px;text-align:left;padding:4px 6px;cursor:pointer}nav .nkset:hover{color:#fff}`;document.head.appendChild(st)}
 
+/* Seitenleiste: Gruppe „Einstellungen“ (erw.navEinst): esNav() setzt vor „Export & Sicherung“ eine Überschrift nav .grp.esg, damit beide wie die anderen Gruppen klappen
+   (mit navKlapp: zugeklappt = beide ausgeblendet, der geöffnete bleibt; „Seitenleiste anpassen“ blendet sie weiterhin nicht aus, NK_FIX). Läuft nach navKlapp() (render und Klick) */
+erwPlus({k:'navEinst',std:true,p:'Ansichten klarer (P44)',l:'Seitenleiste: eigene Gruppe „Einstellungen“',info:'„Export & Sicherung“ und „Einstellungen“ stehen in der Seitenleiste unter einer eigenen Überschrift „Einstellungen“ (mit „Seitenleiste einklappbar“ auch auf- und zuklappbar). Aus = wie bisher ohne Überschrift.'});
+function esNav(){const N=document.querySelector('nav'),x=N?.querySelector(':scope>a[data-n="export"]');if(!x)return;let g=N.querySelector(':scope>.grp.esg');const an=!!DB&&erw('navEinst');
+  if(!an){g?.remove();return}
+  if(!g){g=document.createElement('div');g.className='grp esg';g.textContent='Einstellungen';x.before(g)}
+  const zu=N.classList.contains('nk')&&g.classList.contains('nkzu');for(const n of['export','einstellungen']){const a=N.querySelector(`:scope>a[data-n="${n}"]`);a?.classList.toggle('nkweg',zu&&!a.classList.contains('on'))}}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);esNav();return x}}
+document.addEventListener('click',e=>{if(e.target.closest?.('nav.nk .grp.esg'))esNav()});
+
+/* Seitenleiste: Gruppenüberschriften deutlicher (erw.navGrpStil, body.ngs): größer, heller, fett, dezentes Band mit blauer Randlinie; Abstand zur vorigen Gruppe. Nur CSS (:not(#x) = Vorrang vor P51-Kontrast und kompakt) */
+erwPlus({k:'navGrpStil',std:true,p:'Ansichten klarer (P44)',l:'Seitenleiste: Gruppenüberschriften hervorheben',info:'Die Überschriften der Seitenleiste (Vorgänge, Projektmanagement, Stammdaten, …) sind größer, heller und fett, mit farbigem Rand links und leichtem Hintergrund – so unterscheiden sie sich klar von den Einträgen. Aus = wie bisher.'});
+{const r0=render;render=function(...a){const x=r0.apply(this,a);document.body.classList.toggle('ngs',!!DB&&erw('navGrpStil'));return x}}
+{const st=document.createElement('style');st.textContent=`body.ngs nav>.grp:not(#x){font-size:12px;font-weight:700;letter-spacing:.04em;color:#eef2f9;background:#262f42;border-left:3px solid #4f8ff7;padding:8px 8px 7px 13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;margin-top:10px;margin-bottom:2px}
+body.ngs nav.nk>.grp:not(#x):hover{background:#2e3a52;color:#fff}body.ngs nav.nk>.grp:not(#x)::before{color:#8fb4f5}
+@media(min-width:761px) and (max-height:820px){body.ngs.kompakt nav>.grp:not(#x){padding:6px 8px 5px 13px;margin-top:6px}}
+@media(pointer:coarse){body.ngs nav>.grp:not(#x){padding-top:11px;padding-bottom:10px}}`;document.head.appendChild(st)}
+
 /* Überblick ohne Leeres (P44 B, erw.dashLeer): Wrapper um V.dash (auch mit „Übersicht anpassen“) – Kennzahlen mit 0,00 € ohne Warnung und Karten mit „keine“ entfallen, ihre Titel stehen
    gesammelt in einer Zeile „Nichts offen: …“; Schnellknöpfe als „+ Neu ▾“, „📷 Einlesen ▾“, „⏱ Zeit erfassen“ (wie am Handy) */
 erwPlus({k:'dashLeer',std:false,p:'Ansichten klarer (P44)',l:'Überblick ohne leere Kacheln',info:'Kennzahlen mit 0,00 € und Listen ohne Einträge („keine“) werden im Überblick nicht angezeigt; was leer ist, steht unten in einer Zeile „Nichts offen: …“. Die Schnellknöpfe oben werden zu „+ Neu ▾“, „📷 Einlesen ▾“ und „⏱ Zeit erfassen“.'});
@@ -8081,7 +8099,7 @@ const EB=[['firma','🏢','Firma & Grunddaten'],['belege','🧾','Belege & Druck
 const EB_K=Object.fromEntries(Object.entries({belege:'strgP snapshot duplikat druckprofil abAbschluss gliederung zuschlag pe',
   kalk:'gkalk gkMerken dbStd gkLohn k3Tarif tarifPos gkAufsFeld vkVorschlag ekRechnen kbVorlage kbDruck kbProjekt kbBeleg',einkauf:'scanPE lfTermin lfListe lfErinnern lfVerkauf lfNeu',
   kontakte:'kFilter navKL kontaktForm adrVorschlag adrPruef dublette kDok artBild',bau:'btb btbBild btbSig btbDruck btbVorschau btbZeit btbNrDatum btbRechnung btbFahrt btbTage regie regieAntrag mitarbeiter maLohn unterschrift',
-  ansicht:'kompakt kompaktBeleg einstGruppen kundeProjekt auftragKP belegFilterKurz belegInfo kontaktSchlank dashLeer navKlapp navPm pfeile speicherLeiste dashFlex ihHover scrollSperre baumHover kontext statuszeile kopfFix zuletzt suche einstSuche suEinst',
+  ansicht:'kompakt kompaktBeleg einstGruppen kundeProjekt auftragKP belegFilterKurz belegInfo kontaktSchlank dashLeer navKlapp navPm navEinst navGrpStil pfeile speicherLeiste dashFlex ihHover scrollSperre baumHover kontext statuszeile kopfFix zuletzt suche einstSuche suEinst',
   app:'ios appOffline netStatus ipad tabLeiste wischZurueck langDruck iosTeilen dunkel schnell schnellStart stoppuhr',sicher:'abmKnopf geraetLoeschen mfaPflicht sicherung archiv vollsicherung'}).flatMap(([b,s])=>s.split(' ').map(k=>[k,b])));
 const EB_KARTE=[[/^e-(firma|kfm|st|nk)\||\|(Firma|Kaufmännisch|Steuersätze|Nummernkreise)/,'firma'],[/^e-(mail|druck)\||\|(E-Mail-Vorlage|Druck)/,'belege'],[/^e-(tf|kv|ger)\||\|(Stundentarife|Kollektivvertr|Geräteliste)/,'kalk'],
   [/^e-(ein|lf)\||\|(Belege einlesen|Liefertermine)/,'einkauf'],[/^e-(regie|fahrt)\||\|(Regiepreise|Fahrtkosten)/,'bau'],[/\|Schnellfunktionen/,'app']];

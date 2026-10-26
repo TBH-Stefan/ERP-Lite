@@ -7694,7 +7694,7 @@ function lcKarte(){const P=lcPunkte(),T={ok:['✓','ok'],warn:['!','warn'],err:[
   if(an&&!e){e=document.createElement('div');e.id='testb';e.textContent='TESTBETRIEB – Daten nur in diesem Browser';document.body.append(e)}else if(!an)e?.remove();return x}}
 {const st=document.createElement('style');st.textContent=`.lct{width:100%;border-collapse:collapse}.lct td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}.lct td:first-child{width:28px}.lct td:nth-child(2){white-space:nowrap}
 #testb{position:fixed;top:env(safe-area-inset-top);left:50%;transform:translateX(-50%);z-index:9999;background:#d97706;color:#fff;font:600 11px/1.6 system-ui,sans-serif;letter-spacing:.04em;padding:1px 10px;border-radius:0 0 6px 6px;pointer-events:none;opacity:.92;white-space:nowrap}
-@media print{#testb{display:none}}`;document.head.append(st)}
+@media print{#testb{display:none}}body.nav #testb{display:none}`;document.head.append(st)}
 
 /* Einstellungen gruppieren (P46, erw.einstGruppen): Wrapper um V.einstellungen (nach allen anderen Wrappern). Die Bereiche (Kinder von #main) werden nach Verwendungszweck EB
    geordnet (Karten über data-akk bzw. Überschrift EB_KARTE, Schalter über EB_K, sonst „Weitere“); die Karte „Erweiterungen“ wird je Bereich als „Funktionen“ (egFunk) neu
@@ -8247,6 +8247,11 @@ body{--f53b:#0f6cbd;--f53g:#107c10;--f53o:#ca5010;--f53r:#c50f1f;--f53v:#5c2e91}
 details.ih>summary .i53{width:1.05em;height:1.05em;vertical-align:-.15em}
 ${s}{content:''!important;display:inline-block;width:12px;height:12px;font-size:inherit;vertical-align:-1px;background:currentColor;-webkit-mask:${rt};mask:${rt};transform:none!important;transition:transform .15s}
 body.ic53 details.akk[open]>summary::before,body.ic53 .gl details[open]>summary::before,body.ic53 nav.nk .grp:not(.nkzu)::before{transform:rotate(90deg)!important}`;document.head.appendChild(st)}
+/* Schnellfunktionen in der Seitenleiste (P52, Wunsch 26.10.2026): mit erw.schnell Eintrag „Schnellfunktionen“ (a.navsf, data-n="schnell") direkt nach „Überblick“ – Weg zurück zur Kachelseite, auch am Handy über „Mehr“. */
+{const r0=render;render=function(...a){const x=r0.apply(this,a),N=document.querySelector('nav');if(!N)return x;let e=N.querySelector('a.navsf');const an=!!DB&&erw('schnell');
+  if(an&&!e){N.querySelector('a[data-n="dash"]')?.insertAdjacentHTML('afterend','<a href="#/schnell" data-n="schnell" class="navsf">Schnellfunktionen</a>');e=N.querySelector('a.navsf')}else if(!an)e?.remove();
+  if(e){const on=location.hash.startsWith('#/schnell');e.classList.toggle('on',on);if(on)N.querySelector('a[data-n="dash"]')?.classList.remove('on')}return x}}
+
 start();
 </script>
 </body>

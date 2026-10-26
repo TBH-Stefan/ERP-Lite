@@ -7662,6 +7662,8 @@ Object.assign(ACT,{sf:el=>sfAus(el.dataset.k),
 
 {const e0=V.einstellungen;V.einstellungen=(...x)=>{const h=e0(...x);return DB&&erw('zeitStempel')?h+zsKarte():h}} // Zeiterfassung mit Beginn/Ende (P48)
 
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{const h=v0(...x);return DB&&erw('module')&&!ES_IDX?h.replace(/<h1>Einstellungen<\/h1>/,'$&'+modKarte()):h}} // Karte „Module“ (P52 Etappe 2, Code am Ende vor start()), vor P46 eingesetzt, damit sie im Bereich „Firma & Grunddaten“ steht
+
 /* Live-Betrieb (P52 Etappe 1, erw.liveCheck, Standard ein): Karte „Live-Check“ oben in den Einstellungen (lcPunkte() → Ampel je Punkt, nur Anzeige, ändert nichts),
    Programmstand aus document.lastModified (GitHub Pages: Zeitpunkt der Veröffentlichung), Hinweis #testb „TESTBETRIEB“ bei Speicherort „nur dieser Browser“ (body.testb, nach render()). */
 erwPlus({k:'liveCheck',std:true,p:'Live-Betrieb (P52)',l:'Live-Check in den Einstellungen und Hinweis „Testbetrieb“',info:'Oben in den Einstellungen prüft eine Karte, ob alles für den Echtbetrieb bereit ist (Speicherort, Anmeldung, Firmenangaben, Nummernkreise, Testdaten, Sicherung, Archiv) und zeigt den Programmstand. Läuft das Programm mit „Nur im Browser testen“, steht oben ein Hinweis „TESTBETRIEB“.'});
@@ -7994,6 +7996,53 @@ ${n} input:not([type=checkbox]):not([type=radio])${w},${n} select${w},${n} texta
 ${n} button:not(.p,.gef)${w},${n} .btn${w},${n} .seg${w}{border-color:#535d70}${n} button:not(.p,.gef)${w}:hover{border-color:#8a95a8}
 ${n} th${w}{background:#272d38;color:#c3cad5}
 ${n} #p49{border-bottom-color:#3e4757}${n} #p49 .p49t{background:#262b35;border-color:#353c4a}${n} #p49 .p49t:hover{background:#2f3542}${n} #p49 .p49t.on{background:var(--card);border-color:#3e4757}`;document.head.appendChild(st)}
+/* Module (P52 Etappe 2, erw.module, Standard ein): Bereiche als Ganzes ein/aus, S().module = {<k>:false} nur Abweichungen (fehlt = ein), mod(k).
+   Aus = Menüpunkte (nav/#tabl über href, leere .grp), Listenansichten (V-Wrapper → modAusHTML), Suche (suIndex-Wrapper, SU-Gruppen su), Einstellungen (P46-Bereiche eb, Karten über EB_KARTE)
+   und die Schalter des Moduls (MOD_SW, über ERW_X: wirken nicht) ausgeblendet. Daten bleiben unverändert. Detailansichten (Beleg, Auftrag, Bericht …) bleiben erreichbar.
+   Geräte (erw.geraetFilter, Standard ein): Schalter nur für iPhone/iPad bzw. nur für PC (GER_K) auf dem anderen Gerät ausgeblendet (GER_T = Touch), „Alle Geräte anzeigen“ = erp-gerAlle (ACT.geralle).
+   Beides im äußersten Wrapper um V.einstellungen (nach P46) auf dem fertigen HTML (modEinst()); die Karte modKarte() setzt ein Wrapper vor P46 ein (vor Live-Check P52). */
+erwPlus({k:'module',std:true,p:'Live-Betrieb (P52)',l:'Module: Bereiche als Ganzes ein- und ausschalten',info:'In den Einstellungen gibt es die Karte „Module“. Ein ausgeschaltetes Modul verschwindet aus Menü, Tab-Leiste, Suche und Einstellungen, seine Funktionsschalter wirken nicht. Gespeicherte Daten bleiben erhalten; einzelne Belege, Aufträge oder Berichte lassen sich weiter öffnen.'},
+  {k:'geraetFilter',std:true,p:'Live-Betrieb (P52)',l:'Einstellungen nur für dieses Gerät zeigen',info:'Schalter, die nur iPhone/iPad betreffen (Tab-Leiste, Wischen, PDF teilen, Schnellfunktionen …), werden am PC ausgeblendet, reine PC-Schalter (Tabs, Rechtsklick, Strg+P, Maus-Hilfen …) am iPhone/iPad. Die Werte bleiben gespeichert. „Alle Geräte anzeigen“ in der Karte „Module“ zeigt wieder alles.'});
+EB_K.module='sicher';EB_K.geraetFilter='app';EB_KARTE.push([/^e-mod\||\|Module/,'firma']);
+const MODULE=[{k:'verkauf',ic:'🧾',l:'Verkauf',i:'Angebote, Auftragsbestätigungen, Lieferscheine, Rechnungen, Gutschriften, Zu verrechnen',n:['belege/V','verrechnung']},
+  {k:'einkauf',ic:'📦',l:'Einkauf',i:'Bestellungen, Wareneingang, Eingangsrechnungen, Belege einlesen, Liefertermine',n:['belege/E','lieferungen'],eb:['einkauf'],sw:'scanPE lfTermin lfListe lfErinnern lfVerkauf'},
+  {k:'lager',ic:'🏬',l:'Lager',i:'Lagerplätze, Bestände, Bewegungen',n:['lager']},
+  {k:'auftraege',ic:'🗂️',l:'Aufträge & Zeiten',i:'Aufträge mit DB II, Zeiterfassung, Stoppuhr',n:['auftraege','zeiten'],su:['auftrag'],sw:'stoppuhr zeitOhneA zeitStempel'},
+  {k:'kalk',ic:'🧮',l:'Kalkulation & LV',i:'Gesamtkalkulation, Lohnstunden, Leistungsverzeichnisse, K-Blätter (ÖNORM B 2061), Textbausteine',n:['lvs','kbs','lvbib'],su:['lv','kb','bib'],eb:['kalk'],sw:'gkalk gkMerken dbStd gkLohn k3Tarif gkAufsFeld vkVorschlag kbVorlage kbDruck kbProjekt kbBeleg'},
+  {k:'bau',ic:'🏗️',l:'Baustelle',i:'Bautagesberichte, Regieberichte, Fahrtkosten, Regieanträge',n:['berichte'],su:['btb'],eb:['bau'],sw:'btb btbBild btbSig btbDruck btbVorschau btbZeit btbNrDatum btbRechnung btbFahrt btbTage regie regieAntrag'},
+  {k:'personal',ic:'👷',l:'Personal & Lohn',i:'Mitarbeiter, Lohnbuchung',n:['personal'],eb:['bau'],sw:'mitarbeiter maLohn'},
+  {k:'buch',ic:'📒',l:'Buchhaltung',i:'Finanzbuchhaltung, laufende Kosten, UVA, Auswertungen',n:['kosten','auswertung','fibu'],su:['kosten']}];
+const MOD_SW={};for(const m of MODULE)for(const k of (m.sw||'').split(' ').filter(Boolean))MOD_SW[k]=m.k;
+const modAn=()=>!!(DB?.settings?.erw?.module??ERW_STD.module),mod=k=>!modAn()||DB?.settings?.module?.[k]!==false; // liest den Schalter direkt (ERW_X ruft mod())
+const modAus=()=>MODULE.filter(m=>!mod(m.k)),ebAus=b=>{const L=MODULE.filter(m=>m.eb?.includes(b));return L.length>0&&L.every(m=>!mod(m.k))};
+{const x0=ERW_X;ERW_X=(k,v)=>{v=x0?x0(k,v):v;return v&&(!(k in MOD_SW)||mod(MOD_SW[k]))}}
+const modAusHTML=m=>`<h1>${m.ic} ${esc(m.l)}</h1><div class="card"><p>Das Modul „${esc(m.l)}“ ist ausgeschaltet. Gespeicherte Daten bleiben erhalten.</p><div class="bar"><a class="btn" href="#/einstellungen">Einstellungen → Module</a></div></div>`;
+for(const m of MODULE)for(const v of new Set(m.n.map(n=>n.split('/')[0]))){const v0=V[v];if(!v0||v==='belege')continue;V[v]=(...a)=>mod(m.k)?v0(...a):modAusHTML(m)}
+{const v0=V.belege;V.belege=(bereich='V',...a)=>{const m=MODULE.find(x=>x.k===(bereich==='E'?'einkauf':'verkauf'));return mod(m.k)?v0(bereich,...a):modAusHTML(m)}}
+{const s0=suIndex;suIndex=function(...a){const E=s0.apply(this,a),g=new Set(modAus().flatMap(m=>m.su||[]));return g.size?E.filter(e=>!g.has(e.g)):E}}
+{const r0=render;render=function(...a){const x=r0.apply(this,a),aus=new Set(modAus().flatMap(m=>m.n));
+  for(const e of document.querySelectorAll('nav a[href^="#/"],#tabl a[href^="#/"]'))e.classList.toggle('mweg',aus.has(e.getAttribute('href').slice(2)));
+  for(const g of document.querySelectorAll('nav .grp')){let e=g.nextElementSibling,s=false;while(e&&!e.classList.contains('grp')&&e.tagName==='A'){if(!e.classList.contains('mweg')&&getComputedStyle(e).display!=='none')s=true;e=e.nextElementSibling}g.classList.toggle('mweg',!s)}
+  return x}}
+const GER_K={ios:'ios ipad tabLeiste wischZurueck langDruck iosTeilen schnell schnellStart appHandy',pc:'tabs ihHover baumHover kontext strgP navKlapp'},GER_T=matchMedia('(pointer:coarse)');
+const gerVon=k=>GER_K.ios.split(' ').includes(k)?'ios':GER_K.pc.split(' ').includes(k)?'pc':'',gerAlle=()=>!!lsGet('erp-gerAlle'),
+  gerWeg=k=>{const g=gerVon(k);return!!g&&erw('geraetFilter')&&!gerAlle()&&(g==='ios')!==GER_T.matches};
+function modKarte(){const n=modAus().length,g=erw('geraetFilter');
+  return akk('e-mod','Module',`<div class="card"><h2>Module</h2><p class="mut" style="margin-top:0">Ausgeschaltete Module verschwinden aus Menü, Suche und Einstellungen. Gespeicherte Daten bleiben erhalten. Basis (Übersicht, Kontakte, Artikel, Einstellungen, Sicherung) ist immer an.</p>
+  <div class="modl">${MODULE.map(m=>`<label class="chk"><input type="checkbox" data-o="s" data-f="module.${m.k}" ${mod(m.k)?'checked':''}> <span><b>${m.ic} ${esc(m.l)}</b><br><span class="mut">${esc(m.i)}</span></span></label>`).join('')}</div>
+  ${g?`<label class="chk" style="margin-top:10px"><input type="checkbox" data-act="geralle" ${gerAlle()?'checked':''}> <span>Einstellungen aller Geräte anzeigen <span class="mut">(sonst nur die für ${GER_T.matches?'iPhone/iPad':'den PC'})</span></span></label>`:''}</div>`,{zusatz:n?tag(n+' aus','warn'):'alle an'})}
+Object.assign(ACT,{geralle:()=>{lsSet('erp-gerAlle',gerAlle()?null:'1');render()}});
+function modEinst(h){const t=document.createElement('template');t.innerHTML=h;const C=t.content;
+  for(const i of C.querySelectorAll('input[data-f^="erw."]')){const k=i.dataset.f.slice(4),l=i.closest('label');if(l&&(gerWeg(k)||(k in MOD_SW&&!mod(MOD_SW[k]))))l.classList.add('mweg')}
+  for(const l of C.querySelectorAll('label.mweg')){const c=l.closest('.egp')||l.closest('details')||l.parentElement;if(c&&!c.querySelector('label:not(.mweg) input[data-f^="erw."]'))c.classList.add('mweg')}
+  for(const e of C.querySelectorAll('[data-act="egb"][data-b]'))if(ebAus(e.dataset.b))e.classList.add('mweg');
+  for(const s of C.children){const k=(s.dataset?.akk||'')+'|'+esTitel(s).trim(),g=(EB_KARTE.find(([r])=>r.test(k))||[])[1];if(g&&ebAus(g))s.classList.add('mweg')}
+  const d=document.createElement('div');d.append(C);return d.innerHTML}
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{if(!DB||ES_IDX)return v0(...x);
+  if(erw('module')){if(ebAus(EB_AKT))EB_AKT='firma';if(EB_N&&ebAus(EB_N))EB_N=''}
+  const h=v0(...x);return erw('module')||erw('geraetFilter')?modEinst(h):h}}
+{const st=document.createElement('style');st.textContent=`.mweg{display:none!important}.modl{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 16px}`;document.head.append(st)}
+
 start();
 </script>
 </body>

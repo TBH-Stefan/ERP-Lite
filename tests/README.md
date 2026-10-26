@@ -34,3 +34,11 @@ wie die Preiseinheit, die die alte Fassung nicht kennt, oder Entscheidungen „S
 - Neue Ansicht oder Belegart: in `hilfe.js` → `ansichten()` bzw. in `testdaten.js` ergänzen.
 - Neue Funktion hinter einem Schalter: nichts zu tun – `schalter.spec.js` prüft automatisch, dass sie ausgeschaltet nichts ändert.
 - Keine echten Firmen- oder Kundendaten in `testdaten.js`.
+
+## Gesamtprüfung mit Demo-Daten (von Hand)
+
+`demodaten.js` ergänzt `testdaten.js` um alle Bereiche (Belegkette AN → AB → LS → RE mit Zahlung, AR/TR/SR/PR, Storno, BE → WE mit Lieferterminen,
+Personal, Zeiten, Bautages- und Regiebericht, laufende Kosten, Fibu, LV, Lager). `node pruefen-alles.js [matrix|klick|funktion|alle] [desktop|handy]`
+prüft damit jede Ansicht mit jedem Schalter einzeln, klickt jeden Knopf und Menüeintrag (Daten danach zurückgesetzt) und ruft Kernfunktionen auf;
+Ergebnis in `.tmp/pruefung-*.json`, Demo-Datei `.tmp/demo-daten.json` (laden über Export → „Daten importieren“, nur im Modus „Nur im Browser testen“).
+Dauert je Gerät rund eine Stunde (`KONF=std|alle` für die Klickprüfung getrennt, `PPORT` für parallele Läufe, `PW_EXE` = Pfad zu Chromium).

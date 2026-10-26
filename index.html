@@ -8303,6 +8303,26 @@ function sbZeigen(){let an=false;try{an=!!DB&&!!erw('statusBand')}catch(e){retur
 for(const ev of ['online','offline'])window.addEventListener(ev,()=>sbZeigen());
 {const st=document.createElement('style');st.textContent=`#stb{position:fixed;top:env(safe-area-inset-top);left:50%;transform:translateX(-50%);z-index:9999;color:#fff;font:600 11px/1.6 system-ui,sans-serif;letter-spacing:.04em;padding:1px 10px;border-radius:0 0 6px 6px;opacity:.92;white-space:nowrap;cursor:default}
 #stb[data-act]{cursor:pointer}body.sb55 #testb{display:none}@media print{#stb{display:none}}body.nav #stb{display:none}`;document.head.append(st)}
+/* Überschriften beim Bildlauf oben halten (P56, erw.kopfKleben, Standard aus): body.sk56 macht in #main Kartenüberschriften (.card>h2, nicht in einem Akkordeon), offene Akkordeons
+   (nur das äußerste) und Kunden-Köpfe der Liste Kunde › Projekt (.kpg>.kpk) sowie Projekt-/Tageszeilen in Listen (tr.prjz, die nächste deckt die vorige ab) sticky, bis das Kapitel zu Ende ist. Abstand oben --sk56 = Unterkante der klebenden Leisten SK_L (Kopfleiste Handy/iPad,
+   Tabs P49, Suche P42, Statuszeile P19), sonst sicherer Bereich; durchsichtige Akkordeon-Köpfe bekommen .sk56b (Kartenfarbe). Karten mit overflow-x:auto (Bildlauf breiter Tabellen) heben sticky auf: skFrei() setzt bei Karten ohne Überbreite .sk56v (overflow sichtbar). */
+erwPlus({k:'kopfKleben',std:false,p:'Überschriften beim Bildlauf (P56)',l:'Kapitelüberschriften beim Bildlauf oben halten',info:'Beim Scrollen bleibt die Überschrift des aktuellen Abschnitts (Karte, aufgeklapptes Kapitel, Kunde in der Liste Kunde › Projekt) oben am Bildschirm stehen, bis der nächste Abschnitt kommt. Gilt im ganzen Programm, z. B. in den Einstellungen.'});
+queueMicrotask(()=>{if(typeof EB_K!=='undefined')EB_K.kopfKleben='ansicht'});
+const SK_L='.topbar,#p49,#main .esu,#main .bstat.fix',SK_E='#main .card>h2,#main details.akk[open]>summary,#main .kpg>.kpk,#main tr.prjz>td';
+function skFrei(){let an=false;try{an=!!DB&&!!erw('kopfKleben')}catch(e){return}document.body.classList.toggle('sk56',an);if(!an){document.documentElement.style.scrollPaddingTop='';return}
+  let o=0;for(const e of document.querySelectorAll(SK_L)){const cs=getComputedStyle(e);if(cs.display==='none'||!/sticky|fixed/.test(cs.position)||cs.top==='auto')continue;o=Math.max(o,(parseFloat(cs.top)||0)+e.offsetHeight)}
+  document.documentElement.style.setProperty('--sk56',o+'px');document.documentElement.style.scrollPaddingTop=(o+44)+'px';
+  for(const h of document.querySelectorAll(SK_E))for(let p=h.parentElement;p&&p.id!=='main';p=p.parentElement)if(p.classList.contains('card')&&!p.classList.contains('sk56v')&&getComputedStyle(p).overflowX!=='visible'&&p.scrollWidth<=p.clientWidth+1)p.classList.add('sk56v')
+  for(const e of document.querySelectorAll('#main details.akk>summary'))if(getComputedStyle(e).backgroundColor==='rgba(0, 0, 0, 0)')e.classList.add('sk56b')
+  for(const e of document.querySelectorAll('#main tr.prjz>td'))if(getComputedStyle(e).backgroundColor==='rgba(0, 0, 0, 0)'){const c=getComputedStyle(e.parentElement).backgroundColor;e.style.background=c==='rgba(0, 0, 0, 0)'?'var(--card)':c}}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);skFrei();requestAnimationFrame(skFrei);return x}}
+{let t=0;window.addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(skFrei,150)})}
+{const st=document.createElement('style');st.textContent=`body.sk56 #main .card.sk56v{overflow:visible}body.sk56 .kpg{overflow:clip}
+body.sk56 #main .card>h2:not(details.akk .card>h2){position:sticky;top:max(var(--sk56,0px),env(safe-area-inset-top,0px));z-index:6;background:var(--card);box-shadow:0 0 0 6px var(--card)}
+body.sk56 #main details.akk[open]:not(details.akk details.akk)>summary{position:sticky;top:max(var(--sk56,0px),env(safe-area-inset-top,0px));z-index:7}body.sk56 #main summary.sk56b{background:var(--card)}
+body.sk56 #main tr.prjz>td{position:sticky;top:max(var(--sk56,0px),env(safe-area-inset-top,0px));z-index:4}
+body.sk56 #main .kpg>.kpk{position:sticky;top:max(var(--sk56,0px),env(safe-area-inset-top,0px));z-index:5;background:inherit}
+@media print{body.sk56 #main .card>h2,body.sk56 #main details.akk>summary,body.sk56 #main .kpg>.kpk,body.sk56 #main tr.prjz>td{position:static}}`;document.head.append(st)}
 start();
 </script>
 </body>

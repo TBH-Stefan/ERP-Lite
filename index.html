@@ -8742,6 +8742,35 @@ async function sfeDialog(e){const neu=!e;e=e||{ic:'📌',typ:'seite',gr:[]};cons
   ${adm?'<div class="row"><button data-act="sfeneu">＋ Neue Kachel</button></div>':'<p class="mut">Eigene Kacheln legt der Admin an.</p>'}`;const i=h.lastIndexOf('</div>');return h.slice(0,i)+t+h.slice(i)}}
 Object.assign(ACT,{sfeneu:()=>bnAdmin()&&sfeDialog(),sfeed:el=>{const e=bnAdmin()&&sfeL().find(x=>x.id===el.dataset.id);if(e)sfeDialog(e)},
   sfedel:el=>{const L=sfeL(),i=L.findIndex(x=>x.id===el.dataset.id);if(!bnAdmin()||i<0||!confirm(`Kachel „${L[i].l}“ löschen?`))return;L.splice(i,1);const A=S().schnell.aus,j=A?.indexOf('e-'+el.dataset.id);if(j>=0)A.splice(j,1);persist();render()}});
+/* Schnellfunktionen anordnen (P60, erw.sfOrdnen, Standard aus): Zahnrad auf der Kachelseite → Bearbeiten (UI.sfBea, Kacheln ohne data-act), Ziehen mit Maus/Finger über Pointer-Events (sfZiehen); Reihenfolge je Gerät S().schnell.reihe[dashG()] (tablet fällt auf pc zurück, [] = Standard), sortiert im Wrapper um V.schnell nach data-k der .sfb (unbekannte, z. B. eigene Kacheln P59, hinten; „Unterbrechen“ bleibt bei „zeit“). */
+erwPlus({k:'sfOrdnen',std:false,p:'Schnellfunktionen (P45)',l:'Kacheln der Schnellfunktionen anordnen',info:'Auf der Seite „Schnellfunktionen“ das Zahnrad ⚙: Kacheln mit der Maus oder dem Finger an die gewünschte Stelle ziehen, „Fertig“ beendet. Die Reihenfolge gilt je Gerät (Handy, iPad, Bildschirm) und wird mit gespeichert. „Standard“ stellt die ursprüngliche Reihenfolge wieder her. Wirkt nur mit „Schnellfunktionen und Direktlinks“.'});
+if(typeof EB_K==='object')EB_K.sfOrdnen='app';
+const sfR=()=>{const r=S().schnell?.reihe||{},g=dashG();return r[g]||(g==='tablet'&&r.pc)||null};
+{const s0=V.schnell;V.schnell=(...x)=>{const h=s0(...x);if(!DB||!erw('schnell')||!erw('sfOrdnen'))return h;
+  const t=document.createElement('template');t.innerHTML=h;const K=t.content.querySelector('.sfk');if(!K)return h;const R=sfR(),bea=!!UI.sfBea,Z=K.querySelector('[data-act=uhrpause]');
+  const L=[...K.children].filter(e=>e.classList.contains('sfb')&&e!==Z);for(const e of L)if(!e.dataset.k&&e.querySelector('#erfoto'))e.dataset.k='rechnung';
+  if(R?.length){const p=k=>{const i=R.indexOf(k);return i<0?1e4:i};L.map((e,i)=>[e,i]).sort((a,c)=>p(a[0].dataset.k)-p(c[0].dataset.k)||a[1]-c[1]).forEach(([e])=>K.append(e));const z=K.querySelector('.sfb[data-k=zeit]');if(Z&&z)z.after(Z)}
+  if(bea){K.classList.add('sfed');Z?.remove();for(const e of L){e.removeAttribute('data-act');e.querySelector('input')?.remove()}}
+  const kopf=`<div class="bar sfbar"><h1 style="margin:0">Schnellfunktionen</h1><span class="sp"></span>${bea?`<button class="s" data-act="sfstd"${R?.length?'':' disabled'}>Standard</button><button class="p" data-act="sford">Fertig</button>`:'<button class="s sfzr" data-act="sford" title="Kacheln anordnen">⚙</button>'}</div>${bea?'<p class="mut sfhw">Kacheln an die gewünschte Stelle ziehen. Die Reihenfolge gilt für dieses Gerät.</p>':''}`;
+  return t.innerHTML.replace('<h1>Schnellfunktionen</h1>',kopf)}}
+function sfSpeichern(K){const g=dashG(),N=[...K.children].map(e=>e.dataset.k).filter(Boolean),A=sfR()||[],r=((S().schnell??={}).reihe??={});
+  const neu=[...N,...A.filter(k=>!N.includes(k))];if(String(neu)===String(A))return;r[g]=neu;persist()} // ausgeblendete Kacheln behalten ihren Platz am Ende
+function sfZiehen(ev){const e=ev.target.closest?.('.sfk.sfed>.sfb');if(!e||ev.button>0)return;ev.preventDefault();const K=e.parentNode,s=[...K.children].map(x=>x.dataset.k).join();
+  let x0=ev.clientX,y0=ev.clientY,r0=e.getBoundingClientRect();e.classList.add('sfzieh');try{e.setPointerCapture(ev.pointerId)}catch(_){}
+  const drin=(o,v)=>{const r=o.getBoundingClientRect();return v.clientX>=r.left&&v.clientX<=r.right&&v.clientY>=r.top&&v.clientY<=r.bottom};
+  const mv=v=>{if(v.pointerId!==ev.pointerId)return;const z=[...K.children].find(o=>o!==e&&drin(o,v));
+    if(z){const C=[...K.children];if(C.indexOf(z)<C.indexOf(e))z.before(e);else z.after(e);e.style.transform='';const r1=e.getBoundingClientRect();x0+=r1.left-r0.left;y0+=r1.top-r0.top;r0=r1}
+    e.style.transform=`translate(${v.clientX-x0}px,${v.clientY-y0}px)`};
+  const end=v=>{if(v.pointerId!==ev.pointerId)return;removeEventListener('pointermove',mv);removeEventListener('pointerup',end);removeEventListener('pointercancel',end);
+    e.style.transform='';e.classList.remove('sfzieh');if([...K.children].map(x=>x.dataset.k).join()!==s){sfSpeichern(K);render()}};
+  addEventListener('pointermove',mv);addEventListener('pointerup',end);addEventListener('pointercancel',end)}
+document.addEventListener('pointerdown',sfZiehen);
+Object.assign(ACT,{sford:()=>{UI.sfBea=!UI.sfBea;render()},
+  sfstd:()=>{const r=S().schnell?.reihe;if(!r)return;r[dashG()]=[];persist();render()}});
+{const r0=render;render=(...a)=>{if(UI.sfBea&&!location.hash.startsWith('#/schnell'))UI.sfBea=false;return r0(...a)}} // Bearbeiten endet beim Verlassen der Seite
+{const st=document.createElement('style');st.textContent=`.sfbar{margin-bottom:0}.sfbar .sfzr{font-size:18px;padding:4px 10px}.sfhw{margin:6px 0 0}
+.sfk.sfed .sfb{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab;border-style:dashed;border-color:var(--acc)}
+.sfk.sfed .sfb:hover{transform:none}.sfk .sfb.sfzieh{position:relative;z-index:5;cursor:grabbing;opacity:.92;box-shadow:0 10px 28px rgba(20,30,50,.25);transition:none}`;document.head.append(st)}
 start();
 </script>
 </body>

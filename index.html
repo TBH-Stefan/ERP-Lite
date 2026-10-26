@@ -8314,19 +8314,15 @@ function sbZeigen(){let an=false;try{an=!!DB&&!!erw('statusBand')}catch(e){retur
 for(const ev of ['online','offline'])window.addEventListener(ev,()=>sbZeigen());
 {const st=document.createElement('style');st.textContent=`#stb{position:fixed;top:env(safe-area-inset-top);left:50%;transform:translateX(-50%);z-index:9999;color:#fff;font:600 11px/1.6 system-ui,sans-serif;letter-spacing:.04em;padding:1px 10px;border-radius:0 0 6px 6px;opacity:.92;white-space:nowrap;cursor:default}
 #stb[data-act]{cursor:pointer}body.sb55 #testb{display:none}@media print{#stb{display:none}}body.nav #stb{display:none}`;document.head.append(st)}
-/* Suchfeld fest in der Kopfleiste (erw.esKopf, nutzt P42 Teil 1 und P39 Speicherleiste): in den Einstellungen steht #esu in #sleiste vor Zurück/Vor/Verwerfen/Speichern
-   (PC/iPad oben rechts sticky, Handy in der .topbar) und scrollt nicht mit. sLeiste() setzt innerHTML neu → Knoten vorher merken und wieder einsetzen; außerhalb der Einstellungen weg. */
-erwPlus({k:'esKopf',std:false,p:'Suche in den Einstellungen (P42)',l:'Suchfeld fest in der Kopfleiste',info:'Das Suchfeld „Einstellung suchen …“ steht in der Leiste mit Zurück, Verwerfen und Speichern (am Handy oben in der Kopfleiste) und bleibt beim Scrollen immer sichtbar. Braucht „Suchfeld in den Einstellungen“ und die Speicherleiste. Aus = Suchfeld unter der Überschrift.'});
-erwPlus({k:'slTabs',std:false,p:'Dokumente in Tabs (P49)',l:'Zurück/Speichern-Leiste in der Tab-Leiste',info:'Die Leiste mit Zurück, Vor, Verwerfen und Speichern schwebt nicht mehr über dem Dokument, sondern steht rechts in der Tab-Leiste oben (mit „Suchfeld fest in der Kopfleiste“ in den Einstellungen auch das Suchfeld). Nur am PC mit eingeschalteten Tabs. Aus = Leiste oben rechts über dem Dokument.'});
-queueMicrotask(()=>{EB_K.esKopf='ansicht';EB_K.slTabs='ansicht'});
-{const s0=sLeiste;sLeiste=function(){const q=$('#esu'),x=s0.apply(this,arguments),t=$('#p49');let e=$('#sleiste');if(e&&t&&erw('slTabs')&&!HANDY.matches&&document.body.classList.contains('p49')){if(e.parentNode!==t)t.append(e)}
-  const es=/^#\/?einstellungen$/.test(location.hash),an=!!(q&&e&&es&&erw('esKopf'));
-  document.body.classList.toggle('esk',an);if(an){if(q.parentNode!==e)e.prepend(q);q.querySelector('input').placeholder=HANDY.matches?'🔍 Suchen …':'🔍 Einstellung suchen …'}else if(q&&(!q.isConnected||q.parentNode===e)){const h=es&&$('#main>h1');h?h.after(q):q.remove()}return x}}
+/* Zurück/Speichern-Leiste (P39) in der Tab-Leiste (P49, erw.slTabs): #sleiste steht rechts in #p49 statt über dem Dokument; p49Leiste() zeichnet #p49 neu → danach sLeiste().
+   Einstellungssuche (P42) neben der schwebenden Leiste (Fehlerbehebung, ohne Schalter): Breite der Leiste in --slw, .esu hält rechts so viel frei; mit P46 (#main.eg) war die Leiste ganz breit und deckte das Suchfeld beim Bildlauf zu. */
+erwPlus({k:'slTabs',std:false,p:'Dokumente in Tabs (P49)',l:'Zurück/Speichern-Leiste in der Tab-Leiste',info:'Die Leiste mit Zurück, Vor, Verwerfen und Speichern schwebt nicht mehr über dem Dokument, sondern steht rechts oben in der Tab-Leiste. Nur am PC mit eingeschalteten Tabs. Aus = Leiste oben rechts über dem Dokument.'});
+queueMicrotask(()=>{EB_K.slTabs='ansicht'});
+{const s0=sLeiste;sLeiste=function(){const x=s0.apply(this,arguments),t=$('#p49'),e=$('#sleiste');if(e&&t&&erw('slTabs')&&!HANDY.matches&&document.body.classList.contains('p49')&&e.parentNode!==t)t.append(e);
+  document.documentElement.style.setProperty('--slw',(e&&e.parentNode===$('#main')?Math.ceil(e.offsetWidth)+14:0)+'px');return x}}
 {const p0=p49Leiste;p49Leiste=function(){const x=p0.apply(this,arguments);if(erw('slTabs'))sLeiste();return x}}
-{const st=document.createElement('style');st.textContent=`#p49>#sleiste{position:static;float:none;margin:0 0 4px auto;align-self:center;flex:none;background:none;border:0;box-shadow:none;padding:0}#sleiste #esn{order:-1}#sleiste .esu{position:relative;top:auto!important;margin:0 4px 0 0;padding:0;background:none;gap:6px;flex:0 1 auto;min-width:0}#sleiste .esu input{width:260px;font-size:14px;padding:5px 30px 5px 9px}
-#sleiste .esu [data-act=esx]{position:absolute;right:2px;top:50%;transform:translateY(-50%);min-width:0;min-height:0;padding:2px 6px;border:0;background:none;color:var(--mut);font-size:14px}#sleiste #esn::after{font-size:12px}#sleiste #esn[data-n=""]{display:none}
-@media(max-width:1100px){#sleiste #esn{display:none}#sleiste .esu input{width:200px}}
-@media(max-width:760px){body.esk .topbar #sleiste{flex:1 1 auto;min-width:0}body.esk .topbar #sleiste .esu{flex:1 1 auto}body.esk .topbar>:is(.home,.su,.zl),body.esk .topbar #sleiste>[data-act=vor]{display:none!important}.topbar #sleiste .esu input{width:100%;font-size:16px;padding:6px 28px 6px 8px;border-radius:8px;border:0}.topbar #sleiste .esu button[data-act=esx]{min-width:0;min-height:0;font-size:14px;color:var(--mut)}}`;document.head.append(st)}
+{const st=document.createElement('style');st.textContent=`#p49>#sleiste{position:static;float:none;margin:0 0 4px auto;align-self:center;flex:none;background:none;border:0;box-shadow:none;padding:0}
+#main.eg>#sleiste{justify-self:end}#main>.esu{padding-right:var(--slw,0px)}body.p49 #main>.esu{top:41px!important}`;document.head.append(st)}
 start();
 </script>
 </body>

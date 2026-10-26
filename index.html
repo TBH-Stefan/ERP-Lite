@@ -7575,13 +7575,13 @@ ACT.btbdruck=async el=>{const r=ROOT.btb(el.dataset.id);if(!r)return;document.ac
   const P=[...(r.bilder||[]).map(b=>b.pfad),...Object.values(r.sig||{}).map(s=>s?.pfad)].filter(Boolean);
   await Promise.all(P.map(async p=>{try{BURL[p]??=URL.createObjectURL(await bildBlob(p));const i=new Image();i.src=BURL[p];await i.decode()}catch(e){}}));saveState('');
   const a=btbRoot(r);druckHTML(`<div class="doc btbp">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">${btbTitel(r)} ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${btbDoc(r)}</div>`,`${btbTitel(r)} ${r.nr} ${a?.nr||''} ${dAT(r.datum)}`);bilderLaden()};
-/* Seitenleiste: Gruppe „Projektmanagement“ (erw.navPm): pmNav() setzt vor die Einträge PM_N (data-n, nur vorhandene) eine Überschrift nav .grp.pmg und ordnet sie dahinter;
-   aus = Überschrift entfernt (Einträge stehen dann wie bisher am Ende von „Vorgänge“). Läuft vor navKlapp(), damit die Gruppe mitklappt; ohne sichtbaren Eintrag keine Überschrift */
-erwPlus({k:'navPm',std:true,p:'Ansichten klarer (P44)',l:'Seitenleiste: eigene Gruppe „Projektmanagement“',info:'Bautagesberichte, Projekte und Protokolle stehen in der Seitenleiste unter einer eigenen Überschrift „Projektmanagement“ (mit „Seitenleiste einklappbar“ auch auf- und zuklappbar). Aus = wie bisher am Ende von „Vorgänge“.'});
-const PM_N=['berichte','projekte','protokolle'];
+/* Seitenleiste: Gruppe „Projektmanagement“ (erw.navPm): pmNav() setzt vor die Einträge PM_N (data-n, nur vorhandene) eine Überschrift nav .grp.pmg und ordnet sie dahinter (alter Platz in a._pmV);
+   aus = Überschrift entfernt, Einträge zurück an den alten Platz. Läuft vor navKlapp(), damit die Gruppe mitklappt; ohne sichtbaren Eintrag keine Überschrift */
+erwPlus({k:'navPm',std:true,p:'Ansichten klarer (P44)',l:'Seitenleiste: eigene Gruppe „Projektmanagement“',info:'Aufträge & DB II, Zeiterfassung, Bautagesberichte, Projekte und Protokolle stehen in der Seitenleiste unter einer eigenen Überschrift „Projektmanagement“ (mit „Seitenleiste einklappbar“ auch auf- und zuklappbar). Aus = wie bisher unter „Vorgänge“.'});
+const PM_N=['auftraege','zeiten','berichte','projekte','protokolle'];
 function pmNav(){const N=document.querySelector('nav');if(!N)return;let g=N.querySelector(':scope>.grp.pmg');const an=!!DB&&erw('navPm'),A=PM_N.map(n=>N.querySelector(`:scope>a[data-n="${n}"]`)).filter(Boolean);
-  if(!an||!A.length){g?.remove();return}
-  if(!g){g=document.createElement('div');g.className='grp pmg';g.textContent='Projektmanagement';A[0].before(g)}
+  if(!an||!A.length){if(g){for(const a of A.reverse())if(a._pmV){a._pmV.before(a);delete a._pmV}g.remove()}return}
+  if(!g){for(const a of A)a._pmV=a.nextElementSibling;g=document.createElement('div');g.className='grp pmg';g.textContent='Projektmanagement';(N.querySelector(':scope>.grp~.grp')||A[0]).before(g)}
   let v=g;for(const a of A){v.after(a);v=a}
   g.style.display=A.some(a=>a.classList.contains('nkweg')||getComputedStyle(a).display!=='none')?'':'none'}
 {const r0=render;render=function(...a){const x=r0.apply(this,a);pmNav();return x}}

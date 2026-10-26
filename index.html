@@ -8282,6 +8282,27 @@ body.ic53 details.akk[open]>summary::before,body.ic53 .gl details[open]>summary:
   const st=an&&erw('schnellStart');for(const l of document.querySelectorAll('.topbar a.home,nav a.logo')){l.setAttribute('href',st?'#/schnell':'#/dash');l.title=st?'Schnellfunktionen (Startseite)':'Überblick'} // Logo = Startseite
   return x}}
 
+/* Statusband (P55, erw.statusBand, Standard aus): ein Band #stb oben in der Mitte (Form wie #testb) zeigt genau einen Zustand nach Vorrang SB_Z (Test, Fehler, Offline, ungespeichert, Abgleich, online, lokaler Ordner);
+   sbZeigen() aus render()/saveState()/dirtyBar() und bei online/offline, SB_BAD = letzte Meldung von saveState() war ein Fehler (nicht offline). Tippen = ACT.netz (nur OneDrive). Nur Anzeige. */
+erwPlus({k:'statusBand',std:false,p:'Statusband (P55)',l:'Statusband oben: Online, Offline, Abgleich …',info:'Zeigt oben in der Mitte ein farbiges Band mit dem Zustand: grün = online und abgeglichen, blau = Abgleich läuft, gelb = nicht gespeichert, dunkelrot = offline mit wartenden Änderungen, grau = offline bzw. lokaler Ordner, rot = Speichern fehlgeschlagen, orange = Testbetrieb. Antippen gleicht sofort ab.'});
+queueMicrotask(()=>{if(typeof EB_K!=='undefined')EB_K.statusBand='app'});
+let SB_BAD=false;
+const SB_Z={test:['TESTBETRIEB – Daten nur in diesem Browser','#d97706','Programm läuft mit „Nur im Browser testen“'],fehler:['FEHLER – nicht gespeichert','#dc2626','Speichern ist fehlgeschlagen – antippen für einen neuen Versuch'],
+  offw:['OFFLINE · Änderungen warten','#991b1b','Keine Verbindung zum OneDrive. Die Änderungen bleiben auf diesem Gerät und werden abgeglichen, sobald wieder Internet da ist.'],off:['OFFLINE','#4b5563','Keine Verbindung zum OneDrive'],
+  dirty:['NICHT GESPEICHERT','#a16207','Änderungen sind noch nicht gespeichert'],sync:['ABGLEICH …','#2563eb','Speichern bzw. Abgleich mit dem OneDrive läuft'],on:['ONLINE','#15803d','Mit dem OneDrive verbunden und abgeglichen – antippen zum Abgleichen'],
+  dir:['LOKALER ORDNER','#4b5563','Daten im lokalen Ordner – kein Abgleich mit anderen Geräten']};
+function sbZustand(){const od=STORE.art==='od',off=od&&(navigator.onLine===false||OFFSTART||NETZFEHL);
+  return STORE===CACHESTORE?'test':SB_BAD&&!off?'fehler':off?(pending?'offw':'off'):DIRTY?'dirty':pending||saving||NHL?'sync':od?'on':'dir'}
+function sbZeigen(){let an=false;try{an=!!DB&&!!erw('statusBand')}catch(e){return}document.body.classList.toggle('sb55',an);let e=$('#stb');if(!an){e?.remove();return}
+  if(!e){e=document.createElement('div');e.id='stb';e.setAttribute('role','status');document.body.append(e)}
+  const k=sbZustand(),[t,c,ti]=SB_Z[k];if(e.dataset.k===k)return;e.dataset.k=k;e.textContent=t;e.title=ti;e.style.background=c;
+  if(STORE.art==='od')e.dataset.act='netz';else delete e.dataset.act}
+{const s0=saveState;saveState=function(t,bad){SB_BAD=!!bad&&STORE.art==='od'&&!(navigator.onLine===false||OFFSTART||NETZFEHL);const x=s0.apply(this,arguments);sbZeigen();return x}}
+{const d0=dirtyBar;dirtyBar=function(...a){const x=d0.apply(this,a);sbZeigen();return x}}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);sbZeigen();return x}}
+for(const ev of ['online','offline'])window.addEventListener(ev,()=>sbZeigen());
+{const st=document.createElement('style');st.textContent=`#stb{position:fixed;top:env(safe-area-inset-top);left:50%;transform:translateX(-50%);z-index:9999;color:#fff;font:600 11px/1.6 system-ui,sans-serif;letter-spacing:.04em;padding:1px 10px;border-radius:0 0 6px 6px;opacity:.92;white-space:nowrap;cursor:default}
+#stb[data-act]{cursor:pointer}body.sb55 #testb{display:none}@media print{#stb{display:none}}body.nav #stb{display:none}`;document.head.append(st)}
 start();
 </script>
 </body>

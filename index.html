@@ -8339,10 +8339,14 @@ body.sk56 #main .kpg>.kpk{position:sticky;top:max(var(--sk56,0px),env(safe-area-
 erwPlus({k:'slTabs',std:false,p:'Dokumente in Tabs (P49)',l:'Zurück/Speichern-Leiste in der Tab-Leiste',info:'Die Leiste mit Zurück, Vor, Verwerfen und Speichern schwebt nicht mehr über dem Dokument, sondern steht rechts oben in der Tab-Leiste. Nur am PC mit eingeschalteten Tabs. Aus = Leiste oben rechts über dem Dokument.'});
 queueMicrotask(()=>{EB_K.slTabs='ansicht'});
 {const s0=sLeiste;sLeiste=function(){const x=s0.apply(this,arguments),t=$('#p49'),e=$('#sleiste');if(e&&t&&erw('slTabs')&&!HANDY.matches&&document.body.classList.contains('p49')&&e.parentNode!==t)t.append(e);
-  document.documentElement.style.setProperty('--slw',(e&&e.parentNode===$('#main')?Math.ceil(e.offsetWidth)+14:0)+'px');return x}}
+  esZeile();document.documentElement.style.setProperty('--slw',(e&&e.parentNode===$('#main')?Math.ceil(e.offsetWidth)+14:0)+'px');return x}}
+function esZeile(){const q=$('#main>#esu'),h=$('#main>h1'),i=q?.querySelector('#esq');if(!q||!h||!i)return;q.prepend(h); // Einstellungssuche (P42) in einer Zeile mit der Überschrift, Lupe als Piktogramm (P53)
+  const f=document.createElement('span');f.className='esf';f.innerHTML='<span class="esl">🔍</span>';i.before(f);f.append(i);i.placeholder='Einstellung suchen …'}
 {const p0=p49Leiste;p49Leiste=function(){const x=p0.apply(this,arguments);if(erw('slTabs'))sLeiste();return x}}
 {const st=document.createElement('style');st.textContent=`#p49>#sleiste{position:static;float:none;margin:0 0 4px auto;align-self:center;flex:none;background:none;border:0;box-shadow:none;padding:0}
-#main.eg>#sleiste{justify-self:end}#main>.esu{padding-right:var(--slw,0px)}body.p49 #main>.esu{top:41px!important}`;document.head.append(st)}
+#main.eg>#sleiste{justify-self:end}#main>.esu{padding-right:var(--slw,0px)}body.p49 #main>.esu{top:41px!important}
+#esu>h1{margin:0 6px 0 0;flex:none}#esu .esf{position:relative;display:flex;flex:1 1 auto;min-width:140px;max-width:520px}#esu .esf input{width:100%;max-width:none;padding-left:32px}#esu .esl{position:absolute;left:10px;top:50%;transform:translateY(-50%);display:flex;color:var(--mut);pointer-events:none;line-height:1}
+#esu #esn[data-n=""],#esu #esn:not([data-n]){display:none}@media(max-width:760px){#esu{flex-wrap:wrap}#esu>h1{font-size:20px}#esu .esf{min-width:0;flex-basis:0}#esu>#esn{flex:1 0 100%;margin-top:-4px}}`;document.head.append(st)}
 start();
 </script>
 </body>

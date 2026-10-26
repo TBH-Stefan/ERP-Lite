@@ -156,6 +156,7 @@ body.kompakt td>.nw+br,body.kompakt td>.nw+br+.mut{display:none}
   body.kompakt .kk :is(.kku,.kkz):has(a){padding:10px 0;margin:-10px 0}
 }
 @media(max-width:430px){body.kompakt table.kbg th,body.kompakt table.kbg td{white-space:normal;hyphens:auto}body.kompakt table.kbg input,body.kompakt table.kbg td:first-child input{width:50px!important}body.kompakt table.kbg td:first-child select{width:92px!important}}
+
 @media(max-width:760px){ /* K2 am Handy: Bezeichnung über die volle Breite, darunter die vier Spalten (Kopfzeile = Beschriftung) */
   body.kompakt table.k2k,body.kompakt table.k2k>:is(thead,tbody,tfoot){display:block;width:100%!important}body.kompakt table.k2k tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 40px;gap:4px 6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
   body.kompakt table.k2k :is(td,th){padding:0!important;border:0;white-space:normal!important}body.kompakt table.k2k :is(td,th):first-child{grid-column:1/-1}body.kompakt table.k2k thead th:first-child{display:none}body.kompakt table.k2k.kbg td input{width:100%!important}
@@ -1121,6 +1122,7 @@ async function saveNow(){
       if(ZUNEU){kvSet('unsynced',{local:txt,base:STORE.lastText,ts:Date.now()}).catch(()=>{});saveState('Neuere Programmversion – bitte neu laden',true);zuNeuHinweis();return} // P38: nichts überschreiben, Änderungen bleiben im Browser
       const heute=isoD();
       if(lastBackupDay!==heute&&STORE.lastText&&await tagSicherung(STORE.lastText,heute))lastBackupDay=heute;
+      await planSicherung(STORE.lastText); // Sicherungsplan (P58)
       await STORE.save(txt);STORE.lastText=txt;
     }while(saveAgain);
     pending=false;NETZFEHL=false;kvSet('unsynced',null).catch(()=>{});
@@ -1136,6 +1138,68 @@ async function saveNow(){
 }
 window.addEventListener('online',()=>{if(pending)saveNow()});
 function loginHinweis(){for(const e of [$('#savestate'),$('#sync2')])if(e){e.style.cursor='pointer';e.onclick=()=>AUTH.login()}}
+
+/* Aufgeteilte Ablage (P58 Teil 2, erw.teilAblage, Standard aus): große Listen (TEILE) liegen in daten/<liste>_<JJJJ>.json (Jahr aus datum/ts, sonst _ohne),
+   Kontakte/Artikel in daten/<liste>.json; erp-daten.json behält Einstellungen und kleine Listen samt Verzeichnis meta.teile {Datei:SHA-256}. Gespeichert werden nur geänderte Teile
+   (je Teil eigener eTag, neue Teile mit conflictBehavior=fail), erp-daten.json zuletzt – sie ändert sich so bei jeder Änderung, eTag-Prüfung und Abgleich (meta(), merge3) bleiben wie bisher.
+   Teile verschwinden nie aus dem Verzeichnis (geleert = []). Gelesen wird die geteilte Form immer (auch ohne Schalter, STORE.load liefert den ganzen Stand als einen Text);
+   ohne Schalter wird wieder eine ganze Datei geschrieben. Geteilte Hauptdatei: meta.version = DATENVER+1 (ältere Programmversionen speichern nicht, ZUNEU), echte Version meta.teilV */
+erwPlus({k:'teilAblage',std:false,p:'Datenablage (P58)',l:'Daten aufgeteilt speichern (je Bereich und Jahr)',info:'Statt einer großen Datei erp-daten.json liegen Belege, Lager, Zeiten, Berichte, Protokolle und das Protokoll je Jahr in eigenen Dateien im Unterordner „daten“, Kontakte und Artikel ebenfalls getrennt. Gespeichert werden nur die geänderten Dateien – das geht schneller und spart am Handy Datenvolumen. Sicherungen enthalten weiterhin den ganzen Stand. Ausschalten schreibt beim nächsten Speichern wieder eine ganze Datei.'});
+const TEILE={belege:'datum',lager:'datum',zeiten:'datum',berichte:'datum',protokolle:'datum',log:'ts',kontakte:'',artikel:''},TEIL_RX=/^daten\/([a-z]+)(?:_[^.\/]+)?\.json$/i;
+function teilen(d){const h={...d},T={};
+  for(const k in TEILE)if(Array.isArray(d[k])){delete h[k];for(const x of d[k]){const j=TEILE[k]?'_'+((/^\d{4}/.exec(x?.[TEILE[k]]||'')||['ohne'])[0]):'';(T[`daten/${k}${j}.json`]??=[]).push(x)}if(!TEILE[k])T[`daten/${k}.json`]??=[]}
+  return{h,T}}
+const TEIL_IO={
+  od:{async lesen(p){const r=await graph(odPath(p));if(r.status===404)throw Object.assign(new Error('Teildatei fehlt: '+p),{teil:true});if(!r.ok)throw new Error('OneDrive '+r.status);
+      const m=await r.json(),d=await fetch(m['@microsoft.graph.downloadUrl'],{cache:'no-store'});if(!d.ok)throw new Error('Download '+d.status);return{t:await d.text(),e:m.eTag}},
+    async schreiben(p,t,e){const h={'Content-Type':'application/json'};if(e)h['If-Match']=e;const r=await graph(odPath(p)+':/content'+(e?'':'?@microsoft.graph.conflictBehavior=fail'),{method:'PUT',headers:h,body:t});
+      if(r.status===412||r.status===409)throw Object.assign(new Error('Konflikt'),{konflikt:true});if(!r.ok)throw new Error('OneDrive '+r.status+': '+(await r.text()).slice(0,200));return(await r.json()).eTag},
+    async alt(p){ // neue Teildatei gibt es schon: nur überschreiben, wenn sie im Verzeichnis des aktuellen Stands fehlt (übrig von früher), sonst echter Konflikt
+      const r=await graph(odPath(FILE));if(!r.ok)return null;const d=await (await fetch((await r.json())['@microsoft.graph.downloadUrl'],{cache:'no-store'})).json();if(d.meta?.teile&&p in d.meta.teile)return null;
+      const q=await graph(odPath(p)+'?$select=eTag');return q.ok?(await q.json()).eTag:null}},
+  dir:{async lesen(p){const f=await DIRSTORE.getFile(p);if(!f)throw Object.assign(new Error('Teildatei fehlt: '+p),{teil:true});return{t:await f.text(),e:''}},
+    async schreiben(p,t){await DIRSTORE.putFile(p,new Blob([t],{type:'application/json'}));return''},async alt(){return null}}};
+async function teilLoad(st,io,load0){
+  const txt=await load0.call(st);let d;try{d=JSON.parse(txt)}catch(e){return txt}
+  const M=d?.meta?.teile;if(!M||typeof M!=='object'){st.tt=null;return txt}
+  const N=Object.keys(M).sort();let R;
+  try{R=await Promise.all(N.map(p=>io.lesen(p)))}catch(e){if(e.teil)return'\u0000'+e.message;throw e} // fehlende Teildatei → startDaten() bietet die jüngste Sicherung an
+  const tt={};N.forEach((p,i)=>{const k=TEIL_RX.exec(p)?.[1];let a;try{a=JSON.parse(R[i].t)}catch(e){a=null}if(!k||!Array.isArray(a))throw new Error('Teildatei beschädigt: '+p);(d[k]??=[]).push(...a);tt[p]={t:R[i].t,e:R[i].e,h:M[p]}});
+  const m={...d.meta,version:d.meta.teilV||1};delete m.teilV;delete m.teile;d.meta=m;st.tt=tt;
+  const out=JSON.stringify(d);st.lastText=out;return out}
+async function teilSave(st,io,txt,save0){
+  if(!erw('teilAblage')){await save0.call(st,txt);st.tt=null;return} // eine ganze Datei wie bisher
+  const{h,T}=teilen(JSON.parse(txt)),tt=st.tt||(st.tt={}),M={};
+  for(const p in tt)T[p]??=[];
+  for(const p of Object.keys(T).sort()){const t=JSON.stringify(T[p]);
+    if(tt[p]?.t===t&&tt[p].h){M[p]=tt[p].h;continue}
+    let e;try{e=await io.schreiben(p,t,tt[p]?.e)}catch(x){const a=x.konflikt&&!tt[p]&&await io.alt(p);if(!a)throw x;e=await io.schreiben(p,t,a)}
+    tt[p]={t,e,h:M[p]=await sha(t)}}
+  h.meta={...h.meta,version:DATENVER+1,teilV:h.meta?.version||1,teile:M};
+  await save0.call(st,JSON.stringify(h))} // erp-daten.json zuletzt (eTag wie bisher)
+for(const[st,io]of[[ODSTORE,TEIL_IO.od],[DIRSTORE,TEIL_IO.dir]]){const l0=st.load,s0=st.save;Object.assign(st,{tt:null,load(){return teilLoad(this,io,l0)},save(txt){return teilSave(this,io,txt,s0)}})}
+const teilInfo=()=>{const tt=STORE.tt;if(!tt||STORE.art==='cache')return'';const L=Object.entries(tt),n=L.reduce((a,[,x])=>a+x.t.length,0);
+  return`<p>Ablage aufgeteilt: <b>erp-daten.json</b> und ${L.length} Dateien im Unterordner <b>daten</b> (zusammen ${kbT(n)})${erw('teilAblage')?'':' – Schalter aus, beim nächsten Speichern wieder eine ganze Datei'}.</p>`};
+
+/* Vorbereitung SQL (P58 Teil 3, erw.sqlExport, Standard aus): späterer Umstieg auf eine Datenbank (Azure SQL oder PostgreSQL/Supabase). Jede Liste mit id (mListen) wird eine Tabelle
+   erp_<liste> (id, jahr, daten = Datensatz als JSON, unverändert), Listen mit id eine Ebene tiefer (z. B. fibu.buchungen) erp_<bereich>_<liste>, alles andere erp_bereiche (k, daten).
+   Datenmodell bleibt; ein künftiger Speicherort braucht nur load()/save()/meta() wie ODSTORE (STORE-Schnittstelle), sqlExport() liefert die Erstbefüllung. */
+erwPlus({k:'sqlExport',std:false,p:'Datenablage (P58)',l:'Vorbereitung SQL-Datenbank: Export als SQL-Skript',info:'Für einen späteren Umstieg auf eine SQL-Datenbank (z. B. bei mehreren Mitarbeitern mit eigenen Konten): „Export & Sicherung“ → „Export für SQL-Datenbank“ erzeugt ein Skript, das Tabellen anlegt und alle Daten einträgt – für Azure SQL (Microsoft) oder PostgreSQL (Supabase). Am Programm und an den Daten ändert sich nichts.'});
+const SQL_D={pg:{l:'PostgreSQL / Supabase',j:'jsonb',t:'text',q:x=>"'"+x.replace(/'/g,"''")+"'",a:'BEGIN;',e:'COMMIT;'},ms:{l:'Azure SQL / SQL Server',j:'nvarchar(max)',t:'nvarchar(100)',q:x=>"N'"+x.replace(/'/g,"''")+"'",a:'BEGIN TRANSACTION;',e:'COMMIT;'}};
+function sqlTabellen(d){const T=[],B=[],jr=x=>{const m=/^\d{4}/.exec(x?.datum||x?.ts||'');return m?+m[0]:null},idL=v=>Array.isArray(v)&&v.length&&v.every(x=>x&&typeof x==='object'&&'id' in x);
+  for(const k of mListen([],d)){T.push({n:'erp_'+k,z:d[k].map(x=>[String(x.id),jr(x),JSON.stringify(x)])})}
+  for(const k in d){if(Array.isArray(d[k])&&T.some(t=>t.n==='erp_'+k))continue;let v=d[k];
+    if(v&&typeof v==='object'&&!Array.isArray(v)){v={...v};for(const u in v)if(idL(v[u])){T.push({n:`erp_${k}_${u}`,z:v[u].map(x=>[String(x.id),jr(x),JSON.stringify(x)])});delete v[u]}}
+    B.push([k,JSON.stringify(v??null)])}
+  return{T,B}}
+function sqlSkript(dk){const D=SQL_D[dk],{T,B}=sqlTabellen(JSON.parse(JSON.stringify(DB))),o=[`-- ERP-Lite: Datenstand ${new Date().toLocaleString('de-AT')} (${S().firma.name||''}) für ${D.l}`,'-- In eine leere Datenbank einspielen; daten = Datensatz als JSON wie in erp-daten.json',D.a];
+  const ins=(n,sp,Z)=>{for(let i=0;i<Z.length;i+=100)o.push(`INSERT INTO ${n} (${sp}) VALUES\n`+Z.slice(i,i+100).map(z=>'('+z.map(v=>v==null?'NULL':typeof v==='number'?v:D.q(v)).join(',')+')').join(',\n')+';')};
+  for(const t of T){o.push(`CREATE TABLE ${t.n} (id ${D.t} PRIMARY KEY, jahr int NULL, daten ${D.j} NOT NULL);`,`CREATE INDEX ix_${t.n}_jahr ON ${t.n} (jahr);`);ins(t.n,'id,jahr,daten',t.z)}
+  o.push(`CREATE TABLE erp_bereiche (k ${D.t} PRIMARY KEY, daten ${D.j} NOT NULL);`);ins('erp_bereiche','k,daten',B);o.push(D.e);
+  return{txt:o.join('\n')+'\n',n:T.length+1,z:T.reduce((a,t)=>a+t.z.length,0)}}
+const sqlKnopf=()=>erw('sqlExport')?'<button data-act="sqlexp">Export für SQL-Datenbank …</button>':'';
+queueMicrotask(()=>Object.assign(ACT,{sqlexp:el=>menuePop(el,Object.entries(SQL_D).map(([k,x])=>({l:x.l,act:'sqlexpd',value:k}))),
+  sqlexpd:el=>{const k=el.value,r=sqlSkript(k);dl(new Blob([r.txt],{type:'application/sql'}),`erp-lite_${k==='pg'?'postgresql':'azure-sql'}_${isoD()}.sql`);log('Export SQL',`${SQL_D[k].l}: ${r.n} Tabellen, ${r.z} Datensätze`);persist()}}));
 
 /* ---------- Datensicherung (P38): Sicherungen gzip-komprimiert und nach dem Schreiben geprüft, Konfliktkopien, Wiederherstellen ----------
    Ablage im Speicherort unter backup/ (OneDrive bzw. Ordner; „nur Browser“ sichert nicht). Sicherungen werden nie automatisch gelöscht (Entscheidung Anwender 16.10.2026). */
@@ -1191,10 +1255,10 @@ function sichModal(titel,html){$('#sichm')?.remove();const d=document.createElem
 const SICH_ART=n=>/^erp-daten_/.test(n)?'Tagessicherung':/^konflikt_/.test(n)?'Konfliktkopie':/^vor-import/.test(n)?'vor Import':/^vor-update/.test(n)?'vor Update':/^vor-wieder/.test(n)?'vor Wiederherstellen':/^vor-papier/.test(n)?'vor Papierkorb leeren':/^defekt_/.test(n)?'beschädigte Datei':'Sicherung';
 async function sichPop(){
   if(STORE.art==='cache'){alert('Im Modus „nur Browser“ gibt es keine Sicherungen.');return}
-  let L;try{L=[...(await STORE.list('backup')).map(f=>({...f,p:'backup/'+f.name})),...(await STORE.list('backup/konflikte')).map(f=>({...f,p:'backup/konflikte/'+f.name}))]}catch(e){alert('Sicherungen konnten nicht gelesen werden:\n'+e.message);return}
+  let L;try{L=[...(await STORE.list('backup')).map(f=>({...f,p:'backup/'+f.name})),...(await STORE.list('backup/konflikte')).map(f=>({...f,p:'backup/konflikte/'+f.name})),...await spListe()]}catch(e){alert('Sicherungen konnten nicht gelesen werden:\n'+e.message);return}
   L.sort((a,b)=>b.ts.localeCompare(a.ts));const sum=L.reduce((a,f)=>a+f.size,0);
   sichModal('Sicherungen',`<p class="mut" style="margin-top:0">${L.length} Datei(en), zusammen ${kbT(sum)} · Ordner <b>backup</b> im Speicherort. Beim Wiederherstellen bleiben abgeschlossene Belege, Nummernkreise und Buchungen des aktuellen Stands erhalten; der aktuelle Stand wird vorher gesichert.</p>
-    <table><thead><tr><th>Datei</th><th>Art</th><th>Gespeichert</th><th class="n">Größe</th><th></th></tr></thead><tbody>${L.map(f=>`<tr><td>${esc(f.name)}</td><td>${SICH_ART(f.name)}</td><td style="white-space:nowrap">${new Date(f.ts).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'})}</td><td class="n">${kbT(f.size)}</td>
+    <table><thead><tr><th>Datei</th><th>Art</th><th>Gespeichert</th><th class="n">Größe</th><th></th></tr></thead><tbody>${L.map(f=>`<tr><td>${esc(f.name)}</td><td>${f.art||SICH_ART(f.name)}</td><td style="white-space:nowrap">${new Date(f.ts).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'})}</td><td class="n">${kbT(f.size)}</td>
       <td style="white-space:nowrap">${/^konflikt_/.test(f.name)?`<button class="s" data-act="kkopie" data-p="${esc(f.p)}">Ansehen …</button>`:/\.json(\.gz)?$/.test(f.name)&&!/^defekt_/.test(f.name)?`<button class="s" data-act="sichzur" data-p="${esc(f.p)}">Wiederherstellen …</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" class="mut">Noch keine Sicherungen.</td></tr>'}</tbody></table>`)}
 async function sichZurueck(p){
   let d;try{d=JSON.parse(await sichLesen(p));if(!d.settings||!Array.isArray(d.belege))throw new Error('Keine ERP-Lite-Datei.')}catch(e){alert('Sicherung kann nicht gelesen werden:\n'+e.message);return}
@@ -1228,6 +1292,7 @@ erwPlus({k:'sicherung',std:true,p:'Datensicherung (P38)',l:'Tagessicherung kompr
 let SICHV=0;
 const sichStand=()=>{try{return JSON.parse(lsGet('erp-sich')||'{}')}catch(e){return{}}},sichFehler=()=>{try{return JSON.parse(lsGet('erp-sichf')||'null')}catch(e){return null}};
 async function tagSicherung(txt,tag){
+  if(erw('sichPlan')&&!spS().tag.an)return true; // Stufe „täglich“ im Sicherungsplan aus (P58)
   if(!erw('sicherung')){try{await STORE.backup(txt,tag)}catch(e){}return true}
   try{const p=`backup/erp-daten_${tag}.json.gz`;
     if(!await STORE.exists(p)&&!await STORE.exists(`backup/erp-daten_${tag}.json`)){const h=await sha(txt);
@@ -1239,6 +1304,51 @@ const sichInfo=()=>{if(STORE.art==='cache')return'';const v=sichStand(),f=sichFe
   return`${erw('sicherung')?`<p>${v.tag?`Letzte Tagessicherung dieses Geräts: <b>${dAT(v.tag)}</b>, geprüft${v.n?` (unkomprimiert ${kbT(v.n)})`:''}.`:'Noch keine Tagessicherung von diesem Gerät.'}${f?` <span class="err">Letzter Versuch fehlgeschlagen: ${esc(f.t)}</span>`:''}</p>`:''}
   <div class="bar"><button data-act="sichpop">Sicherungen anzeigen / wiederherstellen …</button></div>`};
 queueMicrotask(()=>Object.assign(ACT,{sichpop:()=>sichPop(),sichzur:el=>sichZurueck(el.dataset.p),kkopie:el=>kkPop(el.dataset.p),kkueb:el=>kkUebernehmen(+el.dataset.i)}));
+/* Sicherungsplan (P58 Teil 1, erw.sichPlan, Standard aus): Stufen SP_ST, Einstellung S().sichPlan {<k>:{an,n},lauf:{an,n,min}} (gilt für alle Geräte; fehlt = SP_STD).
+   Gesichert wird wie bei der Tagessicherung der Stand vor der Änderung, gzip und geprüft (sichSchreiben); fällig = für den Zeitraum noch keine Datei (auch nicht von einem anderen Gerät),
+   ERP-Lite hat keinen Server → verpasste Stufen beim nächsten Speichern nachgeholt. „Täglich“ = bestehende Tagessicherung (tagSicherung). Merker je Gerät erp-sichP.
+   n = Aufbewahrung (laufend in Stunden, sonst Anzahl, 0 = alle); gelöscht wird nur über n hinaus und nie die jüngste Datei (OneDrive: in den Papierkorb).
+   Zweiter Ort (nur PC mit Ordnerzugriff): Ordner kv 'sich2', Kopie jeder neuen Datei außer „laufend“, dort nie gelöscht; ohne Berechtigung Warteschlange erp-sich2q → ACT.sich2ok */
+erwPlus({k:'sichPlan',std:false,p:'Datenablage (P58)',l:'Sicherungsplan einstellbar (laufend, täglich, wöchentlich, monatlich, jährlich)',info:'Unter „Export & Sicherung“ lässt sich je Stufe einstellen, ob gesichert wird und wie viele Sicherungen bleiben (leer = alle). Laufend: beim Speichern höchstens alle 30 Minuten, für 24 Stunden aufbewahrt. Verpasste Stufen werden beim nächsten Speichern nachgeholt. Auf Wunsch zusätzlich eine Kopie in einem zweiten Ordner (USB-Laufwerk, NAS; nur am PC).'});
+const SP_ST=[{k:'lauf',l:'Laufend',w:'beim Speichern, höchstens alle',d:'backup/laufend',z:()=>stempel()},{k:'tag',l:'Täglich',w:'erstes Speichern des Tages',d:'backup',z:()=>isoD()},
+  {k:'woche',l:'Wöchentlich',w:'erstes Speichern der Woche',d:'backup/woche',z:()=>isoWoche()},{k:'monat',l:'Monatlich',w:'erstes Speichern des Monats',d:'backup/monat',z:()=>isoD().slice(0,7)},
+  {k:'jahr',l:'Jährlich',w:'erstes Speichern des Jahres',d:'backup/jahr',z:()=>isoD().slice(0,4)}];
+const SP_STD={lauf:{an:true,n:24,min:30},tag:{an:true,n:0},woche:{an:true,n:0},monat:{an:true,n:0},jahr:{an:true,n:0}};
+const spS=()=>{const x=S().sichPlan||{},o={};for(const k in SP_STD)o[k]={...SP_STD[k],...x[k]};return o},spMerk=()=>{try{return JSON.parse(lsGet('erp-sichP')||'{}')}catch(e){return{}}};
+const isoWoche=(t=new Date())=>{const d=new Date(Date.UTC(t.getFullYear(),t.getMonth(),t.getDate()));d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));const j=d.getUTCFullYear();return`${j}-W${String(Math.ceil(((d-Date.UTC(j,0,1))/864e5+1)/7)).padStart(2,'0')}`};
+Object.assign(ODSTORE,{async del(path){const r=await graph(odPath(path),{method:'DELETE'});if(!r.ok&&r.status!==404)throw new Error('OneDrive '+r.status)}});
+Object.assign(DIRSTORE,{async del(path){const p=path.split('/'),fn=p.pop();try{await (await this.dir(p,false)).removeEntry(fn)}catch(e){if(e.name!=='NotFoundError')throw e}}});
+async function planSicherung(txt){
+  if(!erw('sichPlan')||STORE.art==='cache'||!txt)return;const P=spS(),M=spMerk();
+  for(const s of SP_ST){if(!P[s.k].an)continue;const z=s.z();
+    try{if(s.k==='lauf'){if(Date.now()-(M.lauf||0)<Math.max(5,P.lauf.min||30)*6e4)continue;const h=await sha(txt);if(h!==M.laufH){await sichSchreiben(`${s.d}/erp-daten_${z}.json.gz`,txt);M.laufH=h;M.laufT=Date.now()}M.lauf=Date.now()}
+      else{if(M[s.k]===z)continue;const p=`${s.d}/erp-daten_${z}.json.gz`;
+        if(s.k==='tag'){M.tag=z;lsSet('erp-sichP',JSON.stringify(M));if(!await STORE.exists(p))continue} // Tagessicherung schreibt tagSicherung() (heute nichts geändert = keine Datei); hier nur Kopie und Aufbewahrung
+        else if(!await STORE.exists(p))await sichSchreiben(p,txt);
+        M[s.k]=z;M[s.k+'T']=Date.now();await sich2(p)}
+      lsSet('erp-sichP',JSON.stringify(M));await spAusduennen(s,P[s.k].n)}
+    catch(e){lsSet('erp-sichf',JSON.stringify({ts:Date.now(),t:'Sicherungsplan ('+s.l+'): '+e.message}))}}}
+async function spAusduennen(s,n){if(!n)return;const rx=s.k==='tag'?/^erp-daten_\d{4}-\d\d-\d\d\.json(\.gz)?$/:/^erp-daten_.+\.json\.gz$/;
+  const L=(await STORE.list(s.d)).filter(f=>rx.test(f.name)).sort((a,b)=>b.name.localeCompare(a.name)).slice(1); // jüngste bleibt immer
+  for(const f of s.k==='lauf'?L.filter(f=>Date.now()-Date.parse(f.ts)>n*36e5):L.slice(n-1))await STORE.del(`${s.d}/${f.name}`)}
+const sich2Q=()=>{try{return JSON.parse(lsGet('erp-sich2q')||'[]')}catch(e){return[]}};
+async function sich2(p,frei){const h=await kvGet('sich2').catch(()=>null);if(!h)return;const Q=[...new Set([...sich2Q(),...(p?[p]:[])])];
+  let ok=false;try{ok=await h.queryPermission({mode:'readwrite'})==='granted'||!!frei&&await h.requestPermission({mode:'readwrite'})==='granted'}catch(e){}
+  if(!ok){lsSet('erp-sich2q',JSON.stringify(Q));return}
+  for(const q of [...Q]){const f=await STORE.getFile(q);if(f){const t=q.split('/'),fn=t.pop();let d=h;for(const x of t)d=await d.getDirectoryHandle(x,{create:true});const w=await (await d.getFileHandle(fn,{create:true})).createWritable();await w.write(f);await w.close()}Q.splice(Q.indexOf(q),1)}
+  lsSet('erp-sich2q',Q.length?JSON.stringify(Q):null)}
+async function spListe(){if(!erw('sichPlan'))return[];const o=[];for(const s of SP_ST)if(s.d!=='backup')for(const f of await STORE.list(s.d).catch(()=>[]))o.push({...f,p:s.d+'/'+f.name,art:s.l});return o}
+let SICH2=null;
+function spKarte(){if(!erw('sichPlan')||STORE.art==='cache')return'';const P=spS(),M=spMerk(),fs='showDirectoryPicker' in window,q=sich2Q().length;
+  if(SICH2===null&&fs){SICH2='';kvGet('sich2').then(h=>{SICH2=h?.name||'';if(h&&CURHASH==='#/export')render()}).catch(()=>{})}
+  const zt=t=>t?new Date(t).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'}):'–';
+  return`<div class="card"><h2>Sicherungsplan</h2><p class="mut" style="margin-top:0">Gilt für alle Geräte. Gesichert wird beim Speichern (Stand vor der Änderung); verpasste Stufen werden beim nächsten Speichern nachgeholt. Aufbewahrung leer = alle.</p>
+  <table class="sptab"><thead><tr><th>Stufe</th><th>Aufbewahrung</th></tr></thead><tbody>${SP_ST.map(s=>`<tr><td><label class="chk"><input type="checkbox" data-o="s" data-f="sichPlan.${s.k}.an"${P[s.k].an?' checked':''}> <b>${s.l}</b></label><div class="mut" style="font-size:12px">${s.w}${s.k==='lauf'?` <input type="number" min="5" step="5" style="width:72px" data-o="s" data-f="sichPlan.lauf.min" value="${P.lauf.min||30}"> min`:''}<br>zuletzt (dieses Gerät): ${zt(M[s.k+'T']??(s.k==='tag'?sichStand().ts:0))}</div></td>
+    <td style="white-space:nowrap"><input type="number" min="0" style="width:80px" data-o="s" data-f="sichPlan.${s.k}.n" value="${P[s.k].n||''}" placeholder="alle"> ${s.k==='lauf'?'Std.':'Stk.'}</td></tr>`).join('')}</tbody></table>
+  <h3 style="margin:14px 0 4px">Zweiter Ort</h3>${!fs?'<p class="mut" style="margin:0">Nur am PC (Chrome oder Edge) einstellbar: Kopie jeder Sicherung zusätzlich in einem Ordner, z. B. USB-Laufwerk oder NAS.</p>':`<p style="margin:0">${SICH2?`Kopie jeder neuen Sicherung (außer laufend) zusätzlich in <b>${esc(SICH2)}</b>, dort wird nie gelöscht.${q?` <span class="err">${q} Kopie(n) warten auf die Freigabe des Ordners.</span>`:''}`:'Kein zweiter Ordner gewählt.'}</p>
+  <div class="bar">${q?'<button class="p" data-act="sich2ok">Ordner freigeben und Kopien schreiben</button>':''}<button data-act="sich2wahl">${SICH2?'Anderen Ordner wählen …':'Ordner wählen …'}</button>${SICH2?'<button data-act="sich2weg">Zweiten Ort entfernen</button>':''}</div>`}</div>`}
+queueMicrotask(()=>Object.assign(ACT,{sich2wahl:async()=>{let h;try{h=await window.showDirectoryPicker({id:'erp-sich2',mode:'readwrite'})}catch(e){return}await kvSet('sich2',h);SICH2=h.name;lsSet('erp-sich2q',null);render()},
+  sich2weg:async()=>{await kvSet('sich2',null);SICH2='';lsSet('erp-sich2q',null);render()},sich2ok:async()=>{try{await sich2(null,true)}catch(e){alert('Kopie in den zweiten Ordner fehlgeschlagen:\n'+e.message)}render()}}));
 
 let ZNH=false;
 function zuNeuHinweis(){if(ZNH)return;ZNH=true;setTimeout(()=>{if(confirm('Die Daten wurden inzwischen mit einer neueren Version von ERP-Lite gespeichert.\n\nDiese ältere Version speichert nicht, damit nichts verloren geht. Ihre Änderungen bleiben im Browser und werden nach dem Neuladen nachgetragen.\n\nJetzt neu laden?'))location.reload()},0)}
@@ -5239,10 +5349,10 @@ V.export=()=>{
   <div class="bar">Jahr <select data-o="ui" data-f="jahr">${jahre.map(x=>opt(x,x,UI.jahr)).join('')}</select></div>
   <div class="bar"><button data-act="exp" data-k="ra">Rechnungsausgangsbuch</button><button data-act="exp" data-k="re">Rechnungseingangsbuch</button><button data-act="exp" data-k="za">Zahlungen</button><button data-act="exp" data-k="op">Offene Posten</button><button data-act="exp" data-k="lg">Lagerbestand</button><button data-act="exp" data-k="au">Aufträge DB II</button></div></div>
   <div class="card"><h2>Datensicherung</h2>
-  <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>${sichInfo()}<p class="mut">Programmstand ${new Date(document.lastModified).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'})} · Datenversion ${DATENVER}${ZUNEU?' · <span class="err">Daten stammen von einer neueren Programmversion – bitte neu laden</span>':''}</p>
+  <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>${sichInfo()}${teilInfo()}<p class="mut">Programmstand ${new Date(document.lastModified).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'})} · Datenversion ${DATENVER}${ZUNEU?' · <span class="err">Daten stammen von einer neueren Programmversion – bitte neu laden</span>':''}</p>
   <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}${geraetKnopf()}</div>
-  <div class="bar"><button data-act="exp" data-k="json">Gesamtdaten exportieren (JSON)</button><label class="btn" style="font-size:14px;color:inherit">Daten importieren (ersetzt alles)<input type="file" id="imp" accept=".json" style="display:none"></label><button data-act="savenow">Jetzt speichern</button></div></div>
-  ${archivKarte()}${vollKarte()}${kmp()&&!DB.papierkorb.length?'<div class="card mut">Papierkorb: leer</div>':`<div class="card"><h2>Papierkorb</h2>${DB.papierkorb.length?`<table><thead><tr><th>Gelöscht am</th><th>Art</th><th>Eintrag</th><th></th></tr></thead><tbody>${DB.papierkorb.slice().reverse().map(e=>`<tr><td style="white-space:nowrap">${new Date(e.ts).toLocaleString('de-AT')}</td><td>${PK[e.c]?.n||e.c}</td><td>${esc(e.info)}</td><td style="white-space:nowrap"><button class="s" data-act="pkrest" data-id="${e.id}">Wiederherstellen</button> <button class="s d" data-act="pkdel" data-id="${e.id}">Endgültig löschen</button></td></tr>`).join('')}</tbody></table>
+  <div class="bar"><button data-act="exp" data-k="json">Gesamtdaten exportieren (JSON)</button>${sqlKnopf()}<label class="btn" style="font-size:14px;color:inherit">Daten importieren (ersetzt alles)<input type="file" id="imp" accept=".json" style="display:none"></label><button data-act="savenow">Jetzt speichern</button></div></div>
+  ${spKarte()}${archivKarte()}${vollKarte()}${kmp()&&!DB.papierkorb.length?'<div class="card mut">Papierkorb: leer</div>':`<div class="card"><h2>Papierkorb</h2>${DB.papierkorb.length?`<table><thead><tr><th>Gelöscht am</th><th>Art</th><th>Eintrag</th><th></th></tr></thead><tbody>${DB.papierkorb.slice().reverse().map(e=>`<tr><td style="white-space:nowrap">${new Date(e.ts).toLocaleString('de-AT')}</td><td>${PK[e.c]?.n||e.c}</td><td>${esc(e.info)}</td><td style="white-space:nowrap"><button class="s" data-act="pkrest" data-id="${e.id}">Wiederherstellen</button> <button class="s d" data-act="pkdel" data-id="${e.id}">Endgültig löschen</button></td></tr>`).join('')}</tbody></table>
     <div class="bar" style="margin-top:8px"><button data-act="pkrestall">Alle wiederherstellen</button><button class="d" data-act="pkleer">Papierkorb leeren …</button></div>`:'<p class="mut" style="margin:0">leer</p>'}</div>`}
   ${kmp()?protokollK():`<div class="card"><h2>Protokoll (letzte 100)</h2><table>${DB.log.slice(-100).reverse().map(l=>`<tr><td style="white-space:nowrap">${new Date(l.ts).toLocaleString('de-AT')}</td><td>${esc(l.aktion)}</td><td>${esc(l.info)}</td></tr>`).join('')||'<tr><td class="mut">leer</td></tr>'}</table></div>`}`;
 };
@@ -8100,7 +8210,7 @@ const EB_K=Object.fromEntries(Object.entries({belege:'strgP snapshot duplikat dr
   kalk:'gkalk gkMerken dbStd gkLohn k3Tarif tarifPos gkAufsFeld vkVorschlag ekRechnen kbVorlage kbDruck kbProjekt kbBeleg',einkauf:'scanPE lfTermin lfListe lfErinnern lfVerkauf lfNeu',
   kontakte:'kFilter navKL kontaktForm adrVorschlag adrPruef dublette kDok artBild',bau:'btb btbBild btbSig btbDruck btbVorschau btbZeit btbNrDatum btbRechnung btbFahrt btbTage regie regieAntrag mitarbeiter maLohn unterschrift',
   ansicht:'kompakt kompaktBeleg einstGruppen kundeProjekt auftragKP belegFilterKurz belegInfo kontaktSchlank dashLeer navKlapp navPm navEinst navGrpStil pfeile speicherLeiste dashFlex ihHover scrollSperre baumHover kontext statuszeile kopfFix zuletzt suche einstSuche suEinst',
-  app:'ios appOffline netStatus ipad tabLeiste wischZurueck langDruck iosTeilen dunkel schnell schnellStart stoppuhr',sicher:'abmKnopf geraetLoeschen mfaPflicht sicherung archiv vollsicherung'}).flatMap(([b,s])=>s.split(' ').map(k=>[k,b])));
+  app:'ios appOffline netStatus ipad tabLeiste wischZurueck langDruck iosTeilen dunkel schnell schnellStart stoppuhr',sicher:'abmKnopf geraetLoeschen mfaPflicht sicherung archiv vollsicherung sichPlan teilAblage sqlExport'}).flatMap(([b,s])=>s.split(' ').map(k=>[k,b])));
 const EB_KARTE=[[/^e-(firma|kfm|st|nk)\||\|(Firma|Kaufmännisch|Steuersätze|Nummernkreise)/,'firma'],[/^e-(mail|druck)\||\|(E-Mail-Vorlage|Druck)/,'belege'],[/^e-(tf|kv|ger)\||\|(Stundentarife|Kollektivvertr|Geräteliste)/,'kalk'],
   [/^e-(ein|lf)\||\|(Belege einlesen|Liefertermine)/,'einkauf'],[/^e-(regie|fahrt)\||\|(Regiepreise|Fahrtkosten)/,'bau'],[/\|Schnellfunktionen/,'app']];
 let EB_AKT=lsGet('erp-einstB')||'firma',EB_N='';

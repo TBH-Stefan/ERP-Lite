@@ -8319,7 +8319,7 @@ for(const ev of ['online','offline'])window.addEventListener(ev,()=>sbZeigen());
    Tabs P49, Suche P42, Statuszeile P19), sonst sicherer Bereich; durchsichtige Akkordeon-Köpfe bekommen .sk56b (Kartenfarbe). Karten mit overflow-x:auto (Bildlauf breiter Tabellen) heben sticky auf: skFrei() setzt bei Karten ohne Überbreite .sk56v (overflow sichtbar). */
 erwPlus({k:'kopfKleben',std:false,p:'Überschriften beim Bildlauf (P56)',l:'Kapitelüberschriften beim Bildlauf oben halten',info:'Beim Scrollen bleibt die Überschrift des aktuellen Abschnitts (Karte, aufgeklapptes Kapitel, Kunde in der Liste Kunde › Projekt) oben am Bildschirm stehen, bis der nächste Abschnitt kommt. Gilt im ganzen Programm, z. B. in den Einstellungen.'});
 queueMicrotask(()=>{if(typeof EB_K!=='undefined')EB_K.kopfKleben='ansicht'});
-const SK_L='.topbar,#p49,#main .esu,#main .bstat.fix',SK_E='#main .card>h2,#main details.akk[open]>summary,#main .kpg>.kpk,#main tr.prjz>td';
+const SK_L='.topbar,#p49,#main>.esu,#main .bstat.fix',SK_E='#main .card>h2,#main details.akk[open]>summary,#main .kpg>.kpk,#main tr.prjz>td';
 function skFrei(){let an=false;try{an=!!DB&&!!erw('kopfKleben')}catch(e){return}document.body.classList.toggle('sk56',an);if(!an){document.documentElement.style.scrollPaddingTop='';return}
   let o=0;for(const e of document.querySelectorAll(SK_L)){const cs=getComputedStyle(e);if(cs.display==='none'||!/sticky|fixed/.test(cs.position)||cs.top==='auto')continue;o=Math.max(o,(parseFloat(cs.top)||0)+e.offsetHeight)}
   document.documentElement.style.setProperty('--sk56',o+'px');document.documentElement.style.scrollPaddingTop=(o+44)+'px';

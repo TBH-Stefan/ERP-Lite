@@ -8121,6 +8121,14 @@ async function odShareLesen(){const u=lsGet('erp-odShareUrl');if(!u){lsSet('erp-
   catch(e){if(!confirm(`Der freigegebene Ordner ist nicht erreichbar (${e.message}).\n\nOK = eigenes OneDrive verwenden und den Link entfernen, Abbrechen = nicht laden.`))return false;lsSet('erp-odShareUrl',null);lsSet('erp-odShare',null);return true}}
 {const o0=odStart;odStart=async function(...a){if(!await odShareLesen()){saveState('Freigegebener Ordner nicht erreichbar');return}return o0.apply(this,a)}}
 
+/* Schnellfunktionen: Kacheln ruhiger (P52, Wunsch 26.10.2026; Icons selbst kommen aus P53): Karte mit Rand, Icon in einem Feld in Akzentfarbe (Emoji oder SVG mit currentColor), am Bildschirm feste Kachelbreite. */
+{const st=document.createElement('style');st.textContent=`@media(min-width:761px){.sfk{grid-template-columns:repeat(auto-fill,minmax(150px,180px))}}
+.sfk .sfb{background:var(--card);color:inherit;border:1px solid var(--line);box-shadow:0 1px 2px rgba(20,30,50,.06);min-height:116px;font-size:14px;gap:10px;transition:border-color .15s,box-shadow .15s,transform .15s}
+.sfk .sfb:hover{border-color:var(--acc);box-shadow:0 4px 12px rgba(20,30,50,.12);transform:translateY(-1px)}
+.sfk .sfb span{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:12px;background:var(--acc2);color:var(--acc);font-size:24px}
+.sfk .sfb span svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.sfk .sfb.sfl{background:#c0392b;color:#fff;border-color:#c0392b}.sfk .sfb.sfl span{background:rgba(255,255,255,.2);color:#fff}`;document.head.append(st)}
+
 start();
 </script>
 </body>

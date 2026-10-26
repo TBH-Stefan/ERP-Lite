@@ -7964,10 +7964,10 @@ ${n} input:not([type=checkbox]):not([type=radio])${w},${n} select${w},${n} texta
 ${n} button:not(.p,.gef)${w},${n} .btn${w},${n} .seg${w}{border-color:#535d70}${n} button:not(.p,.gef)${w}:hover{border-color:#8a95a8}
 ${n} th${w}{background:#272d38;color:#c3cad5}
 ${n} #p49{border-bottom-color:#3e4757}${n} #p49 .p49t{background:#262b35;border-color:#353c4a}${n} #p49 .p49t:hover{background:#2f3542}${n} #p49 .p49t.on{background:var(--card);border-color:#3e4757}`;document.head.appendChild(st)}
-/* Moderne Piktogramme (P53, erw.icons, Standard aus): einheitliche Strich-Icons (inline SVG im Stil Lucide, offline, Farbe = Schrift → hell/dunkel) statt Emoji und Symbolzeichen.
+/* Moderne Piktogramme (P53, erw.icons, Standard ein – Wunsch Anwender 26.10.2026): einheitliche Icons im Stil Office 365/Fluent (inline SVG, Farbgruppen IC_F, offline, Farbe = Schrift → hell/dunkel) statt Emoji und Symbolzeichen.
    Geändert wird nur die Anzeige: icTausch(el) ersetzt in Textknoten die Zeichen aus IC_Z durch <svg class="i53 i53-<name>"> (Pfade IC_P); Auswahl-Optionen mit value verlieren das Zeichen.
    Ausgenommen IC_AUS (Blatt, Druck, K-Blätter, Eingabefelder, contenteditable). Nach render() und für Pop-ups/Menüs über IC_MO (MutationObserver), Klappzeichen ▸/▾/◢/▷ per CSS-Maske (body.ic53). */
-erwPlus({k:'icons',std:false,p:'Moderne Piktogramme (P53)',l:'Moderne Piktogramme statt Emoji',info:'Alle Piktogramme der Oberfläche (Menüs, Knöpfe, Belegarten, Seitenleiste, Hinweise, Auf-/Zuklappen) erscheinen als einheitliche, schlanke Linien-Symbole statt bunter Emoji. Sie passen sich hell/dunkel an und sehen auf iPhone, iPad und PC gleich aus. Belege, Druck und PDF bleiben unverändert.'});
+erwPlus({k:'icons',std:true,p:'Moderne Piktogramme (P53)',l:'Moderne Piktogramme statt Emoji (Stil Office 365)',info:'Alle Piktogramme der Oberfläche (Menüs, Knöpfe, Belegarten, Seitenleiste, Hinweise, Auf-/Zuklappen) erscheinen als einheitliche, schlanke Symbole im Stil von Office 365 (Fluent) mit Farbakzenten statt bunter Emoji. Sie passen sich hell/dunkel an und sehen auf iPhone, iPad und PC gleich aus. Belege, Druck und PDF bleiben unverändert.'});
 const IC_P={file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
   files:'<path d="M15 2H9a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7z"/><path d="M15 2v5h5M4 8v12a2 2 0 0 0 2 2h9"/>',
   filepen:'<path d="M12 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v3"/><path d="M14 3v5h5"/><path d="M19.4 13.6a1.5 1.5 0 0 1 2.1 2.1L16 21.2l-3 .8.8-3z"/>',
@@ -8054,7 +8054,10 @@ const IC_Z={'📄':'file','📑':'files','📝':'filepen','📋':'clip','📷':'
   '⊘':'verbot','⌫':'radier','☀':'sonne','🌤':'hsonne','☁':'wolke','🌫':'nebel','🌧':'regen','🌨':'schnee','❄':'frost','💨':'wind','▾':'runter','▸':'rechts'};
 const IC_RX=new RegExp('('+Object.keys(IC_Z).join('|')+')\\uFE0F?','gu'),IC_AUS='input,textarea,script,style,svg,[contenteditable],title,'+DK_HELL;
 let IC_MO=null;
-const icSvg=k=>`<svg class="i53 i53-${k}" viewBox="0 0 24 24" aria-hidden="true">${IC_P[k]}</svg>`;
+const IC_F={b:'file files filepen clip mail druck ordner ordner2 buch bib kopie ab auf inbox liste raster info such pc handy img cam sig stift haus firma fabrik user users tel ort nadel save ext',
+  g:'geld karte bank bon calc ok okk oks chart play',o:'warn timer clock glas lkw pkg wagen mond sonne hsonne frost',r:'trash x stop verbot aus',v:'gear werkz teil tag ziel helm bau hand zu offen'},
+  IC_FK=Object.fromEntries(Object.entries(IC_F).flatMap(([f,l])=>l.split(' ').map(k=>[k,f])));  // Farbgruppe je Icon (Office/Fluent): blau Dokumente, grün Geld, orange Zeit/Lieferung/Warnung, rot Löschen, violett Einstellungen
+const icSvg=k=>`<svg class="i53 i53-${k}${IC_FK[k]?' f53-'+IC_FK[k]:''}" viewBox="0 0 24 24" aria-hidden="true">${IC_P[k]}</svg>`;
 function icText(n){const p=n.parentElement,v=n.nodeValue;IC_RX.lastIndex=0;if(!p||!IC_RX.test(v))return;
   if(p.tagName==='OPTION'){if(p.hasAttribute('value'))n.nodeValue=v.replace(IC_RX,'').replace(/^\s+/,'');return} // Optionen können kein SVG zeigen
   if(p.closest(IC_AUS)||p.closest('select'))return;
@@ -8068,8 +8071,12 @@ function icTausch(r){if(!r)return;if(r.nodeType===3)return icText(r);if(r.nodeTy
 {const st=document.createElement('style'),
   m=d=>`url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`)}") center/contain no-repeat`,
   rt=m('m9 6 6 6-6 6'),s='body.ic53 details.akk>summary::before,body.ic53 .gl details>summary::before,body.ic53 nav.nk .grp::before';
-  st.textContent=`.i53{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.21em;fill:none;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round;flex:none;overflow:visible}
+  st.textContent=`.i53{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.21em;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none;overflow:visible}
 .i53-dots circle{fill:currentColor}.i53-play,.i53-stop,.i53-pause{fill:currentColor;stroke-width:1.2}.i53-warn{color:var(--warn)}.i53-runter,.i53-rechts{width:.95em;height:.95em;vertical-align:-.12em;stroke-width:2.2}
+body{--f53b:#0f6cbd;--f53g:#107c10;--f53o:#ca5010;--f53r:#c50f1f;--f53v:#5c2e91}body.dunkel{--f53b:#479ef5;--f53g:#54b054;--f53o:#f7894a;--f53r:#dc626d;--f53v:#a079d8}
+.f53-b{color:var(--f53b)}.f53-g{color:var(--f53g)}.f53-o{color:var(--f53o)}.f53-r{color:var(--f53r)}.f53-v{color:var(--f53v)}
+.i53>rect:first-child,.i53>circle:first-child,:is(.i53-file,.i53-files,.i53-pkg,.i53-bon,.i53-ordner,.i53-ordner2,.i53-tag,.i53-nadel,.i53-werkz,.i53-tel,.i53-save,.i53-gear,.i53-cam,.i53-mond,.i53-warn,.i53-ort,.i53-buch)>path:first-child{fill:currentColor;fill-opacity:.14}
+:is(button.p,.btn.p,nav,.topbar,#tabl,.mi.d) .i53,.i53-dots,.i53-menu{color:inherit}
 details.ih>summary .i53{width:1.05em;height:1.05em;vertical-align:-.15em}
 ${s}{content:''!important;display:inline-block;width:12px;height:12px;font-size:inherit;vertical-align:-1px;background:currentColor;-webkit-mask:${rt};mask:${rt};transform:none!important;transition:transform .15s}
 body.ic53 details.akk[open]>summary::before,body.ic53 .gl details[open]>summary::before,body.ic53 nav.nk .grp:not(.nkzu)::before{transform:rotate(90deg)!important}`;document.head.appendChild(st)}

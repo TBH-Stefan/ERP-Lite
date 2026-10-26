@@ -394,7 +394,7 @@ body.kompakt table[data-tab="artikel"] tr>:first-child>input[type=checkbox]{widt
 .pgsp>td{padding:0!important;border:0!important;background:none!important}
 .pgband{margin:0 -14mm 0 -20mm;font:7.5pt/1.3 Arial,Helvetica,sans-serif;color:#000;text-align:center;position:relative}
 .pgband .pf{margin:0 18.7mm 0 17.8mm;height:17.3mm;box-sizing:border-box;padding-top:1mm}.pgband .pf.l{border-top:1mm solid #80704d}
-.pgband .pz{position:absolute;right:15mm;top:9.8mm;white-space:nowrap}.pgband .gap{height:7mm;background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 -1px}.pgband .pt{height:10mm}
+.pgband .pz{position:absolute;right:15mm;top:9.8mm;white-space:nowrap}.pgband .gap{height:9mm;background:#8b929c;box-shadow:inset 0 4px 5px -3px rgba(0,0,0,.5),inset 0 -4px 5px -3px rgba(0,0,0,.5);margin:0 -1px} /* Seitengrenze deutlich (hell: grau, dunkel: fast schwarz) */ body.dunkel .blatt .pgband .gap{background:#0b0d12;box-shadow:inset 0 4px 6px -3px #000,inset 0 -4px 6px -3px #000}.pgband .pt{height:10mm}
 .doc{position:relative;font:9.5pt/1.4 Arial,Helvetica,sans-serif;color:#000}
 .doc .hd{position:relative;height:35mm}
 /* Briefkopf wie Vorlage: Bild 42,4 × 31,5 mm, links 150,2 mm / oben 11 mm vom Blattrand (Ränder 20/10/14 mm), Anschrift ab 47 mm */
@@ -1950,7 +1950,8 @@ window.addEventListener('hashchange',async()=>{
   if(erw('strgP'))druckLeeren(); // Druckbereich gehört zur verlassenen Seite
   if(SKIP){SKIP=false;CURHASH=location.hash;render();return}
   if(MAUS&&Math.abs(Date.now()-Math.abs(MAUS))<500){const r=MAUS>0?1:-1;MAUS=0;SKIP=true;history.go(r);return} // Maustaste hat bereits rückgängig gemacht → Navigation zurücknehmen
-  if(DIRTY){
+  if(DIRTY&&p49An()&&!await p49Frei())return; // Tabs (P49): Wechsel ohne Rückfrage, gefragt wird beim Schließen eines Tabs bzw. beim Verlassen eines geänderten Dokuments im selben Tab
+  if(DIRTY&&!p49An()){
     const ziel=location.hash;history.replaceState(null,'',CURHASH||'#/dash');
     const r=await frageSpeichern();if(r==='abbrechen')return;
     if(r==='speichern')await commit();else{if(SNAP)DB=migrate(JSON.parse(SNAP));merk();DIRTY=false;dirtyBar();artDatalist()}
@@ -6511,12 +6512,16 @@ function vorschauSeiten(){
     const band=(fill,letzte)=>`<div style="height:${Math.max(0,fill).toFixed(1)}px"></div><div class="pgband"><div class="pf${fz.length?' l':''}">${fz.map(esc).join('<br>')}</div><span class="pz"></span>${letzte?'':'<div class="gap"></div><div class="pt"></div>'}</div>`;
     const bloecke=[];for(const c of doc.children){if(c.matches('.wm,.ft,.pgsp'))continue;const R=c.matches('table.p')?[...c.querySelectorAll(':scope>tbody>tr')]:[]; // nur Positionstabellen zeilenweise teilen; Summenblock bleibt ganz (wie im Druck)
       if(R.length)R.forEach((r,i)=>bloecke.push({el:r,tab:c,erst:i===0}));else bloecke.push({el:c})}
+    const P=bloecke.map((x,k)=>x.tab&&!x.el.matches('.grpz,.ltz,.gsum')?k:-1).filter(k=>k>=0),oben=k=>{const Z=bloecke[k];return(Z.erst?Z.tab:Z.el).getBoundingClientRect().top-t0()}; // Positionsanfänge
     const t0=()=>bl.getBoundingClientRect().top+parseFloat(getComputedStyle(bl).paddingTop);
     let start=0,n=1;
     for(let i=0;i<bloecke.length;i++){const B=bloecke[i],unten=B.el.getBoundingClientRect().bottom-t0();
       if(unten-start<=H+0.5)continue;
       let j=i;if(j>0&&B.tab&&bloecke[j-1].tab===B.tab&&B.el.classList.contains('ltz'))j--; // Langtext über die volle Breite (P4) mit seiner Position
       while(j>0&&bloecke[j-1].tab&&bloecke[j-1].tab===B.tab&&bloecke[j-1].el.classList.contains('grpz'))j--; // Gruppenkopf mitnehmen
+      // letzte Seite: nicht nur Schluss (Summe, Texte, Unterschrift) oder eine einzelne Position – die letzten zwei Positionen mitnehmen, wenn der Rest dann noch auf eine Seite passt
+      const need=Math.min(2,P.length);if(P.filter(k=>k>=j).length<need){let k=P[P.length-need];while(k>0&&bloecke[k-1].tab===bloecke[k].tab&&bloecke[k-1].el.classList.contains('grpz'))k--;
+        const tk=oben(k),kh=bloecke[k].erst?0:bloecke[k].tab.tHead?.getBoundingClientRect().height||0;if(k<j&&tk>start+1&&doc.getBoundingClientRect().bottom-t0()-tk+kh<=H)j=k}
       const Z=bloecke[j],el=Z.erst?Z.tab:Z.el,zt=el.getBoundingClientRect().top-t0();
       if(zt<=start+1){start+=H;n++;i--;continue} // Block größer als eine Seite: wird geteilt
       const fill=start+H-zt;let sp;
@@ -6634,10 +6639,13 @@ async function pdfAusBeleg(b,o={}){
   // Umbruch nur nach ganzen Zeilen (Position = Bezeichnung + Langtext), nicht nach Tabellen- oder Gruppenkopf; Summenblock (.tot) bleibt ein Block wie im Druck
   const brk=[...box.querySelectorAll('table.p tbody>tr:not(.grpz):not(.mlt),.doc>div:not(.hd),.doc>table,.txt,.sig'+(o.brk?','+o.brk:''))].map(e=>Y(e.getBoundingClientRect().bottom)).sort((a,c)=>a-c);
   const tab=box.querySelector('table.p'),tR=tab?.getBoundingClientRect(),thR=tab?.querySelector('thead')?.getBoundingClientRect(),thH=thR?thR.height:0,thTop=thR?Y(thR.top):0;
+  const pA=[...box.querySelectorAll('table.p tbody>tr:not(.grpz):not(.ltz):not(.gsum)')].map(e=>{while(e.previousElementSibling?.classList.contains('grpz'))e=e.previousElementSibling;return Y(e.getBoundingClientRect().top)}).sort((a,c)=>a-c); // Positionsanfänge (mit Gruppenkopf)
   const hoehe=Math.max(...[...it].map(x=>x.t==='text'?x.y+4:x.t==='line'?Math.max(x.y1,x.y2):x.y+x.h),0);
   const seiten=[];let st=0;
   while(st<hoehe-1&&seiten.length<50){const off=seiten.length&&tR&&st>Y(tR.top)&&st<Y(tR.bottom)?thH:0,cap=HC-off;
-    let en=brk.filter(y=>y>st+20&&y<=st+cap).pop();if(!en||st+cap>=hoehe)en=Math.min(st+cap,hoehe+1);seiten.push({st,en,off});st=en}
+    let en=brk.filter(y=>y>st+20&&y<=st+cap).pop();if(!en||st+cap>=hoehe)en=Math.min(st+cap,hoehe+1);
+    else{const need=Math.min(2,pA.length);if(pA.filter(y=>y>=en-1).length<need){const y=pA[pA.length-need];if(y<en&&y>st+20&&hoehe-y<=HC-thH)en=y}} // wie Vorschau: letzte Seite nicht nur Schluss oder eine Position
+    seiten.push({st,en,off});st=en}
   if(!seiten.length)seiten.push({st:0,en:hoehe+1,off:0});
   const bilder=[],bildNr=new Map();
   const pt=(x,y,s)=>[(MX+x*PX).toFixed(2),(PH-MT-(y-s.st+s.off)*PX).toFixed(2)];
@@ -8088,6 +8096,157 @@ Object.assign(ACT,{ztjetzt:el=>{const i=$('#'+el.dataset.z);if(i){i.value=zsLok(
     await commit();render()}});
 {const st=document.createElement('style');st.textContent='.zsh{margin:6px 0 0;font-size:12.5px}.zsh span:not(:empty){color:var(--ink);font-weight:600;margin-right:6px}';document.head.appendChild(st)}
 
+/* Dokumente in Tabs (P49, erw.tabs, Standard aus, nur PC: P49M = ab 1101 px mit Maus). Tab-Leiste #p49 über #main (beide in .p49w; ohne Schalter wieder heraus).
+   P49T={L:[{h,t,ic,y,d}],a} in localStorage erp-tabs (nur Adressen und Beschriftung, nach Neustart wieder offen); wie im Browser: Navigation ändert die Adresse des aktiven Tabs, neuer Tab nur bewusst über „+“ (p49Neu, Alt+T,
+   Mittelklick/Strg+Klick auf einen Link). d = Tab zeigt einen Datensatz (p49Rec; gelöscht → Tab fällt weg). Tab-Wechsel über p49Geh(t) (P49W, location.replace).
+   Wrapper um render(): vorher Bildlauf des aktiven Tabs merken, danach Adresse in den Tab, Leiste zeichnen. Tab-Wechsel ohne Speichern-Frage (hashchange), Verlassen eines geänderten Dokuments im Tab → p49Frei(), Punkt am Tab = Datensatz ≠ SNAP (p49Geaendert);
+   Schließen mit Änderungen → frageSpeichern() (Verwerfen nur dieser Datensatz: p49Zurueck). Eigenes Fenster (Tab aus der Leiste ziehen bzw. Rechtsklick): p49Fenster(i) → window.open(?p49=1#/…);
+   das Fenster übernimmt die Daten vom Hauptfenster (p49KindStart, ohne eigene Anmeldung) und speichert über dieses (saveNow → opener.p49Speichern). Abgleich zwischen den Fenstern: p49Tick() (nach render/dirtyBar/commit)
+   schickt {j,d,s} (Daten, DIRTY, SNAP) an die anderen, p49Von() übernimmt (eigene, noch nicht geschickte Änderungen über merge3), das Hauptfenster reicht an weitere Fenster weiter. */
+erwPlus({k:'tabs',std:false,p:'Dokumente in Tabs (P49)',l:'Mehrere Dokumente in Tabs (nur PC)',info:'Am PC eine Tab-Leiste über dem Inhalt wie in Google Chrome: Dokumente und Listen öffnen sich im aktuellen Tab, einen neuen Tab öffnet man bewusst mit „+“ rechts neben den Tabs (Alt+T) oder per Mittelklick bzw. Strg+Klick auf einen Eintrag. Wechseln per Klick oder Alt+Bild↑/↓, Schließen mit ×, Mittelklick oder Alt+W. Änderungen bleiben beim Wechseln erhalten (Punkt am Tab = ungespeichert); die Frage „Speichern?“ kommt erst beim Schließen eines geänderten Tabs oder wenn man im selben Tab ein geändertes Dokument verlässt. Einen Tab aus der Leiste ziehen (oder Rechtsklick → „In eigenem Fenster öffnen“) öffnet ihn in einem eigenen Fenster, z. B. für den zweiten Bildschirm; Änderungen erscheinen sofort in allen Fenstern, gespeichert wird über das Hauptfenster. Die offenen Tabs merkt sich dieser PC. Handy und iPad: unverändert.'});
+EB_K.tabs='ansicht';
+const P49M=matchMedia('(min-width:1101px) and (pointer:fine)');P49M.addEventListener?.('change',()=>{if(DB)render()});
+let P49T=null,P49K=[],P49L=null,P49Q=null,P49SC=null,P49S0=false,P49D=null,P49W=null,P49KIND=/[?&]p49=1/.test(location.search);
+const p49An=()=>!!DB&&!P49KIND&&!!erw('tabs')&&P49M.matches;
+function p49Rec(db,id){if(!id||!db)return null;for(const k in db){const l=db[k];if(Array.isArray(l)){const x=l.find(o=>o&&o.id===id);if(x)return[k,x]}}return null}
+const p49Doc=h=>{const[v,a]=String(h).split('/');return!!a&&v!=='schnell'&&!!p49Rec(DB,a)};
+function p49Laden(){if(P49T)return P49T;try{P49T=JSON.parse(lsGet('erp-tabs'))}catch(e){}if(!Array.isArray(P49T?.L)||!P49T.L.length)P49T={L:[{h:'dash'}],a:0};P49T.L.forEach((t,j)=>{if(t.d===undefined)t.d=j>0});return P49T} // alte Liste: L[0] war „Liste“
+const p49Merk=()=>lsSet('erp-tabs',JSON.stringify({L:P49T.L,a:P49T.a}));
+function p49Lbl(h){const[v,a]=h.split('/');if(v==='beleg'){const b=beleg(a);if(b){const n=b.fest&&b.adresse?b.adresse.name:kontakt(b.kontaktId)?.name;return[BICON[b.typ]||'📄',(b.nr||'Entwurf '+(T[b.typ]?.bez||b.typ))+(n?' · '+n:'')]}}
+  const h1=$('#main h1');return[{kontakt:'👤',artikel:'📦',auftrag:'📁',bericht:'📋',mitarbeiter:'👷',kbs:'🧮',lvs:'📑'}[v]||'📄',((h1?.firstChild?.textContent||h1?.textContent||'').trim()||h)]}
+function p49Snap(){if(!SNAP)return null;if(P49SC?.s!==SNAP)P49SC={s:SNAP,o:JSON.parse(SNAP)};return P49SC.o}
+function p49Geaendert(h){if(!DIRTY)return false;const a=h.split('/')[1],r=p49Rec(DB,a),s=p49Rec(p49Snap(),a);if(!r&&!s)return false;return!s||JSON.stringify(r?.[1])!==JSON.stringify(s[1])}
+function p49Zurueck(id){const s=p49Rec(p49Snap(),id),r=p49Rec(DB,id),k=x=>JSON.parse(JSON.stringify(x)); // nur dieser Datensatz zurück auf den gespeicherten Stand (neu angelegt → entfernt)
+  if(r){const l=DB[r[0]],i=l.indexOf(r[1]);if(s)l[i]=k(s[1]);else l.splice(i,1)}else if(s&&Array.isArray(DB[s[0]]))DB[s[0]].push(k(s[1]))}
+function p49Weg(){const w=$('.p49w');if(w){const m=$('#main');w.replaceWith(m)}document.body.classList.remove('p49')}
+function p49Leiste(){let w=$('.p49w');if(!w){w=document.createElement('div');w.className='p49w';const m=$('#main');m.before(w);w.appendChild(m)}
+  let el=$('#p49');if(!el){el=document.createElement('div');el.id='p49';el.setAttribute('role','tablist');w.prepend(el)}
+  document.body.classList.add('p49');
+  const m=P49T.L.length>1;
+  el.innerHTML=P49T.L.map((t,i)=>`<a class="p49t${i===P49T.a?' on':''}" href="#/${esc(t.h)}" data-i="${i}" draggable="${m}" title="${esc(t.t||'')}${m?' – zum eigenen Fenster aus der Leiste ziehen':''}" role="tab"><span class="ic">${t.ic||'📄'}</span><span class="tx">${esc(t.t||t.h)}</span>${p49Geaendert(t.h)?'<i class="p49d" title="Ungespeicherte Änderungen"></i>':''}${m?`<b class="p49x" data-act="p49x" data-i="${i}" title="Schließen (Mittelklick, Alt+W)">×</b>`:''}</a>`).join('')
+    +'<button type="button" class="p49n" data-act="p49n" title="Neuer Tab (Alt+T)">+</button>'
+    +(P49T.L.length>2?'<button type="button" class="p49m" data-act="p49m" title="Alle Tabs">⌄</button>':'')}
+{const r0=render;render=function(...x){
+  if(!p49An()){if($('.p49w'))p49Weg();const r=r0.apply(this,x);p49Tick();return r}
+  const P=p49Laden(),alt=P.L[P.a];if(alt)alt.y=scrollY;
+  if(!P49S0){P49S0=true;const t=P.L[P.a];if(t&&t.h!=='dash'&&(!t.d||p49Doc(t.h))&&/^#?\/?(dash)?$/.test(location.hash)){history.replaceState(null,'','#/'+t.h);CURHASH=location.hash}} // Start: zuletzt aktiver Tab
+  const r=r0.apply(this,x),h=location.hash.replace(/^#\/?/,'')||'dash';
+  let akt=P49W&&P.L.includes(P49W)&&P49W.h===h?P49W:P.L[P.a]||P.L[0];P49W=null; // Wechsel per Tab, sonst Navigation im aktiven Tab
+  akt.h=h;akt.d=p49Doc(h);
+  const[ic,t]=akt.d?p49Lbl(h):['☰',$('nav a.on')?.textContent?.trim()||'Liste'];akt.ic=ic;akt.t=t;
+  P.L=P.L.filter(t=>t===akt||!t.d||p49Doc(t.h)); // gelöschte Datensätze (auch durch Abgleich) fallen weg
+  for(let j=0;P.L.length>15&&j<P.L.length;)if(P.L[j]!==akt&&!p49Geaendert(P.L[j].h))P.L.splice(j,1);else j++; // höchstens 15 Dokumente: älteste ungeänderte zuerst
+  P.a=P.L.indexOf(akt);p49Merk();p49Leiste();if(akt!==alt)requestAnimationFrame(()=>scrollTo(0,akt.y||0));p49Tick();return r}}
+async function p49Zu(L,ziel,ohneFrage){ // Tabs (Indizes) schließen; ziel = danach aktiver Tab (sonst Nachbar)
+  L=L.filter(i=>i>=0&&P49T.L[i]);if(!L.length)return;const ge=ohneFrage?[]:L.filter(i=>p49Geaendert(P49T.L[i].h));
+  if(ge.length){const r=await frageSpeichern();if(r==='abbrechen')return;
+    if(r==='speichern')await commit();else{merk();for(const i of ge)p49Zurueck(P49T.L[i].h.split('/')[1]);if(JSON.stringify(DB)===SNAP)DIRTY=false;dirtyBar();artDatalist()}}
+  const akt=P49T.L[P49T.a],weg=new Set(L.map(i=>P49T.L[i]));
+  if(!ziel&&weg.has(akt)){let j=P49T.a+1;while(j<P49T.L.length&&weg.has(P49T.L[j]))j++;if(j>=P49T.L.length){j=P49T.a-1;while(j>=0&&weg.has(P49T.L[j]))j--}ziel=P49T.L[j]}
+  P49T.L=P49T.L.filter(t=>!weg.has(t));if(!P49T.L.length){ziel={h:'dash',d:false};P49T.L=[ziel]} // letzter Tab zu → Übersicht
+  if(ziel&&ziel!==akt)p49Geh(ziel);else{P49T.a=P49T.L.indexOf(akt);p49Merk();render()}}
+function p49Geh(t){if(!t)return;P49W=t;if(location.hash.replace(/^#\/?/,'')===t.h){P49T.a=P49T.L.indexOf(t);P49W=null;p49Merk();render()}else location.replace('#/'+t.h)} // zu Tab t wechseln (ohne neuen Verlaufseintrag)
+function p49Neu(h,still){const t={h:h||'dash',d:false};if(!still){P49T.L.push(t);p49Geh(t);return} // „+“ = neuer Tab mit Übersicht; Link per Mittelklick/Strg+Klick im Hintergrund rechts neben dem aktiven
+  const r=p49Rec(DB,t.h.split('/')[1])?.[1];t.d=!!r&&!t.h.startsWith('schnell/');if(t.d&&t.h.startsWith('beleg/'))[t.ic,t.t]=p49Lbl(t.h);else{t.ic=t.d?'📄':'☰';t.t=t.d?r.name||r.bez||r.titel||r.nr||t.h:$(`nav a[href="#/${t.h}"]`)?.textContent?.trim()||t.h}
+  P49T.L.splice(P49T.a+1,0,t);p49Merk();p49Leiste()}
+async function p49Frei(){const P=p49Laden(),t=P.L[P.a],h=location.hash.replace(/^#\/?/,'')||'dash'; // Navigation im Tab weg von einem geänderten Dokument (nicht in einem anderen Tab offen) → fragen
+  if(P49W||!t||t.h===h||!p49Geaendert(t.h)||P.L.some((x,j)=>j!==P.a&&x.h===t.h))return true;
+  const ziel=location.hash;history.replaceState(null,'',CURHASH||'#/dash');const r=await frageSpeichern();if(r==='abbrechen')return false;
+  if(r==='speichern')await commit();else{merk();p49Zurueck(t.h.split('/')[1]);if(JSON.stringify(DB)===SNAP)DIRTY=false;dirtyBar();artDatalist()}
+  history.replaceState(null,'',ziel);return true}
+function p49Fenster(i){const t=P49T.L[i];if(!t)return;
+  const w=open(location.pathname+'?p49=1#/'+t.h,'erp_'+t.h.replace(/\W/g,'_'),`popup,width=${Math.min(1300,screen.availWidth-40)},height=${screen.availHeight-80}`);
+  if(!w){const d=document.createElement('div');d.className='modal';d.innerHTML=`<div class="mbox"><h2>Eigenes Fenster</h2><p>„${esc(t.t||t.h)}“ in einem eigenen Fenster öffnen?</p><div class="bar" style="justify-content:flex-end;margin:16px 0 0"><button id="q-ab">Abbrechen</button><button class="p" id="q-ok">Öffnen</button></div></div>`;
+    document.body.appendChild(d);d.querySelector('#q-ab').onclick=()=>d.remove();d.querySelector('#q-ok').onclick=()=>{d.remove();const w2=open(location.pathname+'?p49=1#/'+t.h,'erp_'+t.h.replace(/\W/g,'_'),'popup,width=1200,height=900');
+      if(!w2){alert('Der Browser hat das Fenster blockiert. Bitte Pop-ups für diese Seite erlauben.');return}p49Reg(w2,true);p49Zu([P49T.L.indexOf(t)],null,true)};return} // Pop-up-Blocker: Ziehen zählt nicht als Klick
+  p49Reg(w,true);p49Zu([i],null,true)}
+// Abgleich zwischen Hauptfenster und eigenen Fenstern (direkte Aufrufe, gleiche Herkunft)
+function p49Op(){try{const o=window.opener;return o&&!o.closed&&typeof o.p49Von==='function'?o:null}catch(e){return null}}
+function p49Ziele(){if(P49KIND)return[p49Op()].filter(Boolean);P49K=P49K.filter(w=>{try{return!w.closed}catch(e){return false}});return P49K}
+function p49Stand(){return{j:JSON.stringify(DB),d:DIRTY,s:SNAP}}
+function p49Json(){return p49Stand()}
+function p49Store(){return STORE}
+function p49Tick(sofort){if(!DB)return;const Z=p49Ziele();if(!Z.length)return;clearTimeout(P49Q);
+  const f=()=>{const m=p49Stand();if(P49L&&P49L.j===m.j&&P49L.d===m.d&&P49L.s===m.s)return;P49L=m;for(const w of p49Ziele())try{w.p49Von(m,window)}catch(e){}};if(sofort)f();else P49Q=setTimeout(f,250)}
+function p49Reg(w,neu){if(!P49K.includes(w))P49K.push(w);else if(!neu)return false;if(!neu&&DB)try{w.p49Von(p49Stand(),window)}catch(e){}return true}
+function p49Von(m,von){if(!DB)return;
+  const j0=JSON.stringify(DB),neu=m.j!==j0;
+  if(neu){try{DB=migrate(P49L&&P49L.j!==j0?merge3(JSON.parse(P49L.j),DB,JSON.parse(m.j)).db:JSON.parse(m.j))}catch(e){DB=migrate(JSON.parse(m.j))}}
+  SNAP=m.s;DIRTY=m.d;P49L={j:m.j,d:m.d,s:m.s};
+  if(!P49KIND)for(const w of p49Ziele())if(w!==von)try{w.p49Von(m,window)}catch(e){} // Hauptfenster: an die anderen Fenster weiter
+  dirtyBar();if(neu){artDatalist();renderErhalten()}}
+async function p49Speichern(){await commit()}
+function p49KindStart(){if(!P49KIND)return false;const o=p49Op();
+  if(!o||typeof o.p49Json!=='function'){P49KIND=false;history.replaceState(null,'',location.pathname+location.hash);return false} // ohne Hauptfenster: normaler Start
+  const m=o.p49Json();STORE=o.p49Store();laden(JSON.parse(m.j));SNAP=m.s;DIRTY=m.d;P49L=m;dirtyBar();o.p49Reg(window,true);document.body.classList.add('p49k');
+  saveState('Eigenes Fenster – gespeichert wird über das Hauptfenster');
+  saveNow=async()=>{const h=p49Op();if(!h){saveState('Hauptfenster geschlossen – hier nicht speicherbar',true);alert('Das Hauptfenster von ERP-Lite ist geschlossen. Gespeichert wird nur über das Hauptfenster – bitte ERP-Lite dort wieder öffnen.');return}
+    pending=false;p49Tick(true);await h.p49Speichern();saveState('Gespeichert (über das Hauptfenster)')};
+  aktualisieren=async()=>{}; // Abgleich mit dem OneDrive macht das Hauptfenster
+  setInterval(()=>{const h=p49Op();if(!h)saveState('Hauptfenster geschlossen – hier nicht speicherbar',true);else h.p49Reg(window,false)},3000); // Hauptfenster neu geladen → wieder anmelden, Stand von dort
+  return true}
+{const s0=start;start=async function(...a){if(p49KindStart())return;return s0.apply(this,a)}}
+{const c0=commit;commit=async function(...a){const x=await c0.apply(this,a);p49Tick(true);return x}}
+{const d0=dirtyBar;dirtyBar=function(...a){const x=d0.apply(this,a);p49Tick();if(p49An()&&P49T&&$('#p49'))p49Leiste();return x}}
+queueMicrotask(()=>Object.assign(ACT,{
+  p49x:(el,e)=>{e?.preventDefault?.();e?.stopPropagation?.();p49Zu([+el.dataset.i])},
+  p49a:el=>{const t=P49T.L[+el.dataset.i];p49Zu(P49T.L.map((x,j)=>j).filter(j=>P49T.L[j]!==t),t)},
+  p49r:el=>{const i=+el.dataset.i;p49Zu(P49T.L.map((x,j)=>j).filter(j=>j>i),P49T.a>i?P49T.L[i]:null)},
+  p49f:el=>p49Fenster(+el.dataset.i),
+  p49alle:()=>p49Zu(P49T.L.map((x,j)=>j)),
+  p49n:()=>p49Neu(),
+  p49g:el=>p49Geh(P49T.L[+el.dataset.i]),
+  p49m:el=>menuePop(el,[...P49T.L.map((t,i)=>({l:t.t||t.h,ic:t.ic||'📄',act:'p49g',d:{i}})),{trenn:1},{l:'Neuer Tab',ic:'+',act:'p49n'},{l:'Alle Tabs schließen',ic:'×',act:'p49alle'}])}));
+document.addEventListener('contextmenu',e=>{const t=e.target.closest?.('#p49 .p49t');if(!t||!p49An())return;e.preventDefault();e.stopPropagation();const i=+t.dataset.i;
+  menuePop(t,[{l:'Neuer Tab',ic:'+',act:'p49n'},{trenn:1},{l:'Tab schließen',ic:'×',act:'p49x',d:{i},dis:P49T.L.length<2},{l:'Andere Tabs schließen',act:'p49a',d:{i},dis:P49T.L.length<2},{l:'Tabs rechts davon schließen',act:'p49r',d:{i},dis:i>=P49T.L.length-1},{trenn:1},{l:'In eigenem Fenster öffnen',ic:'⧉',act:'p49f',d:{i},dis:P49T.L.length<2}])},true);
+// Tab-Klick = Wechsel; Mittelklick bzw. Strg+Klick auf einen Link (Seitenleiste, Listenzeile mit nav('…')) = in neuem Tab öffnen
+function p49Ziel(e){const a=e.target.closest?.('a[href^="#/"],[onclick*="nav(\'"]');if(!a||a.closest('#p49,.modal,.mpop'))return null;const m=a.getAttribute('href')?.match(/^#\/(.+)/)||a.getAttribute('onclick')?.match(/nav\('([^']+)'\)/);return m?m[1]:null}
+document.addEventListener('click',e=>{if(!p49An())return;const t=e.target.closest?.('#p49 .p49t');
+  if(t){if(e.target.closest('.p49x')||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();p49Geh(P49T.L[+t.dataset.i]);return}
+  if(e.ctrlKey||e.metaKey){const h=p49Ziel(e);if(h){e.preventDefault();e.stopPropagation();p49Neu(h,1)}}},true);
+document.addEventListener('mousedown',e=>{if(e.button===1&&p49An()&&(e.target.closest?.('#p49 .p49t')||p49Ziel(e)))e.preventDefault()});
+document.addEventListener('auxclick',e=>{if(e.button!==1||!p49An())return;const t=e.target.closest?.('#p49 .p49t');if(t){e.preventDefault();if(P49T.L.length>1)p49Zu([+t.dataset.i]);return}
+  const h=p49Ziel(e);if(h){e.preventDefault();p49Neu(h,1)}});
+document.addEventListener('keydown',e=>{if(!p49An()||!e.altKey||e.ctrlKey||e.metaKey||document.querySelector('.modal'))return;const n=P49T.L.length;
+  if(e.key.toLowerCase()==='w'){if(n>1){e.preventDefault();p49Zu([P49T.a])}}
+  else if(e.key.toLowerCase()==='t'){e.preventDefault();p49Neu()}
+  else if(e.key==='PageDown'||e.key==='PageUp'){e.preventDefault();p49Geh(P49T.L[(P49T.a+(e.key==='PageDown'?1:n-1))%n])}});
+// Ziehen: innerhalb der Leiste umsortieren, außerhalb ablegen = eigenes Fenster (bewusste Handlung, mindestens 80 px weg bzw. außerhalb des Fensters)
+document.addEventListener('dragstart',e=>{const t=e.target.closest?.('#p49 .p49t');if(!t||P49T.L.length<2)return;P49D={i:+t.dataset.i,x:e.screenX,y:e.screenY,drin:false};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('application/x-erp-tab',t.dataset.i)});
+document.addEventListener('dragover',e=>{if(P49D&&e.target.closest?.('#p49')){e.preventDefault();e.dataTransfer.dropEffect='move'}});
+document.addEventListener('drop',e=>{if(!P49D||!e.target.closest?.('#p49'))return;e.preventDefault();P49D.drin=true;const z=e.target.closest('.p49t'),j=z?+z.dataset.i:P49T.L.length-1,akt=P49T.L[P49T.a];
+  const[t]=P49T.L.splice(P49D.i,1);P49T.L.splice(Math.min(j,P49T.L.length),0,t);P49T.a=P49T.L.indexOf(akt);p49Merk();p49Leiste()});
+document.addEventListener('dragend',e=>{const d=P49D;P49D=null;if(!d||d.drin||!p49An())return;
+  const raus=e.screenX<screenX||e.screenX>screenX+outerWidth||e.screenY<screenY||e.screenY>screenY+outerHeight,weit=Math.hypot(e.screenX-d.x,e.screenY-d.y)>80;
+  if(raus||(weit&&e.dataTransfer.dropEffect==='none'))p49Fenster(d.i)});
+{const st=document.createElement('style');st.textContent=`.p49w{flex:1;min-width:0;display:flex;flex-direction:column}.p49w>main{flex:1 0 auto}
+#p49{position:sticky;top:0;z-index:40;display:flex;align-items:flex-end;gap:2px;padding:8px 26px 0;background:var(--bg);border-bottom:1px solid var(--line);font-size:13px}
+#p49 .p49t{display:flex;align-items:center;gap:7px;min-width:0;flex:0 1 230px;padding:7px 8px 7px 11px;border:1px solid transparent;border-bottom:0;border-radius:7px 7px 0 0;background:var(--line);color:var(--ink);text-decoration:none;white-space:nowrap;cursor:pointer;user-select:none}
+#p49 .p49t:hover{background:var(--acc2)}#p49 .p49t .tx{overflow:hidden;text-overflow:ellipsis;flex:1 1 auto}#p49 .p49t .ic{flex:none}
+#p49 .p49t.on{background:var(--card);border-color:var(--line);margin-bottom:-1px;padding-bottom:8px;font-weight:600;color:var(--acc);box-shadow:inset 0 3px 0 var(--acc)}
+#p49 .p49d{flex:none;width:7px;height:7px;border-radius:50%;background:var(--warn)}
+#p49 .p49x{flex:none;width:18px;height:18px;line-height:17px;text-align:center;border-radius:4px;color:var(--mut);font-size:15px;font-weight:400}#p49 .p49x:hover{background:var(--line);color:var(--ink)}
+#p49 .p49n{flex:none;align-self:center;width:28px;height:28px;margin:0 0 2px 4px;padding:0;border:0;border-radius:50%;background:none;color:var(--mut);font-size:20px;line-height:26px;cursor:pointer}#p49 .p49n:hover{background:var(--line);color:var(--ink)}
+#p49 .p49m{flex:none;margin:0 0 4px 4px;padding:3px 9px;background:none;border:0;color:var(--mut);font-size:15px;cursor:pointer}
+body.p49 main>#sleiste{top:48px}body.p49 .split .sticky,body.p49 .glsp,body.p49.kompakt .cols.bcol>:last-child{top:52px;max-height:calc(100vh - 62px)}body.p49 .esu{top:41px}body.p49 #main.eg>#egn{top:50px}body.p49 #main.eg>#esu~#egn{top:106px}
+@media print{#p49{display:none}}`;document.head.appendChild(st)}
+/* Kontrast (P51, erw.kontrast, Standard ein): body.kon (gesetzt nach render()) – Hintergrund deutlich anders als Karten, kräftigere Ränder, Tabs, Eingabefelder, Knöpfe.
+   Hell über :not(.dunkel), dunkel über .dunkel (nach den Regeln aus dkRegeln(), höhere Spezifität); Blatt, Druck und K-Blätter behalten die bisherigen Farben */
+erwPlus({k:'kontrast',std:true,p:'Kontrast (P51)',l:'Mehr Kontrast (hell und dunkel)',info:'Hintergrund etwas dunkler, Karten, Eingabefelder, Knöpfe, Tabellenköpfe und Tabs mit deutlicheren Rändern. Im Dunkelmodus ebenso: dunklerer Hintergrund, hellere Karten und Ränder. Belegblatt, Druck und PDF bleiben unverändert. Aus: Farben wie bisher.'});EB_K.kontrast='app';
+{const r0=render;render=function(...a){const x=r0.apply(this,a);document.body.classList.toggle('kon',!!DB&&erw('kontrast'));return x}}
+{const st=document.createElement('style'),k='body.kon:not(.dunkel)',n='body.kon.dunkel',w=':where(:not(.blatt *,.doc *,#print *,.kbf *))';st.textContent=`${k}{--bg:#e1e5eb;--line:#c6ccd6;--mut:#565e6c}
+${k} .blatt,${k} .doc,${k} #print,${k} .kbf{--bg:#f4f5f7;--line:#e2e5ea;--mut:#6b7280}
+${k} .card{box-shadow:0 1px 3px rgba(20,30,50,.08)}
+${k} input:not([type=checkbox]):not([type=radio])${w},${k} select${w},${k} textarea${w}{border-color:#9ea7b5}
+${k} button:not(.p,.gef)${w},${k} .btn${w},${k} .seg${w}{border-color:#aeb6c2}${k} button:not(.p,.gef)${w}:hover{border-color:#6f7988}
+${k} th${w}{background:#edf0f4;color:#4a5260}
+${k} #p49{border-bottom-color:#b9c1cc}${k} #p49 .p49t{background:#d2d8e0;border-color:#c1c8d2}${k} #p49 .p49t:hover{background:#c7ced8}${k} #p49 .p49t.on{background:var(--card);border-color:#b9c1cc}
+${n}{--bg:#0c0e13;--card:#1f242e;--line:#3b4352;--mut:#adb5c2}
+${n} .card{box-shadow:0 1px 3px rgba(0,0,0,.45)}${n} nav{box-shadow:inset -1px 0 #2a303c}
+${n} input:not([type=checkbox]):not([type=radio])${w},${n} select${w},${n} textarea${w}{background:#12151b;border-color:#5a6478}
+${n} button:not(.p,.gef)${w},${n} .btn${w},${n} .seg${w}{border-color:#535d70}${n} button:not(.p,.gef)${w}:hover{border-color:#8a95a8}
+${n} th${w}{background:#272d38;color:#c3cad5}
+${n} #p49{border-bottom-color:#3e4757}${n} #p49 .p49t{background:#262b35;border-color:#353c4a}${n} #p49 .p49t:hover{background:#2f3542}${n} #p49 .p49t.on{background:var(--card);border-color:#3e4757}`;document.head.appendChild(st)}
 start();
 </script>
 </body>

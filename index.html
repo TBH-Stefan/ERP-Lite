@@ -944,7 +944,7 @@ function cacheLaden(){try{const t=localStorage.getItem('erp-lite-cache');return 
 window.addEventListener('beforeunload',e=>{if(DIRTY||pending){e.preventDefault();e.returnValue=''}});
 
 /* ---------- Anmeldung Microsoft 365 (OAuth 2.0 Code-Flow mit PKCE, ohne Fremdbibliothek) ---------- */
-const SCOPES='openid profile offline_access User.Read Files.ReadWrite';
+const SCOPES='openid profile offline_access User.Read Files.ReadWrite'+(lsGet('erp-odShareUrl')?' Files.ReadWrite.All':''); // freigegebener Ordner (P52 Etappe 4)
 const odCfg=()=>({clientId:CONFIG.clientId||lsGet('erp-cid')||'',tenant:CONFIG.tenantId||lsGet('erp-tid')||'organizations',ordner:CONFIG.ordner||'ERP-Lite'});
 const redirectUri=()=>location.origin+location.pathname.replace(/index\.html$/,'');
 const b64u=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -1049,7 +1049,7 @@ async function graph(path,opt={},nochmal=true){
   if(r.status===401&&nochmal){const x=AUTH.tok();if(x)AUTH.setTok({...x,exp:0});return graph(path,opt,false)}
   return r;
 }
-const odPath=p=>'/me/drive/root:/'+[odCfg().ordner,...p.split('/')].map(encodeURIComponent).join('/');
+const odPath=p=>{const s=odShare();return s?`/drives/${s.d}/items/${s.i}:/`+p.split('/').filter(Boolean).map(encodeURIComponent).join('/'):'/me/drive/root:/'+[odCfg().ordner,...p.split('/')].map(encodeURIComponent).join('/')}; // s: freigegebener Ordner (P52 Etappe 4)
 
 /* ---------- Speicherorte: OneDrive / lokaler Ordner / nur Browser ---------- */
 const ODSTORE={
@@ -1379,10 +1379,10 @@ async function startScreen(){
   <h2>OneDrive (PC und Handy)</h2>
   <p>Anmeldung mit dem Microsoft-365-Konto des Unternehmens. Daten: <b>${esc(c.ordner)}/${FILE}</b> im OneDrive, tägliche Sicherung in <b>backup</b>.</p>
   ${CONFIG.clientId?'':`<div class="row"><label>Anwendungs-ID (Client)<input id="st-cid" value="${esc(lsGet('erp-cid')||'')}"></label><label>Verzeichnis-ID (Mandant)<input id="st-tid" value="${esc(lsGet('erp-tid')||'')}"></label></div>`}
-  <div class="bar"><button class="p" id="st-od">Mit Microsoft anmelden</button></div>
+  ${odShareFeld()}<div class="bar"><button class="p" id="st-od">Mit Microsoft anmelden</button></div>
   ${fs?`<h2 style="margin-top:18px">Lokaler Ordner (nur dieser PC)</h2><div class="bar">${h?`<button id="st-last">Ordner „${esc(h.name)}“ öffnen</button>`:''}<button id="st-pick">Datenordner wählen …</button></div>`:''}
   <div class="bar" style="margin-top:18px"><button id="st-cache">Nur im Browser testen</button></div></div>`;
-  $('#st-od').onclick=()=>{if(!CONFIG.clientId){lsSet('erp-cid',$('#st-cid').value.trim());lsSet('erp-tid',$('#st-tid').value.trim())}AUTH.login()};
+  $('#st-od').onclick=()=>{odShareMerk();if(!CONFIG.clientId){lsSet('erp-cid',$('#st-cid').value.trim());lsSet('erp-tid',$('#st-tid').value.trim())}AUTH.login()};
   if(h&&fs)$('#st-last').onclick=()=>verbinde(h);
   if(fs)$('#st-pick').onclick=async()=>{try{verbinde(await window.showDirectoryPicker({id:'erp-lite',mode:'readwrite'}))}catch(e){}};
   $('#st-cache').onclick=()=>{STORE=CACHESTORE;lsSet('erp-modus',null);laden(cacheLaden()||neueDB());saveNow()};
@@ -7662,6 +7662,40 @@ Object.assign(ACT,{sf:el=>sfAus(el.dataset.k),
 
 {const e0=V.einstellungen;V.einstellungen=(...x)=>{const h=e0(...x);return DB&&erw('zeitStempel')?h+zsKarte():h}} // Zeiterfassung mit Beginn/Ende (P48)
 
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{const h=v0(...x);return DB&&erw('module')&&!ES_IDX?h.replace(/<h1>Einstellungen<\/h1>/,'$&'+modKarte()):h}} // Karte „Module“ (P52 Etappe 2, Code am Ende vor start()), vor P46 eingesetzt, damit sie im Bereich „Firma & Grunddaten“ steht
+
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{const h=v0(...x);return DB&&erw('benutzer')&&!ES_IDX?h+bnKarte():h}} // Karte „Benutzer & Gruppen“ (P52 Etappe 3, Code am Ende vor start())
+
+/* Live-Betrieb (P52 Etappe 1, erw.liveCheck, Standard ein): Karte „Live-Check“ oben in den Einstellungen (lcPunkte() → Ampel je Punkt, nur Anzeige, ändert nichts),
+   Programmstand aus document.lastModified (GitHub Pages: Zeitpunkt der Veröffentlichung), Hinweis #testb „TESTBETRIEB“ bei Speicherort „nur dieser Browser“ (body.testb, nach render()). */
+erwPlus({k:'liveCheck',std:true,p:'Live-Betrieb (P52)',l:'Live-Check in den Einstellungen und Hinweis „Testbetrieb“',info:'Oben in den Einstellungen prüft eine Karte, ob alles für den Echtbetrieb bereit ist (Speicherort, Anmeldung, Firmenangaben, Nummernkreise, Testdaten, Sicherung, Archiv) und zeigt den Programmstand. Läuft das Programm mit „Nur im Browser testen“, steht oben ein Hinweis „TESTBETRIEB“.'});
+queueMicrotask(()=>{EB_K.liveCheck='sicher';EB_KARTE.push([/\|Live-Check/,'firma'])}); // EB_K/EB_KARTE entstehen erst im Block P46 darunter
+const LC_TEST=/\b(test|muster|demo|beispiel|dummy)/i,lcStand=()=>{const d=new Date(document.lastModified);return isNaN(d)?'–':d.toLocaleString('de-AT',{dateStyle:'medium',timeStyle:'short'})};
+function lcPunkte(){const s=S(),f=s.firma||{},P=[],j=String(new Date().getFullYear()),p=(t,st,d)=>P.push({t,st,d});
+  const a=STORE.art;p('Speicherort',a==='od'?'ok':a==='dir'?'warn':'err',a==='od'?esc(STORE.name):a==='dir'?'Lokaler Ordner – kein Abgleich mit Handy und Tablet':'Nur dieser Browser (Test) – Daten gehen beim Leeren des Browsers verloren');
+  if(a==='od')p('Anmeldung',mfaOk()?'ok':'warn',mfaOk()?'Mit zweitem Faktor (MFA) angemeldet':'Ohne zweiten Faktor angemeldet – Microsoft-Konto mit MFA absichern');
+  const fF=[[f.name,'Firmenname'],[f.strasse,'Straße'],[f.plz,'PLZ'],[f.ort,'Ort']].filter(x=>!String(x[0]||'').trim()).map(x=>x[1]).concat(pflichtFehlt(f));
+  p('Firmenangaben',fF.length?'err':'ok',fF.length?'Fehlt: '+fF.join(', '):'Name, Anschrift, UID, Firmenbuch vollständig');
+  p('Bankverbindung',String(f.iban||'').trim()?'ok':'warn',String(f.iban||'').trim()?esc(f.iban):'IBAN fehlt (steht auf Rechnungen)');
+  const nk=s.nk||{},nx=t=>nk[t]?`${nk[t].prefix}-${j}-${String((nk[t].zaehler?.[j]||0)+1).padStart(4,'0')}`:'';
+  p('Nummernkreise','ok','Nächste Nummern '+j+': '+['AN','AB','LS','RE','GS'].map(nx).filter(Boolean).join(', '));
+  const tK=(DB.kontakte||[]).filter(k=>LC_TEST.test(k.name||'')).length,tB=(DB.belege||[]).filter(b=>LC_TEST.test(b.adresse?.name||'')).length;
+  p('Testdaten',tK||tB?'warn':'ok',tK||tB?`${tK} Kontakte und ${tB} Belege mit „Test“, „Muster“ o. Ä. im Namen – vor dem Echtbetrieb prüfen`:'Keine Kontakte oder Belege mit „Test“, „Muster“ o. Ä. im Namen');
+  const sf=sichFehler(),ss=sichStand();
+  p('Tagessicherung',!erw('sicherung')?'warn':sf?'err':'ok',!erw('sicherung')?'Ausgeschaltet (Erweiterungen → Datensicherung)':sf?'Letzter Versuch fehlgeschlagen: '+esc(sf.t):ss.ts?'Ein, letzte neue Sicherung von diesem Gerät: '+new Date(ss.ts).toLocaleDateString('de-AT'):'Ein, noch keine Sicherung von diesem Gerät');
+  p('Archiv',erw('archiv')?'ok':'warn',erw('archiv')?'Ein (PDF beim Abschließen, Monatsexport)':'Ausgeschaltet (Erweiterungen → Datensicherung)');
+  return P}
+function lcKarte(){const P=lcPunkte(),T={ok:['✓','ok'],warn:['!','warn'],err:['✕','err']},n=P.filter(x=>x.st!=='ok').length;
+  return akk('e-live','Live-Check',`<div class="card lc"><h2>Live-Check ${n?tag(n+' offen',P.some(x=>x.st==='err')?'err':'warn'):tag('bereit','ok')}</h2>
+  <table class="lct">${P.map(x=>`<tr><td>${tag(T[x.st][0],T[x.st][1])}</td><td><b>${x.t}</b></td><td>${x.d}</td></tr>`).join('')}</table>
+  <p class="mut" title="Zeitpunkt der Veröffentlichung – am Handy und am PC sollte derselbe Stand stehen">Programmstand: ${lcStand()}</p></div>`,{offen:n>0,zusatz:n?tag(n+' offen','warn'):tag('bereit','ok')})}
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{const h=v0(...x);return DB&&erw('liveCheck')&&!ES_IDX?h.replace('</h1>','</h1>'+lcKarte()):h}}
+{const r0=render;render=function(...a){const x=r0.apply(this,a),an=!!DB&&erw('liveCheck')&&STORE===CACHESTORE;document.body.classList.toggle('testb',an);let e=$('#testb');
+  if(an&&!e){e=document.createElement('div');e.id='testb';e.textContent='TESTBETRIEB – Daten nur in diesem Browser';document.body.append(e)}else if(!an)e?.remove();return x}}
+{const st=document.createElement('style');st.textContent=`.lct{width:100%;border-collapse:collapse}.lct td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}.lct td:first-child{width:28px}.lct td:nth-child(2){white-space:nowrap}
+#testb{position:fixed;top:env(safe-area-inset-top);left:50%;transform:translateX(-50%);z-index:9999;background:#d97706;color:#fff;font:600 11px/1.6 system-ui,sans-serif;letter-spacing:.04em;padding:1px 10px;border-radius:0 0 6px 6px;pointer-events:none;opacity:.92;white-space:nowrap}
+@media print{#testb{display:none}}body.nav #testb{display:none}`;document.head.append(st)}
+
 /* Einstellungen gruppieren (P46, erw.einstGruppen): Wrapper um V.einstellungen (nach allen anderen Wrappern). Die Bereiche (Kinder von #main) werden nach Verwendungszweck EB
    geordnet (Karten über data-akk bzw. Überschrift EB_KARTE, Schalter über EB_K, sonst „Weitere“); die Karte „Erweiterungen“ wird je Bereich als „Funktionen“ (egFunk) neu
    aufgebaut, Paketnummer nur in ⓘ. Breit (> 1100 px): Liste #egn.egw links (Raster per :has), rechts nur der gewählte Bereich (EB_AKT, erp-einstB); schmal: Bereiche als Karten
@@ -7964,6 +7998,139 @@ ${n} input:not([type=checkbox]):not([type=radio])${w},${n} select${w},${n} texta
 ${n} button:not(.p,.gef)${w},${n} .btn${w},${n} .seg${w}{border-color:#535d70}${n} button:not(.p,.gef)${w}:hover{border-color:#8a95a8}
 ${n} th${w}{background:#272d38;color:#c3cad5}
 ${n} #p49{border-bottom-color:#3e4757}${n} #p49 .p49t{background:#262b35;border-color:#353c4a}${n} #p49 .p49t:hover{background:#2f3542}${n} #p49 .p49t.on{background:var(--card);border-color:#3e4757}`;document.head.appendChild(st)}
+/* Module (P52 Etappe 2, erw.module, Standard ein): Bereiche als Ganzes ein/aus, S().module = {<k>:false} nur Abweichungen (fehlt = ein), mod(k).
+   Aus = Menüpunkte (nav/#tabl über href, leere .grp), Listenansichten (V-Wrapper → modAusHTML), Suche (suIndex-Wrapper, SU-Gruppen su), Einstellungen (P46-Bereiche eb, Karten über EB_KARTE)
+   und die Schalter des Moduls (MOD_SW, über ERW_X: wirken nicht) ausgeblendet. Daten bleiben unverändert. Detailansichten (Beleg, Auftrag, Bericht …) bleiben erreichbar.
+   Geräte (erw.geraetFilter, Standard ein): Schalter nur für iPhone/iPad bzw. nur für PC (GER_K) auf dem anderen Gerät ausgeblendet (GER_T = Touch), „Alle Geräte anzeigen“ = erp-gerAlle (ACT.geralle).
+   Beides im äußersten Wrapper um V.einstellungen (nach P46) auf dem fertigen HTML (modEinst()); die Karte modKarte() setzt ein Wrapper vor P46 ein (vor Live-Check P52). */
+erwPlus({k:'module',std:true,p:'Live-Betrieb (P52)',l:'Module: Bereiche als Ganzes ein- und ausschalten',info:'In den Einstellungen gibt es die Karte „Module“. Ein ausgeschaltetes Modul verschwindet aus Menü, Tab-Leiste, Suche und Einstellungen, seine Funktionsschalter wirken nicht. Gespeicherte Daten bleiben erhalten; einzelne Belege, Aufträge oder Berichte lassen sich weiter öffnen.'},
+  {k:'geraetFilter',std:true,p:'Live-Betrieb (P52)',l:'Einstellungen nur für dieses Gerät zeigen',info:'Schalter, die nur iPhone/iPad betreffen (Tab-Leiste, Wischen, PDF teilen, Schnellfunktionen …), werden am PC ausgeblendet, reine PC-Schalter (Tabs, Rechtsklick, Strg+P, Maus-Hilfen …) am iPhone/iPad. Die Werte bleiben gespeichert. „Alle Geräte anzeigen“ in der Karte „Module“ zeigt wieder alles.'});
+EB_K.module='sicher';EB_K.geraetFilter='app';EB_KARTE.push([/^e-mod\||\|Module/,'firma']);
+const MODULE=[{k:'verkauf',ic:'🧾',l:'Verkauf',i:'Angebote, Auftragsbestätigungen, Lieferscheine, Rechnungen, Gutschriften, Zu verrechnen',n:['belege/V','verrechnung']},
+  {k:'einkauf',ic:'📦',l:'Einkauf',i:'Bestellungen, Wareneingang, Eingangsrechnungen, Belege einlesen, Liefertermine',n:['belege/E','lieferungen'],eb:['einkauf'],sw:'scanPE lfTermin lfListe lfErinnern lfVerkauf'},
+  {k:'lager',ic:'🏬',l:'Lager',i:'Lagerplätze, Bestände, Bewegungen',n:['lager']},
+  {k:'auftraege',ic:'🗂️',l:'Aufträge & Zeiten',i:'Aufträge mit DB II, Zeiterfassung, Stoppuhr',n:['auftraege','zeiten'],su:['auftrag'],sw:'stoppuhr zeitOhneA zeitStempel'},
+  {k:'kalk',ic:'🧮',l:'Kalkulation & LV',i:'Gesamtkalkulation, Lohnstunden, Leistungsverzeichnisse, K-Blätter (ÖNORM B 2061), Textbausteine',n:['lvs','kbs','lvbib'],su:['lv','kb','bib'],eb:['kalk'],sw:'gkalk gkMerken dbStd gkLohn k3Tarif gkAufsFeld vkVorschlag kbVorlage kbDruck kbProjekt kbBeleg'},
+  {k:'bau',ic:'🏗️',l:'Baustelle',i:'Bautagesberichte, Regieberichte, Fahrtkosten, Regieanträge',n:['berichte'],su:['btb'],eb:['bau'],sw:'btb btbBild btbSig btbDruck btbVorschau btbZeit btbNrDatum btbRechnung btbFahrt btbTage regie regieAntrag'},
+  {k:'personal',ic:'👷',l:'Personal & Lohn',i:'Mitarbeiter, Lohnbuchung',n:['personal'],eb:['bau'],sw:'mitarbeiter maLohn'},
+  {k:'buch',ic:'📒',l:'Buchhaltung',i:'Finanzbuchhaltung, laufende Kosten, UVA, Auswertungen',n:['kosten','auswertung','fibu'],su:['kosten']}];
+const MOD_SW={};for(const m of MODULE)for(const k of (m.sw||'').split(' ').filter(Boolean))MOD_SW[k]=m.k;
+let MOD_X=null;const modAn=()=>!!(DB?.settings?.erw?.module??ERW_STD.module),mod=k=>(!modAn()||DB?.settings?.module?.[k]!==false)&&(!MOD_X||MOD_X(k)); // liest den Schalter direkt (ERW_X ruft mod()); MOD_X: Rechte je Benutzer (P52 Etappe 3)
+const modAus=()=>MODULE.filter(m=>!mod(m.k)),ebAus=b=>{const L=MODULE.filter(m=>m.eb?.includes(b));return L.length>0&&L.every(m=>!mod(m.k))};
+{const x0=ERW_X;ERW_X=(k,v)=>{v=x0?x0(k,v):v;return v&&(!(k in MOD_SW)||mod(MOD_SW[k]))}}
+const modAusHTML=m=>`<h1>${m.ic} ${esc(m.l)}</h1><div class="card"><p>Das Modul „${esc(m.l)}“ ist ausgeschaltet. Gespeicherte Daten bleiben erhalten.</p><div class="bar"><a class="btn" href="#/einstellungen">Einstellungen → Module</a></div></div>`;
+for(const m of MODULE)for(const v of new Set(m.n.map(n=>n.split('/')[0]))){const v0=V[v];if(!v0||v==='belege')continue;V[v]=(...a)=>mod(m.k)?v0(...a):modAusHTML(m)}
+{const v0=V.belege;V.belege=(bereich='V',...a)=>{const m=MODULE.find(x=>x.k===(bereich==='E'?'einkauf':'verkauf'));return mod(m.k)?v0(bereich,...a):modAusHTML(m)}}
+{const s0=suIndex;suIndex=function(...a){const E=s0.apply(this,a),g=new Set(modAus().flatMap(m=>m.su||[]));return g.size?E.filter(e=>!g.has(e.g)):E}}
+{const r0=render;render=function(...a){const x=r0.apply(this,a),aus=new Set(modAus().flatMap(m=>m.n));
+  for(const e of document.querySelectorAll('nav a[href^="#/"],#tabl a[href^="#/"]'))e.classList.toggle('mweg',aus.has(e.getAttribute('href').slice(2)));
+  for(const g of document.querySelectorAll('nav .grp')){let e=g.nextElementSibling,s=false;while(e&&!e.classList.contains('grp')&&e.tagName==='A'){if(!e.classList.contains('mweg')&&(e.classList.contains('nkweg')||getComputedStyle(e).display!=='none'))s=true;e=e.nextElementSibling}g.classList.toggle('mweg',!s)}
+  return x}}
+const GER_K={ios:'ios ipad tabLeiste wischZurueck langDruck iosTeilen schnell schnellStart appHandy',pc:'tabs ihHover baumHover kontext strgP navKlapp'},GER_T=matchMedia('(pointer:coarse)');
+const gerVon=k=>GER_K.ios.split(' ').includes(k)?'ios':GER_K.pc.split(' ').includes(k)?'pc':'',gerAlle=()=>!!lsGet('erp-gerAlle'),
+  gerWeg=k=>{const g=gerVon(k);return!!g&&erw('geraetFilter')&&!gerAlle()&&(g==='ios')!==GER_T.matches};
+function modKarte(){const n=modAus().length,g=erw('geraetFilter');
+  return akk('e-mod','Module',`<div class="card"><h2>Module</h2><p class="mut" style="margin-top:0">Ausgeschaltete Module verschwinden aus Menü, Suche und Einstellungen. Gespeicherte Daten bleiben erhalten. Basis (Übersicht, Kontakte, Artikel, Einstellungen, Sicherung) ist immer an.</p>
+  <div class="modl">${MODULE.map(m=>`<label class="chk"><input type="checkbox" data-o="s" data-f="module.${m.k}" ${mod(m.k)?'checked':''}> <span><b>${m.ic} ${esc(m.l)}</b><br><span class="mut">${esc(m.i)}</span></span></label>`).join('')}</div>
+  ${g?`<label class="chk" style="margin-top:10px"><input type="checkbox" data-act="geralle" ${gerAlle()?'checked':''}> <span>Einstellungen aller Geräte anzeigen <span class="mut">(sonst nur die für ${GER_T.matches?'iPhone/iPad':'den PC'})</span></span></label>`:''}</div>`,{zusatz:n?tag(n+' aus','warn'):'alle an'})}
+Object.assign(ACT,{geralle:()=>{lsSet('erp-gerAlle',gerAlle()?null:'1');render()}});
+function modEinst(h){const t=document.createElement('template');t.innerHTML=h;const C=t.content;
+  for(const i of C.querySelectorAll('input[data-f^="erw."]')){const k=i.dataset.f.slice(4),l=i.closest('label');if(l&&(gerWeg(k)||(k in MOD_SW&&!mod(MOD_SW[k]))))l.classList.add('mweg')}
+  for(const l of C.querySelectorAll('label.mweg')){const c=l.closest('.egp')||l.closest('details')||l.parentElement;if(c&&!c.querySelector('label:not(.mweg) input[data-f^="erw."]'))c.classList.add('mweg')}
+  for(const e of C.querySelectorAll('[data-act="egb"][data-b]'))if(ebAus(e.dataset.b))e.classList.add('mweg');
+  for(const s of C.children){const k=(s.dataset?.akk||'')+'|'+esTitel(s).trim(),g=(EB_KARTE.find(([r])=>r.test(k))||[])[1];if(g&&ebAus(g))s.classList.add('mweg')}
+  const d=document.createElement('div');d.append(C);return d.innerHTML}
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{if(!DB||ES_IDX)return v0(...x);
+  if(erw('module')){if(ebAus(EB_AKT))EB_AKT='firma';if(EB_N&&ebAus(EB_N))EB_N=''}
+  const h=v0(...x);return erw('module')||erw('geraetFilter')?modEinst(h):h}}
+{const st=document.createElement('style');st.textContent=`.mweg{display:none!important}.modl{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 16px}`;document.head.append(st)}
+
+/* Benutzer & Gruppen (P52 Etappe 3, erw.benutzer, Standard ein; wirkt erst nach „Benutzerverwaltung einrichten“ und mit aktivem Admin-Benutzer):
+   S().gruppen [{id,name,admin?,r:{basis|<Modul>:'k'|'l'|'b'},fest,einst}] (Vorlagen GRP_STD, eigene Gruppen frei benennbar), S().benutzer [{id,name,konto,gruppe,aktiv}].
+   Angemeldet = bnIch() über erp-user (Microsoft-Konto, nur OneDrive; Ordner/Browser = alle Rechte; Konto nicht eingetragen = fremd, kein Zugriff). Rechte recht(m), bnDarf('fest'), bnAdmin().
+   Bedienschutz, kein Datenschutz (alles in erp-daten.json): 'k' → MOD_X (Menü/Suche/Ansicht wie ausgeschaltetes Modul) und #main „Kein Zugriff“; 'l' → Felder in #main gesperrt (bnSperren()),
+   Wächter in der capture-Phase für change/input/click (BN_FREI = Aktionen zum Ansehen), fest = Abschließen/Stornieren (Wrapper festschreiben, ACT fest/storno/fbstorno),
+   einst = Einstellungen ändern, Felder erw./module./gruppen./benutzer. und Aktionen bnein/bnneu/bndel/grneu/grdel nur Admin. log() merkt den Benutzer (wer). Karte bnKarte() über Wrapper vor P46. */
+erwPlus({k:'benutzer',std:true,p:'Live-Betrieb (P52)',l:'Benutzer und Benutzergruppen mit Rechten je Modul',info:'Einstellungen → „Benutzer & Gruppen“: Benutzer (Microsoft-Konto) eintragen, Benutzergruppen selbst benennen und je Modul „kein Zugriff“, „lesen“ oder „bearbeiten“ festlegen, dazu „Abschließen und Stornieren“ und „Einstellungen ändern“. Nur der Admin ändert Module, Schalter, Benutzer und Gruppen. Bedienschutz: Die Datendatei im OneDrive bleibt für alle mit Zugriff auf den Ordner lesbar.'});
+EB_K.benutzer='sicher';EB_KARTE.push([/^e-bn\||\|Benutzer & Gruppen/,'sicher']);
+const BN_M=()=>[{k:'basis',ic:'🏠',l:'Basis (Übersicht, Kontakte, Artikel)'},...MODULE],BN_R=[['k','kein Zugriff'],['l','lesen'],['b','bearbeiten']];
+const GRP_STD=[{id:'admin',name:'Admin',admin:true,r:{},fest:true,einst:true},
+  {id:'buero',name:'Büro',r:{basis:'b',verkauf:'b',einkauf:'b',lager:'b',auftraege:'b',kalk:'b',bau:'b',personal:'l',buch:'b'},fest:true,einst:true},
+  {id:'techniker',name:'Techniker',r:{basis:'l',verkauf:'k',einkauf:'k',lager:'l',auftraege:'b',kalk:'k',bau:'b',personal:'k',buch:'k'},fest:false,einst:false},
+  {id:'lesen',name:'Nur lesen',r:{basis:'l',verkauf:'l',einkauf:'l',lager:'l',auftraege:'l',kalk:'l',bau:'l',personal:'k',buch:'l'},fest:false,einst:false}];
+const bnL=()=>S().benutzer||[],grL=()=>S().gruppen||[],bnEin=()=>!!DB&&erw('benutzer')&&bnL().length>0,bnKto=x=>String(x||'').trim().toLowerCase();
+function bnIch(){if(!bnEin()||STORE.art!=='od')return null;const L=bnL().filter(u=>u.aktiv!==false);if(!L.some(u=>grL().find(g=>g.id===u.gruppe)?.admin))return null; // ohne aktiven Admin keine Einschränkung
+  const k=bnKto(lsGet('erp-user'));return L.find(u=>bnKto(u.konto)===k)||{name:k||'unbekannt',gruppe:'',fremd:true}}
+const bnGr=()=>{const u=bnIch();return u?grL().find(g=>g.id===u.gruppe)||{id:'',name:'kein Zugang',r:{}}:null};
+const recht=m=>{const g=bnGr();return!g||g.admin?'b':!g.id?'k':m==='einst'?(g.einst?'b':'l'):g.r?.[m]||'k'},bnDarf=x=>{const g=bnGr();return!g||!!g.admin||!!g[x]},bnAdmin=()=>{const g=bnGr();return!g||!!g.admin};
+MOD_X=k=>recht(k)!=='k';
+function bnRoute(){const[v,id]=location.hash.slice(2).split('/');if(v==='beleg'){const b=DB.belege.find(x=>x.id===id);return b?(T[b.typ]?.b==='E'?'einkauf':'verkauf'):'basis'}
+  if(v==='belege')return id==='E'?'einkauf':'verkauf';const z={auftrag:'auftraege',bericht:'bau',mitarbeiter:'personal',einstellungen:'einst'}[v];if(z)return z;
+  return(MODULE.find(m=>m.n.some(n=>n.split('/')[0]===v))||{k:'basis'}).k}
+const bnFeld=el=>{const d=el.dataset||{};return(!!d.o&&d.o!=='ui')||d.p!=null||d.h!=null||d.r!=null},bnAdmF=el=>el.dataset?.o==='s'&&/^(erw|module|gruppen|benutzer)\./.test(el.dataset.f||'');
+function bnSperren(M){for(const el of M.querySelectorAll('input,select,textarea'))if(bnFeld(el))el.disabled=true;for(const el of M.querySelectorAll('[contenteditable="true"]'))el.contentEditable='false'}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);if(!DB)return x;const r=recht(bnRoute()),u=bnIch(),M=$('#main');document.body.classList.toggle('rl',r==='l');
+  if(M&&r==='k')M.innerHTML=`<h1>Kein Zugriff</h1><div class="card"><p>${u?.fremd?`Das Konto „${esc(u.name)}“ ist nicht freigeschaltet.`:'Deine Benutzergruppe hat für diesen Bereich keine Berechtigung.'} Der Admin schaltet das in den Einstellungen unter „Benutzer &amp; Gruppen“ frei.</p></div>`;
+  else if(M&&r==='l')bnSperren(M);return x}}
+const BN_FREI=/^(menue|filter|fweg|such|suopen|sulist|zuletzt|zlleer|spring|glpop|sumpop|binfo|kpauf|kpsicht|egb|egzur|egexp|esx|lpop|navanp|netz|zurueck|vor|geralle|druck|pdf|ansicht|grpauf|ktyp|lfst|bzeit|dashauf|kmo)/;
+const bnStopp=(e,t)=>{e.stopImmediatePropagation();e.preventDefault();if(t)alert(t)};
+for(const t of['change','input'])window.addEventListener(t,e=>{const el=e.target;if(!bnEin()||!el?.dataset||!bnFeld(el))return;const adm=bnAdmF(el);
+  if(adm?!bnAdmin():recht(bnRoute())!=='b'){bnStopp(e,t==='change'?(adm?'Nur der Admin kann das ändern.':'Nur Leserecht – die Änderung wird nicht gespeichert.'):'');if(t==='change')render()}},true);
+window.addEventListener('click',e=>{const a=e.target.closest?.('[data-act]');if(!a||!bnEin())return;const k=a.dataset.act;
+  if(['fest','storno','fbstorno'].includes(k)&&!bnDarf('fest'))return bnStopp(e,'Abschließen und Stornieren darf deine Benutzergruppe nicht.');
+  if(/^(bn|gr)(ein|neu|del)$/.test(k)&&!bnAdmin())return bnStopp(e,'Nur der Admin kann Benutzer und Gruppen ändern.');
+  if(recht(bnRoute())==='l'&&!BN_FREI.test(k))bnStopp(e,'Nur Leserecht.')},true);
+{const f0=festschreiben;festschreiben=async function(...a){if(!bnDarf('fest')){alert('Abschließen darf deine Benutzergruppe nicht.');return false}return f0.apply(this,a)}}
+{const l0=log;log=function(...a){const x=l0.apply(this,a),u=bnIch();if(u&&DB.log.length)DB.log[DB.log.length-1].wer=u.name;return x}}
+function bnKarte(){const G=grL(),M=BN_M(),u=bnIch(),g=bnGr(),adm=bnAdmin(),dis=adm?'':' disabled',ich=bnKto(lsGet('erp-user'));
+  if(!bnL().length)return akk('e-bn','Benutzer &amp; Gruppen',`<div class="card"><h2>Benutzer &amp; Gruppen</h2><p class="mut" style="margin-top:0">Für weitere Personen: Benutzer (Microsoft-Konto) eintragen, Benutzergruppen selbst benennen und je Modul „kein Zugriff“, „lesen“ oder „bearbeiten“ festlegen. Solange nur du eingetragen bist, ändert sich nichts. Bedienschutz: Die Datendatei im OneDrive bleibt für alle mit Zugriff auf den Ordner lesbar.</p><div class="bar"><button class="p" data-act="bnein">Benutzerverwaltung einrichten</button></div></div>`,{zusatz:'nicht eingerichtet'});
+  const bz=(x,i)=>{const self=!!ich&&bnKto(x.konto)===ich,d=dis||(self?' disabled':'');
+    return`<tr><td><input data-o="s" data-f="benutzer.${i}.name" value="${esc(x.name||'')}" placeholder="Name"${dis}></td><td><input data-o="s" data-f="benutzer.${i}.konto" value="${esc(x.konto||'')}" placeholder="name@firma.at" inputmode="email"${d}></td>
+    <td><select data-o="s" data-f="benutzer.${i}.gruppe"${d}>${G.map(y=>opt(y.id,y.name,x.gruppe)).join('')}</select></td><td><label class="chk"><input type="checkbox" data-o="s" data-f="benutzer.${i}.aktiv" ${x.aktiv!==false?'checked':''}${d}> <span>aktiv</span></label></td>
+    <td>${self||!adm?'':`<button class="s" data-act="bndel" data-i="${i}" title="Benutzer entfernen">✕</button>`}</td></tr>`};
+  const gk=(y,i)=>{const n=bnL().filter(x=>x.gruppe===y.id).length,d=dis||(y.admin?' disabled':'');
+    return`<div class="grk"><div class="bar" style="margin:0 0 6px"><input data-o="s" data-f="gruppen.${i}.name" value="${esc(y.name)}"${dis} style="flex:1;font-weight:600"><span class="mut">${n} Benutzer</span>${adm&&!y.admin&&!n?`<button class="s" data-act="grdel" data-i="${i}" title="Gruppe löschen">✕</button>`:''}</div>
+    ${y.admin?'<p class="mut">Alle Rechte; schaltet Module frei, verwaltet Benutzer und Gruppen.</p>':M.map(m=>`<label class="grz"><span>${m.ic} ${esc(m.l)}</span><select data-o="s" data-f="gruppen.${i}.r.${m.k}"${d}>${BN_R.filter(r=>m.k!=='basis'||r[0]!=='k').map(([k,l])=>opt(k,l,y.r?.[m.k]||(m.k==='basis'?'l':'k'))).join('')}</select></label>`).join('')
+      +`<label class="chk"><input type="checkbox" data-o="s" data-f="gruppen.${i}.fest" ${y.fest?'checked':''}${d}> <span>Abschließen und Stornieren</span></label><label class="chk"><input type="checkbox" data-o="s" data-f="gruppen.${i}.einst" ${y.einst?'checked':''}${d}> <span>Einstellungen ändern</span></label>`}</div>`};
+  return akk('e-bn','Benutzer &amp; Gruppen',`<div class="card"><h2>Benutzer &amp; Gruppen</h2>
+  <p class="mut" style="margin-top:0">${u?`Angemeldet als <b>${esc(u.name)}</b> – Gruppe ${esc(g?.name||'–')}.`:STORE.art==='od'?'Noch keine Einschränkung aktiv (kein aktiver Admin eingetragen).':'Ordner- bzw. Browser-Modus: alle Rechte.'} Bedienschutz: Die Datendatei im OneDrive bleibt für alle mit Zugriff auf den Ordner lesbar.</p>
+  <h3>Benutzer</h3><table class="bnt"><thead><tr><th>Name</th><th>Microsoft-Konto</th><th>Gruppe</th><th></th><th></th></tr></thead><tbody>${bnL().map(bz).join('')}</tbody></table>
+  ${adm?'<div class="bar"><button class="s" data-act="bnneu">+ Benutzer</button></div>':''}
+  <h3>Benutzergruppen</h3><div class="grl">${G.map(gk).join('')}</div>${adm?'<div class="bar"><button class="s" data-act="grneu">+ Gruppe</button></div>':''}</div>`,{zusatz:`${bnL().length} Benutzer · ${G.length} Gruppen`})}
+Object.assign(ACT,{
+  bnein:()=>{const s=S();s.gruppen=JSON.parse(JSON.stringify(GRP_STD));s.benutzer=[{id:uid(),name:s.firma?.zeichner||'Admin',konto:lsGet('erp-user')||'',gruppe:'admin',aktiv:true}];persist();render()},
+  bnneu:()=>{S().benutzer.push({id:uid(),name:'',konto:'',gruppe:(grL().find(g=>!g.admin)||grL()[0]).id,aktiv:true});persist();render()},
+  bndel:el=>{const L=S().benutzer,x=L[+el.dataset.i];if(!x||!confirm(`Benutzer „${x.name||x.konto||'ohne Namen'}“ entfernen?`))return;L.splice(+el.dataset.i,1);persist();render()},
+  grneu:()=>{S().gruppen.push({id:uid(),name:'Neue Gruppe',r:{basis:'l'},fest:false,einst:false});persist();render()},
+  grdel:el=>{const L=S().gruppen,y=L[+el.dataset.i];if(!y||y.admin||bnL().some(x=>x.gruppe===y.id)||!confirm(`Gruppe „${y.name}“ löschen?`))return;L.splice(+el.dataset.i,1);persist();render()}});
+{const st=document.createElement('style');st.textContent=`.bnt{width:100%;border-collapse:collapse}.bnt td{padding:3px 4px;vertical-align:middle}.bnt input:not([type=checkbox]),.bnt select{width:100%}
+.grl{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}.grk{border:1px solid var(--line);border-radius:8px;padding:8px 10px}.grz{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:3px 0}.grz select{width:auto;min-width:120px}
+@media(max-width:760px){.bnt thead{display:none}.bnt tr{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:6px 0;border-bottom:1px solid var(--line)}.bnt td{padding:0}}`;document.head.append(st)}
+
+/* Freigegebener Ordner (P52 Etappe 4, vorbereitet, ohne Schalter: wirkt nur mit eingetragenem Link): weitere Benutzer arbeiten im ERP-Ordner eines anderen Kontos.
+   Startseite → „Freigegebener ERP-Ordner“ (odShareFeld(), Link in erp-odShareUrl), nach der Anmeldung löst odShareLesen() den Link über /shares/u!…/driveItem auf → erp-odShare {u,d,i,n};
+   odPath() schreibt dann /drives/<d>/items/<i>:/<pfad>, SCOPES zusätzlich Files.ReadWrite.All (App-Registrierung in Entra braucht diese Berechtigung). */
+const odShare=()=>{try{return JSON.parse(lsGet('erp-odShare')||'null')}catch(e){return null}};
+function odShareFeld(){const u=lsGet('erp-odShareUrl')||'';return`<details style="margin:8px 0"${u?' open':''}><summary>Freigegebener ERP-Ordner eines anderen Kontos (für weitere Benutzer)</summary>
+  <label>Freigabelink des Ordners<input id="st-share" value="${esc(u)}" placeholder="https://…sharepoint.com/:f:/…" inputmode="url"></label><p class="mut">Leer = eigenes OneDrive. Der Admin gibt den Ordner im OneDrive mit „Bearbeiten“ für dein Konto frei und schickt dir den Link.</p></details>`}
+function odShareMerk(){const e=$('#st-share');if(!e)return;const u=e.value.trim();if(u!==(lsGet('erp-odShareUrl')||'')){lsSet('erp-odShareUrl',u||null);lsSet('erp-odShare',null)}}
+async function odShareLesen(){const u=lsGet('erp-odShareUrl');if(!u){lsSet('erp-odShare',null);return true}if(odShare()?.u===u)return true;
+  const k='u!'+btoa(unescape(encodeURIComponent(u))).replace(/=+$/,'').replace(/\//g,'_').replace(/\+/g,'-');
+  try{const r=await graph('/shares/'+k+'/driveItem?$select=id,name,parentReference');if(!r.ok)throw new Error('OneDrive '+r.status);const j=await r.json();
+    lsSet('erp-odShare',JSON.stringify({u,d:j.parentReference.driveId,i:j.id,n:j.name}));return true}
+  catch(e){if(!confirm(`Der freigegebene Ordner ist nicht erreichbar (${e.message}).\n\nOK = eigenes OneDrive verwenden und den Link entfernen, Abbrechen = nicht laden.`))return false;lsSet('erp-odShareUrl',null);lsSet('erp-odShare',null);return true}}
+{const o0=odStart;odStart=async function(...a){if(!await odShareLesen()){saveState('Freigegebener Ordner nicht erreichbar');return}return o0.apply(this,a)}}
+
+/* Schnellfunktionen: Kacheln ruhiger (P52, Wunsch 26.10.2026; Icons selbst kommen aus P53): Karte mit Rand, Icon in einem Feld in Akzentfarbe (Emoji bzw. P53-SVG .i53, dessen Farben .f53-* bleiben unberührt), am Bildschirm feste Kachelbreite. */
+{const st=document.createElement('style');st.textContent=`@media(min-width:761px){.sfk{grid-template-columns:repeat(auto-fill,minmax(150px,180px))}}
+.sfk .sfb{background:var(--card);color:inherit;border:1px solid var(--line);box-shadow:0 1px 2px rgba(20,30,50,.06);min-height:116px;font-size:14px;gap:10px;transition:border-color .15s,box-shadow .15s,transform .15s}
+.sfk .sfb:hover{border-color:var(--acc);box-shadow:0 4px 12px rgba(20,30,50,.12);transform:translateY(-1px)}
+.sfk .sfb span{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:12px;background:var(--acc2);color:var(--acc);font-size:24px}
+.sfk .sfb.sfl{background:#c0392b;color:#fff;border-color:#c0392b}.sfk .sfb.sfl span{background:rgba(255,255,255,.2);color:#fff}`;document.head.append(st)}
+
+/* Menü-Gruppen mit mehr Kontrast (P52, Wunsch 26.10.2026; mit erw.kontrast = body.kon): Überschriften der Seitenleiste heller und kräftiger, Klapp-Pfeil deutlicher. */
+{const st=document.createElement('style');st.textContent=`body.kon nav .grp{color:#d3dae6;font-weight:700;font-size:11.5px;letter-spacing:.07em}body.kon nav.nk .grp:hover{color:#fff}body.kon nav.nk .grp::before{color:#9fb4d8}body.kon nav.nk .grp{padding-top:11px;padding-bottom:6px}@media(pointer:coarse){body.kon nav.nk .grp{padding-top:14px;padding-bottom:10px;font-size:12.5px}}`;document.head.append(st)}
+
 /* Moderne Piktogramme (P53, erw.icons, Standard ein – Wunsch Anwender 26.10.2026): einheitliche Icons im Stil Office 365/Fluent (inline SVG, Farbgruppen IC_F, offline, Farbe = Schrift → hell/dunkel) statt Emoji und Symbolzeichen.
    Geändert wird nur die Anzeige: icTausch(el) ersetzt in Textknoten die Zeichen aus IC_Z durch <svg class="i53 i53-<name>"> (Pfade IC_P); Auswahl-Optionen mit value verlieren das Zeichen.
    Ausgenommen IC_AUS (Blatt, Druck, K-Blätter, Eingabefelder, contenteditable). Nach render() und für Pop-ups/Menüs über IC_MO (MutationObserver), Klappzeichen ▸/▾/◢/▷ per CSS-Maske (body.ic53). */
@@ -8080,6 +8247,13 @@ body{--f53b:#0f6cbd;--f53g:#107c10;--f53o:#ca5010;--f53r:#c50f1f;--f53v:#5c2e91}
 details.ih>summary .i53{width:1.05em;height:1.05em;vertical-align:-.15em}
 ${s}{content:''!important;display:inline-block;width:12px;height:12px;font-size:inherit;vertical-align:-1px;background:currentColor;-webkit-mask:${rt};mask:${rt};transform:none!important;transition:transform .15s}
 body.ic53 details.akk[open]>summary::before,body.ic53 .gl details[open]>summary::before,body.ic53 nav.nk .grp:not(.nkzu)::before{transform:rotate(90deg)!important}`;document.head.appendChild(st)}
+/* Schnellfunktionen in der Seitenleiste (P52, Wunsch 26.10.2026): mit erw.schnell Eintrag „Schnellfunktionen“ (a.navsf, data-n="schnell") direkt nach „Überblick“ – Weg zurück zur Kachelseite, auch am Handy über „Mehr“; mit erw.schnellStart führt das Logo (a.home, a.logo) zur Kachelseite. */
+{const r0=render;render=function(...a){const x=r0.apply(this,a),N=document.querySelector('nav');if(!N)return x;let e=N.querySelector('a.navsf');const an=!!DB&&erw('schnell');
+  if(an&&!e){N.querySelector('a[data-n="dash"]')?.insertAdjacentHTML('afterend','<a href="#/schnell" data-n="schnell" class="navsf">Schnellfunktionen</a>');e=N.querySelector('a.navsf')}else if(!an)e?.remove();
+  if(e){const on=location.hash.startsWith('#/schnell');e.classList.toggle('on',on);if(on)N.querySelector('a[data-n="dash"]')?.classList.remove('on')}
+  const st=an&&erw('schnellStart');for(const l of document.querySelectorAll('.topbar a.home,nav a.logo')){l.setAttribute('href',st?'#/schnell':'#/dash');l.title=st?'Schnellfunktionen (Startseite)':'Überblick'} // Logo = Startseite
+  return x}}
+
 start();
 </script>
 </body>

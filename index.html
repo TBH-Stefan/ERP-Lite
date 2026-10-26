@@ -8725,6 +8725,70 @@ queueMicrotask(()=>{const rb0=ACT.rarb;ACT.rarb=el=>{const b=beleg(el.dataset.id
   if(!r)return;if(b.angeordnet)r.angeordnet=b.angeordnet;if(b.arbeitsstelle)r.ort=b.arbeitsstelle;persist()}});
 {const st=document.createElement('style');st.textContent=`.rasf{display:flex;gap:10mm;margin-top:10mm;break-inside:avoid;page-break-inside:avoid}.rasz{flex:1;font-size:9pt;line-height:1.5}
 .rasb{height:18mm;border-bottom:1px solid #333;display:flex;align-items:flex-end;font-size:8pt}.rasb img{max-height:17mm;max-width:100%}.rasu{font-size:8pt;text-align:center;margin-top:1mm}`;document.head.append(st)}
+/* Eigene Schnellfunktionen (P59, erw.sfEigen, Standard aus): S().schnell.eigen=[{id,ic,l,typ:'seite'|'beleg'|'kontakt'|'link',ziel,zl,kid,gr:[]}], Kachel k='e-'+id (Direktlink #/schnell/e-<id>).
+   sfeSync() hängt sie bei jedem render() als Einträge an SF an (Zeigen/Link/Kopieren in sfKarte() wie bisher), Wrapper um sfAus()/sfKarte(); anlegen/ändern nur bnAdmin(); gr leer = alle, sonst nur diese Benutzergruppen (P52). */
+erwPlus({k:'sfEigen',std:false,p:'Eigene Schnellfunktionen (P59)',l:'Eigene Schnellfunktionen anlegen',info:'In der Karte „Schnellfunktionen“ legt der Admin (ohne Benutzerverwaltung jeder) eigene Kacheln an: Name, Symbol und Ziel – eine Seite aus dem Menü, ein neuer Beleg einer Art (wahlweise gleich mit Kunde/Lieferant), ein Kontakt oder eine eigene Adresse. Wahlweise nur für bestimmte Benutzergruppen. Jede Kachel hat einen eigenen Direktlink. Wirkt nur mit „Schnellfunktionen und Direktlinks“.'});
+EB_K.sfEigen='app';
+const SFE_IC=[['📌','Nadel'],['📄','Beleg'],['📝','Angebot'],['🧾','Rechnung'],['📋','Bericht'],['🛒','Einkauf'],['🚚','Lieferung'],['📦','Paket'],['🏬','Lager'],['👤','Kunde'],['👥','Kontakte'],['👷','Monteur'],['🏗','Baustelle'],
+  ['⏱','Stoppuhr'],['🕒','Uhr'],['🧮','Kalkulation'],['📊','Auswertung'],['💶','Geld'],['🏦','Bank'],['📁','Ordner'],['📸','Kamera'],['✉','E-Mail'],['📞','Telefon'],['🛠','Werkzeug'],['🏠','Haus'],['🏢','Firma'],['📍','Ort'],['🏷','Etikett'],['🤝','Auftrag'],['🔍','Suche'],['⚙','Einstellungen']];
+const SFE_TYP=[['seite','Seite öffnen'],['beleg','Neuer Beleg'],['kontakt','Kontakt öffnen'],['link','Eigene Adresse']];
+const sfeL=()=>S().schnell?.eigen||[],sfeDarf=e=>{if(!e.gr?.length)return true;const g=bnGr();return!g||!!g.admin||e.gr.includes(g.id)};
+const sfeSeiten=()=>{const L=[...document.querySelectorAll('nav a[data-n]')].map(a=>[a.dataset.n,a.textContent.trim()]).filter(([n,t])=>t&&n!=='schnell');return L.filter((x,i)=>L.findIndex(y=>y[0]===x[0])===i)};
+const sfeZiel=e=>e.typ==='seite'?'Seite: '+(e.zl||e.ziel):e.typ==='beleg'?'Neu: '+(T[e.ziel]?.bez||e.ziel)+(e.kid?' für '+kName(e.kid):''):e.typ==='kontakt'?'Kontakt: '+kName(e.kid):'Adresse: '+e.ziel;
+function sfeSync(){for(let i=SF.length;i--;)if(SF[i].k.startsWith('e-'))SF.splice(i,1);if(!DB)return;for(const e of sfeL())SF.push({k:'e-'+e.id,ic:e.ic||'📌',l:e.l||'Kachel',nur:()=>erw('sfEigen')&&sfeDarf(e)})}
+{const r0=render;render=function(...a){sfeSync();return r0.apply(this,a)}}
+{const a0=sfAus;sfAus=async function(k){if(!String(k).startsWith('e-'))return a0(k);sfeSync();const e=sfeL().find(x=>'e-'+x.id===k);if(!e||!erw('sfEigen')||!sfeDarf(e))return;
+  if(e.typ==='seite')return go(e.ziel);
+  if(e.typ==='kontakt')return kontakt(e.kid)?go('kontakt/'+e.kid):alert('Der Kontakt dieser Kachel existiert nicht mehr.');
+  if(e.typ==='beleg'){if(!T[e.ziel])return alert('Unbekannte Belegart.');const k=e.kid&&kontakt(e.kid),b=neuBeleg(e.ziel,k?{kontaktId:k.id}:{});if(k)konditionenUebernehmen(b,k);persist();return go('beleg/'+b.id)}
+  const z=String(e.ziel||'').trim();if(/^#\//.test(z))location.hash=z;else if(/^https:\/\//i.test(z))window.open(z,'_blank','noopener');else alert('Adresse muss mit #/ oder https:// beginnen.')}}
+async function sfeDialog(e){const neu=!e;e=e||{ic:'📌',typ:'seite',gr:[]};const S0=sfeSeiten(),G=bnEin()?grL():[],K=[...DB.kontakte].sort((a,c)=>(a.name||'').localeCompare(c.name||'','de'));
+  const o=await formDialog({titel:neu?'Neue Kachel':'Kachel bearbeiten',ok:neu?'Anlegen':'Speichern',felder:[{k:'l',l:'Name',wert:e.l||'',max:40,pflicht:true,cls:'w2',ph:'z. B. Regieantrag Firma X'},
+    {k:'ic',l:'Symbol <span class="sfe-v">'+esc(e.ic||'📌')+'</span>',wert:e.ic||'📌',opts:SFE_IC},{k:'typ',l:'Ziel',wert:e.typ,opts:SFE_TYP,neu:true},
+    {k:'seite',l:'Seite',wert:e.typ==='seite'?e.ziel:'',opts:S0.length?S0:[['dash','Überblick']],cls:'w2'},{k:'art',l:'Belegart',wert:e.typ==='beleg'?e.ziel:'AN',opts:Object.entries(T).map(([k,t])=>[k,t.bez+(t.b==='E'?' (Einkauf)':'')])},
+    {k:'kid',l:'Kunde / Lieferant',wert:e.kid||'',opts:[['','– ohne –'],...K.map(k=>[k.id,(k.name||'–')+(k.nr?' ('+k.nr+')':'')])],cls:'w2'},
+    {k:'url',l:'Adresse',wert:e.typ==='link'?e.ziel:'',cls:'w2',ph:'#/belege/V oder https://…',info:'Teil der Programmadresse ab #/ oder ein https-Link (öffnet in neuem Fenster).'},
+    ...(G.length?[{typ:'abschnitt',l:'Sichtbar für (nichts angehakt = alle)'},...G.map(g=>({k:'g_'+g.id,l:esc(g.name),typ:'checkbox',wert:(e.gr||[]).includes(g.id)}))]:[])],
+    ein:d=>{const f=k=>d.querySelector(`[data-k="${k}"]`),sh=()=>{const t=f('typ').value;for(const[k,an]of[['seite',t==='seite'],['art',t==='beleg'],['kid',t==='beleg'||t==='kontakt'],['url',t==='link']]){const l=f(k)?.closest('label');if(l)l.style.display=an?'':'none'}
+      const v=d.querySelector('.sfe-v');if(v)v.textContent=f('ic').value};setTimeout(sh,0);d.addEventListener('change',sh);return()=>{}},
+    pruef:o=>{if(o.typ==='kontakt'&&!o.kid){alert('Bitte einen Kontakt wählen.');return false}if(o.typ==='link'&&!/^(#\/|https:\/\/)/i.test(String(o.url||'').trim())){alert('Adresse muss mit #/ oder https:// beginnen.');return false}return true}});
+  if(!o)return;const z=o.typ==='seite'?o.seite:o.typ==='beleg'?o.art:o.typ==='link'?String(o.url).trim():'',x={id:e.id||Math.random().toString(36).slice(2,8),ic:o.ic,l:String(o.l).trim(),typ:o.typ,ziel:z,
+    ...(o.typ==='seite'?{zl:(S0.find(s=>s[0]===z)||[])[1]||z}:{}),...((o.typ==='beleg'||o.typ==='kontakt')&&o.kid?{kid:o.kid}:{}),gr:G.filter(g=>o['g_'+g.id]).map(g=>g.id)};
+  const L=(S().schnell??={}).eigen??=[],i=L.findIndex(y=>y.id===x.id);if(i>=0)L[i]=x;else L.push(x);persist();render()}
+{const k0=sfKarte;sfKarte=function(){const h=k0();if(!DB||!erw('sfEigen'))return h;const adm=bnAdmin(),L=sfeL(),G=grL();
+  const t=`<h3 style="margin:14px 0 6px">Eigene Kacheln</h3>${L.length?`<table class="sft"><tr><th>Kachel</th><th>Ziel</th><th>Sichtbar für</th><th></th></tr>${L.map(e=>`<tr><td>${esc(e.ic||'📌')} ${esc(e.l)}</td><td>${esc(sfeZiel(e))}</td><td>${e.gr?.length?esc(e.gr.map(id=>G.find(g=>g.id===id)?.name||'?').join(', ')):'alle'}</td><td style="white-space:nowrap">${adm?`<button class="s" data-act="sfeed" data-id="${e.id}" title="Bearbeiten">✎</button> <button class="s" data-act="sfedel" data-id="${e.id}" title="Löschen">🗑</button>`:''}</td></tr>`).join('')}</table>`:'<p class="mut">Noch keine eigenen Kacheln.</p>'}
+  ${adm?'<div class="row"><button data-act="sfeneu">＋ Neue Kachel</button></div>':'<p class="mut">Eigene Kacheln legt der Admin an.</p>'}`;const i=h.lastIndexOf('</div>');return h.slice(0,i)+t+h.slice(i)}}
+Object.assign(ACT,{sfeneu:()=>bnAdmin()&&sfeDialog(),sfeed:el=>{const e=bnAdmin()&&sfeL().find(x=>x.id===el.dataset.id);if(e)sfeDialog(e)},
+  sfedel:el=>{const L=sfeL(),i=L.findIndex(x=>x.id===el.dataset.id);if(!bnAdmin()||i<0||!confirm(`Kachel „${L[i].l}“ löschen?`))return;L.splice(i,1);const A=S().schnell.aus,j=A?.indexOf('e-'+el.dataset.id);if(j>=0)A.splice(j,1);persist();render()}});
+/* Schnellfunktionen anordnen (P60, erw.sfOrdnen, Standard aus): Zahnrad auf der Kachelseite → Bearbeiten (UI.sfBea, Kacheln ohne data-act), Ziehen mit Maus/Finger über Pointer-Events (sfZiehen); Reihenfolge je Gerät S().schnell.reihe[dashG()] (tablet fällt auf pc zurück, [] = Standard), sortiert im Wrapper um V.schnell nach data-k der .sfb (unbekannte, z. B. eigene Kacheln P59, hinten; „Unterbrechen“ bleibt bei „zeit“). */
+erwPlus({k:'sfOrdnen',std:false,p:'Schnellfunktionen (P45)',l:'Kacheln der Schnellfunktionen anordnen',info:'Auf der Seite „Schnellfunktionen“ das Zahnrad ⚙: Kacheln mit der Maus oder dem Finger an die gewünschte Stelle ziehen, „Fertig“ beendet. Die Reihenfolge gilt je Gerät (Handy, iPad, Bildschirm) und wird mit gespeichert. „Standard“ stellt die ursprüngliche Reihenfolge wieder her. Wirkt nur mit „Schnellfunktionen und Direktlinks“.'});
+if(typeof EB_K==='object')EB_K.sfOrdnen='app';
+const sfR=()=>{const r=S().schnell?.reihe||{},g=dashG();return r[g]||(g==='tablet'&&r.pc)||null};
+{const s0=V.schnell;V.schnell=(...x)=>{const h=s0(...x);if(!DB||!erw('schnell')||!erw('sfOrdnen'))return h;
+  const t=document.createElement('template');t.innerHTML=h;const K=t.content.querySelector('.sfk');if(!K)return h;const R=sfR(),bea=!!UI.sfBea,Z=K.querySelector('[data-act=uhrpause]');
+  const L=[...K.children].filter(e=>e.classList.contains('sfb')&&e!==Z);for(const e of L)if(!e.dataset.k&&e.querySelector('#erfoto'))e.dataset.k='rechnung';
+  if(R?.length){const p=k=>{const i=R.indexOf(k);return i<0?1e4:i};L.map((e,i)=>[e,i]).sort((a,c)=>p(a[0].dataset.k)-p(c[0].dataset.k)||a[1]-c[1]).forEach(([e])=>K.append(e));const z=K.querySelector('.sfb[data-k=zeit]');if(Z&&z)z.after(Z)}
+  if(bea){K.classList.add('sfed');Z?.remove();for(const e of L){e.removeAttribute('data-act');e.querySelector('input')?.remove()}}
+  const kopf=`<div class="bar sfbar"><h1 style="margin:0">Schnellfunktionen</h1><span class="sp"></span>${bea?`<button class="s" data-act="sfstd"${R?.length?'':' disabled'}>Standard</button><button class="p" data-act="sford">Fertig</button>`:'<button class="s sfzr" data-act="sford" title="Kacheln anordnen">⚙</button>'}</div>${bea?'<p class="mut sfhw">Kacheln an die gewünschte Stelle ziehen. Die Reihenfolge gilt für dieses Gerät.</p>':''}`;
+  return t.innerHTML.replace('<h1>Schnellfunktionen</h1>',kopf)}}
+function sfSpeichern(K){const g=dashG(),N=[...K.children].map(e=>e.dataset.k).filter(Boolean),A=sfR()||[],r=((S().schnell??={}).reihe??={});
+  const neu=[...N,...A.filter(k=>!N.includes(k))];if(String(neu)===String(A))return;r[g]=neu;persist()} // ausgeblendete Kacheln behalten ihren Platz am Ende
+function sfZiehen(ev){const e=ev.target.closest?.('.sfk.sfed>.sfb');if(!e||ev.button>0)return;ev.preventDefault();const K=e.parentNode,s=[...K.children].map(x=>x.dataset.k).join();
+  let x0=ev.clientX,y0=ev.clientY,r0=e.getBoundingClientRect();e.classList.add('sfzieh');try{e.setPointerCapture(ev.pointerId)}catch(_){}
+  const drin=(o,v)=>{const r=o.getBoundingClientRect();return v.clientX>=r.left&&v.clientX<=r.right&&v.clientY>=r.top&&v.clientY<=r.bottom};
+  const mv=v=>{if(v.pointerId!==ev.pointerId)return;const z=[...K.children].find(o=>o!==e&&drin(o,v));
+    if(z){const C=[...K.children];if(C.indexOf(z)<C.indexOf(e))z.before(e);else z.after(e);e.style.transform='';const r1=e.getBoundingClientRect();x0+=r1.left-r0.left;y0+=r1.top-r0.top;r0=r1}
+    e.style.transform=`translate(${v.clientX-x0}px,${v.clientY-y0}px)`};
+  const end=v=>{if(v.pointerId!==ev.pointerId)return;removeEventListener('pointermove',mv);removeEventListener('pointerup',end);removeEventListener('pointercancel',end);
+    e.style.transform='';e.classList.remove('sfzieh');if([...K.children].map(x=>x.dataset.k).join()!==s){sfSpeichern(K);render()}};
+  addEventListener('pointermove',mv);addEventListener('pointerup',end);addEventListener('pointercancel',end)}
+document.addEventListener('pointerdown',sfZiehen);
+Object.assign(ACT,{sford:()=>{UI.sfBea=!UI.sfBea;render()},
+  sfstd:()=>{const r=S().schnell?.reihe;if(!r)return;r[dashG()]=[];persist();render()}});
+{const r0=render;render=(...a)=>{if(UI.sfBea&&!location.hash.startsWith('#/schnell'))UI.sfBea=false;return r0(...a)}} // Bearbeiten endet beim Verlassen der Seite
+{const st=document.createElement('style');st.textContent=`.sfbar{margin-bottom:0}.sfbar .sfzr{font-size:18px;padding:4px 10px}.sfhw{margin:6px 0 0}
+.sfk.sfed .sfb{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab;border-style:dashed;border-color:var(--acc)}
+.sfk.sfed .sfb:hover{transform:none}.sfk .sfb.sfzieh{position:relative;z-index:5;cursor:grabbing;opacity:.92;box-shadow:0 10px 28px rgba(20,30,50,.25);transition:none}`;document.head.append(st)}
 start();
 </script>
 </body>

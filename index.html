@@ -7575,6 +7575,17 @@ ACT.btbdruck=async el=>{const r=ROOT.btb(el.dataset.id);if(!r)return;document.ac
   const P=[...(r.bilder||[]).map(b=>b.pfad),...Object.values(r.sig||{}).map(s=>s?.pfad)].filter(Boolean);
   await Promise.all(P.map(async p=>{try{BURL[p]??=URL.createObjectURL(await bildBlob(p));const i=new Image();i.src=BURL[p];await i.decode()}catch(e){}}));saveState('');
   const a=btbRoot(r);druckHTML(`<div class="doc btbp">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">${btbTitel(r)} ${r.nr}${r.nachtragZu?' (Nachtrag)':''}</h3>${btbDoc(r)}</div>`,`${btbTitel(r)} ${r.nr} ${a?.nr||''} ${dAT(r.datum)}`);bilderLaden()};
+/* Seitenleiste: Gruppe „Projektmanagement“ (erw.navPm): pmNav() setzt vor die Einträge PM_N (data-n, nur vorhandene) eine Überschrift nav .grp.pmg und ordnet sie dahinter (alter Platz in a._pmV);
+   aus = Überschrift entfernt, Einträge zurück an den alten Platz. Läuft vor navKlapp(), damit die Gruppe mitklappt; ohne sichtbaren Eintrag keine Überschrift */
+erwPlus({k:'navPm',std:true,p:'Ansichten klarer (P44)',l:'Seitenleiste: eigene Gruppe „Projektmanagement“',info:'Aufträge & DB II, Zeiterfassung, Bautagesberichte, Projekte und Protokolle stehen in der Seitenleiste unter einer eigenen Überschrift „Projektmanagement“ (mit „Seitenleiste einklappbar“ auch auf- und zuklappbar). Aus = wie bisher unter „Vorgänge“.'});
+const PM_N=['auftraege','zeiten','berichte','projekte','protokolle'];
+function pmNav(){const N=document.querySelector('nav');if(!N)return;let g=N.querySelector(':scope>.grp.pmg');const an=!!DB&&erw('navPm'),A=PM_N.map(n=>N.querySelector(`:scope>a[data-n="${n}"]`)).filter(Boolean);
+  if(!an||!A.length){if(g){for(const a of A.reverse())if(a._pmV){a._pmV.before(a);delete a._pmV}g.remove()}return}
+  if(!g){for(const a of A)a._pmV=a.nextElementSibling;g=document.createElement('div');g.className='grp pmg';g.textContent='Projektmanagement';(N.querySelector(':scope>.grp~.grp')||A[0]).before(g)}
+  let v=g;for(const a of A){v.after(a);v=a}
+  g.style.display=A.some(a=>a.classList.contains('nkweg')||getComputedStyle(a).display!=='none')?'':'none'}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);pmNav();return x}}
+
 /* Seitenleiste aufräumen (P44 C, erw.navKlapp): Gruppenüberschriften (nav .grp) klappen wie in Outlook (◢/▷, Zustand je Gerät erp-navzu = Gruppennamen); „⚙ Seitenleiste anpassen …“
    (ACT.navanp) blendet einzelne Einträge aus (erp-navaus = data-n); der geöffnete Eintrag bleibt immer sichtbar, Export und Einstellungen klappen nicht mit. navKlapp() nach jedem render() */
 erwPlus({k:'navKlapp',std:false,p:'Ansichten klarer (P44)',l:'Seitenleiste einklappbar und anpassbar',info:'Die Überschriften der Seitenleiste (Vorgänge, Stammdaten, Auswertung, Kalkulation & LV) lassen sich wie in Outlook auf- und zuklappen. Über „⚙ Seitenleiste anpassen …“ unten in der Seitenleiste blendest du Einträge aus, die du nicht brauchst. Beides merkt sich jedes Gerät; der gerade geöffnete Bereich bleibt immer sichtbar.'});
@@ -7734,7 +7745,7 @@ const EB=[['firma','🏢','Firma & Grunddaten'],['belege','🧾','Belege & Druck
 const EB_K=Object.fromEntries(Object.entries({belege:'strgP snapshot duplikat druckprofil abAbschluss gliederung zuschlag pe',
   kalk:'gkalk gkMerken dbStd gkLohn k3Tarif tarifPos gkAufsFeld vkVorschlag ekRechnen kbVorlage kbDruck kbProjekt kbBeleg',einkauf:'scanPE lfTermin lfListe lfErinnern lfVerkauf lfNeu',
   kontakte:'kFilter navKL kontaktForm adrVorschlag adrPruef dublette kDok artBild',bau:'btb btbBild btbSig btbDruck btbVorschau btbZeit btbNrDatum btbRechnung btbFahrt btbTage regie regieAntrag mitarbeiter maLohn unterschrift',
-  ansicht:'kompakt kompaktBeleg einstGruppen kundeProjekt auftragKP belegFilterKurz belegInfo kontaktSchlank dashLeer navKlapp pfeile speicherLeiste dashFlex ihHover scrollSperre baumHover kontext statuszeile kopfFix zuletzt suche einstSuche suEinst',
+  ansicht:'kompakt kompaktBeleg einstGruppen kundeProjekt auftragKP belegFilterKurz belegInfo kontaktSchlank dashLeer navKlapp navPm pfeile speicherLeiste dashFlex ihHover scrollSperre baumHover kontext statuszeile kopfFix zuletzt suche einstSuche suEinst',
   app:'ios appOffline netStatus ipad tabLeiste wischZurueck langDruck iosTeilen dunkel schnell schnellStart stoppuhr',sicher:'abmKnopf geraetLoeschen mfaPflicht sicherung archiv vollsicherung'}).flatMap(([b,s])=>s.split(' ').map(k=>[k,b])));
 const EB_KARTE=[[/^e-(firma|kfm|st|nk)\||\|(Firma|Kaufmännisch|Steuersätze|Nummernkreise)/,'firma'],[/^e-(mail|druck)\||\|(E-Mail-Vorlage|Druck)/,'belege'],[/^e-(tf|kv|ger)\||\|(Stundentarife|Kollektivvertr|Geräteliste)/,'kalk'],
   [/^e-(ein|lf)\||\|(Belege einlesen|Liefertermine)/,'einkauf'],[/^e-(regie|fahrt)\||\|(Regiepreise|Fahrtkosten)/,'bau'],[/\|Schnellfunktionen/,'app']];

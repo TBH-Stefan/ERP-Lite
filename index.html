@@ -1181,6 +1181,26 @@ for(const[st,io]of[[ODSTORE,TEIL_IO.od],[DIRSTORE,TEIL_IO.dir]]){const l0=st.loa
 const teilInfo=()=>{const tt=STORE.tt;if(!tt||STORE.art==='cache')return'';const L=Object.entries(tt),n=L.reduce((a,[,x])=>a+x.t.length,0);
   return`<p>Ablage aufgeteilt: <b>erp-daten.json</b> und ${L.length} Dateien im Unterordner <b>daten</b> (zusammen ${kbT(n)})${erw('teilAblage')?'':' – Schalter aus, beim nächsten Speichern wieder eine ganze Datei'}.</p>`};
 
+/* Vorbereitung SQL (P58 Teil 3, erw.sqlExport, Standard aus): späterer Umstieg auf eine Datenbank (Azure SQL oder PostgreSQL/Supabase). Jede Liste mit id (mListen) wird eine Tabelle
+   erp_<liste> (id, jahr, daten = Datensatz als JSON, unverändert), Listen mit id eine Ebene tiefer (z. B. fibu.buchungen) erp_<bereich>_<liste>, alles andere erp_bereiche (k, daten).
+   Datenmodell bleibt; ein künftiger Speicherort braucht nur load()/save()/meta() wie ODSTORE (STORE-Schnittstelle), sqlExport() liefert die Erstbefüllung. */
+erwPlus({k:'sqlExport',std:false,p:'Datenablage (P58)',l:'Vorbereitung SQL-Datenbank: Export als SQL-Skript',info:'Für einen späteren Umstieg auf eine SQL-Datenbank (z. B. bei mehreren Mitarbeitern mit eigenen Konten): „Export & Sicherung“ → „Export für SQL-Datenbank“ erzeugt ein Skript, das Tabellen anlegt und alle Daten einträgt – für Azure SQL (Microsoft) oder PostgreSQL (Supabase). Am Programm und an den Daten ändert sich nichts.'});
+const SQL_D={pg:{l:'PostgreSQL / Supabase',j:'jsonb',t:'text',q:x=>"'"+x.replace(/'/g,"''")+"'",a:'BEGIN;',e:'COMMIT;'},ms:{l:'Azure SQL / SQL Server',j:'nvarchar(max)',t:'nvarchar(100)',q:x=>"N'"+x.replace(/'/g,"''")+"'",a:'BEGIN TRANSACTION;',e:'COMMIT;'}};
+function sqlTabellen(d){const T=[],B=[],jr=x=>{const m=/^\d{4}/.exec(x?.datum||x?.ts||'');return m?+m[0]:null},idL=v=>Array.isArray(v)&&v.length&&v.every(x=>x&&typeof x==='object'&&'id' in x);
+  for(const k of mListen([],d)){T.push({n:'erp_'+k,z:d[k].map(x=>[String(x.id),jr(x),JSON.stringify(x)])})}
+  for(const k in d){if(Array.isArray(d[k])&&T.some(t=>t.n==='erp_'+k))continue;let v=d[k];
+    if(v&&typeof v==='object'&&!Array.isArray(v)){v={...v};for(const u in v)if(idL(v[u])){T.push({n:`erp_${k}_${u}`,z:v[u].map(x=>[String(x.id),jr(x),JSON.stringify(x)])});delete v[u]}}
+    B.push([k,JSON.stringify(v??null)])}
+  return{T,B}}
+function sqlSkript(dk){const D=SQL_D[dk],{T,B}=sqlTabellen(JSON.parse(JSON.stringify(DB))),o=[`-- ERP-Lite: Datenstand ${new Date().toLocaleString('de-AT')} (${S().firma.name||''}) für ${D.l}`,'-- In eine leere Datenbank einspielen; daten = Datensatz als JSON wie in erp-daten.json',D.a];
+  const ins=(n,sp,Z)=>{for(let i=0;i<Z.length;i+=100)o.push(`INSERT INTO ${n} (${sp}) VALUES\n`+Z.slice(i,i+100).map(z=>'('+z.map(v=>v==null?'NULL':typeof v==='number'?v:D.q(v)).join(',')+')').join(',\n')+';')};
+  for(const t of T){o.push(`CREATE TABLE ${t.n} (id ${D.t} PRIMARY KEY, jahr int NULL, daten ${D.j} NOT NULL);`,`CREATE INDEX ix_${t.n}_jahr ON ${t.n} (jahr);`);ins(t.n,'id,jahr,daten',t.z)}
+  o.push(`CREATE TABLE erp_bereiche (k ${D.t} PRIMARY KEY, daten ${D.j} NOT NULL);`);ins('erp_bereiche','k,daten',B);o.push(D.e);
+  return{txt:o.join('\n')+'\n',n:T.length+1,z:T.reduce((a,t)=>a+t.z.length,0)}}
+const sqlKnopf=()=>erw('sqlExport')?'<button data-act="sqlexp">Export für SQL-Datenbank …</button>':'';
+queueMicrotask(()=>Object.assign(ACT,{sqlexp:el=>menuePop(el,Object.entries(SQL_D).map(([k,x])=>({l:x.l,act:'sqlexpd',value:k}))),
+  sqlexpd:el=>{const k=el.value,r=sqlSkript(k);dl(new Blob([r.txt],{type:'application/sql'}),`erp-lite_${k==='pg'?'postgresql':'azure-sql'}_${isoD()}.sql`);log('Export SQL',`${SQL_D[k].l}: ${r.n} Tabellen, ${r.z} Datensätze`);persist()}}));
+
 /* ---------- Datensicherung (P38): Sicherungen gzip-komprimiert und nach dem Schreiben geprüft, Konfliktkopien, Wiederherstellen ----------
    Ablage im Speicherort unter backup/ (OneDrive bzw. Ordner; „nur Browser“ sichert nicht). Sicherungen werden nie automatisch gelöscht (Entscheidung Anwender 16.10.2026). */
 async function gz(txt){return new Uint8Array(await new Response(new Blob([txt]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer())}
@@ -5331,7 +5351,7 @@ V.export=()=>{
   <div class="card"><h2>Datensicherung</h2>
   <p>Speicherort: <b>${esc(STORE.name)}</b>${STORE.art==='cache'?' <span class="err">– keine Sicherung, keine Synchronisierung!</span>':'. Automatische Tagessicherung im Unterordner <b>backup</b>.'}</p>${sichInfo()}${teilInfo()}<p class="mut">Programmstand ${new Date(document.lastModified).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'})} · Datenversion ${DATENVER}${ZUNEU?' · <span class="err">Daten stammen von einer neueren Programmversion – bitte neu laden</span>':''}</p>
   <div class="bar">${STORE.art==='od'?'<button data-act="abmelden">Abmelden</button>':'<button data-act="wechseln">Speicherort wechseln</button>'}${geraetKnopf()}</div>
-  <div class="bar"><button data-act="exp" data-k="json">Gesamtdaten exportieren (JSON)</button><label class="btn" style="font-size:14px;color:inherit">Daten importieren (ersetzt alles)<input type="file" id="imp" accept=".json" style="display:none"></label><button data-act="savenow">Jetzt speichern</button></div></div>
+  <div class="bar"><button data-act="exp" data-k="json">Gesamtdaten exportieren (JSON)</button>${sqlKnopf()}<label class="btn" style="font-size:14px;color:inherit">Daten importieren (ersetzt alles)<input type="file" id="imp" accept=".json" style="display:none"></label><button data-act="savenow">Jetzt speichern</button></div></div>
   ${spKarte()}${archivKarte()}${vollKarte()}${kmp()&&!DB.papierkorb.length?'<div class="card mut">Papierkorb: leer</div>':`<div class="card"><h2>Papierkorb</h2>${DB.papierkorb.length?`<table><thead><tr><th>Gelöscht am</th><th>Art</th><th>Eintrag</th><th></th></tr></thead><tbody>${DB.papierkorb.slice().reverse().map(e=>`<tr><td style="white-space:nowrap">${new Date(e.ts).toLocaleString('de-AT')}</td><td>${PK[e.c]?.n||e.c}</td><td>${esc(e.info)}</td><td style="white-space:nowrap"><button class="s" data-act="pkrest" data-id="${e.id}">Wiederherstellen</button> <button class="s d" data-act="pkdel" data-id="${e.id}">Endgültig löschen</button></td></tr>`).join('')}</tbody></table>
     <div class="bar" style="margin-top:8px"><button data-act="pkrestall">Alle wiederherstellen</button><button class="d" data-act="pkleer">Papierkorb leeren …</button></div>`:'<p class="mut" style="margin:0">leer</p>'}</div>`}
   ${kmp()?protokollK():`<div class="card"><h2>Protokoll (letzte 100)</h2><table>${DB.log.slice(-100).reverse().map(l=>`<tr><td style="white-space:nowrap">${new Date(l.ts).toLocaleString('de-AT')}</td><td>${esc(l.aktion)}</td><td>${esc(l.info)}</td></tr>`).join('')||'<tr><td class="mut">leer</td></tr>'}</table></div>`}`;

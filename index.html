@@ -7696,6 +7696,34 @@ function lcKarte(){const P=lcPunkte(),T={ok:['✓','ok'],warn:['!','warn'],err:[
 #testb{position:fixed;top:env(safe-area-inset-top);left:50%;transform:translateX(-50%);z-index:9999;background:#d97706;color:#fff;font:600 11px/1.6 system-ui,sans-serif;letter-spacing:.04em;padding:1px 10px;border-radius:0 0 6px 6px;pointer-events:none;opacity:.92;white-space:nowrap}
 @media print{#testb{display:none}}body.nav #testb{display:none}`;document.head.append(st)}
 
+/* Rechtschreibprüfung (P54, erw.rechtschreib, Standard aus): Wrapper um render() + MutationObserver RS_MO → rsFeld(el) setzt an Fließtext (textarea, contenteditable, Eingaben mit Schlüssel aus RS_F bzw. ID aus RS_ID)
+   spellcheck="true" und lang = rsLang(), an allen übrigen Texteingaben (Nummern, Beträge, Namen, IBAN …) spellcheck/autocorrect aus; ursprüngliche Werte in data-rs, ausgeschaltet zurück über rsWeg().
+   Prüfsprache S().rsSprache (RS_L, leer = de-AT, Karte rsKarte()), im Beleg die Sprache des Kunden k.sprache (leer = Prüfsprache; Feld über Wrapper um kontaktFelder()). Geprüft wird mit dem Wörterbuch des Geräts, nichts verlässt das Gerät */
+erwPlus({k:'rechtschreib',std:false,p:'Rechtschreibprüfung (P54)',l:'Rechtschreibprüfung in Textfeldern',info:'Texte wie Bezeichnungen, Langtexte, Kopf- und Fußtext, Anrede, Notizen, Tätigkeiten und E-Mail-Vorlagen werden auf Rechtschreibung geprüft (rote Wellenlinie; Vorschläge per Rechtsklick bzw. Antippen). Nummern, Beträge, Namen, Art.-Nr., UID, IBAN, E-Mail und Suchfelder werden nicht geprüft, am iPhone/iPad dort auch keine Autokorrektur. Prüfsprache in der Karte „Rechtschreibprüfung“ (Standard Deutsch (Österreich)); im Beleg gilt die Sprache des Kunden, wenn im Kontakt eine eingetragen ist. Geprüft wird mit dem Wörterbuch des Geräts – keine Texte verlassen das Gerät, geht auch offline. Chrome/Edge am PC: die Sprache muss dort unter Einstellungen → Sprachen für die Rechtschreibprüfung aktiviert sein.'});
+queueMicrotask(()=>{EB_K.rechtschreib='ansicht';EB_KARTE.push([/^e-rs\||\|Rechtschreibprüfung/,'ansicht'])});
+const RS_L={'de-AT':'Deutsch (Österreich)','de-DE':'Deutsch (Deutschland)','de-CH':'Deutsch (Schweiz)','en-GB':'Englisch (Großbritannien)','en-US':'Englisch (USA)',it:'Italienisch',fr:'Französisch',hr:'Kroatisch',sl:'Slowenisch',hu:'Ungarisch',cs:'Tschechisch',sk:'Slowakisch'},
+  RS_F=/^(bez|bezeichnung|text|kopf|fuss|anrede|briefAnrede|notiz|hinweis|slogan|betreff|lfBetreff|lfText|projekt|revGrund|grund|gGrund|taetigkeit|behTxt|anord|maengel|sicher|wvNotiz|bemerkung|langtext)$/,
+  RS_ID=['zt-t'],RS_NIE=/json|csv|iban|bic|uid|mail|tel|plz|nr$/i,
+  RS_Q='textarea,input:not([type]),input[type=text],input[type=search],[contenteditable=""],[contenteditable="true"]';
+let RS_MO=null;
+const rsLang=()=>{const b=DB&&curBeleg(),k=b&&b.kontaktId&&kontakt(b.kontaktId);return(k&&RS_L[k.sprache]?k.sprache:'')||(DB&&RS_L[S().rsSprache]?S().rsSprache:'de-AT')},
+  rsSet=(el,n,v)=>v==null?el.removeAttribute(n):el.setAttribute(n,v);
+function rsFeld(el,L){if(!el.dataset.rs)el.dataset.rs=JSON.stringify([el.getAttribute('spellcheck'),el.getAttribute('lang'),el.getAttribute('autocorrect')]);
+  const ce=el.hasAttribute('contenteditable'),k=(el.dataset.f||el.dataset.k||el.dataset.ed||el.dataset.h||'').split(/[.:]/).pop(),
+    an=!RS_NIE.test(k)&&(ce||el.tagName==='TEXTAREA'||RS_F.test(k)||RS_ID.includes(el.id));
+  if(an){rsSet(el,'spellcheck','true');rsSet(el,'lang',L);rsSet(el,'autocorrect',JSON.parse(el.dataset.rs)[2])}else{rsSet(el,'spellcheck','false');rsSet(el,'autocorrect','off')}}
+function rsWeg(el){const[s,l,a]=JSON.parse(el.dataset.rs);rsSet(el,'spellcheck',s);rsSet(el,'lang',l);rsSet(el,'autocorrect',a);delete el.dataset.rs}
+function rsLauf(n){if(n.nodeType!==1)return;const L=rsLang();if(n.matches(RS_Q))rsFeld(n,L);n.querySelectorAll(RS_Q).forEach(e=>rsFeld(e,L))}
+{const r0=render;render=function(...a){const x=r0.apply(this,a),an=!!DB&&erw('rechtschreib');
+  if(an){rsLauf(document.body);if(!RS_MO){RS_MO=new MutationObserver(M=>{for(const m of M)m.addedNodes.forEach(rsLauf)});RS_MO.observe(document.body,{childList:true,subtree:true})}}
+  else{if(RS_MO){RS_MO.disconnect();RS_MO=null}document.querySelectorAll('[data-rs]').forEach(rsWeg)}return x}}
+function rsKarte(){const v=RS_L[S().rsSprache]?S().rsSprache:'de-AT';
+  return akk('e-rs','Rechtschreibprüfung',`<div class="card" id="rskarte"><h2>Rechtschreibprüfung</h2><div class="row"><label class="w2">Prüfsprache<select data-o="s" data-f="rsSprache">${Object.entries(RS_L).map(([k,l])=>opt(k,l,v)).join('')}</select></label></div>
+  <p class="mut">Gilt für alle Textfelder. Im Beleg gilt die Sprache des Kunden, wenn im Kontakt eine eingetragen ist. Geprüft wird mit dem Wörterbuch des Geräts; Chrome/Edge am PC: Sprache dort unter Einstellungen → Sprachen für die Rechtschreibprüfung aktivieren.</p></div>`)}
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{const h=v0(...x);return DB&&erw('rechtschreib')?h+rsKarte():h}}
+{const kf0=kontaktFelder;kontaktFelder=k=>{const h=kf0(k);if(!erw('rechtschreib')||k.typ==='L')return h;
+  return h+`<div class="row"><label class="w2">Sprache (Rechtschreibprüfung im Beleg)<select data-o="k" data-id="${k.id}" data-f="sprache">${opt('','wie Prüfsprache',k.sprache||'')}${Object.entries(RS_L).map(([x,l])=>opt(x,l,k.sprache||'')).join('')}</select></label></div>`}}
+
 /* Einstellungen gruppieren (P46, erw.einstGruppen): Wrapper um V.einstellungen (nach allen anderen Wrappern). Die Bereiche (Kinder von #main) werden nach Verwendungszweck EB
    geordnet (Karten über data-akk bzw. Überschrift EB_KARTE, Schalter über EB_K, sonst „Weitere“); die Karte „Erweiterungen“ wird je Bereich als „Funktionen“ (egFunk) neu
    aufgebaut, Paketnummer nur in ⓘ. Breit (> 1100 px): Liste #egn.egw links (Raster per :has), rechts nur der gewählte Bereich (EB_AKT, erp-einstB); schmal: Bereiche als Karten

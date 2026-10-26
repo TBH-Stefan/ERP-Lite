@@ -20,3 +20,16 @@ test(`Ansichten ohne Fehler und ohne Überlauf (Schalter ${w==='std'?'Standard':
   }
   expect(probleme).toEqual([]);
 });
+
+// Texte passen in Knöpfe, Kacheln und Karten (Wunsch Anwender 26.10.2026: Überlauf bei jeder Textänderung prüfen) – mit allen Erweiterungen ein
+test('Texte ohne Überlauf in Knöpfen und Kacheln (alle Schalter ein)',async({page})=>{
+  await H.starten(page,{daten:H.lesen(H.DATEN)});const ids=H.lesen(H.IDS),probleme=[];
+  await page.evaluate(()=>{DB.settings.erw=Object.fromEntries(ERW.map(x=>[x.k,true]))});
+  for(const h of H.ansichten(ids).concat(['schnell'])){
+    await H.zeichnen(page,h);
+    const ue=await page.evaluate(()=>[...document.querySelectorAll('#main button,#main .btn,#main .sfb,#main .kk,#main .seg>*')]
+      .filter(b=>b.offsetParent&&b.scrollWidth>b.clientWidth+1&&getComputedStyle(b).overflowX==='visible').map(b=>b.textContent.trim().slice(0,40)));
+    for(const t of ue)probleme.push(`#/${h}: Text läuft über: „${t}“`);
+  }
+  expect(probleme).toEqual([]);
+});

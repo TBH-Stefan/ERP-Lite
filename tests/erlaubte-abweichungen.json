@@ -1,4 +1,9 @@
 {
   "hinweis": "Beabsichtigte Unterschiede bei ausgeschalteten Erweiterungen (z. B. Fehlerbehebung ohne Schalter) für schalter.spec.js. Eintrag {\"was\": \"#/beleg/* (vorschau)\" oder \"druck re\" oder \"pdf *\", \"projekt\": \"desktop\"|\"handy\" (optional), \"grund\": \"…\"}; * am Ende = Anfang passt. Nur im Pull Request der Änderung eintragen und im nächsten Pull Request wieder leeren, weil der Ausgangsstand dann die Änderung schon enthält.",
-  "abweichungen": []
+  "abweichungen": [
+    {
+      "was": "#/beleg/*",
+      "grund": "„Festschreiben“ heißt jetzt „Abschließen“ (P52, Entscheidung Anwender 26.10.2026)"
+    }
+  ]
 }

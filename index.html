@@ -8129,6 +8129,9 @@ async function odShareLesen(){const u=lsGet('erp-odShareUrl');if(!u){lsSet('erp-
 .sfk .sfb span svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .sfk .sfb.sfl{background:#c0392b;color:#fff;border-color:#c0392b}.sfk .sfb.sfl span{background:rgba(255,255,255,.2);color:#fff}`;document.head.append(st)}
 
+/* Menü-Gruppen mit mehr Kontrast (P52, Wunsch 26.10.2026; mit erw.kontrast = body.kon): Überschriften der Seitenleiste heller und kräftiger, Klapp-Pfeil deutlicher. */
+{const st=document.createElement('style');st.textContent=`body.kon nav .grp{color:#d3dae6;font-weight:700;font-size:11.5px;letter-spacing:.07em}body.kon nav.nk .grp:hover{color:#fff}body.kon nav.nk .grp::before{color:#9fb4d8}`;document.head.append(st)}
+
 start();
 </script>
 </body>

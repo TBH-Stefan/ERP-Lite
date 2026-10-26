@@ -944,7 +944,7 @@ function cacheLaden(){try{const t=localStorage.getItem('erp-lite-cache');return 
 window.addEventListener('beforeunload',e=>{if(DIRTY||pending){e.preventDefault();e.returnValue=''}});
 
 /* ---------- Anmeldung Microsoft 365 (OAuth 2.0 Code-Flow mit PKCE, ohne Fremdbibliothek) ---------- */
-const SCOPES='openid profile offline_access User.Read Files.ReadWrite';
+const SCOPES='openid profile offline_access User.Read Files.ReadWrite'+(lsGet('erp-odShareUrl')?' Files.ReadWrite.All':''); // freigegebener Ordner (P52 Etappe 4)
 const odCfg=()=>({clientId:CONFIG.clientId||lsGet('erp-cid')||'',tenant:CONFIG.tenantId||lsGet('erp-tid')||'organizations',ordner:CONFIG.ordner||'ERP-Lite'});
 const redirectUri=()=>location.origin+location.pathname.replace(/index\.html$/,'');
 const b64u=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -1049,7 +1049,7 @@ async function graph(path,opt={},nochmal=true){
   if(r.status===401&&nochmal){const x=AUTH.tok();if(x)AUTH.setTok({...x,exp:0});return graph(path,opt,false)}
   return r;
 }
-const odPath=p=>'/me/drive/root:/'+[odCfg().ordner,...p.split('/')].map(encodeURIComponent).join('/');
+const odPath=p=>{const s=odShare();return s?`/drives/${s.d}/items/${s.i}:/`+p.split('/').filter(Boolean).map(encodeURIComponent).join('/'):'/me/drive/root:/'+[odCfg().ordner,...p.split('/')].map(encodeURIComponent).join('/')}; // s: freigegebener Ordner (P52 Etappe 4)
 
 /* ---------- Speicherorte: OneDrive / lokaler Ordner / nur Browser ---------- */
 const ODSTORE={
@@ -1379,10 +1379,10 @@ async function startScreen(){
   <h2>OneDrive (PC und Handy)</h2>
   <p>Anmeldung mit dem Microsoft-365-Konto des Unternehmens. Daten: <b>${esc(c.ordner)}/${FILE}</b> im OneDrive, tägliche Sicherung in <b>backup</b>.</p>
   ${CONFIG.clientId?'':`<div class="row"><label>Anwendungs-ID (Client)<input id="st-cid" value="${esc(lsGet('erp-cid')||'')}"></label><label>Verzeichnis-ID (Mandant)<input id="st-tid" value="${esc(lsGet('erp-tid')||'')}"></label></div>`}
-  <div class="bar"><button class="p" id="st-od">Mit Microsoft anmelden</button></div>
+  ${odShareFeld()}<div class="bar"><button class="p" id="st-od">Mit Microsoft anmelden</button></div>
   ${fs?`<h2 style="margin-top:18px">Lokaler Ordner (nur dieser PC)</h2><div class="bar">${h?`<button id="st-last">Ordner „${esc(h.name)}“ öffnen</button>`:''}<button id="st-pick">Datenordner wählen …</button></div>`:''}
   <div class="bar" style="margin-top:18px"><button id="st-cache">Nur im Browser testen</button></div></div>`;
-  $('#st-od').onclick=()=>{if(!CONFIG.clientId){lsSet('erp-cid',$('#st-cid').value.trim());lsSet('erp-tid',$('#st-tid').value.trim())}AUTH.login()};
+  $('#st-od').onclick=()=>{odShareMerk();if(!CONFIG.clientId){lsSet('erp-cid',$('#st-cid').value.trim());lsSet('erp-tid',$('#st-tid').value.trim())}AUTH.login()};
   if(h&&fs)$('#st-last').onclick=()=>verbinde(h);
   if(fs)$('#st-pick').onclick=async()=>{try{verbinde(await window.showDirectoryPicker({id:'erp-lite',mode:'readwrite'}))}catch(e){}};
   $('#st-cache').onclick=()=>{STORE=CACHESTORE;lsSet('erp-modus',null);laden(cacheLaden()||neueDB());saveNow()};
@@ -8106,6 +8106,20 @@ Object.assign(ACT,{
 {const st=document.createElement('style');st.textContent=`.bnt{width:100%;border-collapse:collapse}.bnt td{padding:3px 4px;vertical-align:middle}.bnt input:not([type=checkbox]),.bnt select{width:100%}
 .grl{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}.grk{border:1px solid var(--line);border-radius:8px;padding:8px 10px}.grz{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:3px 0}.grz select{width:auto;min-width:120px}
 @media(max-width:760px){.bnt thead{display:none}.bnt tr{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:6px 0;border-bottom:1px solid var(--line)}.bnt td{padding:0}}`;document.head.append(st)}
+
+/* Freigegebener Ordner (P52 Etappe 4, vorbereitet, ohne Schalter: wirkt nur mit eingetragenem Link): weitere Benutzer arbeiten im ERP-Ordner eines anderen Kontos.
+   Startseite → „Freigegebener ERP-Ordner“ (odShareFeld(), Link in erp-odShareUrl), nach der Anmeldung löst odShareLesen() den Link über /shares/u!…/driveItem auf → erp-odShare {u,d,i,n};
+   odPath() schreibt dann /drives/<d>/items/<i>:/<pfad>, SCOPES zusätzlich Files.ReadWrite.All (App-Registrierung in Entra braucht diese Berechtigung). */
+const odShare=()=>{try{return JSON.parse(lsGet('erp-odShare')||'null')}catch(e){return null}};
+function odShareFeld(){const u=lsGet('erp-odShareUrl')||'';return`<details style="margin:8px 0"${u?' open':''}><summary>Freigegebener ERP-Ordner eines anderen Kontos (für weitere Benutzer)</summary>
+  <label>Freigabelink des Ordners<input id="st-share" value="${esc(u)}" placeholder="https://…sharepoint.com/:f:/…" inputmode="url"></label><p class="mut">Leer = eigenes OneDrive. Der Admin gibt den Ordner im OneDrive mit „Bearbeiten“ für dein Konto frei und schickt dir den Link.</p></details>`}
+function odShareMerk(){const e=$('#st-share');if(!e)return;const u=e.value.trim();if(u!==(lsGet('erp-odShareUrl')||'')){lsSet('erp-odShareUrl',u||null);lsSet('erp-odShare',null)}}
+async function odShareLesen(){const u=lsGet('erp-odShareUrl');if(!u){lsSet('erp-odShare',null);return true}if(odShare()?.u===u)return true;
+  const k='u!'+btoa(unescape(encodeURIComponent(u))).replace(/=+$/,'').replace(/\//g,'_').replace(/\+/g,'-');
+  try{const r=await graph('/shares/'+k+'/driveItem?$select=id,name,parentReference');if(!r.ok)throw new Error('OneDrive '+r.status);const j=await r.json();
+    lsSet('erp-odShare',JSON.stringify({u,d:j.parentReference.driveId,i:j.id,n:j.name}));return true}
+  catch(e){if(!confirm(`Der freigegebene Ordner ist nicht erreichbar (${e.message}).\n\nOK = eigenes OneDrive verwenden und den Link entfernen, Abbrechen = nicht laden.`))return false;lsSet('erp-odShareUrl',null);lsSet('erp-odShare',null);return true}}
+{const o0=odStart;odStart=async function(...a){if(!await odShareLesen()){saveState('Freigegebener Ordner nicht erreichbar');return}return o0.apply(this,a)}}
 
 start();
 </script>

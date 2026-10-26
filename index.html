@@ -8024,7 +8024,7 @@ for(const m of MODULE)for(const v of new Set(m.n.map(n=>n.split('/')[0]))){const
 {const s0=suIndex;suIndex=function(...a){const E=s0.apply(this,a),g=new Set(modAus().flatMap(m=>m.su||[]));return g.size?E.filter(e=>!g.has(e.g)):E}}
 {const r0=render;render=function(...a){const x=r0.apply(this,a),aus=new Set(modAus().flatMap(m=>m.n));
   for(const e of document.querySelectorAll('nav a[href^="#/"],#tabl a[href^="#/"]'))e.classList.toggle('mweg',aus.has(e.getAttribute('href').slice(2)));
-  for(const g of document.querySelectorAll('nav .grp')){let e=g.nextElementSibling,s=false;while(e&&!e.classList.contains('grp')&&e.tagName==='A'){if(!e.classList.contains('mweg')&&getComputedStyle(e).display!=='none')s=true;e=e.nextElementSibling}g.classList.toggle('mweg',!s)}
+  for(const g of document.querySelectorAll('nav .grp')){let e=g.nextElementSibling,s=false;while(e&&!e.classList.contains('grp')&&e.tagName==='A'){if(!e.classList.contains('mweg')&&(e.classList.contains('nkweg')||getComputedStyle(e).display!=='none'))s=true;e=e.nextElementSibling}g.classList.toggle('mweg',!s)}
   return x}}
 const GER_K={ios:'ios ipad tabLeiste wischZurueck langDruck iosTeilen schnell schnellStart appHandy',pc:'tabs ihHover baumHover kontext strgP navKlapp'},GER_T=matchMedia('(pointer:coarse)');
 const gerVon=k=>GER_K.ios.split(' ').includes(k)?'ios':GER_K.pc.split(' ').includes(k)?'pc':'',gerAlle=()=>!!lsGet('erp-gerAlle'),

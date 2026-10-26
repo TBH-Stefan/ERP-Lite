@@ -109,7 +109,9 @@ async function funktion(browser,g,daten,ids,w){
   const srv=spawn('node',['server.js'],{cwd:__dirname,env:{...process.env,PORT:String(PORT)},stdio:'ignore'});await warte(800);
   const browser=await chromium.launch(process.env.PW_EXE?{executablePath:process.env.PW_EXE}:{});
   try{
-    // Demo-Daten mit dem aktuellen Stand erzeugen
+    const [daten,ids]=await (async()=>{
+    // Demo-Daten mit dem aktuellen Stand erzeugen (DATEN=Datei aus gross.js: diese Daten und gross-ids.json verwenden)
+    if(process.env.DATEN){const daten=JSON.parse(fs.readFileSync(process.env.DATEN,'utf8')),ids=JSON.parse(fs.readFileSync(path.join(H.TMP,'gross-ids.json'),'utf8'));ids.art=daten.artikel.find(a=>a.nr==='00005').id;return [daten,ids]}
     const {page,fehler,ctx}=await seite(browser,'desktop',null);
     const ids=await page.evaluate(`(${testdaten.toString()})()`);
     Object.assign(ids,await page.evaluate(`(${demodaten.toString()})(${JSON.stringify(ids)})`));
@@ -118,6 +120,7 @@ async function funktion(browser,g,daten,ids,w){
     if(fehler.length)console.log('Fehler beim Aufbau:',fehler);
     fs.writeFileSync(path.join(H.TMP,'demo-daten.json'),JSON.stringify(daten,null,1));fs.writeFileSync(path.join(H.TMP,'demo-ids.json'),JSON.stringify(ids));
     console.log('Demo-Daten:',daten.belege.length,'Belege,',daten.kontakte.length,'Kontakte,',daten.berichte.length,'Berichte,',daten.zeiten.length,'Zeiten');
+    return [daten,ids]})();
     const alleEin=await (async()=>{const {page,ctx}=await seite(browser,'desktop',daten);const e=await page.evaluate(()=>Object.fromEntries(ERW.map(x=>[x.k,true])));await ctx.close();return e})();
     for(const g of GERAET==='beide'?['desktop','handy']:[GERAET]){const out={};
       if(MODUS==='matrix'||MODUS==='alle')out.matrix=await matrix(browser,g,daten,ids);

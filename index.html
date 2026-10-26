@@ -7595,13 +7595,17 @@ Object.assign(PK,{protokolle:{n:'Protokoll',info:p=>`${protKz(p)} ${p.titel||p.v
 SIG_C.protokolle={n:p=>'Protokoll '+protKz(p)};
 const PB={teiln:{l:'Teilnehmer',f:1},punkte:{l:'Punkteliste (Info, Beschluss, Aufgabe)',f:1},termin:{l:'Nächster Termin',f:1},fotos:{l:'Fotos',f:1},sig:{l:'Unterschriften',f:1,o:'Rollen (mit ; trennen)'},
   ueber:{l:'Zwischenüberschrift'},text:{l:'Text (mehrzeilig)',v:1},zeile:{l:'Textfeld (einzeilig)',v:1},janein:{l:'Ja / Nein'},auswahl:{l:'Auswahl',o:'Auswahlwerte (mit ; trennen)'},zahl:{l:'Zahl mit Einheit',e:1},datum:{l:'Datum'},tabelle:{l:'Tabelle',o:'Spalten (mit ; trennen)'}};
-const PV_STD={id:'std-bp',std:1,name:'Besprechungsprotokoll',kz:'BP',bs:[{id:'tn',typ:'teiln',l:'Teilnehmer'},{id:'an',typ:'text',l:'Anlass / Tagesordnung'},{id:'pk',typ:'punkte',l:'Besprechungspunkte',pflicht:true},
+const PV_STD={id:'std-bp',std:1,name:'Besprechungsprotokoll',kz:'BP',stil:'bp',bs:[{id:'tn',typ:'teiln',l:'Teilnehmer'},{id:'an',typ:'text',l:'Anlass / Tagesordnung'},{id:'pk',typ:'punkte',l:'Besprechungspunkte',pflicht:true},
   {id:'nt',typ:'termin',l:'Nächster Termin'},{id:'fo',typ:'fotos',l:'Fotos'},{id:'sg',typ:'sig',l:'Unterschriften',opts:'Verfasser; Auftraggeber'}]};
 const pvAlle=()=>[PV_STD,...pvL()],pvVon=id=>pvAlle().find(v=>v.id===id);
 const PART={I:'Info',B:'Beschluss',A:'Aufgabe'},ANW=[['a','anwesend'],['e','entschuldigt'],['v','nur Verteiler']];
 const pbOpts=b=>String(b?.opts||'').split(';').map(pT).filter(Boolean),protRollen=b=>pbOpts(b).length?pbOpts(b):['Verfasser'];
 const protKz=p=>`${p.kz||'PR'} ${p.nr}${p.rev?' Rev. '+p.rev:''}`,protTitel=p=>p.vname||'Protokoll';
-const protFest=p=>!!(p?.abgeschlossen||p?.gesperrt),protSigB=p=>(p.bs||[]).find(b=>b.typ==='sig');
+const protFest=p=>!!(p?.abgeschlossen||p?.gesperrt),protSigB=p=>(p.bs||[]).find(b=>b.typ==='sig'),protSigAn=p=>!p.ohneSig&&protSigB(p);
+const protPk=p=>(p.bs||[]).filter(b=>b.typ==='punkte').flatMap(b=>p.w?.[b.id]||[]),protHatErl=p=>protPk(p).some(x=>x.erl||(x.u||[]).some(u=>u.erl));
+const protFotosAlle=p=>[...(p.bilder||[]),...protPk(p).flatMap(x=>[...(x.bilder||[]),...(x.u||[]).flatMap(u=>u.bilder||[])])];
+SIG_FREI.push('druckOpt'); // Druckauswahl „Erledigte ausblenden“ auch nach der Sperre (kein Inhalt)
+const protFotoEd=(p,R,f,L)=>`<div class="prfo">${(L||[]).map((x,i)=>`<div class="btbbi"><img data-bild="${esc(x.mini)}" data-act="protbild" data-id="${p.id}" data-z="${f}" data-i="${i}" alt="Foto ${i+1}" title="Foto öffnen"><button class="s d" data-act="arrdel" data-r="${R}" data-f="${f}" data-i="${i}" title="Foto entfernen">✕</button><input data-o="path" data-r="${R}" data-f="${f}.${i}.text" value="${esc(x.text)}" placeholder="Beschriftung"></div>`).join('')}<label class="btn s" title="Foto aufnehmen">📷<input type="file" accept="image/*" capture="environment" data-protfoto="${p.id}" data-z="${f}" hidden></label><label class="btn s" title="Bilder wählen">🖼<input type="file" accept="image/*" multiple data-protfoto="${p.id}" data-z="${f}" hidden></label></div>`;
 const protOrdner=p=>`Protokolle/${(p.datum||isoD()).slice(0,4)}/${String(p.kz||'PR').replace(/[^\w.\-]+/g,'_')}-${String(p.nr).replace(/[^\w.\-]+/g,'_')}${p.rev?'_Rev'+p.rev:''}`; // Ablage für Fotos und Unterschriften
 const protNeuer=p=>prL().filter(x=>x.fassungZu===p.id);
 const protStatus=p=>protNeuer(p).length?tag('ersetzt'):p.gesperrt?tag('unterschrieben','ok'):p.abgeschlossen?tag('abgeschlossen','acc'):tag('Entwurf');
@@ -7610,37 +7614,38 @@ const protBezug=p=>[p.kontaktId?kName(p.kontaktId):'',prjVon(p.projektId)?.name|
 const protTn=p=>(p.bs||[]).filter(b=>b.typ==='teiln').flatMap(b=>p.w?.[b.id]||[]);
 const protSort=(a,c)=>(c.datum+c.erstellt).localeCompare(a.datum+a.erstellt);
 function protNrTag(d){const v=String(d||isoD()).replace(/-/g,'')+'-',n=Math.max(0,...[...prL(),...DB.papierkorb.filter(e=>e.c==='protokolle').map(e=>e.daten||{})].map(x=>String(x.nr??'')).filter(x=>x.startsWith(v)).map(x=>+x.slice(v.length)||0));return v+String(n+1).padStart(3,'0')}
-Object.assign(TPL,{prtn:()=>({name:'',firma:'',fkt:'',mail:'',anw:'a',vt:true}),prpk:()=>({thema:'',text:'',art:'I',wer:'',bis:'',erl:false}),prrow:()=>[]});
+Object.assign(TPL,{prtn:()=>({name:'',firma:'',fkt:'',tel:'',mail:'',anw:'a',vt:true}),prpk:()=>({thema:'',text:'',art:'I',wer:'',dat:isoD(),bis:'',erl:false,u:[]}),prpu:()=>({id:uid(),text:'',art:'I',wer:'',dat:isoD(),bis:'',erl:false}),prrow:()=>[]});
 // Vorbelegung: Ort und Teilnehmer vom letzten Protokoll derselben Vorlage zum selben Projekt bzw. Kunden, sonst Verfasser und Kunde
 function protNeu(v,bz={}){const D=DB.protokolle||(DB.protokolle=[]),gl=x=>x.vorlageId===v.id&&(bz.projektId?x.projektId===bz.projektId:bz.auftragId?x.auftragId===bz.auftragId:!!bz.kontaktId&&x.kontaktId===bz.kontaktId);
   const vor=D.filter(gl).sort(protSort)[0],k=kontakt(bz.kontaktId),pr=prjVon(bz.projektId),bs=JSON.parse(JSON.stringify(v.bs||[])),w={},ich={...TPL.prtn(),name:S().bearbeiter||'',firma:S().firma?.name||''};
   for(const b of bs){if((b.typ==='text'||b.typ==='zeile')&&pT(b.vor))w[b.id]=b.vor;
-    if(b.typ==='teiln'){const a=vor?.w?.[b.id];w[b.id]=Array.isArray(a)&&a.length?a.map(t=>({...t})):[ich,...(k?[{...TPL.prtn(),name:persName(k),firma:k.name||'',mail:k.email||''}]:[])]}
+    if(b.typ==='teiln'){const a=vor?.w?.[b.id];w[b.id]=Array.isArray(a)&&a.length?a.map(t=>({...t})):[ich,...(k?[{...TPL.prtn(),name:persName(k),firma:k.name||'',tel:k.tel||'',mail:k.email||''}]:[])]}
     if(b.typ==='punkte')w[b.id]=[TPL.prpk()]}
-  const p={id:uid(),nr:protNrTag(isoD()),kz:v.kz||'PR',vorlageId:v.id,vname:v.name||'Protokoll',datum:isoD(),beginn:'',ende:'',ort:vor?.ort||pr?.ort||[k?.strasse,[k?.plz,k?.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '),
+  const p={id:uid(),nr:protNrTag(isoD()),kz:v.kz||'PR',...(v.stil?{stil:v.stil}:{}),vorlageId:v.id,vname:v.name||'Protokoll',datum:isoD(),beginn:'',ende:'',ort:vor?.ort||pr?.ort||[k?.strasse,[k?.plz,k?.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '),
     titel:'',verfasser:S().bearbeiter||'',kontaktId:bz.kontaktId||'',projektId:bz.projektId||'',auftragId:bz.auftragId||'',bs,w,bilder:[],erstellt:new Date().toISOString()};
   D.push(p);log('Protokoll angelegt',`${protKz(p)} ${protBezug(p)}`.trim());return p}
 // Vorschläge für Teilnehmer: Verfasser, Mitarbeiter, Kunde, Teilnehmer früherer Protokolle (gleicher Kunde zuerst)
-function protTnVor(p){const L=[],dazu=t=>{if(pT(t.name)&&!L.some(x=>x.name===t.name&&x.firma===t.firma))L.push({name:t.name,firma:t.firma||'',fkt:t.fkt||'',mail:t.mail||''})},f=S().firma?.name||'',k=kontakt(p.kontaktId);
-  dazu({name:S().bearbeiter||'',firma:f});if(erw('mitarbeiter'))for(const m of maAkt())dazu({name:m.name,firma:f,fkt:m.funktion,mail:m.mail});if(k)dazu({name:persName(k),firma:k.name,mail:k.email});
+function protTnVor(p){const L=[],dazu=t=>{if(pT(t.name)&&!L.some(x=>x.name===t.name&&x.firma===t.firma))L.push({name:t.name,firma:t.firma||'',fkt:t.fkt||'',tel:t.tel||'',mail:t.mail||''})},f=S().firma?.name||'',k=kontakt(p.kontaktId);
+  dazu({name:S().bearbeiter||'',firma:f});if(erw('mitarbeiter'))for(const m of maAkt())dazu({name:m.name,firma:f,fkt:m.funktion,tel:m.tel,mail:m.mail});if(k)dazu({name:persName(k),firma:k.name,tel:k.tel,mail:k.email});
   for(const x of[...prL()].filter(x=>x!==p).sort((a,c)=>(c.kontaktId===p.kontaktId)-(a.kontaktId===p.kontaktId)||protSort(a,c)))for(const t of protTn(x))dazu(t);
   const da=protTn(p);return L.filter(t=>!da.some(x=>x.name===t.name))}
 const protOffeneVor=p=>{const v=prL().filter(x=>x!==p&&x.vorlageId===p.vorlageId&&(p.projektId?x.projektId===p.projektId:p.kontaktId&&x.kontaktId===p.kontaktId)&&(x.datum+x.erstellt)<(p.datum+p.erstellt)&&!protNeuer(x).length).sort(protSort)[0];
-  return v?{v,L:(v.bs||[]).filter(b=>b.typ==='punkte').flatMap(b=>v.w?.[b.id]||[]).filter(x=>x.art==='A'&&!x.erl&&(pT(x.thema)||pT(x.text)))}:{v:null,L:[]}};
+  return v?{v,L:(v.bs||[]).filter(b=>b.typ==='punkte').flatMap(b=>v.w?.[b.id]||[]).filter(x=>(x.art==='A'&&!x.erl||(x.u||[]).some(u=>u.art==='A'&&!u.erl))&&(pT(x.thema)||pT(x.text))).map(x=>({...x,u:(x.u||[]).filter(u=>!u.erl)}))}:{v:null,L:[]}};
 function protBsEd(p,b,R){const W='w.'+b.id,v=p.w?.[b.id],add=(tpl,l)=>`<button class="s" data-act="arradd" data-r="${R}" data-f="${W}" data-tpl="${tpl}">${l}</button>`,del=i=>`<button class="s d" data-act="arrdel" data-r="${R}" data-f="${W}" data-i="${i}" title="Zeile entfernen">✕</button>`;
   const chk=(f,c,l)=>`<label class="chk" style="align-self:end"><input type="checkbox" data-o="path" data-r="${R}" data-f="${f}"${c?' checked':''}> ${l}</label>`;
   switch(b.typ){
-    case'teiln':{const V_=protTnVor(p);return(v||[]).map((t,i)=>{const P=`${W}.${i}`;return`<div class="row btbz">${bIn(R,P+'.name',t.name,{l:'Name',cls:'w2',list:'dl-prtn'})}${bIn(R,P+'.firma',t.firma,{l:'Firma'})}${bIn(R,P+'.fkt',t.fkt,{l:'Funktion'})}${bIn(R,P+'.mail',t.mail,{t:'email',l:'E-Mail'})}<label class="w05">Teilnahme${fsel(R,P+'.anw',t.anw,ANW)}</label>${chk(P+'.vt',t.vt,'Verteiler')}${del(i)}</div>`}).join('')
+    case'teiln':{const V_=protTnVor(p);return(v||[]).map((t,i)=>{const P=`${W}.${i}`;return`<div class="row btbz">${bIn(R,P+'.name',t.name,{l:'Name',cls:'w2',list:'dl-prtn'})}${bIn(R,P+'.firma',t.firma,{l:'Firma'})}${bIn(R,P+'.fkt',t.fkt,{l:'Funktion'})}${bIn(R,P+'.tel',t.tel,{t:'tel',l:'Telefon'})}${bIn(R,P+'.mail',t.mail,{t:'email',l:'E-Mail'})}<label class="w05">Teilnahme${fsel(R,P+'.anw',t.anw,ANW)}</label>${chk(P+'.vt',t.vt,'Verteiler')}${del(i)}</div>`}).join('')
       +`<datalist id="dl-prtn">${V_.concat(v||[]).filter(t=>pT(t.name)).map(t=>`<option value="${esc(t.name)}">`).join('')}</datalist><div class="bar" style="margin:4px 0 0">${add('prtn','+ Teilnehmer')}${V_.length?`<select data-act="prtnadd" data-id="${p.id}" data-b="${b.id}" style="width:auto"><option value="">+ aus Kontakten, Personal, früheren Protokollen …</option>${V_.map((t,i)=>opt(i,[t.name,t.firma].filter(Boolean).join(' · '),'')).join('')}</select>`:''}</div>`}
-    case'punkte':{const o=protOffeneVor(p);return(v||[]).map((x,i)=>{const P=`${W}.${i}`;return`<div class="row btbz prpk"><span class="prnr">${i+1}.</span>${bIn(R,P+'.thema',x.thema,{l:'Thema',cls:'w2'})}<label class="w05">Art${fsel(R,P+'.art',x.art,Object.entries(PART))}</label>${bIn(R,P+'.wer',x.wer,{l:'Wer',list:'dl-prtn'})}${bIn(R,P+'.bis',x.bis,{t:'date',l:'Bis',cls:'w05'})}${x.art==='A'?chk(P+'.erl',x.erl,'erledigt'):''}${del(i)}
-        <div class="row" style="flex-basis:100%;margin:0">${bTa(R,P+'.text',x.text,{l:'',ph:'Inhalt: Feststellung, Beschluss bzw. Aufgabe'})}</div></div>`}).join('')
-      +`<div class="bar" style="margin:4px 0 0">${add('prpk','+ Punkt')}${o.L.length?`<button class="s" data-act="protoffen" data-id="${p.id}" data-b="${b.id}" title="Offene Aufgaben aus ${esc(protKz(o.v))} vom ${dAT(o.v.datum)} übernehmen">+ ${o.L.length} offene Aufgabe${o.L.length>1?'n':''} aus ${esc(protKz(o.v))}</button>`:''}</div>`}
+    case'punkte':{const o=protOffeneVor(p),ne=(x,P,nr,sub)=>`<div class="row btbz prpk${sub?' prsub':''}${x.erl?' prerl':''}"><span class="prnr">${nr}</span>${sub?'':bIn(R,P+'.thema',x.thema,{l:'Thema',cls:'w2'})}<label class="w05">Art${fsel(R,P+'.art',x.art,Object.entries(PART))}</label>${bIn(R,P+'.wer',x.wer,{l:'Wer',list:'dl-prtn'})}${bIn(R,P+'.dat',x.dat,{t:'date',l:'Datum',cls:'w05'})}${bIn(R,P+'.bis',x.bis,{t:'date',l:'Bis (optional)',cls:'w05'})}${chk(P+'.erl',x.erl,'erledigt')}${chk(P+'.druck',x.druck!==false,'im Druck')}<button class="s d" data-act="arrdel" data-r="${R}" data-f="${P.replace(/\.\d+$/,'')}" data-i="${P.split('.').pop()}" title="${sub?'Unterpunkt':'Thema'} entfernen">✕</button>
+        <div class="row" style="flex-basis:100%;margin:0">${bTa(R,P+'.text',x.text,{l:'',ph:sub?'Eintrag zum Thema':'Inhalt: Feststellung, Beschluss bzw. Aufgabe'})}</div>${protFotoEd(p,R,P+'.bilder',x.bilder)}</div>`;
+      return(v||[]).map((x,i)=>{const P=`${W}.${i}`;return`<div class="prth">${ne(x,P,(i+1)+'.')}${(x.u||[]).map((u,j)=>ne(u,`${P}.u.${j}`,`${i+1}.${j+1}`,1)).join('')}<div class="bar prsubk"><button class="s" data-act="arradd" data-r="${R}" data-f="${P}.u" data-tpl="prpu">+ Unterpunkt</button></div></div>`}).join('')
+      +`<div class="bar" style="margin:4px 0 0">${add('prpk','+ Thema')}${o.L.length?`<button class="s" data-act="protoffen" data-id="${p.id}" data-b="${b.id}" title="Offene Aufgaben aus ${esc(protKz(o.v))} vom ${dAT(o.v.datum)} übernehmen">+ ${o.L.length} offene${o.L.length>1?'':'s'} Thema aus ${esc(protKz(o.v))}</button>`:''}</div>`}
     case'termin':{const t=v||{};return`<div class="row">${bIn(R,W+'.datum',t.datum,{t:'date',l:'Datum',cls:'w05'})}${bIn(R,W+'.zeit',t.zeit,{t:'time',l:'Uhrzeit',cls:'w05'})}${bIn(R,W+'.ort',t.ort,{l:'Ort',cls:'w2'})}</div>`}
     case'fotos':{const L=p.bilder||[],w=ablOffen(protOrdner(p));return`${L.length?`<div class="btbb">${L.map((x,i)=>`<div class="btbbi"><img data-bild="${esc(x.mini)}" data-act="protbild" data-id="${p.id}" data-i="${i}" alt="Foto ${i+1}" title="Foto öffnen">
         <button class="s d" data-act="arrdel" data-r="${R}" data-f="bilder" data-i="${i}" title="Foto entfernen">✕</button><input data-o="path" data-r="${R}" data-f="bilder.${i}.text" value="${esc(x.text)}" placeholder="Beschriftung"><span class="mut">${dtAT(x.zeit)}</span></div>`).join('')}</div>`:''}
       <div class="bar" style="margin:8px 0 0"><label class="btn p">📷 Foto aufnehmen<input type="file" accept="image/*" capture="environment" data-protfoto="${p.id}" hidden></label><label class="btn">🖼 Bilder wählen …<input type="file" accept="image/*" multiple data-protfoto="${p.id}" hidden></label>
       ${w?`<span class="mut">⏳ ${w} Datei${w>1?'en warten':' wartet'} auf Netz</span>`:''}</div>`}
-    case'sig':return`<p class="mut" style="margin:0">${protRollen(b).map(esc).join(', ')} – unterschrieben wird nach „Abschließen“${erw('unterschrift')?'':' (dazu „Unterschrift am Gerät und Sperre“ unter Einstellungen → Erweiterungen einschalten)'}.</p>`;
+    case'sig':return`<label class="chk" style="margin:0 0 4px"><input type="checkbox" data-act="protsigaus" data-id="${p.id}"${p.ohneSig?'':' checked'}> Unterschriften im Protokoll</label><p class="mut" style="margin:0">${p.ohneSig?'Ohne Haken: keine Unterschriftsfelder in Ansicht, Druck und PDF':protRollen(b).map(esc).join(', ')+' – unterschrieben wird nach „Abschließen“'}${erw('unterschrift')?'':' (dazu „Unterschrift am Gerät und Sperre“ unter Einstellungen → Erweiterungen einschalten)'}.</p>`;
     case'text':return`<div class="row">${bTa(R,W,v,{l:''})}</div>`;
     case'zeile':return`<div class="row">${bIn(R,W,v,{cls:'w2'})}</div>`;
     case'janein':return`<div class="row"><label class="w05">${fsel(R,W,v,[['','–'],['ja','ja'],['nein','nein']])}</label></div>`;
@@ -7653,7 +7658,7 @@ function protBsEd(p,b,R){const W='w.'+b.id,v=p.w?.[b.id],add=(tpl,l)=>`<button c
 const protLeer=(p,b)=>{const v=p.w?.[b.id];switch(b.typ){case'teiln':return!(v||[]).some(t=>pT(t.name));case'punkte':return!(v||[]).some(x=>pT(x.thema)||pT(x.text));case'termin':return!v?.datum;
   case'fotos':return!(p.bilder||[]).length;case'tabelle':return!(v||[]).some(z=>(z||[]).some(pT));case'sig':case'ueber':return false}return!pT(v)};
 function protEditor(p){const R='prot|'+p.id,K=DB.kontakte.filter(k=>k.typ!=='L'||k.id===p.kontaktId).sort((a,c)=>String(a.name).localeCompare(String(c.name),'de')),P=prjL().filter(x=>!p.kontaktId||x.kontaktId===p.kontaktId||x.id===p.projektId);
-  const kopf=`<div class="row">${bIn(R,'titel',p.titel,{l:'Betreff',cls:'w2',ph:'z. B. Baubesprechung Elektroinstallation'})}${bIn(R,'datum',p.datum,{t:'date',l:'Datum',cls:'w05'})}${bIn(R,'beginn',p.beginn,{t:'time',l:'Beginn',cls:'w05'})}${bIn(R,'ende',p.ende,{t:'time',l:'Ende',cls:'w05'})}</div>
+  const kopf=`<div class="row">${bIn(R,'titel',p.titel,{l:'Betreff',cls:'w2',ph:'z. B. Baubesprechung Elektroinstallation'})}${bIn(R,'datum',p.datum,{t:'date',l:'Datum',cls:'w05'})}${['beginn','ende'].map(f=>`<span class="prjt">${bIn(R,f,p[f],{t:'time',l:f==='beginn'?'Beginn':'Ende',cls:'w05'})}<button class="s" data-act="protjetzt" data-id="${p.id}" data-f="${f}" title="aktuelle Uhrzeit eintragen">jetzt</button></span>`).join('')}</div>
     <div class="row">${bIn(R,'ort',p.ort,{l:'Ort',cls:'w2'})}${bIn(R,'verfasser',p.verfasser,{l:'Verfasser',list:erw('mitarbeiter')?'dl-ma':''})}</div>
     <div class="row"><label class="w2">Kunde${fsel(R,'kontaktId',p.kontaktId,[['','– ohne –'],...K.map(k=>[k.id,`${k.nr||''} ${k.name}`.trim()])])}</label>
     <label class="w2">Projekt<select data-act="protprj" data-id="${p.id}"><option value="">– ohne –</option>${P.map(x=>opt(x.id,x.name+(p.kontaktId||!x.kontaktId?'':' · '+kName(x.kontaktId)),p.projektId)).join('')}${erw('projekte')?'<option value="§neu">+ Neues Projekt …</option>':''}</select></label>
@@ -7668,27 +7673,32 @@ function protDoc(p){const k=kontakt(p.kontaktId),pr=prjVon(p.projektId),zl=(l,v)
   for(const b of p.bs||[]){const v=p.w?.[b.id],h=`<h3>${esc(b.l)}</h3>`;
     switch(b.typ){
       case'ueber':o+=`<h3 class="prh">${esc(b.l)}</h3>`;break;
-      case'teiln':{const L=(v||[]).filter(t=>pT(t.name)||pT(t.firma));if(L.length)o+=h+`<table class="btbt"><thead><tr><th>Name</th><th>Firma</th><th>Funktion</th><th>Teilnahme</th></tr></thead><tbody>${L.map(t=>`<tr><td>${esc(t.name)}</td><td>${esc(t.firma)}</td><td>${esc(t.fkt)}</td><td>${(ANW.find(a=>a[0]===t.anw)||ANW[0])[1]}${t.vt&&t.anw!=='v'?', Verteiler':''}</td></tr>`).join('')}</tbody></table>`;break}
-      case'punkte':{const L=(v||[]).filter(x=>pT(x.thema)||pT(x.text));if(L.length)o+=h+`<table class="btbt prpt"><thead><tr><th>Nr.</th><th>Thema / Inhalt</th><th>Art</th><th>Wer</th><th>Bis</th></tr></thead><tbody>${L.map((x,i)=>`<tr><td>${i+1}.</td><td>${pT(x.thema)?`<b>${esc(x.thema)}</b>${pT(x.text)?'<br>':''}`:''}${nl(x.text)}</td><td>${PART[x.art]||''}${x.art==='A'&&x.erl?'<br>erledigt':''}</td><td>${esc(x.wer)}</td><td>${x.bis?dAT(x.bis):''}</td></tr>`).join('')}</tbody></table>`;break}
+      case'teiln':{const L=(v||[]).filter(t=>pT(t.name)||pT(t.firma));if(L.length)o+=h+`<table class="btbt"><thead><tr><th>Name</th><th>Firma</th><th>Funktion</th><th>Telefon / E-Mail</th><th>Teilnahme</th></tr></thead><tbody>${L.map(t=>`<tr><td>${esc(t.name)}</td><td>${esc(t.firma)}</td><td>${esc(t.fkt)}</td><td>${[t.tel,t.mail].filter(pT).map(esc).join('<br>')}</td><td>${(ANW.find(a=>a[0]===t.anw)||ANW[0])[1]}${t.vt&&t.anw!=='v'?', Verteiler':''}</td></tr>`).join('')}</tbody></table>`;break}
+      case'punkte':{const oe=!!p.druckOpt?.ohneErl,zeig=x=>x.druck!==false&&!(oe&&x.erl),Z=(v||[]).map((x,i)=>({x,i})).filter(({x})=>(pT(x.thema)||pT(x.text))&&zeig(x)),
+        fo=(B,n)=>(B||[]).length?`<tr class="prbz"><td></td><td colspan="5"><div class="prbb">${B.map((f,k)=>`<figure><img data-bild="${esc(f.pfad)}" alt="Foto"><figcaption>${n} Foto ${k+1}${f.text?' · '+esc(f.text):''}</figcaption></figure>`).join('')}</div></td></tr>`:'',
+        z=(x,n,sub)=>`<tr class="${sub?'prs':'prt'}"><td>${n}</td><td>${!sub&&pT(x.thema)?`<b>${esc(x.thema)}</b>${pT(x.text)?'<br>':''}`:''}${nl(x.text)}</td><td><span class="pa pa-${x.art||'I'}">${PART[x.art]||''}</span>${x.erl?'<br><span class="perl">erledigt</span>':''}</td><td>${esc(x.wer)}</td><td>${x.dat?dAT(x.dat):''}</td><td>${x.bis?dAT(x.bis):''}</td></tr>`+fo(x.bilder,n);
+        if(Z.length)o+=h+`<table class="btbt prpt"><thead><tr><th>Nr.</th><th>Thema / Inhalt</th><th>Art</th><th>Wer</th><th>Datum</th><th>Bis</th></tr></thead><tbody>${Z.map(({x,i})=>z(x,(i+1)+'.')+(x.u||[]).map((u,j)=>({u,j})).filter(({u})=>pT(u.text)&&zeig(u)).map(({u,j})=>z(u,`${i+1}.${j+1}`,1)).join('')).join('')}</tbody></table>`;break}
       case'termin':{const t=v||{};if(t.datum||pT(t.ort))o+=h+`<p>${[t.datum?dAT(t.datum):'',t.zeit?t.zeit+' Uhr':'',esc(t.ort||'')].filter(Boolean).join(', ')}</p>`;break}
       case'fotos':if((p.bilder||[]).length)o+=h+`<div class="btbbd">${p.bilder.map((x,i)=>`<figure><img data-bild="${esc(x.pfad)}" alt="Foto ${i+1}"><figcaption>${i+1}. ${esc(x.text||'')}${x.text?' · ':''}${dtAT(x.zeit)}</figcaption></figure>`).join('')}</div>`;break;
       case'sig':break;
       case'tabelle':{const S_=pbOpts(b),L=(v||[]).filter(z=>(z||[]).some(pT));if(L.length&&S_.length)o+=h+`<table class="btbt"><thead><tr>${S_.map(s=>`<th>${esc(s)}</th>`).join('')}</tr></thead><tbody>${L.map(z=>`<tr>${S_.map((s,j)=>`<td>${nl(z[j]??'')}</td>`).join('')}</tr>`).join('')}</tbody></table>`;break}
       default:if(pT(v))o+=h+`<p>${b.typ==='datum'?dAT(v):b.typ==='zahl'?fmtQ(v)+' '+esc(b.einh||''):nl(v)}</p>`}}
-  const sb=protSigB(p);if(sb&&protFest(p))o+=sigBlock(p,protRollen(sb).map((r,i)=>['r'+i,r]));
+  const sb=protSigAn(p);if(sb&&protFest(p))o+=sigBlock(p,protRollen(sb).map((r,i)=>['r'+i,r]));
   const alt=ROOT.prot(p.fassungZu),neu=protNeuer(p);
   if(alt)o+=`<p class="hint">Neue Fassung von ${esc(protKz(alt))} vom ${dAT(alt.datum)}</p>`;if(neu.length)o+=`<p class="hint">Ersetzt durch ${neu.map(x=>esc(protKz(x))).join(', ')}</p>`;
   return o}
-const protInnen=p=>`<div class="doc btbp btbd prd">${briefkopf(S().firma)}<h3 style="margin:4mm 0 2mm">${esc(protTitel(p))} ${esc(protKz(p))}${protFest(p)?'':' – Entwurf'}</h3>${protDoc(p)}</div>`;
+const protStil=p=>p.stil||(p.vorlageId==='std-bp'?'bp':''); // farbiges Layout nur Besprechungsprotokoll (Vorlage mit stil:'bp')
+const protInnen=p=>`<div class="doc btbp btbd prd${protStil(p)==='bp'?' bp':''}">${briefkopf(S().firma)}<h3 class="prtit" style="margin:4mm 0 2mm">${esc(protTitel(p))} ${esc(protKz(p))}${protFest(p)?'':' – Entwurf'}</h3>${protDoc(p)}${fusszeile(fussZeilen(S().firma))}</div>`;
 const protBlatt=p=>`<div class="blatt">${protInnen(p)}</div>`;
 function protAnsicht(p,fest){if(fest)return protBlatt(p);const ans=ansicht();
   return`<div class="bar" style="margin:0 0 10px"><span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span></div>`
     +(ans==='beides'?`<div class="split"><div>${protEditor(p)}</div><div class="sticky">${protBlatt(p)}</div></div>`:ans==='vorschau'?protBlatt(p):protEditor(p))}
-function protKnoepfe(p){const sb=protSigB(p),R=sb?protRollen(sb):[],sig=erw('unterschrift'),k=[];
+function protKnoepfe(p){const sb=protSigAn(p),R=sb?protRollen(sb):[],sig=erw('unterschrift'),k=[];
   if(!protFest(p))k.push(`<button class="p" data-act="protab" data-id="${p.id}">Abschließen</button>`);
   else{if(!p.gesperrt)k.push(`<button data-act="protauf" data-id="${p.id}">Wieder öffnen</button>`);
     if(sig)R.forEach((r,i)=>{if(!p.sig?.['r'+i])k.push(`<button class="${p.gesperrt?'':'p'}" data-act="protsig" data-id="${p.id}" data-i="${i}">✍ ${esc(r)}</button>`)});
     if(p.gesperrt&&!protNeuer(p).length)k.push(`<button data-act="protneuf" data-id="${p.id}">Neue Fassung …</button>`)}
+  if(erw('protDruck')&&protHatErl(p))k.push(`<label class="chk prerlk" title="Erledigte Themen und Einträge in Druck, PDF und Vorschau ausblenden; im Protokoll bleiben sie erhalten"><input type="checkbox" data-act="protdopt" data-id="${p.id}"${p.druckOpt?.ohneErl?' checked':''}> Erledigte ausblenden</label>`);
   if(erw('protDruck'))k.push(`<button data-act="protdruck" data-id="${p.id}">🖨 Drucken</button><button data-act="protpdf" data-id="${p.id}">${pdfL()}</button><button data-act="protmail" data-id="${p.id}">✉ Senden …</button>`);
   return k.join('')}
 V.protokoll=id=>{const p=ROOT.prot(id);if(!p)return'<p>Protokoll nicht gefunden.</p>';const fest=protFest(p),pr=prjVon(p.projektId),A=p.ausgaben||[],a=A[A.length-1];
@@ -7760,9 +7770,15 @@ V.projekt=id=>{const x=prjVon(id);if(!x)return'<p>Projekt nicht gefunden.</p>';c
   <p class="mut" style="margin:2px 0 10px"><a href="#/projekte">Projekte</a>${x.kontaktId?` › <a href="#/kontakt/${x.kontaktId}">${esc(kName(x.kontaktId))}</a>`:''}${A.map(a=>` · <a href="#/auftrag/${a}">Auftrag ${esc(auftragKurz(a))}</a>`).join('')}</p>
   ${bAbs('prj-stamm','Projekt',stamm,{zusatz:esc(x.nr||'')})}${bAbs('prj-bel','Belege',bel,{zusatz:B.length+''})}${btb}${protKarte({projektId:x.id,kontaktId:x.kontaktId})}`};
 // Unterschrift, PDF, E-Mail
-async function protBilder(p){const P=[...(p.bilder||[]).map(b=>b.pfad),...Object.values(p.sig||{}).map(s=>s?.pfad)].filter(Boolean);
+async function protBilder(p){const P=[...protFotosAlle(p).map(b=>b.pfad),...Object.values(p.sig||{}).map(s=>s?.pfad)].filter(Boolean);
   await Promise.all(P.map(async x=>{try{BURL[x]??=URL.createObjectURL(await bildBlob(x));const i=new Image();i.src=BURL[x];await i.decode()}catch(e){}}))}
 const protDruckHTML=p=>protInnen(p).replace(/<img data-bild="([^"]*)"/g,(m,x)=>{const u=BURL[x.replace(/&amp;/g,'&')];return u?`<img src="${u}"`:m}); // Bilder direkt (Druck und PDF warten nicht auf bilderLaden)
+// Druck mit Fußzeile auf jeder Seite wie bei Belegen (druckVorbereiten)
+function protDrucken(p){papierCSS();$('#print').innerHTML=`<table class="pgw"><tbody><tr><td>${protDruckHTML(p)}</td></tr></tbody><tfoot><tr><td><div class="pgf"></div></td></tr></tfoot></table>`;
+  const mb=!!navigator.userAgentData?.brands?.some(x=>x.brand==='Chromium'&&+x.version>=131);$('#print').classList.toggle('mb',mb);
+  const css=(ftZeilen($('#print'))||fussZeilen(S().firma)).join('\n').replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\A ');
+  ($('#pgfuss')||document.head.appendChild(Object.assign(document.createElement('style'),{id:'pgfuss'}))).textContent=mb?`@media print{@page{@bottom-left{content:"${css}";white-space:pre;text-align:center;font:7.5pt/1.3 Arial,sans-serif;color:#000;border-top:1mm solid #80704d;vertical-align:top;padding-top:1mm;width:173.5mm;margin-left:-2.2mm}}}`:'';
+  const alt=document.title;document.title=`${protTitel(p)} ${protKz(p)} ${dAT(p.datum)}`.replace(/[\\/:*?"<>|]/g,'-');DRUCK={h:location.hash,an:1};setTimeout(()=>{window.print();document.title=alt;if(DRUCK)DRUCK.an=0},50)}
 const protName=p=>`${protTitel(p)}-${protKz(p)}${p.kontaktId?'-'+kName(p.kontaktId):''}`.replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_')+'.pdf';
 async function protPDF(p){await protBilder(p);return pdfAusBeleg(p,{html:protDruckHTML(p),brk:'.prd>p,.prd>h3,.prd tr,.prd figure,.prd .sigb',
   info:{titel:`${protTitel(p)} ${protKz(p)}${protFest(p)?'':' Entwurf'}${p.kontaktId?' '+kName(p.kontaktId):''}`,autor:S().firma?.name||'',betreff:`${protTitel(p)} ${protKz(p)}${p.titel?' – '+p.titel:''}`}})}
@@ -7789,12 +7805,12 @@ async function protMail(p){const f=S().firma,od=STORE.art==='od',an=[...new Set(
   saveState('');if(!r.ok){const j=await r.json().catch(()=>({}));alert('Senden fehlgeschlagen:\n'+(j.error?.message||r.status));return}
   protAusgabe(p,'mail',A.join(', '));alert(`Gesendet an ${A.join(', ')}.`);render()}
 async function protDatei(bl,name){if(pdfTeilenOk())return pdfTeilen(new File([bl],name,{type:'application/pdf'}));const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);return true}
-async function protFotos(p,files){let n=0;saveState('Fotos werden gespeichert …');
+async function protFotos(p,files,z='bilder'){let n=0;saveState('Fotos werden gespeichert …');
   for(const f of files){if(!/^image\//.test(f.type))continue;let mini;try{mini=await bildMini(f)}catch(e){alert(`${f.name}: Das Bild kann nicht gelesen werden.\n${e.message}`);continue}
     const id=uid(),o=protOrdner(p),g=await bildVerkleinern(f),pfad=`${o}/${id}.${/png$/i.test(g.type)?'png':'jpg'}`;await ablegen(`${o}/${id}_v.jpg`,mini);await ablegen(pfad,g);
-    (p.bilder||(p.bilder=[])).push({id,mini:`${o}/${id}_v.jpg`,pfad,text:'',zeit:new Date(f.lastModified||Date.now()).toISOString()});n++}
+    let B=getP(p,z);if(!Array.isArray(B)){setP(p,z,[]);B=getP(p,z)}B.push({id,mini:`${o}/${id}_v.jpg`,pfad,text:'',zeit:new Date(f.lastModified||Date.now()).toISOString()});n++}
   saveState('');if(n){log('Protokoll Fotos',`${protKz(p)}: ${n}`);commit()}render()}
-document.addEventListener('change',e=>{const id=e.target.dataset?.protfoto;if(id==null)return;const p=ROOT.prot(id),f=[...e.target.files];e.target.value='';if(p&&!protFest(p)&&f.length)protFotos(p,f)});
+document.addEventListener('change',e=>{const id=e.target.dataset?.protfoto;if(id==null)return;const p=ROOT.prot(id),f=[...e.target.files];e.target.value='';if(p&&!protFest(p)&&f.length)protFotos(p,f,e.target.dataset.z||'bilder')});
 document.addEventListener('change',e=>{const d=e.target.dataset||{};if(!d.r?.startsWith('prot|')||d.f!=='kontaktId')return; // nach dem Pfad-Setter: Projekt eines anderen Kunden lösen
   const p=ROOT.prot(d.r.slice(5)),x=p&&prjVon(p.projektId);if(x&&x.kontaktId&&x.kontaktId!==p.kontaktId&&!protFest(p)){p.projektId='';persist();render()}});
 Object.assign(ACT,{
@@ -7815,7 +7831,7 @@ Object.assign(ACT,{
     const f=[!p.datum&&'Datum',...(p.bs||[]).filter(b=>b.pflicht&&protLeer(p,b)).map(b=>b.l)].filter(Boolean);if(f.length){alert('Bitte ausfüllen: '+f.join(', '));return}
     p.abgeschlossen=new Date().toISOString();log('Protokoll abgeschlossen',protKz(p));await commit();render()},
   protauf:async el=>{const p=ROOT.prot(el.dataset.id);if(!p||p.gesperrt)return;delete p.abgeschlossen;log('Protokoll wieder geöffnet',protKz(p));await commit();render()},
-  protsig:async el=>{const p=ROOT.prot(el.dataset.id),i=+el.dataset.i,k='r'+i;if(!p||!erw('unterschrift')||!p.abgeschlossen&&!p.gesperrt||p.sig?.[k])return;const R=protRollen(protSigB(p)||{}),erst=!p.gesperrt;if(!R[i])return;
+  protsig:async el=>{const p=ROOT.prot(el.dataset.id),i=+el.dataset.i,k='r'+i;if(!p||!protSigAn(p)||!erw('unterschrift')||!p.abgeschlossen&&!p.gesperrt||p.sig?.[k])return;const R=protRollen(protSigB(p)||{}),erst=!p.gesperrt;if(!R[i])return;
     const t=protTn(p).find(x=>pT(x.fkt).toLowerCase()===R[i].toLowerCase()),e=await sigPop(`Unterschrift ${R[i]}`,{name:i===0?p.verfasser||S().bearbeiter||'':t?.name||(R[i]==='Auftraggeber'?persName(kontakt(p.kontaktId)):''),ohne:!erst,
       hinweis:erst?'Mit der ersten Unterschrift wird das Protokoll gesperrt: Inhalt und Fotos sind danach nicht mehr änderbar (Korrektur nur als neue Fassung).':`Bestätigt ${protTitel(p)} ${protKz(p)} vom ${dAT(p.datum)}. Der Inhalt bleibt unverändert.`});
     if(!e||p.sig?.[k])return;const s=await sigAblegen(protOrdner(p),'r'+i,e);p.sig={...p.sig,[k]:s};if(!p.gesperrt)await sperren(p);
@@ -7824,10 +7840,13 @@ Object.assign(ACT,{
     const c=JSON.parse(JSON.stringify(p));for(const k of['abgeschlossen','gesperrt','hash','sig','ausgaben'])delete c[k];
     const n={...c,id:uid(),rev:Math.max(0,...prL().filter(x=>x.nr===p.nr&&x.kz===p.kz).map(x=>+x.rev||0))+1,fassungZu:p.id,erstellt:new Date().toISOString()};
     DB.protokolle.push(n);log('Protokoll neue Fassung',`${protKz(n)} zu ${protKz(p)}`);persist();go('protokoll/'+n.id)},
-  protbild:el=>{const b=ROOT.prot(el.dataset.id)?.bilder?.[+el.dataset.i];if(!b)return;const d=document.createElement('div');d.className='modal btblb';d.innerHTML=`<div class="mbox"><img alt=""><p class="mut">${esc(b.text||'')} ${dtAT(b.zeit)}</p><div class="bar" style="margin:8px 0 0"><span class="sp"></span><button class="p">Schließen</button></div></div>`;
+  protbild:el=>{const p=ROOT.prot(el.dataset.id),b=p&&getP(p,el.dataset.z||'bilder')?.[+el.dataset.i];if(!b)return;const d=document.createElement('div');d.className='modal btblb';d.innerHTML=`<div class="mbox"><img alt=""><p class="mut">${esc(b.text||'')} ${dtAT(b.zeit)}</p><div class="bar" style="margin:8px 0 0"><span class="sp"></span><button class="p">Schließen</button></div></div>`;
     document.body.appendChild(d);d.onclick=e=>{if(e.target===d||e.target.tagName==='BUTTON')d.remove()};bildBlob(b.pfad).then(x=>{d.querySelector('img').src=BURL[b.pfad]??=URL.createObjectURL(x)}).catch(()=>{d.querySelector('img').replaceWith('Bild nicht verfügbar (Ablage nicht erreichbar)')})},
   protdruck:async el=>{const p=ROOT.prot(el.dataset.id);if(!p)return;document.activeElement?.blur?.();saveState('Druck wird vorbereitet …');await protBilder(p);saveState('');
-    druckHTML(protDruckHTML(p),`${protTitel(p)} ${protKz(p)} ${dAT(p.datum)}`);protAusgabe(p,'druck')},
+    protDrucken(p);protAusgabe(p,'druck')},
+  protjetzt:el=>{const p=ROOT.prot(el.dataset.id);if(!p||protFest(p))return;const d=new Date();p[el.dataset.f]=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');persist();render()},
+  protsigaus:el=>{const p=ROOT.prot(el.dataset.id);if(!p||protFest(p))return;if(p.ohneSig)delete p.ohneSig;else p.ohneSig=true;persist();render()},
+  protdopt:el=>{const p=ROOT.prot(el.dataset.id);if(!p)return;const o={...p.druckOpt};if(o.ohneErl)delete o.ohneErl;else o.ohneErl=true;if(Object.keys(o).length)p.druckOpt=o;else delete p.druckOpt;persist();render()},
   protpdf:async el=>{const p=ROOT.prot(el.dataset.id);if(!p)return;saveState('PDF wird erstellt …');let bl;try{bl=await protPDF(p)}finally{saveState('')}if(await protDatei(bl,protName(p))!==false)protAusgabe(p,'pdf')},
   protmail:el=>{const p=ROOT.prot(el.dataset.id);if(p)protMail(p).catch(e=>{saveState('');alert('Senden fehlgeschlagen:\n'+e.message)})},
   pvneu:()=>{const v={id:uid(),name:'Neue Vorlage',kz:'PR',bs:[{id:uid(),typ:'text',l:'Feststellungen'}]};(DB.protvorlagen||(DB.protvorlagen=[])).push(v);log('Protokollvorlage angelegt',v.name);persist();go('protvorlage/'+v.id)},
@@ -7856,7 +7875,15 @@ SU_G.push(['prot','Protokolle'],['prj','Projekte']); // Globale Suche (P20)
 .pvz{align-items:flex-end}.pvt{flex:0 0 150px;font-size:12px;color:var(--mut);align-self:center}.pvk{display:flex;gap:4px;align-self:end}
 .prd .prh{font-size:16px;border-bottom:1px solid var(--line);padding-bottom:3px}.prd .prpt td:first-child{width:28px}.prd .prpt td:nth-child(3){width:80px}.prd .prpt td:nth-child(4){width:110px}.prd .prpt td:nth-child(5){width:70px}
 .prd>p,.btbd.prd p{margin:4px 0 8px;line-height:1.45}
-@media(max-width:760px){.pvt{flex-basis:100%}.prnr{min-width:0}}
+@media(max-width:760px){.pvt{flex-basis:100%}.prnr{min-width:0}.prsub{margin-left:8px}.prsubk{margin-left:8px}}
+.prth{border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin:0 0 8px}.prsub{margin:6px 0 0 26px;padding-left:8px;border-left:3px solid #d8cfbd}.prsubk{margin:4px 0 0 26px}.prerl textarea,.prerl input:not([type=checkbox]){color:var(--mut)}
+.prfo{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;flex-basis:100%;margin:4px 0 0}.prfo .btbbi{width:120px}.prfo .btbbi img{height:72px;width:100%;object-fit:cover}.prfo label.btn{padding:4px 10px}.prjt{display:flex;align-items:flex-end;gap:4px}.prerlk{margin:0 4px;white-space:nowrap}
+.prd .prbb{display:flex;flex-wrap:wrap;gap:6px}.prd .prbb figure{margin:0;width:48mm;break-inside:avoid}.prd .prbb img{width:100%;max-height:36mm;object-fit:contain;background:#f4f5f7}.prd .prbb figcaption{font-size:9px;color:#666}
+.prd .prs td:nth-child(2){padding-left:5mm}.prd .prs td:first-child{color:#777}.prd .prpt td:nth-child(5),.prd .prpt td:nth-child(6){width:70px;white-space:nowrap}.prd .pa{font-weight:600}.prd .perl{color:#2e7d32;font-weight:600}
+.prd.bp{-webkit-print-color-adjust:exact;print-color-adjust:exact}.prd.bp .prtit{color:#3d3528;font-size:16px;border-bottom:.8mm solid #80704d;padding-bottom:1.5mm}
+.prd.bp h3:not(.prtit){background:#f3efe6;border-left:1.2mm solid #80704d;color:#3d3528;padding:1.2mm 2.5mm;margin:5mm 0 2mm;font-size:13px}
+.prd.bp .btbk th{background:#faf8f3;color:#6b5f45}.prd.bp .btbt thead th{background:#ece6d8;color:#3d3528;font-weight:600;border-bottom:.4mm solid #80704d}
+.prd.bp .prt td{border-top:.3mm solid #cfc6b2}.prd.bp .prs td,.prd.bp .prbz td{background:#fcfbf8}.prd.bp .pa-A{color:#a3570c}.prd.bp .pa-B{color:#1f4f99}.prd.bp .pa-I{color:#6b7280}
 @media print{.prd h3{break-after:avoid}.prd tr,.prd figure,.prd .sigb{break-inside:avoid}}`;document.head.appendChild(st)}
 /* Seitenleiste aufräumen (P44 C, erw.navKlapp): Gruppenüberschriften (nav .grp) klappen wie in Outlook (◢/▷, Zustand je Gerät erp-navzu = Gruppennamen); „⚙ Seitenleiste anpassen …“
    (ACT.navanp) blendet einzelne Einträge aus (erp-navaus = data-n); der geöffnete Eintrag bleibt immer sichtbar, Export und Einstellungen klappen nicht mit. navKlapp() nach jedem render() */

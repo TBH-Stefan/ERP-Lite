@@ -23,7 +23,7 @@ Auf GitHub laufen die Tests bei jedem Pull Request auf `main` (`.github/workflow
 | `act.spec.js` / `act-duplikate.js` | Keine doppelten Schlüssel in `ACT`, `ACT_LV`, `ACT_LB`, `ACT_FB`, `ACT_KBW`, `MENUE`, `LIVE`, `FILTER`, `KM`, `V` – auch nicht über `Object.assign(ACT,…)` und `...ACT_KBW`. Erweiterungen eines Eintrags (`const m0=MENUE.beleg;MENUE.beleg=…m0(el)…`) gelten nicht als Duplikat. |
 | `schalter.spec.js` | Alle Erweiterungen aus → `#main` aller Ansichten (Belege in Eingabe, Vorschau und „Beides“), `docHTML` (Druck und Editor) und PDF (Inhalt und Datei-Info) gleich wie im Ausgangsstand `BASIS` (Vorgabe `origin/main`, im Pull Request die Spitze von `main`). Die Karte „Erweiterungen“ in den Einstellungen und Leerraum ohne Wirkung auf die Darstellung zählen nicht. Beabsichtigte Unterschiede: `erlaubte-abweichungen.json`. |
 | `fest.spec.js` | Festgeschriebene Belege: Druck, PDF (Inhalt und Datei-Info) und Summen bleiben nach Änderung von Firma, Bearbeiter, Steuersätzen, Texten, Druckprofilen, Kontakten, Artikeln und Tarifen gleich; Nummernkreise lückenlos (auch nach weiterem Festschreiben und „Zurück“); Rechnungsarten ohne Eingabefelder. |
-| `ansichten.spec.js` | Jede Ansicht ohne Konsolenfehler, nicht leer und ohne waagrechten Überlauf, mit Standard-Schaltern und mit allen aus. |
+| `ansichten.spec.js` | Jede Ansicht ohne Konsolenfehler, nicht leer und ohne waagrechten Überlauf, mit Standard-Schaltern und mit allen aus. Dazu: kein Text läuft aus Knöpfen, Kacheln (`.sfb`), Karten (`.kk`) und Segmenten, mit allen Schaltern ein (auch `#/schnell`). |
 
 Der Vergleich mit dem Ausgangsstand setzt dieselben Testdaten in beide Fassungen; die Daten erzeugt der aktuelle Stand
 (`vorbereiten.js`, Ergebnis in `.tmp/`). Gegen weit zurückliegende Stände gibt es daher erwartete Unterschiede (z. B. Felder
@@ -34,3 +34,11 @@ wie die Preiseinheit, die die alte Fassung nicht kennt, oder Entscheidungen „S
 - Neue Ansicht oder Belegart: in `hilfe.js` → `ansichten()` bzw. in `testdaten.js` ergänzen.
 - Neue Funktion hinter einem Schalter: nichts zu tun – `schalter.spec.js` prüft automatisch, dass sie ausgeschaltet nichts ändert.
 - Keine echten Firmen- oder Kundendaten in `testdaten.js`.
+
+## Gesamtprüfung mit Demo-Daten (von Hand)
+
+`demodaten.js` ergänzt `testdaten.js` um alle Bereiche (Belegkette AN → AB → LS → RE mit Zahlung, AR/TR/SR/PR, Storno, BE → WE mit Lieferterminen,
+Personal, Zeiten, Bautages- und Regiebericht, laufende Kosten, Fibu, LV, Lager). `node pruefen-alles.js [matrix|klick|funktion|alle] [desktop|handy]`
+prüft damit jede Ansicht mit jedem Schalter einzeln, klickt jeden Knopf und Menüeintrag (Daten danach zurückgesetzt) und ruft Kernfunktionen auf;
+Ergebnis in `.tmp/pruefung-*.json`, Demo-Datei `.tmp/demo-daten.json` (laden über Export → „Daten importieren“, nur im Modus „Nur im Browser testen“).
+Dauert je Gerät rund eine Stunde (`KONF=std|alle` für die Klickprüfung getrennt, `PPORT` für parallele Läufe, `PW_EXE` = Pfad zu Chromium).

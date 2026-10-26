@@ -722,28 +722,28 @@ const ERW=[
   {k:'ekRechnen',std:true,p:'Stammdaten (P31)',l:'Listenpreis, Rabatt und EK: zwei Werte ergeben den dritten',info:'In „Neuer Artikel“, im Artikel-Pop-up einer Position (✎) und in der Lieferantenliste eines Artikels: Listenpreis und Rabatt ergeben den EK, EK und Listenpreis den Rabatt, EK und Rabatt den Listenpreis. Neu berechnet wird jeweils das Feld, das am längsten nicht bearbeitet wurde. Wird zuerst nur der EK oder nur der Listenpreis eingetragen, gilt Listenpreis = EK und Rabatt 0 – so sind immer alle drei Felder ausgefüllt. Aus = wie bisher (nur im Artikel-Pop-up einer Position: Listenpreis/Rabatt → EK, EK → Rabatt).'},
   {k:'adrPruef',std:false,p:'Adressen (P41)',l:'Adresse prüfen: Straße, Hausnummer, PLZ und Ort (Kunden und Lieferanten)',info:'Beim Anlegen und Speichern in „Neuer Kunde“ / „Neuer Lieferant“ fragt das Programm einmal bei OpenStreetMap (Photon) nach, ob Straße mit Hausnummer, PLZ und Ort existieren. Bei einer Abweichung kommt eine Rückfrage (Vorschlag übernehmen bzw. trotzdem speichern), gesperrt wird nie. Im geöffneten Kontakt steht ein Hinweis unter der Adresse. Aus der Vorschlagsliste gewählte und unveränderte Adressen werden nicht erneut geprüft. Ohne Netz: „nicht geprüft“. Gesendet wird nur die Adresse.'},
   {k:'artBild',std:true,p:'Bilder (P24)',l:'Bild je Artikel',info:'Im Artikel (Karte „Bild“) und in „Neuer Artikel“ lässt sich ein Foto oder Bild einfügen, am Handy auch direkt mit der Kamera. Das Bild liegt als Datei in der Ablage unter „bilder/“ (OneDrive bzw. Ordner, im Test nur in diesem Browser) – als Vorschau mit höchstens 320 Pixeln und in voller Größe (große Bilder verkleinert); die Daten (erp-daten.json) enthalten nur den Dateinamen. Ein Klick auf die Vorschau öffnet das Bild. Belege und Ausdrucke bleiben unverändert (Bilder im Druck folgen mit P24). Aus = Karte und Feld ausgeblendet, gespeicherte Bilder bleiben erhalten.'},
-  {k:'abAbschluss',std:true,p:'Belegstatus (P32)',l:'Auftragsbestätigung nach der Ausgabe „abgeschlossen“',info:'Sobald eine festgeschriebene Auftragsbestätigung gedruckt, als PDF gespeichert oder per E-Mail versendet wird, steht ihr Status auf „abgeschlossen“ (nicht mehr unter „offen“). „Status wieder offen“ im Beleg nimmt das zurück, „Bearbeiten“ ebenfalls. Aus = Status wie bisher nach Lieferung und Rechnung (offen, teilweise, erledigt).'},
+  {k:'abAbschluss',std:true,p:'Belegstatus (P32)',l:'Auftragsbestätigung nach der Ausgabe „erledigt“',info:'Sobald eine abgeschlossene Auftragsbestätigung gedruckt, als PDF gespeichert oder per E-Mail versendet wird, steht ihr Status auf „erledigt“ (nicht mehr unter „offen“). „Status wieder offen“ im Beleg nimmt das zurück, „Bearbeiten“ ebenfalls. Aus = Status wie bisher nach Lieferung und Rechnung (offen, teilweise, erledigt).'},
   {k:'ihHover',std:true,p:'Bedienung (P33)',l:'Erläuterungen ⓘ beim Darüberfahren mit der Maus',info:'Am Bildschirm mit Maus erscheint die Erläuterung, solange der Mauszeiger auf dem ⓘ steht, als kleines Fenster – ohne Klick und ohne dass sich die Seite verschiebt. Am Handy und Tablet weiter durch Antippen. Aus = Aufklappen per Klick.'},
   {k:'scrollSperre',std:true,p:'Bedienung (P33)',l:'Bei offenem Pop-up nur im Pop-up scrollen',info:'Solange ein Pop-up offen ist, scrollen Mausrad und Wischen nur das Pop-up bzw. die Liste darin (z. B. Struktur-Auswahl, Menü), der Bildschirm dahinter bleibt stehen – auch am Ende der Liste. Aus = wie bisher.'},
   {k:'baumHover',std:true,p:'Bedienung (P33)',l:'Struktur-Auswahl wie im Explorer: nächste Ebene beim Darüberfahren',info:'In „Artikelgruppe wählen“ und „Lagerplatz wählen“ öffnet sich die nächste Ebene als weitere Spalte, sobald der Mauszeiger kurz auf einem Eintrag steht (wie im Windows-Explorer bzw. in iOS-Menüs). Klick markiert den Eintrag, Doppelklick übernimmt ihn. Am Handy und Tablet weiter durch Antippen. Aus = Ebene per Klick öffnen.'},
   {k:'kontext',std:true,p:'Bedienung (P33)',l:'Rechtsklick-Menüs',info:'Rechtsklick (am Handy langes Drücken) auf einen Beleg, Kontakt oder Artikel in Listen und Karten öffnet ein Menü mit passenden Aktionen (Öffnen, PDF speichern, Drucken, Senden, Duplizieren, Neuer Beleg, Bearbeiten, Löschen …), auf eine Position im Beleg das Positionsmenü, sonst im Beleg das Belegmenü. In Eingabefeldern, bei markiertem Text und mit gedrückter Umschalttaste erscheint das Menü des Browsers (Kopieren, Einfügen …).'},
   {k:'tarifPos',std:true,p:'Lohnstunden (P12)',l:'Stundentarif als Position wählen (Verkauf)',info:'In Angeboten, Auftragsbestätigungen, Rechnungen und den anderen Verkaufsbelegen fügt „+ Stundentarif …“ (am Bildschirm neben „+ Leistung“, im kompakten Beleg unter „+ Position ▾“) eine Leistung mit Kürzel, Bezeichnung, Einheit h, Verkaufspreis und Kostensatz des Tarifs ein (Kundenrabatt wie bei „+ Leistung“). Die Tarife stehen unter Einstellungen → Stundentarife.'},
-  {k:'snapshot',std:true,p:'Nachdruck (P0 c)',l:'Nachdruck wie das Original',info:'Beim Festschreiben werden Fußzeile, Ansprechperson, E-Mail, Telefon, Unterzeichner und die verwendeten Steuersätze im Beleg eingefroren. Nachdruck, PDF, Summen, FiBu und UVA festgeschriebener Belege verwenden diese Werte statt der aktuellen Einstellungen; Bestellungen drucken die Lieferanten-Art.-Nr. aus der Position bzw. aus dem Artikelstamm beim Festschreiben. Das Logo wird nicht eingefroren. Ältere Belege ohne eingefrorene Werte bleiben unverändert. Aus: wie bisher die aktuellen Einstellungen (eingefrorene Werte bleiben gespeichert). Fehlerbehebung, daher Standard ein.'},
+  {k:'snapshot',std:true,p:'Nachdruck (P0 c)',l:'Nachdruck wie das Original',info:'Beim Abschließen werden Fußzeile, Ansprechperson, E-Mail, Telefon, Unterzeichner und die verwendeten Steuersätze im Beleg eingefroren. Nachdruck, PDF, Summen, FiBu und UVA abgeschlossener Belege verwenden diese Werte statt der aktuellen Einstellungen; Bestellungen drucken die Lieferanten-Art.-Nr. aus der Position bzw. aus dem Artikelstamm beim Abschließen. Das Logo wird nicht eingefroren. Ältere Belege ohne eingefrorene Werte bleiben unverändert. Aus: wie bisher die aktuellen Einstellungen (eingefrorene Werte bleiben gespeichert). Fehlerbehebung, daher Standard ein.'},
   {k:'scanPE',std:true,p:'Einlesen (P14)',l:'Preiseinheit beim Einlesen prüfen',info:'Beim Einlesen von PDF-Text und Scans wird je Zeile Menge × Einzelpreis gegen den Gesamtpreis geprüft. Ergibt sich genau ein Faktor 10, 100 oder 1000 (±2 %), galt der Einzelpreis je 10/100/1000 Einheiten (z. B. Kabel „Preis/100“): er wird auf je Einheit umgerechnet; ohne Gesamtpreis gilt eine Spalte „PE“ bzw. der Spaltenkopf („Preis/100“). Im Abgleich ist die Umrechnung je Zeile markiert und abwählbar, der EK-Vorschlag für den Artikelstamm hat dann mehr Nachkommastellen (z. B. 0,4537 €/m). Zeilen, bei denen Menge × Einzelpreis nicht zum Gesamtpreis passt, werden markiert. E-Rechnungen sind nicht betroffen. Aus: wie bisher. Fehlerbehebung (sonst 100-fach zu hoher EK im Artikelstamm), daher Standard ein.'},
-  {k:'pe',std:true,p:'Preiseinheit (P14)',l:'Preiseinheit (Preis je 10, 100 oder 1000 Einheiten)',info:'Artikel und Positionen können einen Preis je 10, 100 oder 1000 Einheiten haben, z. B. Kabel 45,37 € je 100 m: Feld „Preiseinheit“ im Artikel, in „Neuer Artikel“, im Artikel-Pop-up (✎) und im Positions-Pop-up, im Beleg auch in der Auswahl „Einheit“ (Preis je …). Im Beleg werden Einzelpreis, Lohn / Sonstiges und EK dann je Preiseinheit eingegeben und angezeigt („je 100 m“), gerechnet wird Gesamtpreis = Menge × Einzelpreis ÷ 100. Eine neue Position übernimmt die Preiseinheit des Artikels, eingelesene Belege und E-Rechnungen die der Zeile. Wie gedruckt wird, legt das Druckprofil fest (Preiseinheit). Ohne eingetragene Preiseinheit ändert sich nichts. Aus: Felder ausgeblendet, Preise je Einheit; gespeicherte Preiseinheiten rechnen weiter (Gesamtpreise und festgeschriebene Belege bleiben gleich).'},
-  {k:'duplikat',std:true,p:'Duplikat (P0 n)',l:'Vermerk „DUPLIKAT“ bei erneuter Ausgabe von Rechnungen',info:'Druck, PDF und E-Mail-Versand festgeschriebener Rechnungen (auch Anzahlungs-, Teil-, Schlussrechnungen und Gutschriften) werden gezählt. Ab der zweiten Ausgabe fragt das Programm „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja), der Vermerk steht dann über dem Belegtitel; beim Druck über das Browsermenü wird ohne Rückfrage gekennzeichnet. Das erste Original bleibt unverändert. Gezählt wird nur bei eingeschaltetem Schalter (bei älteren Rechnungen zählen bereits per E-Mail versendete mit). Eine zweite gleichlautende Rechnung ohne Vermerk kann eine zusätzliche Steuerschuld auslösen (§ 11 Abs. 12 und 14 UStG).'},
+  {k:'pe',std:true,p:'Preiseinheit (P14)',l:'Preiseinheit (Preis je 10, 100 oder 1000 Einheiten)',info:'Artikel und Positionen können einen Preis je 10, 100 oder 1000 Einheiten haben, z. B. Kabel 45,37 € je 100 m: Feld „Preiseinheit“ im Artikel, in „Neuer Artikel“, im Artikel-Pop-up (✎) und im Positions-Pop-up, im Beleg auch in der Auswahl „Einheit“ (Preis je …). Im Beleg werden Einzelpreis, Lohn / Sonstiges und EK dann je Preiseinheit eingegeben und angezeigt („je 100 m“), gerechnet wird Gesamtpreis = Menge × Einzelpreis ÷ 100. Eine neue Position übernimmt die Preiseinheit des Artikels, eingelesene Belege und E-Rechnungen die der Zeile. Wie gedruckt wird, legt das Druckprofil fest (Preiseinheit). Ohne eingetragene Preiseinheit ändert sich nichts. Aus: Felder ausgeblendet, Preise je Einheit; gespeicherte Preiseinheiten rechnen weiter (Gesamtpreise und abgeschlossene Belege bleiben gleich).'},
+  {k:'duplikat',std:true,p:'Duplikat (P0 n)',l:'Vermerk „DUPLIKAT“ bei erneuter Ausgabe von Rechnungen',info:'Druck, PDF und E-Mail-Versand abgeschlossener Rechnungen (auch Anzahlungs-, Teil-, Schlussrechnungen und Gutschriften) werden gezählt. Ab der zweiten Ausgabe fragt das Programm „Als DUPLIKAT kennzeichnen?“ (vorbelegt Ja), der Vermerk steht dann über dem Belegtitel; beim Druck über das Browsermenü wird ohne Rückfrage gekennzeichnet. Das erste Original bleibt unverändert. Gezählt wird nur bei eingeschaltetem Schalter (bei älteren Rechnungen zählen bereits per E-Mail versendete mit). Eine zweite gleichlautende Rechnung ohne Vermerk kann eine zusätzliche Steuerschuld auslösen (§ 11 Abs. 12 und 14 UStG).'},
   {k:'zuletzt',std:true,p:'Navigation (P19)',l:'„Zuletzt geöffnet“ in Seitenleiste und Kopfzeile',info:'Merkt sich auf diesem Gerät die 12 zuletzt geöffneten Belege, Kontakte, Artikel, Aufträge, LVs und K-Blätter (im Browser nur interne Kennungen, keine Namen; nicht in den Daten, Öffnen ist keine Änderung). „🕘 Zuletzt“ in der Seitenleiste bzw. 🕘 in der Kopfzeile am Handy zeigt sie mit Belegart, Nummer, Kunde und Status; Gelöschtes wird übersprungen, „Liste leeren“ löscht die Liste. Reine Bedienhilfe, daher Standard ein. Aus: Knopf ausgeblendet, es wird nichts gemerkt.'},
   {k:'suche',std:true,p:'Suche (P20)',l:'Globale Suche (Strg+K)',info:'„🔍 Suchen …“ in der Seitenleiste, 🔍 in der Kopfzeile am Handy, Tastenkürzel Strg+K bzw. F3: ein Pop-up mit Eingabefeld oben durchsucht Belege (Nummer, Fremd-Nr., Betreff, Bezug, Kunde bzw. Lieferant, Positionstexte und Artikelnummern; Beträge wie „1.234,56“ finden Netto-, Brutto- bzw. Zahlbetrag), Kunden und Lieferanten (auch E-Mail, Telefon, UID, Person), Artikel (auch EAN und Lieferanten-Art.-Nr.), Aufträge, Leistungsverzeichnisse, K-Blätter, laufende Kosten und Textbausteine. Alle Suchwörter müssen vorkommen; Treffer nach Bereich gruppiert (je Bereich höchstens 15, „alle in Liste“ öffnet die Liste mit dieser Suche), ↑ ↓ wählen, Enter öffnet. Ohne Eingabe stehen die zuletzt geöffneten Einträge da. Nur Suche, keine Datenänderung. Aus: Knöpfe und Tastenkürzel ausgeblendet.'},
-  {k:'druckprofil',std:true,p:'Druckprofil (P1)',l:'Druckprofil je Belegart',info:'Darstellungsoptionen für Vorschau, Druck, PDF und E-Mail je Belegart (unten unter „Druck & Belegdarstellung“) und je Beleg über „Druckoptionen …“ (dort nur Abweichungen). Beim Festschreiben wird die Darstellung im Beleg eingefroren, ein Nachdruck sieht wie das Original aus; „Bearbeiten“ hebt das wieder auf. Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG). Aus: Entwürfe im Standard-Aussehen, festgeschriebene Belege weiter mit ihrem eingefrorenen Stand; alle Einstellungen bleiben gespeichert. Die Vorgaben entsprechen dem bisherigen Aussehen.'},
-  {k:'statuszeile',std:true,p:'Navigation (P19)',l:'Statuszeile unter dem Belegtitel',info:'Zeigt unter dem Titel eines Belegs den Pfad „Verkauf › Angebote“ (anklickbar, führt zur gefilterten Liste), das Belegdatum, den Kunden bzw. Lieferanten, den Nettobetrag (läuft bei Änderungen mit) und wann der Beleg angelegt bzw. festgeschrieben wurde (mit Uhrzeit). Reine Anzeige, daher Standard ein.'},
+  {k:'druckprofil',std:true,p:'Druckprofil (P1)',l:'Druckprofil je Belegart',info:'Darstellungsoptionen für Vorschau, Druck, PDF und E-Mail je Belegart (unten unter „Druck & Belegdarstellung“) und je Beleg über „Druckoptionen …“ (dort nur Abweichungen). Beim Abschließen wird die Darstellung im Beleg eingefroren, ein Nachdruck sieht wie das Original aus; „Bearbeiten“ hebt das wieder auf. Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG). Aus: Entwürfe im Standard-Aussehen, abgeschlossene Belege weiter mit ihrem eingefrorenen Stand; alle Einstellungen bleiben gespeichert. Die Vorgaben entsprechen dem bisherigen Aussehen.'},
+  {k:'statuszeile',std:true,p:'Navigation (P19)',l:'Statuszeile unter dem Belegtitel',info:'Zeigt unter dem Titel eines Belegs den Pfad „Verkauf › Angebote“ (anklickbar, führt zur gefilterten Liste), das Belegdatum, den Kunden bzw. Lieferanten, den Nettobetrag (läuft bei Änderungen mit) und wann der Beleg angelegt bzw. abgeschlossen wurde (mit Uhrzeit). Reine Anzeige, daher Standard ein.'},
   {k:'kopfFix',std:false,p:'Navigation (P19)',l:'Statuszeile beim Scrollen oben festhalten',info:'Die Statuszeile bleibt mit Nummer und Status beim Scrollen am oberen Rand stehen (am Handy unter der Kopfzeile). Standard aus, weil sie am Handy eine Zeile Platz kostet. Wirkt nur mit eingeschalteter Statuszeile.'},
   {k:'gliederung',std:true,p:'Gliederung (P18)',l:'Gliederung (Dokumentenübersicht) im Beleg',info:'Bei Belegen mit Gruppen oder mehr als 15 Positionen: Übersicht der Gruppen mit Nummer, Bezeichnung, Summe und Option/Alternative, darunter die Positionen mit Gesamtpreis; ein Klick springt zur Zeile in der Eingabe bzw. im Blatt der Vorschau und lässt sie kurz aufleuchten. Am Bildschirm als Karte rechts (Eingabe, Beides) bzw. als schmale Spalte links neben dem Blatt (Vorschau), am Handy über ≡ in der Leiste unten bzw. „Gliederung …“ im ⋯-Menü als Pop-up. Im Entwurf lässt sich eine ganze Gruppe mit ↑ ↓ verschieben, „+“ legt eine Position am Ende der Gruppe an. Gruppen sind auf- und zuklappbar (ab 30 Positionen anfangs zu; das Gerät merkt sich den Zustand). Reine Bedienhilfe, Belege und Ausdruck bleiben gleich (PDF-Lesezeichen wahlweise im Druckprofil). Aus: keine Übersicht.'},
   {k:'kompakt',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht (Handy und Bildschirm)',info:'Weniger Bedienelemente auf einmal: Seltenes liegt in Menüs (⋯, „+ Neu ▾“) und Pop-ups, Listen erscheinen am Handy als Karten, Filter in einem Pop-up, lange Abschnitte (z. B. Einstellungen) zum Auf- und Zuklappen, Erklärtexte hinter ⓘ. Dialoge öffnen am Handy als Blatt von unten, Titel und Knöpfe bleiben beim Scrollen sichtbar; Knöpfe und Felder sind am Handy und auf Tablets mindestens 40 px hoch. Welche Abschnitte offen sind, merkt sich das Gerät. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Entscheidung des Anwenders (09.10.2026), daher Standard ein. Aus: bisherige Darstellung.'},
   {k:'zuschlag',std:false,p:'Zuschlag je Position (P4)',l:'Rabattspalte im Editor als „Rabatt/Zuschlag“',info:'Ein für den Kunden sichtbarer Zuschlag je Position (z. B. Erschwernis, Kleinmenge, Nachtarbeit) wird als negativer Rabatt erfasst: −10 = 10 % Zuschlag. Summen, Folgebelege und Auswertungen rechnen damit unverändert. Mit diesem Schalter heißt die Spalte im Beleg-Editor „Rabatt/Zuschlag %“ mit diesem Hinweis, die Positionskarte zeigt „+ 10 % Zuschlag“. Wie Zuschläge gedruckt werden (negativ in der Rabattspalte, als „+10 %“ oder als Textzeile), legt das Druckprofil fest (Positionsdarstellung). Aus: Bezeichnung „Rabatt“ wie bisher.'},
-  {k:'kompaktBeleg',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht im Beleg-Editor',info:'Wirkt nur mit eingeschalteter kompakter Ansicht. Im Beleg stehen oben nur Eingabe | Vorschau, die Hauptaktion (z. B. Festschreiben, Zahlung erfassen, → Rechnung) und ⋯ mit allen weiteren Belegaktionen (PDF, Senden, Folgebeleg, Duplizieren, Revision, Löschen bzw. Stornieren …); Kopfdaten, Positionen und Zahlungen werden in Pop-ups bearbeitet, am Handy erscheinen die Positionen als Karten und Summe und Hauptaktion in einer Leiste am unteren Rand. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Aus: Beleg-Editor wie bisher (übrige kompakte Ansicht bleibt).'},
+  {k:'kompaktBeleg',std:true,p:'Ansicht (P30)',l:'Kompakte Ansicht im Beleg-Editor',info:'Wirkt nur mit eingeschalteter kompakter Ansicht. Im Beleg stehen oben nur Eingabe | Vorschau, die Hauptaktion (z. B. Abschließen, Zahlung erfassen, → Rechnung) und ⋯ mit allen weiteren Belegaktionen (PDF, Senden, Folgebeleg, Duplizieren, Revision, Löschen bzw. Stornieren …); Kopfdaten, Positionen und Zahlungen werden in Pop-ups bearbeitet, am Handy erscheinen die Positionen als Karten und Summe und Hauptaktion in einer Leiste am unteren Rand. Nur Bildschirmdarstellung: Belege, Ausdruck, PDF und Rechenwege bleiben gleich. Aus: Beleg-Editor wie bisher (übrige kompakte Ansicht bleibt).'},
   {k:'ios',std:true,p:'Ansicht (P30)',l:'iOS-Darstellung am Handy',info:'Wirkt nur mit eingeschalteter kompakter Ansicht und nur am Handy. Bedienung nach den Vorgaben von Apple: Systemschrift, Tippziele mindestens 44 pt, Pop-ups und Menüs als Blatt von unten mit Griff, Segmente wie in iOS (z. B. Art der Position: Ware | Leistung | …), Schalter statt Häkchen, Hintergrund bleibt beim offenen Pop-up stehen, durchscheinende Leisten. Sichere Bereiche (Notch, Home-Indikator) gelten immer. Aus: kompakte Ansicht ohne iOS-Gestaltung.'},
   {k:'gkalk',std:true,p:'Gesamtkalkulation (P10)',l:'Gesamtkalkulation: alle Preise eines Entwurfs auf einmal neu kalkulieren',info:'In Verkaufsbelegen (Entwurf) steht unter „Kalkulation DB II“ (am Handy im Summen-Pop-up) und im ⋯-Menü „Gesamtkalkulation …“: ein Pop-up mit EK/HK-GP, Aufschlag aktuell in % und €, VK-GP aktuell und „Aufschlag neu“ je Kostenart (Gesamt, Material, Fremdleistung, Lohn). Eingabe in % oder € bzw. VK-GP neu (Ziel-VK) für eine Kostenart, in der Zeile Gesamt für alle; „Ziel-DB II“ setzt den VK, der den Ziel-DB II erreicht, „→ auf Ziel anheben …“ öffnet das Pop-up damit. Verteilung proportional (alle Preise einer Kostenart mit demselben Faktor, die Preisverhältnisse bleiben; Standard) oder einheitlicher Aufschlag auf EK/HK der Position (Positionen ohne EK, negative und mit Rabatt ab 100 % bleiben unverändert und werden gemeldet); wahlweise mit Optionen/Alternativen und Rundung auf 0,05 bzw. 0,10. Vorher zeigt das Pop-up Netto, DB und DB II neu; Übernehmen ist ein Schritt (Strg+Z), danach steht das erreichte Netto da. Nur Entwürfe, der Artikelstamm bleibt unverändert; gedruckt werden nur die neuen Preise. Es kommt nur eine Schaltfläche dazu, daher Standard ein. Aus: Schaltflächen ausgeblendet.'},
-  {k:'gkMerken',std:true,p:'Gesamtkalkulation (P10)',l:'Preisanpassung für eine spätere Rücknahme merken',info:'Beim Übernehmen der Gesamtkalkulation merkt sich der Beleg die bisherigen Preise der geänderten Positionen (nur im Entwurf, Festschreiben löscht sie; eine neue Preisanpassung ersetzt sie). Unter „Kalkulation DB II“ steht dann „Letzte Preisanpassung vom … zurücknehmen …“: ganz oder teilweise je Position bzw. je Kostenart; seither von Hand geänderte Positionen sind markiert und nicht vorgewählt. Aus: es wird nichts gemerkt (Strg+Z bleibt möglich).'},
+  {k:'gkMerken',std:true,p:'Gesamtkalkulation (P10)',l:'Preisanpassung für eine spätere Rücknahme merken',info:'Beim Übernehmen der Gesamtkalkulation merkt sich der Beleg die bisherigen Preise der geänderten Positionen (nur im Entwurf, Abschließen löscht sie; eine neue Preisanpassung ersetzt sie). Unter „Kalkulation DB II“ steht dann „Letzte Preisanpassung vom … zurücknehmen …“: ganz oder teilweise je Position bzw. je Kostenart; seither von Hand geänderte Positionen sind markiert und nicht vorgewählt. Aus: es wird nichts gemerkt (Strg+Z bleibt möglich).'},
   {k:'dbStd',std:false,p:'Lohnstunden (P12)',l:'DB II je Lohnstunde mit Ampel (Mindest- und Kalk.-DB/Std)',info:'Lohnstunden = Positionen der Art „Leistung“ mit Einheit h (Std., min umgerechnet), ohne Optionen/Alternativen. Die Karte „Kalkulation DB II“ (am Handy im Summen-Pop-up) zeigt dann „Lohnstunden“ und „DB II je Lohnstunde“ (DB II ÷ Stunden), die Gesamtkalkulation den Wert aktuell und neu, der Auftrag Vor- und Ist-Wert (Ist: erfasste Stunden), die Auftragsliste wahlweise die Spalten „Vorkalk. DB II/Std“ und „Ist-DB II/Std“. Ampel: grün ab dem Kalk.-DB/Std, gelb ab dem Mindest-DB/Std, sonst rot (beide in Einstellungen → Kaufmännisch, 0 = aus; Vorschlag für den Kalk.-Wert: Verkauf − Kostensatz des Haupttarifs). Die Stundentarife zeigen zusätzlich Aufschlag und DB je Stunde. Nur Anzeige, Belege und Druck bleiben gleich. Aus: wie bisher.'},
   {k:'gkLohn',std:true,p:'Lohnstunden (P12)',l:'Lohnkalkulation je Tarif in der Gesamtkalkulation',info:'Wirkt nur im Pop-up „Gesamtkalkulation“ (sofern der Beleg Stundenpositionen hat): je Stundentarif EK/Std, Aufschlag und VK/Std laut Stamm, VK/Std im Beleg, Zeit und VK-GP Lohn; eine eigene Zeile „enthaltene Lohnpauschale(n)“ für Lohn ohne Stundenbezug. „VK/Std neu“ bzw. „Aufschlag neu %“ (auf den EK je Stunde) setzt bei allen Positionen dieses Tarifs (Art Leistung, Einheit h; Zuordnung über das Tarifkürzel als Art.-Nr.) den EP bzw. bei Lohn / Sonstiges den Lohn-EP; Positionen in Pauschalgruppen bleiben. Wahlweise werden die neuen Sätze auch in die Stundentarife übernommen (bereits erfasste Zeiten bleiben unverändert). Aus: Abschnitt ausgeblendet.'},
   {k:'k3Tarif',std:true,p:'Lohnstunden (P12)',l:'K3-Blatt: „als Stundentarif übernehmen …“',info:'Im K3-Blatt eigener K-Blätter (ÖNORM B 2061) übernimmt der Knopf die Lohnkosten je Stunde als Kostensatz und den Mittellohnpreis als Verkauf in einen bestehenden oder neuen Stundentarif. Bereits erfasste Zeiten behalten ihre Sätze. Es kommt nur eine Schaltfläche dazu. Aus: Knopf ausgeblendet.'},
@@ -895,7 +895,7 @@ function aenderungText(a,b){
   return'Änderung'}
 // Festgeschriebene Belege und Nummernkreise dürfen nicht zurückgedreht werden
 function undoSperre(alt){const A=new Map((alt.belege||[]).map(b=>[b.id,b]));
-  for(const b of DB.belege)if(b.fest){const o=A.get(b.id);if(!o||!o.fest)return`${bNr(b)} wurde inzwischen festgeschrieben – Korrektur nur per Storno/Gutschrift.`}
+  for(const b of DB.belege)if(b.fest){const o=A.get(b.id);if(!o||!o.fest)return`${bNr(b)} wurde inzwischen abgeschlossen – Korrektur nur per Storno/Gutschrift.`}
   if(JSON.stringify(alt.settings?.nk)!==JSON.stringify(S().nk))return'Seither wurde eine Belegnummer vergeben (Nummernkreise bleiben lückenlos).';
   {const u=sigUndo(alt);if(u)return u} // Unterschriften und Sperren (P36 a) bleiben
   return''}
@@ -946,7 +946,7 @@ function cacheLaden(){try{const t=localStorage.getItem('erp-lite-cache');return 
 window.addEventListener('beforeunload',e=>{if(DIRTY||pending){e.preventDefault();e.returnValue=''}});
 
 /* ---------- Anmeldung Microsoft 365 (OAuth 2.0 Code-Flow mit PKCE, ohne Fremdbibliothek) ---------- */
-const SCOPES='openid profile offline_access User.Read Files.ReadWrite';
+const SCOPES='openid profile offline_access User.Read Files.ReadWrite'+(lsGet('erp-odShareUrl')?' Files.ReadWrite.All':''); // freigegebener Ordner (P52 Etappe 4)
 const odCfg=()=>({clientId:CONFIG.clientId||lsGet('erp-cid')||'',tenant:CONFIG.tenantId||lsGet('erp-tid')||'organizations',ordner:CONFIG.ordner||'ERP-Lite'});
 const redirectUri=()=>location.origin+location.pathname.replace(/index\.html$/,'');
 const b64u=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -1051,7 +1051,7 @@ async function graph(path,opt={},nochmal=true){
   if(r.status===401&&nochmal){const x=AUTH.tok();if(x)AUTH.setTok({...x,exp:0});return graph(path,opt,false)}
   return r;
 }
-const odPath=p=>'/me/drive/root:/'+[odCfg().ordner,...p.split('/')].map(encodeURIComponent).join('/');
+const odPath=p=>{const s=odShare();return s?`/drives/${s.d}/items/${s.i}:/`+p.split('/').filter(Boolean).map(encodeURIComponent).join('/'):'/me/drive/root:/'+[odCfg().ordner,...p.split('/')].map(encodeURIComponent).join('/')}; // s: freigegebener Ordner (P52 Etappe 4)
 
 /* ---------- Speicherorte: OneDrive / lokaler Ordner / nur Browser ---------- */
 const ODSTORE={
@@ -1193,7 +1193,7 @@ async function sichPop(){
   if(STORE.art==='cache'){alert('Im Modus „nur Browser“ gibt es keine Sicherungen.');return}
   let L;try{L=[...(await STORE.list('backup')).map(f=>({...f,p:'backup/'+f.name})),...(await STORE.list('backup/konflikte')).map(f=>({...f,p:'backup/konflikte/'+f.name}))]}catch(e){alert('Sicherungen konnten nicht gelesen werden:\n'+e.message);return}
   L.sort((a,b)=>b.ts.localeCompare(a.ts));const sum=L.reduce((a,f)=>a+f.size,0);
-  sichModal('Sicherungen',`<p class="mut" style="margin-top:0">${L.length} Datei(en), zusammen ${kbT(sum)} · Ordner <b>backup</b> im Speicherort. Beim Wiederherstellen bleiben festgeschriebene Belege, Nummernkreise und Buchungen des aktuellen Stands erhalten; der aktuelle Stand wird vorher gesichert.</p>
+  sichModal('Sicherungen',`<p class="mut" style="margin-top:0">${L.length} Datei(en), zusammen ${kbT(sum)} · Ordner <b>backup</b> im Speicherort. Beim Wiederherstellen bleiben abgeschlossene Belege, Nummernkreise und Buchungen des aktuellen Stands erhalten; der aktuelle Stand wird vorher gesichert.</p>
     <table><thead><tr><th>Datei</th><th>Art</th><th>Gespeichert</th><th class="n">Größe</th><th></th></tr></thead><tbody>${L.map(f=>`<tr><td>${esc(f.name)}</td><td>${SICH_ART(f.name)}</td><td style="white-space:nowrap">${new Date(f.ts).toLocaleString('de-AT',{dateStyle:'short',timeStyle:'short'})}</td><td class="n">${kbT(f.size)}</td>
       <td style="white-space:nowrap">${/^konflikt_/.test(f.name)?`<button class="s" data-act="kkopie" data-p="${esc(f.p)}">Ansehen …</button>`:/\.json(\.gz)?$/.test(f.name)&&!/^defekt_/.test(f.name)?`<button class="s" data-act="sichzur" data-p="${esc(f.p)}">Wiederherstellen …</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" class="mut">Noch keine Sicherungen.</td></tr>'}</tbody></table>`)}
 async function sichZurueck(p){
@@ -1201,7 +1201,7 @@ async function sichZurueck(p){
   // festgeschriebene Belege (mit Zahlungen, Storno), Lagerbuchungen dazu, Buchungen und Nummernkreise des aktuellen Stands bleiben (lückenlose Nummern, § 131 BAO)
   const fest=DB.belege.filter(b=>b.fest),fid=new Set(fest.map(b=>b.id)),neuF=fest.filter(b=>!d.belege.some(x=>x.id===b.id));
   if(!await dialog({titel:'Sicherung wiederherstellen',html:`<p style="margin-top:0"><b>${esc(p.split('/').pop())}</b><br>${d.belege.length} Belege, ${(d.kontakte||[]).length} Kontakte, ${(d.artikel||[]).length} Artikel (aktuell ${DB.belege.length} / ${DB.kontakte.length} / ${DB.artikel.length}).</p>
-    <div class="hint">Alle anderen Daten werden auf den Stand der Sicherung zurückgesetzt. Erhalten bleiben: ${fest.length} festgeschriebene Belege (davon ${neuF.length} nach der Sicherung festgeschrieben) mit Zahlungen und Lagerbuchungen, Buchungen der Finanzbuchhaltung, Nummernkreise. Der aktuelle Stand wird vorher unter backup/ gesichert.</div>`,ok:'Wiederherstellen',gefahr:true}))return;
+    <div class="hint">Alle anderen Daten werden auf den Stand der Sicherung zurückgesetzt. Erhalten bleiben: ${fest.length} abgeschlossene Belege (davon ${neuF.length} nach der Sicherung abgeschlossen) mit Zahlungen und Lagerbuchungen, Buchungen der Finanzbuchhaltung, Nummernkreise. Der aktuelle Stand wird vorher unter backup/ gesichert.</div>`,ok:'Wiederherstellen',gefahr:true}))return;
   if(!await vorSichern('vor-wiederherstellen'))return;
   for(const b of fest){const i=d.belege.findIndex(x=>x.id===b.id);if(i>=0)d.belege[i]=b;else d.belege.push(b)}
   d.lager=d.lager||[];{const ids=new Set(d.lager.map(e=>e.id));for(const e of DB.lager)if(!ids.has(e.id)&&fid.has(e.belegId))d.lager.push(e)}
@@ -1218,7 +1218,7 @@ async function kkPop(p){
     <table><tbody>${KKOPIE.liste.map((e,i)=>`<tr><td>${esc(PK[e.c]?.n||e.c)}</td><td>${esc(nm(e))}</td><td style="white-space:nowrap">${e.c==='settings'?'<span class="mut">nur zur Ansicht</span>':`<button class="s" data-act="kkueb" data-i="${i}">Übernehmen</button>`}</td></tr>`).join('')}</tbody></table>`)}
 function kkUebernehmen(i){const e=KKOPIE?.liste[i];if(!e)return;const L=DB[e.c];if(!Array.isArray(L)){alert('Nicht übernehmbar.');return}
   const x=JSON.parse(JSON.stringify(e.x)),j=L.findIndex(y=>y.id===x.id),cur=L[j];
-  if(e.c==='belege'&&cur?.fest&&!(x.fest&&x.nr===cur.nr)){alert('Der Beleg ist inzwischen festgeschrieben – diese Version kann nicht übernommen werden (§ 131 BAO).');return}
+  if(e.c==='belege'&&cur?.fest&&!(x.fest&&x.nr===cur.nr)){alert('Der Beleg ist inzwischen abgeschlossen – diese Version kann nicht übernommen werden (§ 131 BAO).');return}
   if(e.c==='belege'&&cur)x.ausgaben=Math.max(x.ausgaben||0,cur.ausgaben||0); // Ausgabezähler (DUPLIKAT) nie verkleinern
   if(!confirm('Aktuellen Datensatz durch die Version aus der Konfliktkopie ersetzen?'))return;
   if(j>=0)L[j]=x;else L.push(x);log('Konfliktkopie übernommen',`${e.c} ${x.nr||x.name||x.id}`);$('#sichm')?.remove();artDatalist();persist();render()}
@@ -1294,10 +1294,10 @@ setInterval(()=>{if(document.visibilityState==='visible')aktualisieren()},60000)
 /* Nummernvergabe nur mit aktuellem Stand (lückenlos, keine Doppelvergabe zwischen Geräten) */
 async function vorFest(){
   if(STORE.art!=='od')return true;
-  if(DIRTY){if(!confirm('Vor dem Festschreiben werden alle Änderungen gespeichert. Fortfahren?'))return false;await commit()}else await saveNow();
-  if(pending){alert('Festschreiben ist nur mit Internetverbindung möglich (lückenlose Nummernvergabe).\nDer Beleg bleibt als Entwurf gespeichert.');return false}
-  try{const m=await STORE.meta();if(m&&m.eTag!==STORE.etag){await zusammenfuehren();alert('Daten wurden vom anderen Gerät aktualisiert. Bitte erneut festschreiben.');return false}return true}
-  catch(e){alert('Festschreiben ist nur mit Internetverbindung möglich.');return false}
+  if(DIRTY){if(!confirm('Vor dem Abschließen werden alle Änderungen gespeichert. Fortfahren?'))return false;await commit()}else await saveNow();
+  if(pending){alert('Abschließen ist nur mit Internetverbindung möglich (lückenlose Nummernvergabe).\nDer Beleg bleibt als Entwurf gespeichert.');return false}
+  try{const m=await STORE.meta();if(m&&m.eTag!==STORE.etag){await zusammenfuehren();alert('Daten wurden vom anderen Gerät aktualisiert. Bitte erneut abschließen.');return false}return true}
+  catch(e){alert('Abschließen ist nur mit Internetverbindung möglich.');return false}
 }
 
 /* ---------- Start ---------- */
@@ -1312,7 +1312,7 @@ async function start(){
    erw.appOffline: Service Worker sw.js hält nur das Programm (index.html, Symbol) für den Start ohne Netz bereit, holt online immer zuerst die neueste Version; keine Daten.
    Ohne Netz gestartet (OFFSTART): Daten aus der Browser-Kopie, Speichern nur lokal (unsynced), mit Netz nachholen() = 3-Wege-Abgleich wie zusammenfuehren(), erst dann Hochladen mit eTag.
    erw.netStatus: Anzeige .netz vor #sync2/#savestate (Online, Abgleich …, Offline · Änderungen warten), Tippen gleicht ab */
-erwPlus({k:'appOffline',std:false,p:'App iPhone/iPad (P40)',l:'App: Start auch ohne Internet',info:'Die App vom Home-Bildschirm (bzw. die Seite im Browser) startet auch ohne Internetverbindung, z. B. im Keller oder auf der Baustelle. Gearbeitet wird dann mit den Daten auf diesem Gerät; sobald wieder Internet da ist, werden die Änderungen mit dem OneDrive abgeglichen. Festschreiben (Nummernvergabe) bleibt nur mit Internet möglich. Online lädt die App immer die neueste Programmversion.'},
+erwPlus({k:'appOffline',std:false,p:'App iPhone/iPad (P40)',l:'App: Start auch ohne Internet',info:'Die App vom Home-Bildschirm (bzw. die Seite im Browser) startet auch ohne Internetverbindung, z. B. im Keller oder auf der Baustelle. Gearbeitet wird dann mit den Daten auf diesem Gerät; sobald wieder Internet da ist, werden die Änderungen mit dem OneDrive abgeglichen. Abschließen (Nummernvergabe) bleibt nur mit Internet möglich. Online lädt die App immer die neueste Programmversion.'},
   {k:'netStatus',std:false,p:'App iPhone/iPad (P40)',l:'Online/Offline-Anzeige mit Abgleich',info:'Zeigt oben in der Kopfleiste (Handy) bzw. in der Seitenleiste (PC) an, ob eine Verbindung zum OneDrive besteht: grün = online, blau = Abgleich läuft, orange = offline (mit Hinweis, wenn Änderungen auf den Abgleich warten). Tippen gleicht sofort ab.'});
 var OFFSTART=false,NETZFEHL=false,NHL=false,SWZ=null;
 const appOffAn=()=>lsGet('erp-app')==='1'; // Schalter beim Start, bevor Daten geladen sind
@@ -1342,10 +1342,10 @@ function netzZeigen(){
   if(!L.length){for(const r of [$('#sync2'),$('#savestate')])if(r){const e=document.createElement('button');e.type='button';e.className='netz';e.dataset.act='netz';r.before(e)}L=document.querySelectorAll('button.netz')}
   const off=navigator.onLine===false||OFFSTART||NETZFEHL,sync=!off&&(pending||saving||NHL),k=off?'off':sync?'sync':'on',
     t=off?'Offline'+(pending?' · Änderungen warten':''):sync?'Abgleich …':'Online',h=off&&pending?'Offline<span class="nzx"> · Änderungen warten</span>':esc(t),
-    ti=off?'Keine Verbindung zum OneDrive. Änderungen bleiben auf diesem Gerät und werden abgeglichen, sobald wieder Internet da ist. Festschreiben erst wieder online.':'Verbunden mit dem OneDrive – tippen zum Abgleichen';
+    ti=off?'Keine Verbindung zum OneDrive. Änderungen bleiben auf diesem Gerät und werden abgeglichen, sobald wieder Internet da ist. Abschließen erst wieder online.':'Verbunden mit dem OneDrive – tippen zum Abgleichen';
   L.forEach(e=>{e.className='netz '+k;e.innerHTML=h;e.title=ti;e.setAttribute('aria-label',t)})}
 queueMicrotask(()=>Object.assign(ACT,{netz:()=>{
-  if(navigator.onLine===false){alert('Offline: keine Internetverbindung.\n\nDu kannst weiterarbeiten. Die Änderungen bleiben auf diesem Gerät und werden mit dem OneDrive abgeglichen, sobald wieder Internet da ist. Festschreiben ist erst dann wieder möglich.');return}
+  if(navigator.onLine===false){alert('Offline: keine Internetverbindung.\n\nDu kannst weiterarbeiten. Die Änderungen bleiben auf diesem Gerät und werden mit dem OneDrive abgeglichen, sobald wieder Internet da ist. Abschließen ist erst dann wieder möglich.');return}
   if(OFFSTART){if(DIRTY){alert('Bitte zuerst speichern, dann wird abgeglichen.');return}nachholen()}else if(pending)saveNow();else{NETZFEHL=false;aktualisieren().then(()=>saveState('Abgeglichen '+new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})))}}}));
 /* Zweiter Faktor (P37, erw.mfaPflicht, Standard aus): Microsoft trägt im Zugriffstoken unter „amr“ ein, wie angemeldet wurde ("pwd", "mfa").
    Mit Schalter lädt das Programm die Daten aus dem OneDrive nur, wenn die Anmeldung einen zweiten Faktor hatte (Authenticator, SMS …).
@@ -1381,10 +1381,10 @@ async function startScreen(){
   <h2>OneDrive (PC und Handy)</h2>
   <p>Anmeldung mit dem Microsoft-365-Konto des Unternehmens. Daten: <b>${esc(c.ordner)}/${FILE}</b> im OneDrive, tägliche Sicherung in <b>backup</b>.</p>
   ${CONFIG.clientId?'':`<div class="row"><label>Anwendungs-ID (Client)<input id="st-cid" value="${esc(lsGet('erp-cid')||'')}"></label><label>Verzeichnis-ID (Mandant)<input id="st-tid" value="${esc(lsGet('erp-tid')||'')}"></label></div>`}
-  <div class="bar"><button class="p" id="st-od">Mit Microsoft anmelden</button></div>
+  ${odShareFeld()}<div class="bar"><button class="p" id="st-od">Mit Microsoft anmelden</button></div>
   ${fs?`<h2 style="margin-top:18px">Lokaler Ordner (nur dieser PC)</h2><div class="bar">${h?`<button id="st-last">Ordner „${esc(h.name)}“ öffnen</button>`:''}<button id="st-pick">Datenordner wählen …</button></div>`:''}
   <div class="bar" style="margin-top:18px"><button id="st-cache">Nur im Browser testen</button></div></div>`;
-  $('#st-od').onclick=()=>{if(!CONFIG.clientId){lsSet('erp-cid',$('#st-cid').value.trim());lsSet('erp-tid',$('#st-tid').value.trim())}AUTH.login()};
+  $('#st-od').onclick=()=>{odShareMerk();if(!CONFIG.clientId){lsSet('erp-cid',$('#st-cid').value.trim());lsSet('erp-tid',$('#st-tid').value.trim())}AUTH.login()};
   if(h&&fs)$('#st-last').onclick=()=>verbinde(h);
   if(fs)$('#st-pick').onclick=async()=>{try{verbinde(await window.showDirectoryPicker({id:'erp-lite',mode:'readwrite'}))}catch(e){}};
   $('#st-cache').onclick=()=>{STORE=CACHESTORE;lsSet('erp-modus',null);laden(cacheLaden()||neueDB());saveNow()};
@@ -1512,7 +1512,7 @@ function statusTag(b){
   if(b.typ==='AN')return b.status==='angenommen'?tag('angenommen','ok'):b.status==='abgelehnt'?tag('abgelehnt','err'):(b.gueltigBis&&b.gueltigBis<isoD()?tag('abgelaufen','warn'):tag('offen','acc'));
   if(b.typ==='GS'&&beleg(b.vorgaengerId)&&T[beleg(b.vorgaengerId).typ].re)return tag('verrechnet','ok');
   if(T[b.typ].re){const o=offen(b);if(Math.abs(o)<0.005)return tag('bezahlt','ok');return faellig(b)<isoD()?tag('überfällig','err'):tag('offen','acc')}
-  if(abZu(b))return tag('abgeschlossen','ok'); // nach der Ausgabe (P32)
+  if(abZu(b))return tag('erledigt','ok'); // nach der Ausgabe (P32)
   if(['AB','BE'].includes(b.typ)){const e=erledigung(b);return e>=0.9999?tag('erledigt','ok'):e>0?tag('teilweise','warn'):tag('offen','acc')}
   return tag('gebucht','ok');
 }
@@ -1585,7 +1585,7 @@ function neuBeleg(typ,o={}){
 }
 function neuPos(o={}){return{id:uid(),art:'W',artikelId:'',nr:'',bez:'',text:'',menge:1,einheit:'Stk',faktor:1,ep:0,rabatt:0,ek:0,steuer:S().stdSteuer,kz:'',herkunftPosId:'',...o}}
 function folge(src,typ,extra={}){
-  if(!src.fest){alert('Bitte den Beleg zuerst festschreiben.');return null}
+  if(!src.fest){alert('Bitte den Beleg zuerst abschließen.');return null}
   const o={ltDruck:src.ltDruck!==false,optRabatt:!!src.optRabatt,optLS:!!src.optLS,auftragId:src.auftragId||'',vorgaengerId:src.id,betreff:src.betreff,bezug:`${T[src.typ].bez} ${src.nr} vom ${dAT(src.datum)}`,
     kontaktId:typ==='BE'?'':src.kontaktId,zahlungsziel:src.zahlungsziel,skonto:src.skonto,skontoTage:src.skontoTage,...(src.druck&&typ!=='BE'?{druck:{...src.druck}}:{}),...(src.anrede&&typ!=='BE'?{anrede:src.anrede}:{}),...extra}; // Druckabweichungen (P1) nicht auf die Bestellung an den Lieferanten
   if(typ==='BE'){o.zahlungsziel=S().zahlungsziel;o.skonto=0;o.skontoTage=0;o.betreff=src.betreff?'Projekt: '+src.betreff:''}
@@ -1622,7 +1622,7 @@ function folgeGo(src,typ){const b=folge(src,typ);if(b){log('Folgebeleg',`${T[typ
    lfPos(b) je Position (ohne Text/Gruppe/Option/Alternative): bestellt, geliefert (Wareneingänge bzw. Eingangsrechnung direkt aus der Bestellung, wie erledigung()), gestrichen, offen, offene Teilmengen mit Termin (bestätigt: Teilmenge → Position →
    Bestellung, sonst gewünscht = b.liefertermin; Lieferungen decken die früheste Teilmenge, gestrichen wird die späteste), termin = frühester offener, tage = Verzug, st = Status.
    „Restmenge streichen“: erledigung() (über lfErl) und Folgebelege BE → WE/ER rechnen mit Menge − gestrichen. Schalter aus: b.lief wird nicht gelesen (Termin = Liefertermin der Bestellung) */
-erwPlus({k:'lfTermin',std:true,p:'Liefertermine (P35)',l:'Bestellungen: Auftragsbestätigung des Lieferanten, Liefertermine je Position, Restmenge streichen',info:'Festgeschriebene Bestellungen zeigen die Karte „Lieferung“ mit je Position bestellt, geliefert (Wareneingänge), offen, Termin und Verzug in Tagen. „Bestätigung & Termine …“ erfasst Nummer und Datum der Auftragsbestätigung des Lieferanten, den bestätigten Liefertermin der ganzen Bestellung und wahlweise je Position, auch Teilmengen mit eigenem Termin (Teillieferungen); geänderte Termine kommen mit Grund in den Terminverlauf. „Restmenge streichen …“ (⋯ an der Position) für Mengen, die der Lieferant nicht mehr liefert: Die Position gilt dann als erledigt, der Wareneingang übernimmt nur den Rest. Das sind Statusangaben – Nummer, Positionen, Summen und Ausdruck der Bestellung bleiben unverändert. Aus: Die Angaben bleiben gespeichert, gelten aber nicht (Status wie bisher).'});
+erwPlus({k:'lfTermin',std:true,p:'Liefertermine (P35)',l:'Bestellungen: Auftragsbestätigung des Lieferanten, Liefertermine je Position, Restmenge streichen',info:'Abgeschlossene Bestellungen zeigen die Karte „Lieferung“ mit je Position bestellt, geliefert (Wareneingänge), offen, Termin und Verzug in Tagen. „Bestätigung & Termine …“ erfasst Nummer und Datum der Auftragsbestätigung des Lieferanten, den bestätigten Liefertermin der ganzen Bestellung und wahlweise je Position, auch Teilmengen mit eigenem Termin (Teillieferungen); geänderte Termine kommen mit Grund in den Terminverlauf. „Restmenge streichen …“ (⋯ an der Position) für Mengen, die der Lieferant nicht mehr liefert: Die Position gilt dann als erledigt, der Wareneingang übernimmt nur den Rest. Das sind Statusangaben – Nummer, Positionen, Summen und Ausdruck der Bestellung bleiben unverändert. Aus: Die Angaben bleiben gespeichert, gelten aber nicht (Status wie bisher).'});
 const lfL=b=>erw('lfTermin')&&b?.typ==='BE'&&b.lief||null;
 const lfGestr=(b,p)=>+lfL(b)?.pos?.[p.id]?.gestrichen||0;
 const lfTage=(iso,h=isoD())=>iso?Math.round((new Date(h+'T12:00:00')-new Date(iso+'T12:00:00'))/864e5):null; // Tage seit dem Termin (> 0 = überfällig)
@@ -1750,18 +1750,18 @@ async function festschreiben(b0){
   if(b.typ==='ER'&&!String(b.fremdNr).trim())err.push('Rechnungsnummer des Lieferanten fehlt.');
   if(FB().sperre&&b.datum<=FB().sperre)err.push('Die Buchungsperiode bis '+dAT(FB().sperre)+' ist gesperrt (Finanzbuchhaltung → Einstellungen).');
   if(!OHNE_PREIS.includes(b.typ)&&b.pos.some(p=>!isInfo(p)&&!effKz(p,s.gi)&&!(+p.ep)))warn.push('Position(en) mit Preis 0.'); // Option/Alternative auch über die Gruppe
-  if(err.length){alert('Festschreiben nicht möglich:\n\n• '+err.join('\n• '));return}
+  if(err.length){alert('Abschließen nicht möglich:\n\n• '+err.join('\n• '));return}
   const fix=t.re||OHNE_PREIS.includes(b.typ),nrNeu=vorschlagNr(b);
   const ok=await dialog({
-    titel:`${t.bez} festschreiben`,
+    titel:`${t.bez} abschließen`,
     html:`<table class="mtab"><tr><td>${b.nr?'Nummer':'Folgende Nummer wird <b>endgültig</b> vergeben'}</td><td><b style="font-size:17px">${esc(nrNeu)}</b></td></tr>
       <tr><td>Datum</td><td>${dAT(b.datum)}</td></tr><tr><td>${t.b==='V'?'Kunde':'Lieferant'}</td><td>${esc(k.name)}</td></tr>
       ${OHNE_PREIS.includes(b.typ)?'':`<tr><td>Betrag brutto</td><td><b>${fmt(s.zahlbar)} €</b></td></tr>`}</table>
       ${warn.length?`<div class="hint"><b>Hinweise:</b><br>• ${warn.map(esc).join('<br>• ')}</div>`:''}
-      ${fix?`<div class="mwarn">Nach dem Festschreiben kann dieser Beleg <b>nicht mehr geändert oder gelöscht</b> werden. Korrekturen sind nur noch über ${t.b==='V'&&t.re?'eine Gutschrift / Storno':'Storno'} möglich (§ 11 UStG, § 131 BAO).</div>`
+      ${fix?`<div class="mwarn">Nach dem Abschließen kann dieser Beleg <b>nicht mehr geändert oder gelöscht</b> werden. Korrekturen sind nur noch über ${t.b==='V'&&t.re?'eine Gutschrift / Storno':'Storno'} möglich (§ 11 UStG, § 131 BAO).</div>`
         :`<div class="hint">Die Nummer bleibt fix. Der Inhalt kann später über „Bearbeiten“ noch geändert werden.</div>`}`,
     check:fix?'Ich habe den Beleg geprüft – Inhalt und Beträge sind korrekt.':'',
-    ok:fix?'Endgültig festschreiben':'Festschreiben',gefahr:fix});
+    ok:fix?'Endgültig abschließen':'Abschließen',gefahr:fix});
   if(!ok)return;
   if(!b.nr)b.nr=b.typ==='AN'&&b.rev?`${b.basisNr}-R${b.rev}`:nextNr(b.typ,b.datum);
   if(b.typ==='AN'&&b.basisNr)for(const x of DB.belege)if(x!==b&&x.typ==='AN'&&x.fest&&(x.nr===b.basisNr||x.basisNr===b.basisNr)&&(x.rev||0)<b.rev){x.status='ersetzt';log('Angebot ersetzt',`${x.nr} durch ${b.nr}`)}
@@ -1782,7 +1782,7 @@ function stornieren(b){
   }
   const t=T[b.typ];
   if(t.b==='V'&&t.re&&b.typ!=='GS'){
-    if(!confirm('Es wird eine Storno-Gutschrift über den vollen Betrag als Entwurf angelegt.\nMit dem Festschreiben der Gutschrift gilt die Rechnung als storniert.\n\nFortfahren?'))return;
+    if(!confirm('Es wird eine Storno-Gutschrift über den vollen Betrag als Entwurf angelegt.\nMit dem Abschließen der Gutschrift gilt die Rechnung als storniert.\n\nFortfahren?'))return;
     const g=folge(b,'GS',{stornoVon:b.id});if(!g)return;
     g.pos=b.pos.map(p=>({...p,id:uid(),herkunftPosId:p.id}));
     g.kopf=`Storno zu ${t.bez} ${b.nr} vom ${dAT(b.datum)}.`;
@@ -1840,7 +1840,7 @@ function artikelInPos(b,p,a){
    = Mittellohnpreis des K3-Blatts (Kürzel, sonst Standardblatt), Material = Kosten (K4-EK des Artikels, sonst EK/HK der Position) × (1 + Zuschlag Material bzw. Fremdleistung), Fremdleistung × (1 + Zuschlag
    Fremdleistung), Gerät (Bezeichnung wie im K6) = Gerätepreis, Leistung ohne Stunden × (1 + Zuschlag Lohn); Rundung des K-Blatts, Preiseinheit wie P14. „Preise nach K-Blatt anwenden …“ = Vorschau je
    Position mit Auswahl, ein persist(), Rücknahme über b.kalkAlt wie P10 (gkRueck); neue Positionen aus der Artikelwahl gleich so kalkuliert (kbNeuPos). Nur Entwürfe. --- */
-erwPlus({k:'kbBeleg',std:true,p:'K-Blätter (P34)',l:'Verkaufsbelege nach K-Blatt kalkulieren (Zuschläge, Mittellohn)',info:'Angebote, Auftragsbestätigungen, Rechnungen und die anderen Verkaufsbelege mit Preisen bekommen in den Kopfdaten die Auswahl „K-Blatt“ (vorbelegt, wenn genau ein K-Blatt dem Auftrag bzw. Projekt zugeordnet ist; Folgebeleg, Duplizieren und Revision übernehmen sie). Dann stehen unter „+ Stundentarif …“ die K3-Blätter als Tarif (Verkauf = Mittellohnpreis U bzw. W, Kostensatz = Mittellohnkosten M), neue Positionen aus der Artikelwahl werden gleich nach dem K-Blatt kalkuliert (Material: EK × (1 + Gesamtzuschlag Material bzw. Fremdleistung), Stunden: Mittellohnpreis), und „Preise nach K-Blatt anwenden …“ (Kopfdaten, Kalkulation DB II, ⋯-Menü) zeigt für alle Positionen den Preis nach K-Blatt zur Auswahl; Übernehmen ist ein Schritt (Strg+Z) und lässt sich wie die Gesamtkalkulation später zurücknehmen. Nur Entwürfe; festgeschriebene Belege bleiben unverändert, Rechnungen behalten Summenblock und Steuer (§ 11 UStG). Aus = wie bisher, eingetragene K-Blätter bleiben gespeichert.'});
+erwPlus({k:'kbBeleg',std:true,p:'K-Blätter (P34)',l:'Verkaufsbelege nach K-Blatt kalkulieren (Zuschläge, Mittellohn)',info:'Angebote, Auftragsbestätigungen, Rechnungen und die anderen Verkaufsbelege mit Preisen bekommen in den Kopfdaten die Auswahl „K-Blatt“ (vorbelegt, wenn genau ein K-Blatt dem Auftrag bzw. Projekt zugeordnet ist; Folgebeleg, Duplizieren und Revision übernehmen sie). Dann stehen unter „+ Stundentarif …“ die K3-Blätter als Tarif (Verkauf = Mittellohnpreis U bzw. W, Kostensatz = Mittellohnkosten M), neue Positionen aus der Artikelwahl werden gleich nach dem K-Blatt kalkuliert (Material: EK × (1 + Gesamtzuschlag Material bzw. Fremdleistung), Stunden: Mittellohnpreis), und „Preise nach K-Blatt anwenden …“ (Kopfdaten, Kalkulation DB II, ⋯-Menü) zeigt für alle Positionen den Preis nach K-Blatt zur Auswahl; Übernehmen ist ein Schritt (Strg+Z) und lässt sich wie die Gesamtkalkulation später zurücknehmen. Nur Entwürfe; abgeschlossene Belege bleiben unverändert, Rechnungen behalten Summenblock und Steuer (§ 11 UStG). Aus = wie bisher, eingetragene K-Blätter bleiben gespeichert.'});
 const kbDarf=b=>!!b&&erw('kbBeleg')&&T[b.typ].b==='V'&&!OHNE_PREIS.includes(b.typ)&&b.typ!=='GS';
 const kbKand=b=>{const p=beleg(b.auftragId)?.projekt;return DB.kalk.filter(kb=>kb.art!=='bieter'&&(kb.auftragId&&kb.auftragId===b.auftragId||p&&kb.projekt===p))};
 const kbVon=b=>{if(!kbDarf(b))return null;if(b.kbId!=null)return b.kbId?ROOT.kb(b.kbId)||null:null;const K=kbKand(b);return K.length===1?K[0]:null};
@@ -1863,7 +1863,7 @@ function kbPreis(b,p,kb=kbVon(b)){if(!kb||isInfo(p)||p.art==='G')return null;con
   const k=+p.ek||0,s=p.art==='F'?'f':p.art==='L'?'l':'m';return k>0?{ep:R(k*(1+z[s]/100)),info:Z(s)}:null}
 function kbSetzen(b,p,n){if(b.optLS&&(p.epL!=null||p.epS!=null)){if(p.art==='L'&&!(+p.epS)){p.epL=n.ep;p.epS=0}else{p.epL=0;p.epS=n.ep}}p.ep=n.ep;if(n.ek!=null)p.ek=n.ek} // Lohn / Sonstiges: Stunden als Lohn, sonst Sonstiges
 function kbNeuPos(b,p){const n=kbPreis(b,p);if(n){p.ep=n.ep;if(n.ek!=null)p.ek=n.ek;lsAufteilen(b,p)}} // neue Position aus der Artikelwahl
-function kbPreisDialog(b){if(!b)return;const kb=kbVon(b);if(!kb){alert('Kein K-Blatt gewählt (Kopfdaten → K-Blatt).');return}if(b.fest){alert('Nur im Entwurf – festgeschriebene Belege bleiben unverändert.');return}
+function kbPreisDialog(b){if(!b)return;const kb=kbVon(b);if(!kb){alert('Kein K-Blatt gewählt (Kopfdaten → K-Blatt).');return}if(b.fest){alert('Nur im Entwurf – abgeschlossene Belege bleiben unverändert.');return}
   const gi=gruppenInfo(b),pnr=posNummern(b),Z=[],ohne=[];
   for(const p of b.pos){if(isInfo(p)||p.art==='G')continue;const g=gi.grp[p.id];if(g&&+g.pauschal>0&&!p.kz){ohne.push([p,'in Pauschalgruppe']);continue}
     const n=kbPreis(b,p,kb);if(!n){ohne.push([p,'ohne Kosten']);continue}if(b.optLS&&(p.art==='L'?(+p.epL||0)&&(+p.epS||0):+p.epL||0)){ohne.push([p,'mit Lohnanteil']);continue} // Lohn / Sonstiges: nur reine Lohn- bzw. Sonstiges-Positionen
@@ -2465,7 +2465,7 @@ body.pfe details.akk[open]>summary::before,body.pfe .gl details[open]>summary::b
 /* ---------- Offene Lieferungen (P35 Teil 2, erw.lfListe): je offene Position festgeschriebener Bestellungen (lfPos) Lieferant, Bestellung, Artikel, offen, Termin (bestätigt,
    sonst gewünscht) und Status; Filter UI.lfSt (Status, LF_F), UI.lfK (Lieferant), UI.lfQ (Suche); Spalten LF_SP über tabelle() mit Spaltenauswahl, am Handy Karten;
    Zeile → Bestellung, „📦 WE“ → lfWE() (Folgebeleg BE → WE mit den offenen Mengen). Seitenleiste „Offene Lieferungen“ unter „Einkauf“, lfNav() aus render() ---------- */
-erwPlus({k:'lfListe',std:true,p:'Liefertermine (P35)',l:'Liste „Offene Lieferungen“ (Einkauf)',info:'In der Seitenleiste unter „Einkauf“: alle noch nicht (vollständig) gelieferten Positionen festgeschriebener Bestellungen mit Lieferant, Bestellung, Artikel, offener Menge, Termin (bestätigt laut Auftragsbestätigung des Lieferanten, sonst der gewünschte Liefertermin) und Status rechtzeitig, heute fällig, überfällig (Tage) oder ohne Termin. Filter nach Status und Lieferant, Suche, Spaltenauswahl (⚙), am Handy als Karten. Antippen öffnet die Bestellung, „📦 WE“ erfasst den Wareneingang mit den offenen Mengen.'});
+erwPlus({k:'lfListe',std:true,p:'Liefertermine (P35)',l:'Liste „Offene Lieferungen“ (Einkauf)',info:'In der Seitenleiste unter „Einkauf“: alle noch nicht (vollständig) gelieferten Positionen abgeschlossener Bestellungen mit Lieferant, Bestellung, Artikel, offener Menge, Termin (bestätigt laut Auftragsbestätigung des Lieferanten, sonst der gewünschte Liefertermin) und Status rechtzeitig, heute fällig, überfällig (Tage) oder ohne Termin. Filter nach Status und Lieferant, Suche, Spaltenauswahl (⚙), am Handy als Karten. Antippen öffnet die Bestellung, „📦 WE“ erfasst den Wareneingang mit den offenen Mengen.'});
 const lfOffen=(h=isoD(),M=lfMengen())=>DB.belege.filter(b=>b.typ==='BE'&&b.fest&&!b.storno).flatMap(b=>lfPos(b,h,M).filter(x=>x.offen>0));
 const LF_ST={ueber:'überfällig',heute:'heute fällig',ok:'rechtzeitig',ohne:'ohne Termin'},LF_F={ueber:x=>x.st==='ueber',heute:x=>x.st==='heute',ok:x=>x.st==='ok',ohne:x=>x.st==='ohne'};
 const LF_SP=[{k:'lief',l:'Lieferant',f:x=>esc(kName(x.b.kontaktId))},{k:'be',l:'Bestellung',f:x=>`<span class="nw">${esc(bNr(x.b))}</span><br><span class="mut">${dAT(x.b.datum)}</span>`},{k:'pos',l:'Pos',f:x=>esc(x.nr),std:false},
@@ -2583,9 +2583,9 @@ V.beleg=id=>{
   const ans=ansicht();
   const kopfbar=kmpB()?belegKopfbarK(b,ans)+zahlKopfK(b)+aktLeiste(b):`<div class="bar"><h1 style="margin:0">${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut" style="font-weight:400;font-size:15px">Entwurf · Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}<span class="sp"></span>
     <span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
-    ${b.fest?'':`<button class="p" data-act="fest">Festschreiben …</button>`}
+    ${b.fest?'':`<button class="p" data-act="fest">Abschließen …</button>`}
     <button data-act="druck">PDF / Drucken</button>
-    ${!b.storno&&t.folge.length&&b.status!=='ersetzt'?`${['AN','AB','LS','PR'].includes(b.typ)?`<button data-act="folgere">→ Rechnung</button>`:''}<select data-act="folge" title="${b.fest?'':'Wird vorher festgeschrieben'}">${opt('','Folgebeleg …','')}${t.folge.map(f=>opt(f,T[f].bez,'')).join('')}</select>`:''}
+    ${!b.storno&&t.folge.length&&b.status!=='ersetzt'?`${['AN','AB','LS','PR'].includes(b.typ)?`<button data-act="folgere">→ Rechnung</button>`:''}<select data-act="folge" title="${b.fest?'':'Wird vorher abgeschlossen'}">${opt('','Folgebeleg …','')}${t.folge.map(f=>opt(f,T[f].bez,'')).join('')}</select>`:''}
     ${b.typ==='LS'&&!b.storno?`<button data-act="sammelre">Sammelrechnung …</button>`:''}
     <button data-act="senden" title="Als PDF per E-Mail versenden">✉ Senden …</button><button data-act="pdfdl" title="PDF-Datei speichern">${pdfL()}</button>
     ${b.fest&&!b.storno&&b.typ==='AN'&&b.status!=='ersetzt'?`<button data-act="anrev" title="Erstellt eine neue Revision zum Bearbeiten – dieser Stand bleibt unverändert gespeichert">✎ Bearbeiten (Revision)</button><button data-act="anfolge">Folgeangebot</button><button data-act="anst" data-v="${b.status==='abgelehnt'?'':'abgelehnt'}">${b.status==='abgelehnt'?'wieder offen':'abgelehnt'}</button>`:''}
@@ -2625,10 +2625,10 @@ const BMZ={AN:'Angebote',AB:'Auftragsbestätigungen',PR:'Proformarechnungen',LS:
 const dtAT=iso=>{const d=iso?new Date(iso):null;return d&&!isNaN(d)?d.toLocaleString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):''};
 function belegStatus(b){
   if(!erw('statuszeile'))return'';const t=T[b.typ],k=kontakt(b.kontaktId),fix=erw('kopfFix');
-  if(kmpBH())return`<div class="bstat${fix?' fix':''}"${fix?` style="top:${$('.topbar')?.offsetHeight||0}px"`:''}>${[fix?`<b>${esc(bNr(b))}</b>${statusTag(b)}`:'',b.datum?`vom ${dAT(b.datum)}`:'',b.fest?`festgeschrieben${b.festAm?' '+dtAT(b.festAm):''}`:b.erstellt?`angelegt ${dtAT(b.erstellt)}`:''].filter(Boolean).join('<span class="mut"> · </span>')}</div>`; // kompakt am Handy (P30): ohne Pfad, Kontakt und Netto (stehen in Zusammenfassung und Aktionsleiste)
+  if(kmpBH())return`<div class="bstat${fix?' fix':''}"${fix?` style="top:${$('.topbar')?.offsetHeight||0}px"`:''}>${[fix?`<b>${esc(bNr(b))}</b>${statusTag(b)}`:'',b.datum?`vom ${dAT(b.datum)}`:'',b.fest?`abgeschlossen${b.festAm?' '+dtAT(b.festAm):''}`:b.erstellt?`angelegt ${dtAT(b.erstellt)}`:''].filter(Boolean).join('<span class="mut"> · </span>')}</div>`; // kompakt am Handy (P30): ohne Pfad, Kontakt und Netto (stehen in Zusammenfassung und Aktionsleiste)
   const teile=[`<a href="#/belege/${t.b}">${t.b==='V'?'Verkauf':'Einkauf'}</a> › <a href="javascript:void 0" onclick="zuListe('${t.b}','${b.typ}')" title="Liste der ${esc(BMZ[b.typ]||t.bez)}">${esc(BMZ[b.typ]||t.bez)}</a>${fix?` › <b>${esc(bNr(b))}</b>${statusTag(b)}`:''}`,
     b.datum?`vom ${dAT(b.datum)}`:'',k?`<a href="#/kontakt/${k.id}">${esc(k.name)}</a>`:'',OHNE_PREIS.includes(b.typ)?'':`netto <b id="kopfsum">${fmt(summen(b).netto)} €</b>`,
-    b.fest?`festgeschrieben${b.festAm?' '+dtAT(b.festAm):''}`:b.erstellt?`angelegt ${dtAT(b.erstellt)}`:''].filter(Boolean);
+    b.fest?`abgeschlossen${b.festAm?' '+dtAT(b.festAm):''}`:b.erstellt?`angelegt ${dtAT(b.erstellt)}`:''].filter(Boolean);
   return`<div class="bstat${fix?' fix':''}"${fix?` style="top:${$('.topbar')?.offsetHeight||0}px"`:''}>${teile.join('<span class="mut"> · </span>')}</div>`;
 }
 function ansicht(){const m=lsGet('erp-ansicht')||'form';return m==='beides'&&window.innerWidth<(kmpB()?1280:1000)?'form':m} // kompakt (P30): „Beides“ erst ab 1280 px
@@ -2658,7 +2658,7 @@ function vorschlagNr(b){
    sonst PDF / Drucken) und ⋯ (MENUE.beleg); am Bildschirm zusätzlich PDF / Drucken und → Rechnung. „Spalten & Druck …“ (LIVE.spalten): die bisherigen data-h-Häkchen und „Druckoptionen …“ */
 const kmpB=()=>kmp()&&!!erw('kompaktBeleg'),kmpBH=()=>kmpB()&&HANDY.matches;
 function belegHaupt(b){const t=T[b.typ];
-  if(!b.fest)return{l:'Festschreiben …',act:'fest'};
+  if(!b.fest)return{l:'Abschließen …',act:'fest'};
   if(zahlOffen(b))return{l:'💶 Zahlung erfassen …',lh:'💶 Zahlung …',act:'zpop'};
   if(!b.storno&&b.status!=='ersetzt'&&t.folge.length){if(b.typ==='AN'&&!b.status)return{l:'→ Auftragsbestätigung',lh:'→ Auftragsbest.',act:'folge',value:'AB'};if(['AB','LS','PR'].includes(b.typ))return{l:'→ Rechnung',act:'folgere'}}
   return{l:'PDF / Drucken',act:'druck'}}
@@ -2666,9 +2666,9 @@ const zuRE=b=>!b.storno&&T[b.typ].folge.length&&b.status!=='ersetzt'&&['AN','AB'
 function belegKopfbarK(b,ans){const t=T[b.typ],H=HANDY.matches,h=belegHaupt(b);
   return`<div class="bar bkopf"><div class="bkt"><h1>${t.bez} ${esc(b.nr||'')}${b.nr?'':`<span class="mut">Nr.-Vorschlag <b>${esc(vorschlagNr(b))}</b></span>`}</h1>${statusTag(b)}${dupAktiv(b)&&ausgabenN(b)?`<span title="Druck, PDF und E-Mail; ab der 2. Ausgabe Vermerk „DUPLIKAT“ wählbar">${tag(ausgabenN(b)+'× ausgegeben')}</span>`:''}${b.stornoVon?tag('Storno zu '+esc(bNr(beleg(b.stornoVon))),'warn'):''}${b.rev?tag('Revision '+b.rev,'acc'):''}</div>
     <div class="bka"><span class="seg">${[['form','Eingabe'],['vorschau','Vorschau'],['beides','Beides']].map(([m,l])=>`<button class="${ans===m?'on':''} ${m==='beides'?'hm':''}" data-act="ansicht" data-m="${m}">${l}</button>`).join('')}</span>
-      ${H?'':`${h.act!=='druck'?'<button data-act="druck">PDF / Drucken</button>':''}${zuRE(b)&&h.act!=='folgere'?`<button data-act="folgere"${b.fest?'':' title="Wird vorher festgeschrieben"'}>→ Rechnung</button>`:''}`}<button class="p" data-act="${h.act}"${h.value?` value="${h.value}"`:''}>${esc(H&&h.lh||h.l)}</button><button class="mehr" data-act="menue" data-m="beleg" title="Weitere Aktionen: PDF speichern, Senden, Folgebeleg, Duplizieren …">⋯</button></div>
+      ${H?'':`${h.act!=='druck'?'<button data-act="druck">PDF / Drucken</button>':''}${zuRE(b)&&h.act!=='folgere'?`<button data-act="folgere"${b.fest?'':' title="Wird vorher abgeschlossen"'}>→ Rechnung</button>`:''}`}<button class="p" data-act="${h.act}"${h.value?` value="${h.value}"`:''}>${esc(H&&h.lh||h.l)}</button><button class="mehr" data-act="menue" data-m="beleg" title="Weitere Aktionen: PDF speichern, Senden, Folgebeleg, Duplizieren …">⋯</button></div>
   </div>${belegStatus(b)}${b.status==='ersetzt'?`<div class="hint">Dieses Angebot wurde durch eine Revision ersetzt.</div>`:''}`}
-MENUE.beleg=()=>{const b=curBeleg();if(!b)return[];const t=T[b.typ],H=HANDY.matches,h=belegHaupt(b),fo=!b.storno&&t.folge.length&&b.status!=='ersetzt',vf=b.fest?'':'Wird vorher festgeschrieben',anF=b.fest&&!b.storno&&b.typ==='AN'&&b.status!=='ersetzt';
+MENUE.beleg=()=>{const b=curBeleg();if(!b)return[];const t=T[b.typ],H=HANDY.matches,h=belegHaupt(b),fo=!b.storno&&t.folge.length&&b.status!=='ersetzt',vf=b.fest?'':'Wird vorher abgeschlossen',anF=b.fest&&!b.storno&&b.typ==='AN'&&b.status!=='ersetzt';
   const L=[H&&h.act!=='druck'&&{l:'PDF / Drucken',ic:'🖨',act:'druck'},{l:pdfL(),ic:'⤓',act:'pdfdl',titel:'PDF-Datei speichern'},{l:'Senden …',ic:'✉',act:'senden',titel:'Als PDF per E-Mail versenden'},{trenn:1},
     H&&zuRE(b)&&h.act!=='folgere'&&{l:'→ Rechnung',ic:BICON.RE,act:'folgere',titel:vf},fo&&{l:'Folgebeleg',ic:'➜',sub:t.folge.map(f=>({l:T[f].bez,ic:BICON[f],act:'folge',value:f,titel:vf}))},
     b.typ==='LS'&&!b.storno&&{l:'Sammelrechnung …',ic:'🧾',act:'sammelre'},{trenn:1},
@@ -2716,7 +2716,7 @@ document.addEventListener('paste',e=>{if(!e.target.closest?.('[data-ed]'))return
    Nach dem Festschreiben Status b.ra={st:'gen'|'abg',datum,wie:'sig'|'schriftlich',sig?,notiz} (auch am festgeschriebenen Beleg, per commit mit log; statusTag → raTag): Genehmigung per Unterschrift des
    Kunden (sigPop, Ablage Regie/<Jahr>/<Nr>) oder Vermerk „schriftlich genehmigt am …“ (Schreiben als Anhang des Belegs). Karte raKarte(b) in V.beleg: Status, Soll (Stunden, netto) gegen Ist der
    zugeordneten Regieberichte (r.raId; Stunden, bewertet zu Regiepreisen, verrechnet), „+ Regiebericht“; im Regiebericht Auswahl des Regieantrags (BTB_ED) und Vermerk im Druck (BTB_DOC) */
-erwPlus({k:'regieAntrag',std:false,p:'Bautagesbericht (P36)',l:'Regieantrag im Verkauf',info:'Wirkt mit „Regiebericht und Regiepreise“. Im Verkauf die Belegart „Regieantrag“ mit eigenem Reiter und Nummernkreis (RA-2026-0001): Beschreibung der Zusatzarbeit, geschätzte Stunden je Tarif (zu Regiepreisen) und Material, Vor- und Nachtext wie im Angebot. Nach dem Festschreiben: „Genehmigung mit Unterschrift“ am Gerät, „schriftlich genehmigt …“ (Schreiben als Anhang) oder „abgelehnt“. Aus einem genehmigten Regieantrag entstehen Regieberichte; der Antrag zeigt Soll (geschätzt) gegen Ist (Regieberichte) in Stunden und Betrag. Aus = keine neuen Regieanträge; vorhandene bleiben in der Liste.'});
+erwPlus({k:'regieAntrag',std:false,p:'Bautagesbericht (P36)',l:'Regieantrag im Verkauf',info:'Wirkt mit „Regiebericht und Regiepreise“. Im Verkauf die Belegart „Regieantrag“ mit eigenem Reiter und Nummernkreis (RA-2026-0001): Beschreibung der Zusatzarbeit, geschätzte Stunden je Tarif (zu Regiepreisen) und Material, Vor- und Nachtext wie im Angebot. Nach dem Abschließen: „Genehmigung mit Unterschrift“ am Gerät, „schriftlich genehmigt …“ (Schreiben als Anhang) oder „abgelehnt“. Aus einem genehmigten Regieantrag entstehen Regieberichte; der Antrag zeigt Soll (geschätzt) gegen Ist (Regieberichte) in Stunden und Betrag. Aus = keine neuen Regieanträge; vorhandene bleiben in der Liste.'});
 const RA_T={bez:'Regieantrag',b:'V',folge:[]},RA_KOPF='Für die folgenden, im Auftrag nicht enthaltenen Leistungen ersuchen wir um Genehmigung als Regiearbeiten:';
 function raSync(d=DB){if(!d?.settings)return;const an=!!d.settings.erw?.regieAntrag||(d.belege||[]).some(b=>b.typ==='RA');
   if(!an){delete T.RA;return}T.RA??=RA_T;BICON.RA??='🛠';const s=d.settings;s.nk??={};s.texte??={};s.nk.RA??={prefix:'RA',zaehler:{}};s.texte.RA??={kopf:RA_KOPF,fuss:''}}
@@ -2727,7 +2727,7 @@ const raPreise=b=>{let n=0;for(const p of b.pos)if(p.art==='L'){const x=regiePre
 const raBerichte=b=>DB.berichte.filter(r=>r.raId===b.id);
 const raPreisH=kz=>regiePreis(kz)??(+S().tarife.find(t=>t.kz===kz)?.vk||0);
 function raKarte(b){if(b.typ!=='RA')return'';
-  if(!b.fest)return`<div class="card"><h2>Regieantrag</h2><p class="mut" style="margin:0 0 8px">Stundentarife werden zu Regiepreisen eingesetzt (Einstellungen → Regiepreise). Nach dem Festschreiben folgt die Genehmigung durch den Kunden.</p><button class="s" data-act="rapreise">Regiepreise einsetzen</button></div>`;
+  if(!b.fest)return`<div class="card"><h2>Regieantrag</h2><p class="mut" style="margin:0 0 8px">Stundentarife werden zu Regiepreisen eingesetzt (Einstellungen → Regiepreise). Nach dem Abschließen folgt die Genehmigung durch den Kunden.</p><button class="s" data-act="rapreise">Regiepreise einsetzen</button></div>`;
   const g=gruppenInfo(b),P=b.pos.filter(p=>!effKz(p,g)),sStd=r2(sum(P,posStd)),R=raBerichte(b),iStd=r2(sum(R,btbSumme)),iW=r2(sum(R,r=>sum(r.personal||[],p=>btbStd(p)*raPreisH(p.tarif)))),
     RE=[...new Set(R.map(btbRe).filter(Boolean))],iV=r2(sum(RE,x=>summen(x).netto)),ra=b.ra||{},z=(l,s,i)=>`<tr><td>${l}</td><td class="n">${s}</td><td class="n">${i}</td></tr>`;
   return`<div class="card"><div class="bar" style="margin:0 0 6px"><h2 style="margin:0">Regieantrag</h2>${raTag(b)}</div>
@@ -3193,7 +3193,7 @@ function gkKalk(b,v){if(!gkDarf(b))return'';
 function gkMeldung(t){document.getElementById('undo')?.remove();const d=document.createElement('div');d.id='undo';d.className='undo';d.style.cssText='width:max-content;height:max-content;bottom:78px'; /* über der Leiste „Ungespeicherte Änderungen“ (wie undoHinweis) */d.innerHTML=`<span>${esc(t)}</span><button>↶ Rückgängig</button><button class="x" title="Schließen">✕</button>`;document.body.appendChild(d);
   const weg=()=>d.remove(),tm=setTimeout(weg,15000);d.querySelector('button').onclick=()=>{clearTimeout(tm);weg();zurueck()};d.querySelector('.x').onclick=()=>{clearTimeout(tm);weg()}}
 function gesamtKalk(b,{ziel=false}={}){
-  if(!gkDarf(b))return;if(b.fest){alert(b.typ==='AN'?'Festgeschriebene Angebote bleiben unverändert. Für neue Preise „✎ Bearbeiten (Revision)“ wählen und dort die Gesamtkalkulation öffnen.':'Die Gesamtkalkulation ist nur im Entwurf möglich – festgeschriebene Belege bleiben unverändert.');return}
+  if(!gkDarf(b))return;if(b.fest){alert(b.typ==='AN'?'Abgeschlossene Angebote bleiben unverändert. Für neue Preise „✎ Bearbeiten (Revision)“ wählen und dort die Gesamtkalkulation öffnen.':'Die Gesamtkalkulation ist nur im Entwurf möglich – abgeschlossene Belege bleiben unverändert.');return}
   if(!b.pos.some(p=>!isInfo(p))){alert('Noch keine Positionen.');return}
   const W=gkWerte(b),v0=vorkalk(b),Z=['G',...GKZ.map(x=>x[0]).filter(k=>W[k].ek||W[k].vk)],LB={G:'Gesamt',...Object.fromEntries(GKZ)},K=kmp(),E=gkAuf(b,{M:0,F:0,L:0},W).E;
   const st={modus:Math.abs(W.G.vk)>0.004||!(E.M||E.F||E.L)?'faktor':'aufschlag',mitOpt:true,rund:0.01,vk:{M:W.M.vk,F:W.F.vk,L:W.L.vk},G:W.G.vk,quelle:''},zDB=S().zielDB2/100,sk=+b.skonto||0,zielVK=zDB<1&&sk<100&&v0.hk>0?r2(v0.hk/(1-zDB)/(1-sk/100)):null;
@@ -3845,7 +3845,7 @@ function artikelLoeschen(ids){
   // geschützt: in festgeschriebenen (auch stornierten) Belegen oder mit Lagerbewegung; nur in Entwürfen → löschbar, Positionen behalten den Text
   const wo=a=>{const fb=DB.belege.find(b=>b.fest&&b.pos.some(p=>p.artikelId===a.id));return fb?`${T[fb.typ].bez} ${bNr(fb)}`:DB.lager.some(e=>e.artikelId===a.id)?'Lagerbewegungen':''};
   const benutzt=L.filter(a=>wo(a)),frei=L.filter(a=>!benutzt.includes(a));
-  if(benutzt.length){const t=`${benutzt.length} Artikel ${benutzt.length>1?'stehen':'steht'} in festgeschriebenen Belegen oder im Lager und ${benutzt.length>1?'können':'kann'} nicht gelöscht werden:\n`+benutzt.slice(0,15).map(a=>`• ${a.nr} ${a.bez} (${wo(a)})`).join('\n')+(benutzt.length>15?'\n…':'');
+  if(benutzt.length){const t=`${benutzt.length} Artikel ${benutzt.length>1?'stehen':'steht'} in abgeschlossenen Belegen oder im Lager und ${benutzt.length>1?'können':'kann'} nicht gelöscht werden:\n`+benutzt.slice(0,15).map(a=>`• ${a.nr} ${a.bez} (${wo(a)})`).join('\n')+(benutzt.length>15?'\n…':'');
     if(confirm(t+'\n\nStattdessen deaktivieren (bleibt erhalten, wird nicht mehr vorgeschlagen)?')){for(const a of benutzt)if(a.aktiv!==false){a.aktiv=false;log('Artikel deaktiviert',`${a.nr} ${a.bez}`)}commit()}}
   if(!frei.length){artDatalist();return false}
   const entw=DB.belege.filter(b=>!b.fest&&b.pos.some(p=>frei.some(a=>a.id===p.artikelId)));
@@ -5089,7 +5089,7 @@ V.fibu=()=>{
     ${[['ford','Forderungen L+L'],['verb','Verbindlichkeiten L+L'],['ust','Umsatzsteuer'],['vst','Vorsteuer'],['bank','Bank'],['kassa','Kassa'],['verr','Verrechnung'],['anz','Erhaltene Anzahlungen'],['kdSkonto','Kundenskonti'],['liefSkonto','Lieferantenskonti']].map(([k,l])=>`<label>${l}${ks(k,M[k])}</label>`).join('')}
     ${S().steuer.map(st=>`<label>Erlöse ${esc(st.bez)}${ks('erl.'+st.code,M.erl[st.code]||M.erl['20'])}</label>`).join('')}
     ${['W','F','L'].map(a=>`<label>Aufwand Eingangsrechnung: ${ART[a]}${ks('aufw.'+a,M.aufw[a])}</label>`).join('')}</div></div>
-    <div class="card"><h2>Periodensperre</h2><div class="row"><label class="w05">Gesperrt bis einschließlich<input type="date" data-o="fbmap" data-f="!sperre" value="${esc(fb.sperre)}"></label><span style="flex:3" class="mut">Nach Abgabe der UVA setzen – danach sind Festschreiben, Zahlungen und manuelle Buchungen mit Datum bis zu diesem Tag gesperrt.</span></div></div>`;
+    <div class="card"><h2>Periodensperre</h2><div class="row"><label class="w05">Gesperrt bis einschließlich<input type="date" data-o="fbmap" data-f="!sperre" value="${esc(fb.sperre)}"></label><span style="flex:3" class="mut">Nach Abgabe der UVA setzen – danach sind Abschließen, Zahlungen und manuelle Buchungen mit Datum bis zu diesem Tag gesperrt.</span></div></div>`;
   }
   const tabs=[['journal','Journal / Kontoblatt'],['buchen','Buchen'],['salden','Saldenliste'],['uva','UVA'],['guv','GuV'],['bilanz','Bilanz'],['konten','Kontenplan'],['einst','Einstellungen']];
   return`<h1>Finanzbuchhaltung</h1><div class="bar"><span class="seg">${tabs.map(([k,l])=>`<button class="${tab===k?'on':''}" data-act="fbtab" data-t="${k}">${l}</button>`).join('')}</span></div>${body}`;
@@ -5137,7 +5137,7 @@ const EXPORTS={
 };
 /* ---------- Archiv (P38 Teil 3, erw.archiv): PDF je Rechnung/Gutschrift/Storno beim Festschreiben, Monatsexport Excel + CSV, Datenstand zum Jahreswechsel ----------
    Ablage im Speicherort unter archiv/<Jahr>/ (nie überschrieben, nie gelöscht). Excel und ZIP ohne Bibliothek: zipBlob() (deflate-raw über CompressionStream), xlsxBlob() (Office Open XML). */
-erwPlus({k:'archiv',std:true,p:'Datensicherung (P38)',l:'Archiv im OneDrive: PDF je Rechnung, Monatsexport Excel und CSV',info:'Beim Festschreiben einer Rechnung (auch Anzahlungs-, Teil- und Schlussrechnung), Gutschrift oder Storno-Gutschrift wird eine PDF-Kopie unter „archiv/<Jahr>/belege“ abgelegt (unabhängig vom Programm lesbar, § 132 BAO). Am Anfang jedes Monats wird für den Vormonat eine Excel-Mappe und eine ZIP-Datei mit denselben Listen als CSV unter „archiv/<Jahr>/<Monat>“ geschrieben: Ausgangs- und Eingangsbuch, Zahlungen, Offene Posten, Lager, Aufträge DB II, Buchungsjournal, Belege, Positionen, Kontakte, Artikel, Kosten; zum Jahreswechsel zusätzlich der gesamte Datenstand. Nichts wird überschrieben oder gelöscht. Aus = keine Archivdateien.'});
+erwPlus({k:'archiv',std:true,p:'Datensicherung (P38)',l:'Archiv im OneDrive: PDF je Rechnung, Monatsexport Excel und CSV',info:'Beim Abschließen einer Rechnung (auch Anzahlungs-, Teil- und Schlussrechnung), Gutschrift oder Storno-Gutschrift wird eine PDF-Kopie unter „archiv/<Jahr>/belege“ abgelegt (unabhängig vom Programm lesbar, § 132 BAO). Am Anfang jedes Monats wird für den Vormonat eine Excel-Mappe und eine ZIP-Datei mit denselben Listen als CSV unter „archiv/<Jahr>/<Monat>“ geschrieben: Ausgangs- und Eingangsbuch, Zahlungen, Offene Posten, Lager, Aufträge DB II, Buchungsjournal, Belege, Positionen, Kontakte, Artikel, Kosten; zum Jahreswechsel zusätzlich der gesamte Datenstand. Nichts wird überschrieben oder gelöscht. Aus = keine Archivdateien.'});
 const CRCT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
 const crc32=u=>{let c=~0;for(let i=0;i<u.length;i++)c=CRCT[(c^u[i])&255]^(c>>>8);return(~c)>>>0};
 async function defRaw(u8){return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer())}
@@ -5180,7 +5180,7 @@ function archivListen(j){ // alle Listen eines Jahres (Stand jetzt): die Exporte
   L.push({name:'Buchungsjournal',head:['Datum','Beleg','Text','Soll','Haben','Betrag'],rows:journal().filter(e=>e.datum.startsWith(j)).map(e=>[dAT(e.datum),e.beleg,e.text,e.soll,e.haben,e.betrag])});
   const bj=DB.belege.filter(b=>String(b.datum).startsWith(j)).sort((a,c)=>a.typ.localeCompare(c.typ)||String(a.nr).localeCompare(String(c.nr)));
   L.push({name:'Belege',head:['Art','Nr','Datum','Status','Fremd-Nr','Kontakt-Nr','Name','Betreff','Netto','USt','Brutto','Offen','ID'],rows:bj.map(b=>{const s=summen(b),k=b.adresse||kontakt(b.kontaktId)||{};
-    return[T[b.typ]?.bez||b.typ,b.nr||'',dAT(b.datum),b.storno?'storniert':b.fest?'festgeschrieben':'Entwurf',b.fremdNr||'',k.nr||'',k.name||'',b.betreff||'',s.netto,s.steuer,s.brutto,T[b.typ]?.re&&b.fest?offen(b):'',b.id]})});
+    return[T[b.typ]?.bez||b.typ,b.nr||'',dAT(b.datum),b.storno?'storniert':b.fest?'abgeschlossen':'Entwurf',b.fremdNr||'',k.nr||'',k.name||'',b.betreff||'',s.netto,s.steuer,s.brutto,T[b.typ]?.re&&b.fest?offen(b):'',b.id]})});
   L.push({name:'Positionen',head:['Art','Beleg','Pos','Positionsart','Art.-Nr.','Bezeichnung','Langtext','Menge','Einheit','EP','Rabatt %','GP','Steuer'],rows:bj.flatMap(b=>b.pos.map((p,i)=>[T[b.typ]?.bez||b.typ,b.nr||'(Entwurf)',i+1,ART[p.art]||p.art||'',p.nr||'',p.bez||'',txtRein(p.text),+p.menge||0,p.einheit||'',+p.ep||0,+p.rabatt||0,posGP(p),p.steuer||'']))});
   for(const[c,n]of[['kontakte','Kontakte'],['artikel','Artikel'],['kosten','Kosten']])L.push({name:n,...flach(DB[c]||[])});
   return L}
@@ -5207,7 +5207,7 @@ async function archivNach(){const L=DB.belege.filter(b=>b.fest&&RE_V.includes(b.
   for(const b of L){saveState(`Archiv: ${++i}/${L.length} geprüft …`);if(await archivBeleg(b))n++}
   saveState('Archiv geprüft');alert(`${L.length} Rechnung(en)/Gutschrift(en) geprüft, ${n} PDF(s) neu im Archiv abgelegt.`);if(n===L.length||!lsGet('erp-archf'))render()}
 const archivKarte=()=>!erw('archiv')||STORE.art==='cache'?'':`<div class="card"><h2>Archiv (PDF, Excel, CSV)</h2>
-  <p style="margin-top:0">Ordner <b>archiv</b> im Speicherort: je Jahr die PDFs der festgeschriebenen Rechnungen, Gutschriften und Stornos (<b>belege</b>) und je Monat eine Excel-Mappe mit allen Listen samt CSV (ZIP). Der Monatsexport des Vormonats entsteht automatisch beim ersten Speichern im neuen Monat.</p>${archDash()}
+  <p style="margin-top:0">Ordner <b>archiv</b> im Speicherort: je Jahr die PDFs der abgeschlossenen Rechnungen, Gutschriften und Stornos (<b>belege</b>) und je Monat eine Excel-Mappe mit allen Listen samt CSV (ZIP). Der Monatsexport des Vormonats entsteht automatisch beim ersten Speichern im neuen Monat.</p>${archDash()}
   <div class="bar"><button data-act="archmon">Monatsexport jetzt (Stand heute)</button><button data-act="archnach">Fehlende Rechnungs-PDFs nachholen</button></div></div>`;
 queueMicrotask(()=>Object.assign(ACT,{archnach:()=>archivNach(),
   archmon:async()=>{const mon=isoD().slice(0,7);saveState('Monatsexport …');try{const d=await archivMonat(mon,'_Stand_'+isoD());saveState('Monatsexport geschrieben');alert('Monatsexport abgelegt unter '+d+'.')}catch(e){archFehler(e);saveState('Monatsexport fehlgeschlagen',true);alert('Monatsexport fehlgeschlagen:\n'+e.message)}}}));
@@ -5415,7 +5415,7 @@ function lpEntf(btn,act,liste){const n=liste().length,m=btn.closest('.modal');AC
 const stKarten=()=>{const stG=stGesperrt();return`<div class="kkl">${S().steuer.map((x,i)=>karte({t:esc(x.bez||x.code),s:stG.has(x.code)?tag('gesperrt'):'',u:esc(x.hinweis||''),z:'Code '+esc(x.code),b:fmtQ(x.satz)+' %',a:`onclick="ACT.lpop(this)" data-lp="st" data-i="${i}"`})).join('')}</div><button style="margin-top:8px" data-act="lpop" data-lp="stneu">+ Steuersatz</button>`};
 LIVE.st=el=>{const i=+el.dataset.i,x=S().steuer[i];if(!x)return;
   livePop('Steuersatz',()=>{const y=S().steuer[i];if(y!==x)return'<p class="mut">Nicht mehr vorhanden.</p>';const g=stGesperrt().has(y.code),ds=g?' disabled':'',a=f=>`data-o="st" data-i="${i}" data-f="${f}"`;
-    return`${g?'<p class="hint" style="margin:0 0 8px">In festgeschriebenen Belegen verwendet – Code, Satz, Bezeichnung und Hinweistext bleiben unverändert (§ 11 UStG, § 131 BAO). Für einen neuen Satz einen neuen Code anlegen.</p>':''}
+    return`${g?'<p class="hint" style="margin:0 0 8px">In abgeschlossenen Belegen verwendet – Code, Satz, Bezeichnung und Hinweistext bleiben unverändert (§ 11 UStG, § 131 BAO). Für einen neuen Satz einen neuen Code anlegen.</p>':''}
     <div class="row"><label class="w05">Code<input ${a('code')} value="${esc(y.code)}"${ds}></label><label class="w05">Satz %<input type="number" step="any" inputmode="decimal" ${a('satz')} value="${y.satz}"${ds}></label><label class="w2">Bezeichnung<input ${a('bez')} value="${esc(y.bez)}"${ds}></label></div>
     <div class="row"><label class="w2">Hinweistext auf Rechnung<input ${a('hinweis')} value="${esc(y.hinweis)}"${ds}></label></div>${g?'':`<div class="bar" style="margin:10px 0 0"><button class="d" data-i="${i}" onclick="lpEntf(this,'stdel',()=>S().steuer)">Steuersatz löschen</button></div>`}`},{verwerfen:x})};
 LIVE.stneu=()=>{S().steuer.push({code:'NEU',satz:0,bez:'',hinweis:''});persist();render();LIVE.st({dataset:{i:S().steuer.length-1}})};
@@ -5563,8 +5563,8 @@ function dpKarte(){
       :`<label style="flex:1 1 320px">${kopf}${x.max?` <span class="mut">höchstens ${x.max} Zeichen</span>`:''}${x.opts?`<select ${a}>${x.opts.map(([k,l])=>opt(k,l,v)).join('')}</select>`:x.typ==='ta'?`<textarea ${a} placeholder="${esc(x.ph||'')}" style="height:54px">${esc(v)}</textarea>`:`<input ${a} value="${esc(v)}" placeholder="${esc(x.ph||'')}"${x.max?` maxlength="${x.max}"`:''}>`}${inf}</label>`};
   return`<div id="dprof" style="border-top:1px solid var(--line);margin-top:14px;padding-top:8px"><div class="bar" style="margin:0"><b>Druck &amp; Belegdarstellung</b><select data-o="ui" data-f="dpTyp" title="Belegart">${Object.keys(T).map(t=>opt(t,T[t].bez,typ)).join('')}</select>${Object.keys(P).length?tag(Object.keys(P).length+' vom Standard abweichend','warn'):tag('Standard','ok')}<span class="sp"></span>${phKnopf()}
     <button class="s" data-act="dpre" title="Dieses Profil für Anzahlungs-, Teil-, Schlussrechnung, Rechnung und Gutschrift übernehmen">auf alle Rechnungsarten übertragen</button><button class="s" data-act="dpstd" ${Object.keys(P).length?'':'disabled'}>Standard wiederherstellen</button></div>
-    ${(t=>kmp()?`<p style="margin:6px 0 0">${hilfe(t)}</p>`:`<p class="mut" style="margin:6px 0 0;font-size:13px">${t}</p>`)(`Darstellung in Vorschau, Druck, PDF und E-Mail je Belegart. Im Beleg legt „Druckoptionen …“ Abweichungen für diesen einen Beleg fest. Beim Festschreiben wird die Darstellung im Beleg eingefroren (Nachdruck wie das Original).${re?' Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG).':''}`)}
-    ${erw('druckprofil')?'':'<div class="hint" style="margin:8px 0 0">Das Druckprofil ist ausgeschaltet (Schalter „Druckprofil je Belegart“ oben): Entwürfe werden im Standard-Aussehen gedruckt, festgeschriebene Belege mit ihrem Stand beim Festschreiben. Die Einstellungen hier bleiben gespeichert.</div>'}
+    ${(t=>kmp()?`<p style="margin:6px 0 0">${hilfe(t)}</p>`:`<p class="mut" style="margin:6px 0 0;font-size:13px">${t}</p>`)(`Darstellung in Vorschau, Druck, PDF und E-Mail je Belegart. Im Beleg legt „Druckoptionen …“ Abweichungen für diesen einen Beleg fest. Beim Abschließen wird die Darstellung im Beleg eingefroren (Nachdruck wie das Original).${re?' Bei Rechnungen sind Gesamtpreise und Summenblock immer enthalten (§ 11 UStG).':''}`)}
+    ${erw('druckprofil')?'':'<div class="hint" style="margin:8px 0 0">Das Druckprofil ist ausgeschaltet (Schalter „Druckprofil je Belegart“ oben): Entwürfe werden im Standard-Aussehen gedruckt, abgeschlossene Belege mit ihrem Stand beim Abschließen. Die Einstellungen hier bleiben gespeichert.</div>'}
     ${hw.length?`<div class="hint" style="margin:8px 0 0">${hw.map(esc).join('<br>')}</div>`:''}
     ${L.length?G.map(g=>kmp()?akk('dp-'+g,esc(g),`<div class="row" style="align-items:flex-start">${L.filter(x=>x.p===g).map(feld).join('')}</div>`,{zusatz:(n=>n?tag(n+' geändert','warn'):'')(L.filter(x=>x.p===g&&x.k in P).length)}):`<div style="margin-top:10px"><div class="mut" style="font-weight:600">${esc(g)}</div><div class="row" style="align-items:flex-start">${L.filter(x=>x.p===g).map(feld).join('')}</div></div>`).join(''):'<p class="mut">Noch keine Darstellungsoptionen vorhanden.</p>'}</div>`}
 // Feld des Druckprofils setzen (Einstellungen): Abweichung speichern bzw. bei Standardwert löschen; Unterkarte neu zeichnen, Fokus bleibt im nächsten Feld
@@ -6387,7 +6387,7 @@ const DRUCKOPT=[
   {k:'nrHinweisRE',std:'',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Hinweis unter der Rechnungs-Nr.',typ:'txt',nur:RE_V,ph:'z. B. Bitte bei Zahlung als Verwendungszweck angeben',info:'nur mit „Beleg-Nr. im Infoblock“; leer = kein Hinweis'},
   {k:'lblGueltig',std:'Gültig bis',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Beschriftung „Gültig bis“',typ:'txt',nur:['AN'],ph:'z. B. Bindefrist',info:'im Infoblock und im Formular; „Bindefrist“ trifft die Annahmefrist (§ 862 ABGB) genauer; leer = Standard'},
   {k:'infoTab',std:false,p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Infoblock als Tabelle',typ:'chk',info:'zweispaltig: Bezeichnungen links, Werte daneben'},
-  {k:'infoGrp',std:'linie',alt:'',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Infoblock gegliedert',opts:[['','nein (wie bisher)'],['abstand','Belegdaten | Kunde | Kontakt mit Abstand'],['linie','… mit Abstand und Trennlinie'],['titel','… mit Trennlinie und Überschriften „Kunde“ und „Ihr Kontakt“']],info:'Zuerst Datum, Beleg-Nr., Leistung, Gültig bis, Liefertermin; dann die Daten des Kunden (Kunden-Nr., UID); dann Ansprechperson, E-Mail und Telefon der Firma. Belege, die vor dieser Einstellung festgeschrieben wurden, bleiben wie gedruckt.'},
+  {k:'infoGrp',std:'linie',alt:'',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Infoblock gegliedert',opts:[['','nein (wie bisher)'],['abstand','Belegdaten | Kunde | Kontakt mit Abstand'],['linie','… mit Abstand und Trennlinie'],['titel','… mit Trennlinie und Überschriften „Kunde“ und „Ihr Kontakt“']],info:'Zuerst Datum, Beleg-Nr., Leistung, Gültig bis, Liefertermin; dann die Daten des Kunden (Kunden-Nr., UID); dann Ansprechperson, E-Mail und Telefon der Firma. Belege, die vor dieser Einstellung abgeschlossen wurden, bleiben wie gedruckt.'},
   {k:'lblUid',std:'UID Kunde',alt:'Ihre UID',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Beschriftung UID-Nr. des Kunden',typ:'txt',nur:Object.keys(T).filter(t=>T[t].b==='V'),ph:'z. B. UID-Nr. Kunde',info:'im Infoblock vor der UID-Nr. des Kunden (bisher „Ihre UID“); leer = „UID Kunde“'},
   {k:'gruss',std:'',p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Grußformel',typ:'txt',nur:Object.keys(T).filter(t=>T[t].b==='V'||t==='BE'),ph:'z. B. Mit freundlichen Grüßen',info:'über der Unterschrift; mit Grußformel gibt es den Unterschriftsblock auch bei Bestellungen'},
   {k:'sigFirma',std:false,p:'Infoblock, Grußformel, Fußzeile (P5)',l:'Firmenname unter der Grußformel',typ:'chk',nur:Object.keys(T).filter(t=>T[t].b==='V'||t==='BE')},
@@ -6400,7 +6400,7 @@ const DRUCKOPT=[
   {k:'adrAnrede',std:false,p:'Anrede (P6)',l:'Anrede im Adressblock',typ:'chk',info:'Privatkunden: „Herr“, „Frau“ bzw. „Familie“ über dem Namen (mit Titel, Vor- und Nachname, wenn eingetragen); Unternehmen: „z. H. Herrn Ing. Max Mustermann“ unter dem Firmennamen, wenn kein Zusatz eingetragen ist; Anrede „Firma“: „Firma“ über dem Namen. Kontakte ohne Anrede bleiben unverändert.'},
   {k:'briefAnrede',std:false,p:'Anrede (P6)',l:'Briefanrede vor dem Kopftext',typ:'chk',nur:Object.keys(T).filter(t=>T[t].b==='V'||t==='BE'),info:'Österreichische Form aus Anrede, Titel und Nachname des Kontakts: „Sehr geehrter Herr Ing. Mustermann,“ bzw. „Sehr geehrte Frau …“, ohne Nachname „Sehr geehrte Damen und Herren,“. Im Kontakt frei überschreibbar (Feld „Briefanrede“), im Beleg über das Feld „Briefanrede“ bzw. direkt in der Vorschau. Auch als Anrede der E-Mail.'},
   // Platzhalter (P8): bestehende Texte enthalten keine {…}, unbekannte Platzhalter bleiben stehen – daher Standard ein
-  {k:'platzhalter',std:true,p:'Platzhalter (P8)',l:'Platzhalter in Texten ersetzen',typ:'chk',info:'{Anrede}, {Kunde}, {KundenNr}, {Person}, {Belegart}, {Nr}, {Datum}, {GueltigBis}, {Faellig}, {Betreff}, {Netto}, {Brutto}, {Firma}, {Bearbeiter} in Kopf- und Fußtext, Briefanrede, Grußformel, Kostenvoranschlag, Zusatzzeile der Fußzeile und E-Mail werden bei der Ausgabe durch die Werte des Belegs ersetzt („{…} Platzhalter“ fügt sie ein). Gespeichert bleibt der Text mit Platzhaltern; festgeschriebene Belege verwenden die eingefrorenen Werte. Unbekannte Platzhalter bleiben stehen. Aus: Texte werden wörtlich gedruckt.'},
+  {k:'platzhalter',std:true,p:'Platzhalter (P8)',l:'Platzhalter in Texten ersetzen',typ:'chk',info:'{Anrede}, {Kunde}, {KundenNr}, {Person}, {Belegart}, {Nr}, {Datum}, {GueltigBis}, {Faellig}, {Betreff}, {Netto}, {Brutto}, {Firma}, {Bearbeiter} in Kopf- und Fußtext, Briefanrede, Grußformel, Kostenvoranschlag, Zusatzzeile der Fußzeile und E-Mail werden bei der Ausgabe durch die Werte des Belegs ersetzt („{…} Platzhalter“ fügt sie ein). Gespeichert bleibt der Text mit Platzhaltern; abgeschlossene Belege verwenden die eingefrorenen Werte. Unbekannte Platzhalter bleiben stehen. Aus: Texte werden wörtlich gedruckt.'},
   // Gliederung (P18): Lesezeichen je Gruppe im PDF (pdfAusBeleg)
   {k:'pdfLz',std:false,p:'Gliederung (P18)',l:'PDF mit Lesezeichen je Gruppe',typ:'chk',info:'Das PDF (PDF speichern, E-Mail) bekommt je Gruppe ein Lesezeichen mit Nummer und Bezeichnung (Seitenleiste des PDF-Programms), z. B. für lange Angebote. Ausdruck und Aussehen bleiben gleich; ohne Gruppen keine Lesezeichen.'},
   // Lohnkostennachweis (P9): Entscheidung des Anwenders – nur auf Wunsch je Beleg (Häkchen „Lohnkostennachweis“ bzw. Druckoptionen), Standard wie bisher
@@ -6427,7 +6427,7 @@ const ohneIAN=s=>String(s||'').replace(/<div>Ihre Art\.-Nr\.: [^<]*<\/div>/g,'')
 const ndSet=b=>dOpt(b).nullMenge==='aus'?nullWeg(b,'aus'):null,ndAttr=(w,i)=>w?` data-nd="${i}"`:'',ndCls=(w,p)=>w?.has(p.id)?' nd':'',ndTag=w=>w?'<span class="ndh">wird nicht gedruckt</span>':'';
 const dStdTxt=x=>x.typ==='chk'?(x.std?'ein':'aus'):x.opts?x.opts.find(o=>o[0]===x.std)?.[1]||x.std:x.std?`„${x.std}“`:'leer';
 // Knopf im Beleg (Formular: „Druckoptionen …“, über der Vorschau: „Druckformat …“)
-const dKnopf=(b,l)=>erw('druckprofil')&&DRUCKOPT.some(x=>dGilt(x,b.typ))?`<button class="s" data-act="dopt"${b.fest?' disabled title="Festgeschrieben – die Darstellung wurde beim Festschreiben eingefroren"':' title="Darstellung dieses Belegs in Vorschau, Druck und PDF (Abweichungen vom Druckprofil der Belegart)"'}>${l}${!b.fest&&b.druck&&Object.keys(b.druck).length?' (geändert)':''}</button>`:'';
+const dKnopf=(b,l)=>erw('druckprofil')&&DRUCKOPT.some(x=>dGilt(x,b.typ))?`<button class="s" data-act="dopt"${b.fest?' disabled title="Abgeschlossen – die Darstellung wurde beim Abschließen eingefroren"':' title="Darstellung dieses Belegs in Vorschau, Druck und PDF (Abweichungen vom Druckprofil der Belegart)"'}>${l}${!b.fest&&b.druck&&Object.keys(b.druck).length?' (geändert)':''}</button>`:'';
 // Druckoptionen je Beleg: nur Abweichungen vom Profil der Belegart in b.druck („Wie Belegart“ löscht sie); bei Rechnungsarten gesperrte Felder (DRUCK_RE); ein Rückgängig-Schritt
 async function druckDialog(b){
   if(!b||b.fest)return;const L=DRUCKOPT.filter(x=>dGilt(x,b.typ));if(!L.length)return;
@@ -6583,7 +6583,7 @@ function ausgabeZaehlen(b,a,speichern=true){if(!a?.z)return;b.ausgaben=a.n+1;if(
 // Auftragsbestätigung (erw.abAbschluss): erste Ausgabe einer festgeschriebenen AB (Druck, PDF, E-Mail) setzt b.abgeschlossen (Zeitpunkt) → Status „abgeschlossen“;
 // s: 2 = speichern und neu zeichnen, 1 = nur speichern (Druck über das Browsermenü), 0 = speichert der Aufrufer
 const abZu=b=>!!(erw('abAbschluss')&&b?.typ==='AB'&&b.abgeschlossen&&!b.storno);
-function abAbschluss(b,s=2){if(!erw('abAbschluss')||b?.typ!=='AB'||!b.fest||b.storno||b.abgeschlossen)return;b.abgeschlossen=new Date().toISOString();log('Auftragsbestätigung abgeschlossen',`${b.nr} (ausgegeben)`);if(s)commit();if(s>1&&curBeleg()?.id===b.id)render()}
+function abAbschluss(b,s=2){if(!erw('abAbschluss')||b?.typ!=='AB'||!b.fest||b.storno||b.abgeschlossen)return;b.abgeschlossen=new Date().toISOString();log('Auftragsbestätigung erledigt',`${b.nr} (ausgegeben)`);if(s)commit();if(s>1&&curBeleg()?.id===b.id)render()}
 async function belegDrucken(b){const a=await dupFrage(b);if(!a)return;drucken(b,a);ausgabeZaehlen(b,a);abAbschluss(b)}
 async function belegPDF(b){const a=await dupFrage(b);if(!a)return;if(await pdfHerunterladen(b,a)===false)return;ausgabeZaehlen(b,a);abAbschluss(b)}
 window.addEventListener('afterprint',()=>{if(DRUCK&&!DRUCK.an&&DRUCK.t!=null){document.title=DRUCK.t;DRUCK.t=null}});
@@ -6767,7 +6767,7 @@ function mailVorlage(b){const f=S().firma,t=T[b.typ],k=kontakt(b.kontaktId),offe
   return{betreff:mv.betreff?phT(mv.betreff,pw):`${t.bez} ${bNr(b)}${b.betreff?' – '+b.betreff:''} – ${f.name}`,
     text:mv.text?phT(mv.text,pw):`${anr},\n\n${satz} ${bNr(b)}${b.betreff?' („'+b.betreff+'“)':''}.${t.re&&b.typ!=='GS'&&offenB>0?`\nZahlbar bis ${dAT(faellig(b))}: ${fmt(offenB)} €.`:''}\n\nFür Rückfragen stehen wir gerne zur Verfügung.\n\nMit freundlichen Grüßen\n${f.zeichner||S().bearbeiter||''}\n${f.name}${f.tel?'\nTel. '+f.tel:''}${f.mail?'\n'+f.mail:''}`,an:k?.email||''}}
 async function versenden(b){
-  if(!b.fest&&!confirm('Der Beleg ist noch nicht festgeschrieben (Ausdruck mit „ENTWURF“). Trotzdem versenden?'))return;
+  if(!b.fest&&!confirm('Der Beleg ist noch nicht abgeschlossen (Ausdruck mit „ENTWURF“). Trotzdem versenden?'))return;
   const v=mailVorlage(b),od=STORE.art==='od';
   const o=await formDialog({titel:`${T[b.typ].bez} ${bNr(b)} per E-Mail senden`,ok:od?'Senden':'PDF speichern + E-Mail öffnen',breit:true,felder:[
     {k:'an',l:'An (mehrere mit ; trennen)',wert:v.an,cls:'w2',pflicht:true},{k:'cc',l:'Cc',wert:''},
@@ -6867,7 +6867,7 @@ queueMicrotask(()=>Object.assign(ACT,{lfmail:()=>lfMail(curBeleg()),lfwv:()=>lfW
 /* ---------- Lieferverzug im Verkauf (P35 Teil 4, erw.lfVerkauf): Auftragsbestätigungen an Kunden mit überschrittenem Liefertermin (fest, nicht storniert, erledigung() < 1
    über Lieferscheine bzw. Rechnungen, nicht abgeschlossen nach P32) → eigener Abschnitt in der Karte „Lieferverzug“ (lfKunden); Bestellungen aus der Belegkette einer AB
    (vorgaengerId bzw. gleicher Auftrag) mit überfälligen Positionen → Hinweis „Material verspätet“ in der AB (lfMaterial, lfHinweis). Nur Anzeige ---------- */
-erwPlus({k:'lfVerkauf',std:true,p:'Liefertermine (P35)',l:'Lieferverzug im Verkauf: Kundenlieferungen und verspätetes Material',info:'Auftragsbestätigungen an Kunden, deren Liefertermin vorbei ist und die noch nicht vollständig geliefert bzw. verrechnet sind (Lieferscheine, Rechnungen), stehen in einem eigenen Abschnitt der Karte „Lieferverzug“ im Überblick; ausgenommen sind Auftragsbestätigungen mit Status „abgeschlossen“ (Belegstatus P32). In der Auftragsbestätigung erscheint der Hinweis „Material verspätet“, wenn eine Bestellung aus derselben Belegkette (bzw. demselben Auftrag) überfällige Positionen hat, mit Bestellung, Lieferant und Termin.'});
+erwPlus({k:'lfVerkauf',std:true,p:'Liefertermine (P35)',l:'Lieferverzug im Verkauf: Kundenlieferungen und verspätetes Material',info:'Auftragsbestätigungen an Kunden, deren Liefertermin vorbei ist und die noch nicht vollständig geliefert bzw. verrechnet sind (Lieferscheine, Rechnungen), stehen in einem eigenen Abschnitt der Karte „Lieferverzug“ im Überblick; ausgenommen sind Auftragsbestätigungen mit Status „erledigt“ (Belegstatus P32). In der Auftragsbestätigung erscheint der Hinweis „Material verspätet“, wenn eine Bestellung aus derselben Belegkette (bzw. demselben Auftrag) überfällige Positionen hat, mit Bestellung, Lieferant und Termin.'});
 function lfMaterial(ab,h=isoD()){if(!ab?.fest)return[];return DB.belege.filter(x=>x.typ==='BE'&&x.fest&&!x.storno&&(x.vorgaengerId===ab.id||(ab.auftragId&&x.auftragId===ab.auftragId)))
   .map(b=>({b,w:lfStand(lfPos(b,h).filter(x=>x.st==='ueber'))})).filter(x=>x.w)} // Bestellungen der Belegkette mit überfälligen Positionen
 const lfKunden=(h=isoD())=>DB.belege.filter(b=>b.typ==='AB'&&b.fest&&!b.storno&&b.liefertermin&&b.liefertermin<h&&erledigung(b)<0.9999).map(b=>({b,tage:lfTage(b.liefertermin,h),m:lfMaterial(b,h)})).sort((a,c)=>a.b.liefertermin.localeCompare(c.b.liefertermin));
@@ -6883,7 +6883,7 @@ function sammelRechnung(kid0=''){
     d.innerHTML=`<div class="mbox" style="max-width:640px"><h2>Rechnung aus Lieferscheinen</h2>
       <label>Kunde<select id="sr-k">${kunden.map(k=>opt(k.id,k.name,kid0||kunden[0]?.id)).join('')}</select></label><div id="sr-l" style="margin-top:8px;max-height:50vh;overflow:auto"></div>
       <div class="bar" style="justify-content:flex-end;margin:12px 0 0"><button id="m-no">Abbrechen</button><button class="p" id="m-ok">Rechnung erstellen</button></div></div>`;
-    document.body.appendChild(d);const sel=d.querySelector('#sr-k'),lst=d.querySelector('#sr-l');lst.innerHTML=kunden.length?zeich(sel.value):'<p class="mut">Keine offenen (festgeschriebenen, noch nicht verrechneten) Lieferscheine.</p>';
+    document.body.appendChild(d);const sel=d.querySelector('#sr-k'),lst=d.querySelector('#sr-l');lst.innerHTML=kunden.length?zeich(sel.value):'<p class="mut">Keine offenen (abgeschlossenen, noch nicht verrechneten) Lieferscheine.</p>';
     sel.onchange=()=>{lst.innerHTML=zeich(sel.value)};const fin=v=>{d.remove();res(v)};
     d.querySelector('#m-no').onclick=()=>fin(null);
     d.querySelector('#m-ok').onclick=()=>{const ids=[...lst.querySelectorAll('[data-ls]:checked')].map(e=>e.dataset.ls);if(!ids.length)return;fin(ids)};
@@ -6903,7 +6903,7 @@ const ACT={
   fest:()=>festschreiben(curBeleg()),
   druck:()=>belegDrucken(curBeleg()),
   folge:async el=>{const typ=el.value;if(!typ)return;el.value='';const b=curBeleg();
-    if(!b.fest){if(!confirm(`Für den Folgebeleg „${T[typ].bez}“ muss ${T[b.typ].bez} zuerst festgeschrieben werden.\nJetzt festschreiben?`))return;await festschreiben(b);if(!beleg(b.id)?.fest)return}
+    if(!b.fest){if(!confirm(`Für den Folgebeleg „${T[typ].bez}“ muss ${T[b.typ].bez} zuerst abgeschlossen werden.\nJetzt abschließen?`))return;await festschreiben(b);if(!beleg(b.id)?.fest)return}
     folgeGo(beleg(b.id),typ)},
   folgere:el=>{el.value='RE';ACT.folge(el)},
   sammelre:()=>sammelRechnung(curBeleg().kontaktId),sammelre0:()=>sammelRechnung(),
@@ -7227,7 +7227,7 @@ document.addEventListener('change',e=>{
       for(const x in o){const f={lp:'lp',rab:'rabatt',ek:'ek'}[x];l[f]=o[x];document.querySelectorAll(`[data-o="al"][data-id="${d.id}"][data-i="${d.i}"][data-f="${f}"]`).forEach(e=>e.value=o[x])}break}
     case's':if(d.f==='erw.mfaPflicht'&&el.checked&&!mfaFrei()){el.checked=false;return} // nur mit Anmeldung über zweiten Faktor einschaltbar (P37)
       if(d.f.startsWith('druckprofil.')){dpSetzen(d.f,v);return}if(d.f==='einheitenStr')S().einheiten=String(v).split(',').map(x=>x.trim()).filter(Boolean);else{const pth=d.f.split('.');let o=S();while(pth.length>1)o=o[pth.shift()]??={};o[pth[0]]=d.t==='b'?v===true||v==='true':nv;if(d.f.startsWith('erw.')){persist();render();return}}break;
-    case'st':{const x=S().steuer[+d.i];if(stGesperrt().has(x.code)){alert(`Steuersatz „${x.bez||x.code}“ wird in festgeschriebenen Belegen verwendet und kann nicht geändert werden (§ 11 UStG, § 131 BAO).\nFür einen neuen Satz bitte einen neuen Code anlegen.`);render();return}if(d.f==='code'){const alt=x.code;if(S().steuer.some((y,j)=>j!==+d.i&&y.code===v)){alert('Code existiert bereits.');render();return}if(DB.belege.some(b=>b.pos.some(p=>p.steuer===alt))){alert('Code wird verwendet und kann nicht geändert werden.');render();return}}x[d.f]=nv;break}
+    case'st':{const x=S().steuer[+d.i];if(stGesperrt().has(x.code)){alert(`Steuersatz „${x.bez||x.code}“ wird in abgeschlossenen Belegen verwendet und kann nicht geändert werden (§ 11 UStG, § 131 BAO).\nFür einen neuen Satz bitte einen neuen Code anlegen.`);render();return}if(d.f==='code'){const alt=x.code;if(S().steuer.some((y,j)=>j!==+d.i&&y.code===v)){alert('Code existiert bereits.');render();return}if(DB.belege.some(b=>b.pos.some(p=>p.steuer===alt))){alert('Code wird verwendet und kann nicht geändert werden.');render();return}}x[d.f]=nv;break}
     case'tf':S().tarife[+d.i][d.f]=nv;break;
     case'kbbel':{const b=curBeleg();if(!b||b.fest)return;b.kbId=v;log('K-Blatt im Beleg',`${bNr(b)}: ${ROOT.kb(v)?.name||'keines'}`);persist();render();return} // K-Blatt des Verkaufsbelegs (P34, '' = bewusst keines)
     case'fbk':FB().konten[+d.i][d.f]=v;break;
@@ -7906,6 +7906,17 @@ SU_G.push(['prot','Protokolle'],['prj','Projekte']); // Globale Suche (P20)
 .prd.bp .btbk th{background:#faf8f3;color:#6b5f45}.prd.bp .btbt thead th{background:#ece6d8;color:#3d3528;font-weight:600;border-bottom:.4mm solid #80704d}
 .prd.bp .prt td{border-top:.3mm solid #cfc6b2}.prd.bp .prs td,.prd.bp .prbz td{background:#fcfbf8}.prd.bp .pa-A{color:#a3570c}.prd.bp .pa-B{color:#1f4f99}.prd.bp .pa-I{color:#6b7280}
 @media print{.prd h3{break-after:avoid}.prd tr,.prd figure,.prd .sigb{break-inside:avoid}}`;document.head.appendChild(st)}
+/* Seitenleiste: Gruppe „Projektmanagement“ (erw.navPm): pmNav() setzt vor die Einträge PM_N (data-n, nur vorhandene) eine Überschrift nav .grp.pmg und ordnet sie dahinter (alter Platz in a._pmV);
+   aus = Überschrift entfernt, Einträge zurück an den alten Platz. Läuft vor navKlapp(), damit die Gruppe mitklappt; ohne sichtbaren Eintrag keine Überschrift */
+erwPlus({k:'navPm',std:true,p:'Ansichten klarer (P44)',l:'Seitenleiste: eigene Gruppe „Projektmanagement“',info:'Aufträge & DB II, Zeiterfassung, Bautagesberichte, Projekte und Protokolle stehen in der Seitenleiste unter einer eigenen Überschrift „Projektmanagement“ (mit „Seitenleiste einklappbar“ auch auf- und zuklappbar). Aus = wie bisher unter „Vorgänge“.'});
+const PM_N=['auftraege','zeiten','berichte','projekte','protokolle'];
+function pmNav(){const N=document.querySelector('nav');if(!N)return;let g=N.querySelector(':scope>.grp.pmg');const an=!!DB&&erw('navPm'),A=PM_N.map(n=>N.querySelector(`:scope>a[data-n="${n}"]`)).filter(Boolean);
+  if(!an||!A.length){if(g){for(const a of A.reverse())if(a._pmV){a._pmV.before(a);delete a._pmV}g.remove()}return}
+  if(!g){for(const a of A)a._pmV=a.nextElementSibling;g=document.createElement('div');g.className='grp pmg';g.textContent='Projektmanagement';(N.querySelector(':scope>.grp~.grp')||A[0]).before(g)}
+  let v=g;for(const a of A){v.after(a);v=a}
+  g.style.display=A.some(a=>a.classList.contains('nkweg')||getComputedStyle(a).display!=='none')?'':'none'}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);pmNav();return x}}
+
 /* Seitenleiste aufräumen (P44 C, erw.navKlapp): Gruppenüberschriften (nav .grp) klappen wie in Outlook (◢/▷, Zustand je Gerät erp-navzu = Gruppennamen); „⚙ Seitenleiste anpassen …“
    (ACT.navanp) blendet einzelne Einträge aus (erp-navaus = data-n); der geöffnete Eintrag bleibt immer sichtbar, Export und Einstellungen klappen nicht mit. navKlapp() nach jedem render() */
 erwPlus({k:'navKlapp',std:false,p:'Ansichten klarer (P44)',l:'Seitenleiste einklappbar und anpassbar',info:'Die Überschriften der Seitenleiste (Vorgänge, Stammdaten, Auswertung, Kalkulation & LV) lassen sich wie in Outlook auf- und zuklappen. Über „⚙ Seitenleiste anpassen …“ unten in der Seitenleiste blendest du Einträge aus, die du nicht brauchst. Beides merkt sich jedes Gerät; der gerade geöffnete Bereich bleibt immer sichtbar.'});
@@ -7942,7 +7953,7 @@ erwPlus({k:'schnell',std:false,p:'Schnellfunktionen (P45)',l:'Schnellfunktionen 
 erwPlus({k:'appHandy',std:true,p:'Schnellfunktionen (P45)',l:'Am Handy automatisch App-Darstellung',info:'Am Handy (Touch, bis 760 px Breite) gelten immer die kompakte Ansicht, der kompakte Beleg-Editor, die iOS-Darstellung und die Tab-Leiste unten, auch wenn ERP-Lite über einen Link in Safari aufgeht oder diese Schalter aus sind. Am PC und iPad gelten weiter die einzelnen Schalter. Aus = nur die einzelnen Schalter.'});
 const APP_H=['kompakt','kompaktBeleg','ios','tabLeiste'],APP_HM=matchMedia('(max-width:760px) and (pointer:coarse)');
 ERW_X=(k,v)=>v||(APP_H.includes(k)&&APP_HM.matches&&!!(DB?.settings?.erw?.appHandy??ERW_STD.appHandy)); // erw.appHandy liest den Schalter direkt (keine Schleife über erw())
-const SF=[{k:'zeit',ic:'⏱',l:'Zeit starten / stoppen',nur:()=>erw('stoppuhr')},{k:'erfassen',ic:'🕒',l:'Zeit erfassen'},{k:'bericht',ic:'📋',l:'Neuer Bautagesbericht',nur:()=>erw('btb')},
+const SF=[{k:'zeit',ic:'⏱',l:'Zeit starten / stoppen',nur:()=>erw('stoppuhr')},{k:'erfassen',ic:'🕒',l:'Zeit erfassen'},{k:'bericht',ic:'📋',l:'Neuer Bautages\u00adbericht',nur:()=>erw('btb')},
   {k:'foto',ic:'📸',l:'Foto zum Bericht',nur:()=>erw('btb')&&erw('btbBild')},{k:'rechnung',ic:'📄',l:'Rechnung einlesen'},{k:'angebot',ic:'📝',l:'Neues Angebot'},{k:'suche',ic:'🔍',l:'Suchen',nur:()=>erw('suche')},
   {k:'dash',ic:'🏠',l:'Übersicht'},{k:'lief',ic:'🚚',l:'Offene Lieferungen',nur:()=>erw('lfListe')},{k:'kontakt',ic:'👤',l:'Neuer Kunde'}];
 const sfOk=x=>!x.nur||x.nur(),sfL=()=>SF.filter(x=>sfOk(x)&&!(S().schnell?.aus||[]).includes(x.k)),SF_H0=location.hash;let SFST=false;
@@ -7989,9 +8000,71 @@ function sfKarte(){const s=S(),aus=s.schnell?.aus||[],basis=location.href.split(
 Object.assign(ACT,{sf:el=>sfAus(el.dataset.k),
   sfaus:el=>{const s=S(),L=(s.schnell??={}).aus??=[],i=L.indexOf(el.dataset.k);if(el.checked&&i>=0)L.splice(i,1);else if(!el.checked&&i<0)L.push(el.dataset.k);persist()},
   sfkopie:async el=>{try{await navigator.clipboard.writeText(el.dataset.u);el.textContent='✓ Kopiert'}catch(e){prompt('Link kopieren:',el.dataset.u)}}});
-{const st=document.createElement('style');st.textContent='.sfk{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:10px}.sfk .sfb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:104px;padding:12px;font-size:15px;font-weight:600;text-align:center;border-radius:14px;cursor:pointer}.sfk .sfb span{font-size:30px;line-height:1}.sfk .sfb small{font-weight:400;font-size:12px;opacity:.8}.sfk .sfhl{outline:3px solid #2f6fdf;outline-offset:2px}.sfk .sfl{background:#c0392b;color:#fff;border-color:#c0392b}@media(max-width:760px){.sfk{grid-template-columns:1fr 1fr}}.sft code{font-size:12px;word-break:break-all}.sft td{vertical-align:middle;padding:4px 6px}#uhrp{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:900;background:#c0392b;color:#fff;border:0;border-radius:20px;padding:8px 14px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.25)}body.tl #uhrp{bottom:calc(76px + env(safe-area-inset-bottom))}@media(max-width:760px){nav{height:100dvh;padding-bottom:calc(24px + env(safe-area-inset-bottom));overscroll-behavior:contain}}@media(max-width:760px) and (display-mode:browser){nav{padding-bottom:calc(110px + env(safe-area-inset-bottom))}}';/* Menü am Handy: 100vh reicht in Safari hinter die Werkzeugleiste, untere Einträge waren nicht erreichbar */document.head.appendChild(st)}
+{const st=document.createElement('style');st.textContent='.sfk{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:10px}.sfk .sfb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:104px;padding:12px;font-size:15px;font-weight:600;text-align:center;border-radius:14px;cursor:pointer;min-width:0;white-space:normal;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word;line-height:1.25}.sfk .sfb span{font-size:30px;line-height:1}.sfk .sfb small{font-weight:400;font-size:12px;opacity:.8}.sfk .sfhl{outline:3px solid #2f6fdf;outline-offset:2px}.sfk .sfl{background:#c0392b;color:#fff;border-color:#c0392b}@media(max-width:760px){.sfk{grid-template-columns:1fr 1fr}}.sft code{font-size:12px;word-break:break-all}.sft td{vertical-align:middle;padding:4px 6px}#uhrp{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:900;background:#c0392b;color:#fff;border:0;border-radius:20px;padding:8px 14px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.25)}body.tl #uhrp{bottom:calc(76px + env(safe-area-inset-bottom))}@media(max-width:760px){nav{height:100dvh;padding-bottom:calc(24px + env(safe-area-inset-bottom));overscroll-behavior:contain}}@media(max-width:760px) and (display-mode:browser){nav{padding-bottom:calc(110px + env(safe-area-inset-bottom))}}';/* Menü am Handy: 100vh reicht in Safari hinter die Werkzeugleiste, untere Einträge waren nicht erreichbar */document.head.appendChild(st)}
 
 {const e0=V.einstellungen;V.einstellungen=(...x)=>{const h=e0(...x);return DB&&erw('zeitStempel')?h+zsKarte():h}} // Zeiterfassung mit Beginn/Ende (P48)
+
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{const h=v0(...x);return DB&&erw('module')&&!ES_IDX?h.replace(/<h1>Einstellungen<\/h1>/,'$&'+modKarte()):h}} // Karte „Module“ (P52 Etappe 2, Code am Ende vor start()), vor P46 eingesetzt, damit sie im Bereich „Firma & Grunddaten“ steht
+
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{const h=v0(...x);return DB&&erw('benutzer')&&!ES_IDX?h+bnKarte():h}} // Karte „Benutzer & Gruppen“ (P52 Etappe 3, Code am Ende vor start())
+
+/* Live-Betrieb (P52 Etappe 1, erw.liveCheck, Standard ein): Karte „Live-Check“ oben in den Einstellungen (lcPunkte() → Ampel je Punkt, nur Anzeige, ändert nichts),
+   Programmstand aus document.lastModified (GitHub Pages: Zeitpunkt der Veröffentlichung), Hinweis #testb „TESTBETRIEB“ bei Speicherort „nur dieser Browser“ (body.testb, nach render()). */
+erwPlus({k:'liveCheck',std:true,p:'Live-Betrieb (P52)',l:'Live-Check in den Einstellungen und Hinweis „Testbetrieb“',info:'Oben in den Einstellungen prüft eine Karte, ob alles für den Echtbetrieb bereit ist (Speicherort, Anmeldung, Firmenangaben, Nummernkreise, Testdaten, Sicherung, Archiv) und zeigt den Programmstand. Läuft das Programm mit „Nur im Browser testen“, steht oben ein Hinweis „TESTBETRIEB“.'});
+queueMicrotask(()=>{EB_K.liveCheck='sicher';EB_KARTE.push([/\|Live-Check/,'firma'])}); // EB_K/EB_KARTE entstehen erst im Block P46 darunter
+const LC_TEST=/\b(test|muster|demo|beispiel|dummy)/i,lcStand=()=>{const d=new Date(document.lastModified);return isNaN(d)?'–':d.toLocaleString('de-AT',{dateStyle:'medium',timeStyle:'short'})};
+function lcPunkte(){const s=S(),f=s.firma||{},P=[],j=String(new Date().getFullYear()),p=(t,st,d)=>P.push({t,st,d});
+  const a=STORE.art;p('Speicherort',a==='od'?'ok':a==='dir'?'warn':'err',a==='od'?esc(STORE.name):a==='dir'?'Lokaler Ordner – kein Abgleich mit Handy und Tablet':'Nur dieser Browser (Test) – Daten gehen beim Leeren des Browsers verloren');
+  if(a==='od')p('Anmeldung',mfaOk()?'ok':'warn',mfaOk()?'Mit zweitem Faktor (MFA) angemeldet':'Ohne zweiten Faktor angemeldet – Microsoft-Konto mit MFA absichern');
+  const fF=[[f.name,'Firmenname'],[f.strasse,'Straße'],[f.plz,'PLZ'],[f.ort,'Ort']].filter(x=>!String(x[0]||'').trim()).map(x=>x[1]).concat(pflichtFehlt(f));
+  p('Firmenangaben',fF.length?'err':'ok',fF.length?'Fehlt: '+fF.join(', '):'Name, Anschrift, UID, Firmenbuch vollständig');
+  p('Bankverbindung',String(f.iban||'').trim()?'ok':'warn',String(f.iban||'').trim()?esc(f.iban):'IBAN fehlt (steht auf Rechnungen)');
+  const nk=s.nk||{},nx=t=>nk[t]?`${nk[t].prefix}-${j}-${String((nk[t].zaehler?.[j]||0)+1).padStart(4,'0')}`:'';
+  p('Nummernkreise','ok','Nächste Nummern '+j+': '+['AN','AB','LS','RE','GS'].map(nx).filter(Boolean).join(', '));
+  const tK=(DB.kontakte||[]).filter(k=>LC_TEST.test(k.name||'')).length,tB=(DB.belege||[]).filter(b=>LC_TEST.test(b.adresse?.name||'')).length;
+  p('Testdaten',tK||tB?'warn':'ok',tK||tB?`${tK} Kontakte und ${tB} Belege mit „Test“, „Muster“ o. Ä. im Namen – vor dem Echtbetrieb prüfen`:'Keine Kontakte oder Belege mit „Test“, „Muster“ o. Ä. im Namen');
+  const sf=sichFehler(),ss=sichStand();
+  p('Tagessicherung',!erw('sicherung')?'warn':sf?'err':'ok',!erw('sicherung')?'Ausgeschaltet (Erweiterungen → Datensicherung)':sf?'Letzter Versuch fehlgeschlagen: '+esc(sf.t):ss.ts?'Ein, letzte neue Sicherung von diesem Gerät: '+new Date(ss.ts).toLocaleDateString('de-AT'):'Ein, noch keine Sicherung von diesem Gerät');
+  p('Archiv',erw('archiv')?'ok':'warn',erw('archiv')?'Ein (PDF beim Abschließen, Monatsexport)':'Ausgeschaltet (Erweiterungen → Datensicherung)');
+  return P}
+function lcKarte(){const P=lcPunkte(),T={ok:['✓','ok'],warn:['!','warn'],err:['✕','err']},n=P.filter(x=>x.st!=='ok').length;
+  return akk('e-live','Live-Check',`<div class="card lc"><h2>Live-Check ${n?tag(n+' offen',P.some(x=>x.st==='err')?'err':'warn'):tag('bereit','ok')}</h2>
+  <table class="lct">${P.map(x=>`<tr><td>${tag(T[x.st][0],T[x.st][1])}</td><td><b>${x.t}</b></td><td>${x.d}</td></tr>`).join('')}</table>
+  <p class="mut" title="Zeitpunkt der Veröffentlichung – am Handy und am PC sollte derselbe Stand stehen">Programmstand: ${lcStand()}</p></div>`,{offen:n>0,zusatz:n?tag(n+' offen','warn'):tag('bereit','ok')})}
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{const h=v0(...x);return DB&&erw('liveCheck')&&!ES_IDX?h.replace('</h1>','</h1>'+lcKarte()):h}}
+{const r0=render;render=function(...a){const x=r0.apply(this,a),an=!!DB&&erw('liveCheck')&&STORE===CACHESTORE;document.body.classList.toggle('testb',an);let e=$('#testb');
+  if(an&&!e){e=document.createElement('div');e.id='testb';e.textContent='TESTBETRIEB – Daten nur in diesem Browser';document.body.append(e)}else if(!an)e?.remove();return x}}
+{const st=document.createElement('style');st.textContent=`.lct{width:100%;border-collapse:collapse}.lct td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}.lct td:first-child{width:28px}.lct td:nth-child(2){white-space:nowrap}
+#testb{position:fixed;top:env(safe-area-inset-top);left:50%;transform:translateX(-50%);z-index:9999;background:#d97706;color:#fff;font:600 11px/1.6 system-ui,sans-serif;letter-spacing:.04em;padding:1px 10px;border-radius:0 0 6px 6px;pointer-events:none;opacity:.92;white-space:nowrap}
+@media print{#testb{display:none}}body.nav #testb{display:none}`;document.head.append(st)}
+
+/* Rechtschreibprüfung (P54, erw.rechtschreib, Standard aus): Wrapper um render() + MutationObserver RS_MO → rsFeld(el) setzt an Fließtext (textarea, contenteditable, Eingaben mit Schlüssel aus RS_F bzw. ID aus RS_ID)
+   spellcheck="true" und lang = rsLang(), an allen übrigen Texteingaben (Nummern, Beträge, Namen, IBAN …) spellcheck/autocorrect aus; ursprüngliche Werte in data-rs, ausgeschaltet zurück über rsWeg().
+   Prüfsprache S().rsSprache (RS_L, leer = de-AT, Karte rsKarte()), im Beleg die Sprache des Kunden k.sprache (leer = Prüfsprache; Feld über Wrapper um kontaktFelder()). Geprüft wird mit dem Wörterbuch des Geräts, nichts verlässt das Gerät */
+erwPlus({k:'rechtschreib',std:false,p:'Rechtschreibprüfung (P54)',l:'Rechtschreibprüfung in Textfeldern',info:'Texte wie Bezeichnungen, Langtexte, Kopf- und Fußtext, Anrede, Notizen, Tätigkeiten und E-Mail-Vorlagen werden auf Rechtschreibung geprüft (rote Wellenlinie; Vorschläge per Rechtsklick bzw. Antippen). Nummern, Beträge, Namen, Art.-Nr., UID, IBAN, E-Mail und Suchfelder werden nicht geprüft, am iPhone/iPad dort auch keine Autokorrektur. Prüfsprache in der Karte „Rechtschreibprüfung“ (Standard Deutsch (Österreich)); im Beleg gilt die Sprache des Kunden, wenn im Kontakt eine eingetragen ist. Geprüft wird mit dem Wörterbuch des Geräts – keine Texte verlassen das Gerät, geht auch offline. Chrome/Edge am PC: die Sprache muss dort unter Einstellungen → Sprachen für die Rechtschreibprüfung aktiviert sein.'});
+queueMicrotask(()=>{EB_K.rechtschreib='ansicht';EB_KARTE.push([/^e-rs\||\|Rechtschreibprüfung/,'ansicht'])});
+const RS_L={'de-AT':'Deutsch (Österreich)','de-DE':'Deutsch (Deutschland)','de-CH':'Deutsch (Schweiz)','en-GB':'Englisch (Großbritannien)','en-US':'Englisch (USA)',it:'Italienisch',fr:'Französisch',hr:'Kroatisch',sl:'Slowenisch',hu:'Ungarisch',cs:'Tschechisch',sk:'Slowakisch'},
+  RS_F=/^(bez|bezeichnung|text|kopf|fuss|anrede|briefAnrede|notiz|hinweis|slogan|betreff|lfBetreff|lfText|projekt|revGrund|grund|gGrund|taetigkeit|behTxt|anord|maengel|sicher|wvNotiz|bemerkung|langtext)$/,
+  RS_ID=['zt-t'],RS_NIE=/json|csv|iban|bic|uid|mail|tel|plz|nr$/i,
+  RS_Q='textarea,input:not([type]),input[type=text],input[type=search],[contenteditable=""],[contenteditable="true"]';
+let RS_MO=null;
+const rsLang=()=>{const b=DB&&curBeleg(),k=b&&b.kontaktId&&kontakt(b.kontaktId);return(k&&RS_L[k.sprache]?k.sprache:'')||(DB&&RS_L[S().rsSprache]?S().rsSprache:'de-AT')},
+  rsSet=(el,n,v)=>v==null?el.removeAttribute(n):el.setAttribute(n,v);
+function rsFeld(el,L){if(!el.dataset.rs)el.dataset.rs=JSON.stringify([el.getAttribute('spellcheck'),el.getAttribute('lang'),el.getAttribute('autocorrect')]);
+  const ce=el.hasAttribute('contenteditable'),k=(el.dataset.f||el.dataset.k||el.dataset.ed||el.dataset.h||'').split(/[.:]/).pop(),
+    an=!RS_NIE.test(k)&&(ce||el.tagName==='TEXTAREA'||RS_F.test(k)||RS_ID.includes(el.id));
+  if(an){rsSet(el,'spellcheck','true');rsSet(el,'lang',L);rsSet(el,'autocorrect',JSON.parse(el.dataset.rs)[2])}else{rsSet(el,'spellcheck','false');rsSet(el,'autocorrect','off')}}
+function rsWeg(el){const[s,l,a]=JSON.parse(el.dataset.rs);rsSet(el,'spellcheck',s);rsSet(el,'lang',l);rsSet(el,'autocorrect',a);delete el.dataset.rs}
+function rsLauf(n){if(n.nodeType!==1)return;const L=rsLang();if(n.matches(RS_Q))rsFeld(n,L);n.querySelectorAll(RS_Q).forEach(e=>rsFeld(e,L))}
+{const r0=render;render=function(...a){const x=r0.apply(this,a),an=!!DB&&erw('rechtschreib');
+  if(an){rsLauf(document.body);if(!RS_MO){RS_MO=new MutationObserver(M=>{for(const m of M)m.addedNodes.forEach(rsLauf)});RS_MO.observe(document.body,{childList:true,subtree:true})}}
+  else{if(RS_MO){RS_MO.disconnect();RS_MO=null}document.querySelectorAll('[data-rs]').forEach(rsWeg)}return x}}
+function rsKarte(){const v=RS_L[S().rsSprache]?S().rsSprache:'de-AT';
+  return akk('e-rs','Rechtschreibprüfung',`<div class="card" id="rskarte"><h2>Rechtschreibprüfung</h2><div class="row"><label class="w2">Prüfsprache<select data-o="s" data-f="rsSprache">${Object.entries(RS_L).map(([k,l])=>opt(k,l,v)).join('')}</select></label></div>
+  <p class="mut">Gilt für alle Textfelder. Im Beleg gilt die Sprache des Kunden, wenn im Kontakt eine eingetragen ist. Geprüft wird mit dem Wörterbuch des Geräts; Chrome/Edge am PC: Sprache dort unter Einstellungen → Sprachen für die Rechtschreibprüfung aktivieren.</p></div>`)}
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{const h=v0(...x);return DB&&erw('rechtschreib')?h+rsKarte():h}}
+{const kf0=kontaktFelder;kontaktFelder=k=>{const h=kf0(k);if(!erw('rechtschreib')||k.typ==='L')return h;
+  return h+`<div class="row"><label class="w2">Sprache (Rechtschreibprüfung im Beleg)<select data-o="k" data-id="${k.id}" data-f="sprache">${opt('','wie Prüfsprache',k.sprache||'')}${Object.entries(RS_L).map(([x,l])=>opt(x,l,k.sprache||'')).join('')}</select></label></div>`}}
 
 /* Einstellungen gruppieren (P46, erw.einstGruppen): Wrapper um V.einstellungen (nach allen anderen Wrappern). Die Bereiche (Kinder von #main) werden nach Verwendungszweck EB
    geordnet (Karten über data-akk bzw. Überschrift EB_KARTE, Schalter über EB_K, sonst „Weitere“); die Karte „Erweiterungen“ wird je Bereich als „Funktionen“ (egFunk) neu
@@ -8003,7 +8076,7 @@ const EB=[['firma','🏢','Firma & Grunddaten'],['belege','🧾','Belege & Druck
 const EB_K=Object.fromEntries(Object.entries({belege:'strgP snapshot duplikat druckprofil abAbschluss gliederung zuschlag pe',
   kalk:'gkalk gkMerken dbStd gkLohn k3Tarif tarifPos gkAufsFeld vkVorschlag ekRechnen kbVorlage kbDruck kbProjekt kbBeleg',einkauf:'scanPE lfTermin lfListe lfErinnern lfVerkauf lfNeu',
   kontakte:'kFilter navKL kontaktForm adrVorschlag adrPruef dublette kDok artBild',bau:'btb btbBild btbSig btbDruck btbVorschau btbZeit btbNrDatum btbRechnung btbFahrt btbTage regie regieAntrag mitarbeiter maLohn unterschrift',
-  ansicht:'kompakt kompaktBeleg einstGruppen kundeProjekt auftragKP belegFilterKurz belegInfo kontaktSchlank dashLeer navKlapp pfeile speicherLeiste dashFlex ihHover scrollSperre baumHover kontext statuszeile kopfFix zuletzt suche einstSuche suEinst',
+  ansicht:'kompakt kompaktBeleg einstGruppen kundeProjekt auftragKP belegFilterKurz belegInfo kontaktSchlank dashLeer navKlapp navPm pfeile speicherLeiste dashFlex ihHover scrollSperre baumHover kontext statuszeile kopfFix zuletzt suche einstSuche suEinst',
   app:'ios appOffline netStatus ipad tabLeiste wischZurueck langDruck iosTeilen dunkel schnell schnellStart stoppuhr',sicher:'abmKnopf geraetLoeschen mfaPflicht sicherung archiv vollsicherung'}).flatMap(([b,s])=>s.split(' ').map(k=>[k,b])));
 const EB_KARTE=[[/^e-(firma|kfm|st|nk)\||\|(Firma|Kaufmännisch|Steuersätze|Nummernkreise)/,'firma'],[/^e-(mail|druck)\||\|(E-Mail-Vorlage|Druck)/,'belege'],[/^e-(tf|kv|ger)\||\|(Stundentarife|Kollektivvertr|Geräteliste)/,'kalk'],
   [/^e-(ein|lf)\||\|(Belege einlesen|Liefertermine)/,'einkauf'],[/^e-(regie|fahrt)\||\|(Regiepreise|Fahrtkosten)/,'bau'],[/\|Schnellfunktionen/,'app']];
@@ -8037,7 +8110,7 @@ function egMain(){const m=$('#main');if(!m)return;const n=m.querySelector(':scop
 document.addEventListener('input',e=>{if(e.target.id==='esq')egMain()});document.addEventListener('keydown',e=>{if(e.target.id==='esq')setTimeout(egMain)});document.addEventListener('click',e=>{if(e.target.closest?.('[data-act=esx]'))setTimeout(egMain)});
 {const st=document.createElement('style');st.textContent=`#main.eg{display:grid;grid-template-columns:230px minmax(0,1fr);column-gap:20px;align-items:start}#main.eg>*{grid-column:2;min-width:0}
 #main.eg>:is(h1,#esu,#sleiste,#dirtybar){grid-column:1/-1}#main.eg>#egn{grid-column:1;grid-row:span 300;position:sticky;top:8px;display:flex;flex-direction:column;gap:2px}#main.eg>#esu~#egn{top:64px}
-#egn button.egb{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:8px 10px;color:var(--ink);font-size:14px;font-weight:400;cursor:pointer;min-height:38px}
+#egn button.egb{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:8px 10px;color:var(--ink);font-size:14px;font-weight:400;cursor:pointer;min-height:38px;white-space:normal;line-height:1.3}
 #egn button.egb:hover{background:var(--acc2)}#egn button.egb.on{background:var(--acc2);color:var(--acc);font-weight:600}.egn .egi{flex:none;width:24px;text-align:center}
 .egd{flex:none;width:8px;height:8px;border-radius:50%;background:var(--warn);margin-left:auto}.egk .egd{margin-left:0}
 .eg-aus{display:none}#main.egq .eg-aus{display:revert}
@@ -8295,6 +8368,283 @@ ${n} input:not([type=checkbox]):not([type=radio])${w},${n} select${w},${n} texta
 ${n} button:not(.p,.gef)${w},${n} .btn${w},${n} .seg${w}{border-color:#535d70}${n} button:not(.p,.gef)${w}:hover{border-color:#8a95a8}
 ${n} th${w}{background:#272d38;color:#c3cad5}
 ${n} #p49{border-bottom-color:#3e4757}${n} #p49 .p49t{background:#262b35;border-color:#353c4a}${n} #p49 .p49t:hover{background:#2f3542}${n} #p49 .p49t.on{background:var(--card);border-color:#3e4757}`;document.head.appendChild(st)}
+/* Module (P52 Etappe 2, erw.module, Standard ein): Bereiche als Ganzes ein/aus, S().module = {<k>:false} nur Abweichungen (fehlt = ein), mod(k).
+   Aus = Menüpunkte (nav/#tabl über href, leere .grp), Listenansichten (V-Wrapper → modAusHTML), Suche (suIndex-Wrapper, SU-Gruppen su), Einstellungen (P46-Bereiche eb, Karten über EB_KARTE)
+   und die Schalter des Moduls (MOD_SW, über ERW_X: wirken nicht) ausgeblendet. Daten bleiben unverändert. Detailansichten (Beleg, Auftrag, Bericht …) bleiben erreichbar.
+   Geräte (erw.geraetFilter, Standard ein): Schalter nur für iPhone/iPad bzw. nur für PC (GER_K) auf dem anderen Gerät ausgeblendet (GER_T = Touch), „Alle Geräte anzeigen“ = erp-gerAlle (ACT.geralle).
+   Beides im äußersten Wrapper um V.einstellungen (nach P46) auf dem fertigen HTML (modEinst()); die Karte modKarte() setzt ein Wrapper vor P46 ein (vor Live-Check P52). */
+erwPlus({k:'module',std:true,p:'Live-Betrieb (P52)',l:'Module: Bereiche als Ganzes ein- und ausschalten',info:'In den Einstellungen gibt es die Karte „Module“. Ein ausgeschaltetes Modul verschwindet aus Menü, Tab-Leiste, Suche und Einstellungen, seine Funktionsschalter wirken nicht. Gespeicherte Daten bleiben erhalten; einzelne Belege, Aufträge oder Berichte lassen sich weiter öffnen.'},
+  {k:'geraetFilter',std:true,p:'Live-Betrieb (P52)',l:'Einstellungen nur für dieses Gerät zeigen',info:'Schalter, die nur iPhone/iPad betreffen (Tab-Leiste, Wischen, PDF teilen, Schnellfunktionen …), werden am PC ausgeblendet, reine PC-Schalter (Tabs, Rechtsklick, Strg+P, Maus-Hilfen …) am iPhone/iPad. Die Werte bleiben gespeichert. „Alle Geräte anzeigen“ in der Karte „Module“ zeigt wieder alles.'});
+EB_K.module='sicher';EB_K.geraetFilter='app';EB_KARTE.push([/^e-mod\||\|Module/,'firma']);
+const MODULE=[{k:'verkauf',ic:'🧾',l:'Verkauf',i:'Angebote, Auftragsbestätigungen, Lieferscheine, Rechnungen, Gutschriften, Zu verrechnen',n:['belege/V','verrechnung']},
+  {k:'einkauf',ic:'📦',l:'Einkauf',i:'Bestellungen, Wareneingang, Eingangsrechnungen, Belege einlesen, Liefertermine',n:['belege/E','lieferungen'],eb:['einkauf'],sw:'scanPE lfTermin lfListe lfErinnern lfVerkauf'},
+  {k:'lager',ic:'🏬',l:'Lager',i:'Lagerplätze, Bestände, Bewegungen',n:['lager']},
+  {k:'auftraege',ic:'🗂️',l:'Aufträge & Zeiten',i:'Aufträge mit DB II, Zeiterfassung, Stoppuhr',n:['auftraege','zeiten'],su:['auftrag'],sw:'stoppuhr zeitOhneA zeitStempel'},
+  {k:'kalk',ic:'🧮',l:'Kalkulation & LV',i:'Gesamtkalkulation, Lohnstunden, Leistungsverzeichnisse, K-Blätter (ÖNORM B 2061), Textbausteine',n:['lvs','kbs','lvbib'],su:['lv','kb','bib'],eb:['kalk'],sw:'gkalk gkMerken dbStd gkLohn k3Tarif gkAufsFeld vkVorschlag kbVorlage kbDruck kbProjekt kbBeleg'},
+  {k:'bau',ic:'🏗️',l:'Baustelle',i:'Bautagesberichte, Regieberichte, Fahrtkosten, Regieanträge',n:['berichte'],su:['btb'],eb:['bau'],sw:'btb btbBild btbSig btbDruck btbVorschau btbZeit btbNrDatum btbRechnung btbFahrt btbTage regie regieAntrag'},
+  {k:'personal',ic:'👷',l:'Personal & Lohn',i:'Mitarbeiter, Lohnbuchung',n:['personal'],eb:['bau'],sw:'mitarbeiter maLohn'},
+  {k:'buch',ic:'📒',l:'Buchhaltung',i:'Finanzbuchhaltung, laufende Kosten, UVA, Auswertungen',n:['kosten','auswertung','fibu'],su:['kosten']}];
+const MOD_SW={};for(const m of MODULE)for(const k of (m.sw||'').split(' ').filter(Boolean))MOD_SW[k]=m.k;
+let MOD_X=null;const modAn=()=>!!(DB?.settings?.erw?.module??ERW_STD.module),mod=k=>(!modAn()||DB?.settings?.module?.[k]!==false)&&(!MOD_X||MOD_X(k)); // liest den Schalter direkt (ERW_X ruft mod()); MOD_X: Rechte je Benutzer (P52 Etappe 3)
+const modAus=()=>MODULE.filter(m=>!mod(m.k)),ebAus=b=>{const L=MODULE.filter(m=>m.eb?.includes(b));return L.length>0&&L.every(m=>!mod(m.k))};
+{const x0=ERW_X;ERW_X=(k,v)=>{v=x0?x0(k,v):v;return v&&(!(k in MOD_SW)||mod(MOD_SW[k]))}}
+const modAusHTML=m=>`<h1>${m.ic} ${esc(m.l)}</h1><div class="card"><p>Das Modul „${esc(m.l)}“ ist ausgeschaltet. Gespeicherte Daten bleiben erhalten.</p><div class="bar"><a class="btn" href="#/einstellungen">Einstellungen → Module</a></div></div>`;
+for(const m of MODULE)for(const v of new Set(m.n.map(n=>n.split('/')[0]))){const v0=V[v];if(!v0||v==='belege')continue;V[v]=(...a)=>mod(m.k)?v0(...a):modAusHTML(m)}
+{const v0=V.belege;V.belege=(bereich='V',...a)=>{const m=MODULE.find(x=>x.k===(bereich==='E'?'einkauf':'verkauf'));return mod(m.k)?v0(bereich,...a):modAusHTML(m)}}
+{const s0=suIndex;suIndex=function(...a){const E=s0.apply(this,a),g=new Set(modAus().flatMap(m=>m.su||[]));return g.size?E.filter(e=>!g.has(e.g)):E}}
+{const r0=render;render=function(...a){const x=r0.apply(this,a),aus=new Set(modAus().flatMap(m=>m.n));
+  for(const e of document.querySelectorAll('nav a[href^="#/"],#tabl a[href^="#/"]'))e.classList.toggle('mweg',aus.has(e.getAttribute('href').slice(2)));
+  for(const g of document.querySelectorAll('nav .grp')){let e=g.nextElementSibling,s=false;while(e&&!e.classList.contains('grp')&&e.tagName==='A'){if(!e.classList.contains('mweg')&&(e.classList.contains('nkweg')||getComputedStyle(e).display!=='none'))s=true;e=e.nextElementSibling}g.classList.toggle('mweg',!s)}
+  return x}}
+const GER_K={ios:'ios ipad tabLeiste wischZurueck langDruck iosTeilen schnell schnellStart appHandy',pc:'tabs ihHover baumHover kontext strgP navKlapp'},GER_T=matchMedia('(pointer:coarse)');
+const gerVon=k=>GER_K.ios.split(' ').includes(k)?'ios':GER_K.pc.split(' ').includes(k)?'pc':'',gerAlle=()=>!!lsGet('erp-gerAlle'),
+  gerWeg=k=>{const g=gerVon(k);return!!g&&erw('geraetFilter')&&!gerAlle()&&(g==='ios')!==GER_T.matches};
+function modKarte(){const n=modAus().length,g=erw('geraetFilter');
+  return akk('e-mod','Module',`<div class="card"><h2>Module</h2><p class="mut" style="margin-top:0">Ausgeschaltete Module verschwinden aus Menü, Suche und Einstellungen. Gespeicherte Daten bleiben erhalten. Basis (Übersicht, Kontakte, Artikel, Einstellungen, Sicherung) ist immer an.</p>
+  <div class="modl">${MODULE.map(m=>`<label class="chk"><input type="checkbox" data-o="s" data-f="module.${m.k}" ${mod(m.k)?'checked':''}> <span><b>${m.ic} ${esc(m.l)}</b><br><span class="mut">${esc(m.i)}</span></span></label>`).join('')}</div>
+  ${g?`<label class="chk" style="margin-top:10px"><input type="checkbox" data-act="geralle" ${gerAlle()?'checked':''}> <span>Einstellungen aller Geräte anzeigen <span class="mut">(sonst nur die für ${GER_T.matches?'iPhone/iPad':'den PC'})</span></span></label>`:''}</div>`,{zusatz:n?tag(n+' aus','warn'):'alle an'})}
+Object.assign(ACT,{geralle:()=>{lsSet('erp-gerAlle',gerAlle()?null:'1');render()}});
+function modEinst(h){const t=document.createElement('template');t.innerHTML=h;const C=t.content;
+  for(const i of C.querySelectorAll('input[data-f^="erw."]')){const k=i.dataset.f.slice(4),l=i.closest('label');if(l&&(gerWeg(k)||(k in MOD_SW&&!mod(MOD_SW[k]))))l.classList.add('mweg')}
+  for(const l of C.querySelectorAll('label.mweg')){const c=l.closest('.egp')||l.closest('details')||l.parentElement;if(c&&!c.querySelector('label:not(.mweg) input[data-f^="erw."]'))c.classList.add('mweg')}
+  for(const e of C.querySelectorAll('[data-act="egb"][data-b]'))if(ebAus(e.dataset.b))e.classList.add('mweg');
+  for(const s of C.children){const k=(s.dataset?.akk||'')+'|'+esTitel(s).trim(),g=(EB_KARTE.find(([r])=>r.test(k))||[])[1];if(g&&ebAus(g))s.classList.add('mweg')}
+  const d=document.createElement('div');d.append(C);return d.innerHTML}
+{const v0=V.einstellungen;V.einstellungen=(...x)=>{if(!DB||ES_IDX)return v0(...x);
+  if(erw('module')){if(ebAus(EB_AKT))EB_AKT='firma';if(EB_N&&ebAus(EB_N))EB_N=''}
+  const h=v0(...x);return erw('module')||erw('geraetFilter')?modEinst(h):h}}
+{const st=document.createElement('style');st.textContent=`.mweg{display:none!important}.modl{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 16px}`;document.head.append(st)}
+
+/* Benutzer & Gruppen (P52 Etappe 3, erw.benutzer, Standard ein; wirkt erst nach „Benutzerverwaltung einrichten“ und mit aktivem Admin-Benutzer):
+   S().gruppen [{id,name,admin?,r:{basis|<Modul>:'k'|'l'|'b'},fest,einst}] (Vorlagen GRP_STD, eigene Gruppen frei benennbar), S().benutzer [{id,name,konto,gruppe,aktiv}].
+   Angemeldet = bnIch() über erp-user (Microsoft-Konto, nur OneDrive; Ordner/Browser = alle Rechte; Konto nicht eingetragen = fremd, kein Zugriff). Rechte recht(m), bnDarf('fest'), bnAdmin().
+   Bedienschutz, kein Datenschutz (alles in erp-daten.json): 'k' → MOD_X (Menü/Suche/Ansicht wie ausgeschaltetes Modul) und #main „Kein Zugriff“; 'l' → Felder in #main gesperrt (bnSperren()),
+   Wächter in der capture-Phase für change/input/click (BN_FREI = Aktionen zum Ansehen), fest = Abschließen/Stornieren (Wrapper festschreiben, ACT fest/storno/fbstorno),
+   einst = Einstellungen ändern, Felder erw./module./gruppen./benutzer. und Aktionen bnein/bnneu/bndel/grneu/grdel nur Admin. log() merkt den Benutzer (wer). Karte bnKarte() über Wrapper vor P46. */
+erwPlus({k:'benutzer',std:true,p:'Live-Betrieb (P52)',l:'Benutzer und Benutzergruppen mit Rechten je Modul',info:'Einstellungen → „Benutzer & Gruppen“: Benutzer (Microsoft-Konto) eintragen, Benutzergruppen selbst benennen und je Modul „kein Zugriff“, „lesen“ oder „bearbeiten“ festlegen, dazu „Abschließen und Stornieren“ und „Einstellungen ändern“. Nur der Admin ändert Module, Schalter, Benutzer und Gruppen. Bedienschutz: Die Datendatei im OneDrive bleibt für alle mit Zugriff auf den Ordner lesbar.'});
+EB_K.benutzer='sicher';EB_KARTE.push([/^e-bn\||\|Benutzer & Gruppen/,'sicher']);
+const BN_M=()=>[{k:'basis',ic:'🏠',l:'Basis (Übersicht, Kontakte, Artikel)'},...MODULE],BN_R=[['k','kein Zugriff'],['l','lesen'],['b','bearbeiten']];
+const GRP_STD=[{id:'admin',name:'Admin',admin:true,r:{},fest:true,einst:true},
+  {id:'buero',name:'Büro',r:{basis:'b',verkauf:'b',einkauf:'b',lager:'b',auftraege:'b',kalk:'b',bau:'b',personal:'l',buch:'b'},fest:true,einst:true},
+  {id:'techniker',name:'Techniker',r:{basis:'l',verkauf:'k',einkauf:'k',lager:'l',auftraege:'b',kalk:'k',bau:'b',personal:'k',buch:'k'},fest:false,einst:false},
+  {id:'lesen',name:'Nur lesen',r:{basis:'l',verkauf:'l',einkauf:'l',lager:'l',auftraege:'l',kalk:'l',bau:'l',personal:'k',buch:'l'},fest:false,einst:false}];
+const bnL=()=>S().benutzer||[],grL=()=>S().gruppen||[],bnEin=()=>!!DB&&erw('benutzer')&&bnL().length>0,bnKto=x=>String(x||'').trim().toLowerCase();
+function bnIch(){if(!bnEin()||STORE.art!=='od')return null;const L=bnL().filter(u=>u.aktiv!==false);if(!L.some(u=>grL().find(g=>g.id===u.gruppe)?.admin))return null; // ohne aktiven Admin keine Einschränkung
+  const k=bnKto(lsGet('erp-user'));return L.find(u=>bnKto(u.konto)===k)||{name:k||'unbekannt',gruppe:'',fremd:true}}
+const bnGr=()=>{const u=bnIch();return u?grL().find(g=>g.id===u.gruppe)||{id:'',name:'kein Zugang',r:{}}:null};
+const recht=m=>{const g=bnGr();return!g||g.admin?'b':!g.id?'k':m==='einst'?(g.einst?'b':'l'):g.r?.[m]||'k'},bnDarf=x=>{const g=bnGr();return!g||!!g.admin||!!g[x]},bnAdmin=()=>{const g=bnGr();return!g||!!g.admin};
+MOD_X=k=>recht(k)!=='k';
+function bnRoute(){const[v,id]=location.hash.slice(2).split('/');if(v==='beleg'){const b=DB.belege.find(x=>x.id===id);return b?(T[b.typ]?.b==='E'?'einkauf':'verkauf'):'basis'}
+  if(v==='belege')return id==='E'?'einkauf':'verkauf';const z={auftrag:'auftraege',bericht:'bau',mitarbeiter:'personal',einstellungen:'einst'}[v];if(z)return z;
+  return(MODULE.find(m=>m.n.some(n=>n.split('/')[0]===v))||{k:'basis'}).k}
+const bnFeld=el=>{const d=el.dataset||{};return(!!d.o&&d.o!=='ui')||d.p!=null||d.h!=null||d.r!=null},bnAdmF=el=>el.dataset?.o==='s'&&/^(erw|module|gruppen|benutzer)\./.test(el.dataset.f||'');
+function bnSperren(M){for(const el of M.querySelectorAll('input,select,textarea'))if(bnFeld(el))el.disabled=true;for(const el of M.querySelectorAll('[contenteditable="true"]'))el.contentEditable='false'}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);if(!DB)return x;const r=recht(bnRoute()),u=bnIch(),M=$('#main');document.body.classList.toggle('rl',r==='l');
+  if(M&&r==='k')M.innerHTML=`<h1>Kein Zugriff</h1><div class="card"><p>${u?.fremd?`Das Konto „${esc(u.name)}“ ist nicht freigeschaltet.`:'Deine Benutzergruppe hat für diesen Bereich keine Berechtigung.'} Der Admin schaltet das in den Einstellungen unter „Benutzer &amp; Gruppen“ frei.</p></div>`;
+  else if(M&&r==='l')bnSperren(M);return x}}
+const BN_FREI=/^(menue|filter|fweg|such|suopen|sulist|zuletzt|zlleer|spring|glpop|sumpop|binfo|kpauf|kpsicht|egb|egzur|egexp|esx|lpop|navanp|netz|zurueck|vor|geralle|druck|pdf|ansicht|grpauf|ktyp|lfst|bzeit|dashauf|kmo)/;
+const bnStopp=(e,t)=>{e.stopImmediatePropagation();e.preventDefault();if(t)alert(t)};
+for(const t of['change','input'])window.addEventListener(t,e=>{const el=e.target;if(!bnEin()||!el?.dataset||!bnFeld(el))return;const adm=bnAdmF(el);
+  if(adm?!bnAdmin():recht(bnRoute())!=='b'){bnStopp(e,t==='change'?(adm?'Nur der Admin kann das ändern.':'Nur Leserecht – die Änderung wird nicht gespeichert.'):'');if(t==='change')render()}},true);
+window.addEventListener('click',e=>{const a=e.target.closest?.('[data-act]');if(!a||!bnEin())return;const k=a.dataset.act;
+  if(['fest','storno','fbstorno'].includes(k)&&!bnDarf('fest'))return bnStopp(e,'Abschließen und Stornieren darf deine Benutzergruppe nicht.');
+  if(/^(bn|gr)(ein|neu|del)$/.test(k)&&!bnAdmin())return bnStopp(e,'Nur der Admin kann Benutzer und Gruppen ändern.');
+  if(recht(bnRoute())==='l'&&!BN_FREI.test(k))bnStopp(e,'Nur Leserecht.')},true);
+{const f0=festschreiben;festschreiben=async function(...a){if(!bnDarf('fest')){alert('Abschließen darf deine Benutzergruppe nicht.');return false}return f0.apply(this,a)}}
+{const l0=log;log=function(...a){const x=l0.apply(this,a),u=bnIch();if(u&&DB.log.length)DB.log[DB.log.length-1].wer=u.name;return x}}
+function bnKarte(){const G=grL(),M=BN_M(),u=bnIch(),g=bnGr(),adm=bnAdmin(),dis=adm?'':' disabled',ich=bnKto(lsGet('erp-user'));
+  if(!bnL().length)return akk('e-bn','Benutzer &amp; Gruppen',`<div class="card"><h2>Benutzer &amp; Gruppen</h2><p class="mut" style="margin-top:0">Für weitere Personen: Benutzer (Microsoft-Konto) eintragen, Benutzergruppen selbst benennen und je Modul „kein Zugriff“, „lesen“ oder „bearbeiten“ festlegen. Solange nur du eingetragen bist, ändert sich nichts. Bedienschutz: Die Datendatei im OneDrive bleibt für alle mit Zugriff auf den Ordner lesbar.</p><div class="bar"><button class="p" data-act="bnein">Benutzerverwaltung einrichten</button></div></div>`,{zusatz:'nicht eingerichtet'});
+  const bz=(x,i)=>{const self=!!ich&&bnKto(x.konto)===ich,d=dis||(self?' disabled':'');
+    return`<tr><td><input data-o="s" data-f="benutzer.${i}.name" value="${esc(x.name||'')}" placeholder="Name"${dis}></td><td><input data-o="s" data-f="benutzer.${i}.konto" value="${esc(x.konto||'')}" placeholder="name@firma.at" inputmode="email"${d}></td>
+    <td><select data-o="s" data-f="benutzer.${i}.gruppe"${d}>${G.map(y=>opt(y.id,y.name,x.gruppe)).join('')}</select></td><td><label class="chk"><input type="checkbox" data-o="s" data-f="benutzer.${i}.aktiv" ${x.aktiv!==false?'checked':''}${d}> <span>aktiv</span></label></td>
+    <td>${self||!adm?'':`<button class="s" data-act="bndel" data-i="${i}" title="Benutzer entfernen">✕</button>`}</td></tr>`};
+  const gk=(y,i)=>{const n=bnL().filter(x=>x.gruppe===y.id).length,d=dis||(y.admin?' disabled':'');
+    return`<div class="grk"><div class="bar" style="margin:0 0 6px"><input data-o="s" data-f="gruppen.${i}.name" value="${esc(y.name)}"${dis} style="flex:1;font-weight:600"><span class="mut">${n} Benutzer</span>${adm&&!y.admin&&!n?`<button class="s" data-act="grdel" data-i="${i}" title="Gruppe löschen">✕</button>`:''}</div>
+    ${y.admin?'<p class="mut">Alle Rechte; schaltet Module frei, verwaltet Benutzer und Gruppen.</p>':M.map(m=>`<label class="grz"><span>${m.ic} ${esc(m.l)}</span><select data-o="s" data-f="gruppen.${i}.r.${m.k}"${d}>${BN_R.filter(r=>m.k!=='basis'||r[0]!=='k').map(([k,l])=>opt(k,l,y.r?.[m.k]||(m.k==='basis'?'l':'k'))).join('')}</select></label>`).join('')
+      +`<label class="chk"><input type="checkbox" data-o="s" data-f="gruppen.${i}.fest" ${y.fest?'checked':''}${d}> <span>Abschließen und Stornieren</span></label><label class="chk"><input type="checkbox" data-o="s" data-f="gruppen.${i}.einst" ${y.einst?'checked':''}${d}> <span>Einstellungen ändern</span></label>`}</div>`};
+  return akk('e-bn','Benutzer &amp; Gruppen',`<div class="card"><h2>Benutzer &amp; Gruppen</h2>
+  <p class="mut" style="margin-top:0">${u?`Angemeldet als <b>${esc(u.name)}</b> – Gruppe ${esc(g?.name||'–')}.`:STORE.art==='od'?'Noch keine Einschränkung aktiv (kein aktiver Admin eingetragen).':'Ordner- bzw. Browser-Modus: alle Rechte.'} Bedienschutz: Die Datendatei im OneDrive bleibt für alle mit Zugriff auf den Ordner lesbar.</p>
+  <h3>Benutzer</h3><table class="bnt"><thead><tr><th>Name</th><th>Microsoft-Konto</th><th>Gruppe</th><th></th><th></th></tr></thead><tbody>${bnL().map(bz).join('')}</tbody></table>
+  ${adm?'<div class="bar"><button class="s" data-act="bnneu">+ Benutzer</button></div>':''}
+  <h3>Benutzergruppen</h3><div class="grl">${G.map(gk).join('')}</div>${adm?'<div class="bar"><button class="s" data-act="grneu">+ Gruppe</button></div>':''}</div>`,{zusatz:`${bnL().length} Benutzer · ${G.length} Gruppen`})}
+Object.assign(ACT,{
+  bnein:()=>{const s=S();s.gruppen=JSON.parse(JSON.stringify(GRP_STD));s.benutzer=[{id:uid(),name:s.firma?.zeichner||'Admin',konto:lsGet('erp-user')||'',gruppe:'admin',aktiv:true}];persist();render()},
+  bnneu:()=>{S().benutzer.push({id:uid(),name:'',konto:'',gruppe:(grL().find(g=>!g.admin)||grL()[0]).id,aktiv:true});persist();render()},
+  bndel:el=>{const L=S().benutzer,x=L[+el.dataset.i];if(!x||!confirm(`Benutzer „${x.name||x.konto||'ohne Namen'}“ entfernen?`))return;L.splice(+el.dataset.i,1);persist();render()},
+  grneu:()=>{S().gruppen.push({id:uid(),name:'Neue Gruppe',r:{basis:'l'},fest:false,einst:false});persist();render()},
+  grdel:el=>{const L=S().gruppen,y=L[+el.dataset.i];if(!y||y.admin||bnL().some(x=>x.gruppe===y.id)||!confirm(`Gruppe „${y.name}“ löschen?`))return;L.splice(+el.dataset.i,1);persist();render()}});
+{const st=document.createElement('style');st.textContent=`.bnt{width:100%;border-collapse:collapse}.bnt td{padding:3px 4px;vertical-align:middle}.bnt input:not([type=checkbox]),.bnt select{width:100%}
+.grl{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}.grk{border:1px solid var(--line);border-radius:8px;padding:8px 10px}.grz{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:3px 0}.grz select{width:auto;min-width:120px}
+@media(max-width:760px){.bnt thead{display:none}.bnt tr{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:6px 0;border-bottom:1px solid var(--line)}.bnt td{padding:0}}`;document.head.append(st)}
+
+/* Freigegebener Ordner (P52 Etappe 4, vorbereitet, ohne Schalter: wirkt nur mit eingetragenem Link): weitere Benutzer arbeiten im ERP-Ordner eines anderen Kontos.
+   Startseite → „Freigegebener ERP-Ordner“ (odShareFeld(), Link in erp-odShareUrl), nach der Anmeldung löst odShareLesen() den Link über /shares/u!…/driveItem auf → erp-odShare {u,d,i,n};
+   odPath() schreibt dann /drives/<d>/items/<i>:/<pfad>, SCOPES zusätzlich Files.ReadWrite.All (App-Registrierung in Entra braucht diese Berechtigung). */
+const odShare=()=>{try{return JSON.parse(lsGet('erp-odShare')||'null')}catch(e){return null}};
+function odShareFeld(){const u=lsGet('erp-odShareUrl')||'';return`<details style="margin:8px 0"${u?' open':''}><summary>Freigegebener ERP-Ordner eines anderen Kontos (für weitere Benutzer)</summary>
+  <label>Freigabelink des Ordners<input id="st-share" value="${esc(u)}" placeholder="https://…sharepoint.com/:f:/…" inputmode="url"></label><p class="mut">Leer = eigenes OneDrive. Der Admin gibt den Ordner im OneDrive mit „Bearbeiten“ für dein Konto frei und schickt dir den Link.</p></details>`}
+function odShareMerk(){const e=$('#st-share');if(!e)return;const u=e.value.trim();if(u!==(lsGet('erp-odShareUrl')||'')){lsSet('erp-odShareUrl',u||null);lsSet('erp-odShare',null)}}
+async function odShareLesen(){const u=lsGet('erp-odShareUrl');if(!u){lsSet('erp-odShare',null);return true}if(odShare()?.u===u)return true;
+  const k='u!'+btoa(unescape(encodeURIComponent(u))).replace(/=+$/,'').replace(/\//g,'_').replace(/\+/g,'-');
+  try{const r=await graph('/shares/'+k+'/driveItem?$select=id,name,parentReference');if(!r.ok)throw new Error('OneDrive '+r.status);const j=await r.json();
+    lsSet('erp-odShare',JSON.stringify({u,d:j.parentReference.driveId,i:j.id,n:j.name}));return true}
+  catch(e){if(!confirm(`Der freigegebene Ordner ist nicht erreichbar (${e.message}).\n\nOK = eigenes OneDrive verwenden und den Link entfernen, Abbrechen = nicht laden.`))return false;lsSet('erp-odShareUrl',null);lsSet('erp-odShare',null);return true}}
+{const o0=odStart;odStart=async function(...a){if(!await odShareLesen()){saveState('Freigegebener Ordner nicht erreichbar');return}return o0.apply(this,a)}}
+
+/* Schnellfunktionen: Kacheln ruhiger (P52, Wunsch 26.10.2026; Icons selbst kommen aus P53): Karte mit Rand, Icon in einem Feld in Akzentfarbe (Emoji bzw. P53-SVG .i53, dessen Farben .f53-* bleiben unberührt), am Bildschirm feste Kachelbreite. */
+{const st=document.createElement('style');st.textContent=`@media(min-width:761px){.sfk{grid-template-columns:repeat(auto-fill,minmax(150px,180px))}}
+.sfk .sfb{background:var(--card);color:inherit;border:1px solid var(--line);box-shadow:0 1px 2px rgba(20,30,50,.06);min-height:116px;font-size:14px;gap:10px;transition:border-color .15s,box-shadow .15s,transform .15s}
+.sfk .sfb:hover{border-color:var(--acc);box-shadow:0 4px 12px rgba(20,30,50,.12);transform:translateY(-1px)}
+.sfk .sfb span{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:12px;background:var(--acc2);color:var(--acc);font-size:24px}
+.sfk .sfb.sfl{background:#c0392b;color:#fff;border-color:#c0392b}.sfk .sfb.sfl span{background:rgba(255,255,255,.2);color:#fff}`;document.head.append(st)}
+
+/* Menü-Gruppen mit mehr Kontrast (P52, Wunsch 26.10.2026; mit erw.kontrast = body.kon): Überschriften der Seitenleiste heller und kräftiger, Klapp-Pfeil deutlicher. */
+{const st=document.createElement('style');st.textContent=`body.kon nav .grp{color:#d3dae6;font-weight:700;font-size:11.5px;letter-spacing:.07em}body.kon nav.nk .grp:hover{color:#fff}body.kon nav.nk .grp::before{color:#9fb4d8}body.kon nav.nk .grp{padding-top:11px;padding-bottom:6px}@media(pointer:coarse){body.kon nav.nk .grp{padding-top:14px;padding-bottom:10px;font-size:12.5px}}`;document.head.append(st)}
+
+/* Moderne Piktogramme (P53, erw.icons, Standard ein – Wunsch Anwender 26.10.2026): einheitliche Icons im Stil Office 365/Fluent (inline SVG, Farbgruppen IC_F, offline, Farbe = Schrift → hell/dunkel) statt Emoji und Symbolzeichen.
+   Geändert wird nur die Anzeige: icTausch(el) ersetzt in Textknoten die Zeichen aus IC_Z durch <svg class="i53 i53-<name>"> (Pfade IC_P); Auswahl-Optionen mit value verlieren das Zeichen.
+   Ausgenommen IC_AUS (Blatt, Druck, K-Blätter, Eingabefelder, contenteditable). Nach render() und für Pop-ups/Menüs über IC_MO (MutationObserver), Klappzeichen ▸/▾/◢/▷ per CSS-Maske (body.ic53). */
+erwPlus({k:'icons',std:true,p:'Moderne Piktogramme (P53)',l:'Moderne Piktogramme statt Emoji (Stil Office 365)',info:'Alle Piktogramme der Oberfläche (Menüs, Knöpfe, Belegarten, Seitenleiste, Hinweise, Auf-/Zuklappen) erscheinen als einheitliche, schlanke Symbole im Stil von Office 365 (Fluent) mit Farbakzenten statt bunter Emoji. Sie passen sich hell/dunkel an und sehen auf iPhone, iPad und PC gleich aus. Belege, Druck und PDF bleiben unverändert.'});
+const IC_P={file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+  files:'<path d="M15 2H9a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7z"/><path d="M15 2v5h5M4 8v12a2 2 0 0 0 2 2h9"/>',
+  filepen:'<path d="M12 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v3"/><path d="M14 3v5h5"/><path d="M19.4 13.6a1.5 1.5 0 0 1 2.1 2.1L16 21.2l-3 .8.8-3z"/>',
+  clip:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 12h6M9 16h4"/>',
+  cam:'<path d="M14.5 4h-5L7.5 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3.5z"/><circle cx="12" cy="13" r="3.5"/>',
+  img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+  gear:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  info:'<circle cx="12" cy="12" r="9.5"/><path d="M12 16v-4.5M12 8h.01"/>',
+  mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  timer:'<path d="M10 2h4M12 14l3-3"/><circle cx="12" cy="14" r="8"/>',
+  clock:'<circle cx="12" cy="12" r="9.5"/><path d="M12 6.5V12l3.5 2"/>',
+  glas:'<path d="M5 22h14M5 2h14M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/>',
+  trash:'<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/>',
+  pkg:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12M7.5 4.27l9 5.15"/>',
+  such:'<circle cx="11" cy="11" r="7.5"/><path d="m21 21-4.5-4.5"/>',
+  warn:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01"/>',
+  menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+  dots:'<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
+  undo:'<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>',redo:'<path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 15-6.7l3 2.7"/>',
+  zur:'<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  rotl:'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',rotr:'<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
+  ok:'<path d="M20 6 9 17l-5-5"/>',okk:'<circle cx="12" cy="12" r="9.5"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',oks:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  stift:'<path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5zM15 5l4 4"/>',
+  sig:'<path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/>',
+  calc:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M16 14v4M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"/>',
+  bon:'<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  geld:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>',
+  karte:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+  bank:'<path d="M3 21h18M6 18v-7M10 18v-7M14 18v-7M18 18v-7M12 3l8 5H4z"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  helm:'<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1z"/><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5M4 15v-3a6 6 0 0 1 6-6M14 6a6 6 0 0 1 6 6v3"/>',
+  bau:'<rect x="2" y="6" width="20" height="8" rx="1"/><path d="M17 14v7M7 14v7M17 3v3M7 3v3M10 14 2.3 6.3M14 6l7.7 7.7M8 6l8 8"/>',
+  druck:'<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 9V3h12v6"/><rect x="6" y="14" width="12" height="8" rx="1"/>',
+  stop:'<rect x="5" y="5" width="14" height="14" rx="2.5"/>',play:'<path d="M7 4.5v15a.8.8 0 0 0 1.2.7l12-7.5a.8.8 0 0 0 0-1.4l-12-7.5A.8.8 0 0 0 7 4.5z"/>',
+  pause:'<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+  aus:'<path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.77.04"/>',
+  ext:'<path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  pfeil:'<path d="M5 12h14M12 5l7 7-7 7"/>',
+  kopie:'<rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2"/>',
+  raster:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
+  liste:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  mond:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  chart:'<path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/>',
+  ordner:'<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  ordner2:'<path d="M20 17a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3.9a2 2 0 0 1-1.69-.9l-.81-1.2a2 2 0 0 0-1.67-.9H8a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2Z"/><path d="M2 8v11a2 2 0 0 0 2 2h14"/>',
+  lkw:'<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2M15 18H9M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
+  teil:'<path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/>',
+  ab:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',auf:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  inbox:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  ort:'<path d="M20 10c0 5-5.5 10.2-7.4 11.8a1 1 0 0 1-1.2 0C9.5 20.2 4 15 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  nadel:'<path d="M12 17v5M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>',
+  tag:'<path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1"/>',
+  werkz:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/>',
+  tel:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  handy:'<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>',pc:'<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  bib:'<path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/>',buch:'<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2zM22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',
+  haus:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/>',
+  firma:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/>',
+  fabrik:'<path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1M12 18h1M7 18h1"/>',
+  schere:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12"/>',
+  plus:'<path d="M5 12h14M12 5v14"/>',ziel:'<path d="M4 22V4M4 4h13l-2.5 4.5L17 13H4"/>',
+  wagen:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+  zu:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',offen:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
+  save:'<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7M7 3v4a1 1 0 0 0 1 1h7"/>',
+  hand:'<path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3M3 4h8"/>',
+  verbot:'<circle cx="12" cy="12" r="9.5"/><path d="m5.3 5.3 13.4 13.4"/>',
+  radier:'<path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21M22 21H7M5 11l9 9"/>',
+  sonne:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+  hsonne:'<path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41M15.95 12.95A4 4 0 0 0 8.65 9.6"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6"/>',
+  wolke:'<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9"/>',
+  nebel:'<path d="M4 14.9A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.24M16 17H7M17 21H9"/>',
+  regen:'<path d="M4 14.9A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.24M16 14v6M8 14v6M12 16v6"/>',
+  schnee:'<path d="M4 14.9A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.24M8 15h.01M8 19h.01M12 17h.01M12 21h.01M16 15h.01M16 19h.01"/>',
+  frost:'<path d="M2 12h20M12 2v20M20 16l-4-4 4-4M4 8l4 4-4 4M16 4l-4 4-4-4M8 20l4-4 4 4"/>',
+  wind:'<path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"/>',
+  runter:'<path d="m6 9 6 6 6-6"/>',rechts:'<path d="m9 6 6 6-6 6"/>'};
+const IC_Z={'📄':'file','📑':'files','📝':'filepen','📋':'clip','📷':'cam','📸':'cam','🖼':'img','⚙':'gear','ⓘ':'info','✉':'mail','⏱':'timer','🕘':'clock','🕑':'clock','🕒':'clock','⏳':'glas',
+  '🗑':'trash','📦':'pkg','🔍':'such','⚠':'warn','☰':'menu','⋯':'dots','↶':'undo','↷':'redo','↩':'zur','↺':'rotl','↻':'rotr','✓':'ok','✅':'okk','☑':'oks','✕':'x','✗':'x','✎':'stift','✍':'sig',
+  '🧮':'calc','🧾':'bon','💶':'geld','💳':'karte','🏦':'bank','👤':'user','👥':'users','👷':'helm','🏗':'bau','🖨':'druck','⏹':'stop','▶':'play','⏸':'pause','⏻':'aus','↗':'ext','➜':'pfeil',
+  '⧉':'kopie','▦':'raster','≡':'liste','💤':'mond','📊':'chart','📁':'ordner','🗂':'ordner2','🚚':'lkw','🧩':'teil','⤓':'ab','⇪':'auf','📥':'inbox','📍':'ort','📌':'nadel','🏷':'tag','🛠':'werkz',
+  '📞':'tel','📱':'handy','🖥':'pc','📚':'bib','📖':'buch','🏠':'haus','🏢':'firma','🏭':'fabrik','✂':'schere','＋':'plus','🏁':'ziel','🛒':'wagen','🔒':'zu','🔓':'offen','💾':'save','🤝':'hand',
+  '⊘':'verbot','⌫':'radier','☀':'sonne','🌤':'hsonne','☁':'wolke','🌫':'nebel','🌧':'regen','🌨':'schnee','❄':'frost','💨':'wind','▾':'runter','▸':'rechts'};
+const IC_RX=new RegExp('('+Object.keys(IC_Z).join('|')+')\\uFE0F?','gu'),IC_AUS='input,textarea,script,style,svg,[contenteditable],title,'+DK_HELL;
+let IC_MO=null;
+const IC_F={b:'file files filepen clip mail druck ordner ordner2 buch bib kopie ab auf inbox liste raster info such pc handy img cam sig stift haus firma fabrik user users tel ort nadel save ext',
+  g:'geld karte bank bon calc ok okk oks chart play',o:'warn timer clock glas lkw pkg wagen mond sonne hsonne frost',r:'trash x stop verbot aus',v:'gear werkz teil tag ziel helm bau hand zu offen'},
+  IC_FK=Object.fromEntries(Object.entries(IC_F).flatMap(([f,l])=>l.split(' ').map(k=>[k,f])));  // Farbgruppe je Icon (Office/Fluent): blau Dokumente, grün Geld, orange Zeit/Lieferung/Warnung, rot Löschen, violett Einstellungen
+const icSvg=k=>`<svg class="i53 i53-${k}${IC_FK[k]?' f53-'+IC_FK[k]:''}" viewBox="0 0 24 24" aria-hidden="true">${IC_P[k]}</svg>`;
+function icText(n){const p=n.parentElement,v=n.nodeValue;IC_RX.lastIndex=0;if(!p||!IC_RX.test(v))return;
+  if(p.tagName==='OPTION'){if(p.hasAttribute('value'))n.nodeValue=v.replace(IC_RX,'').replace(/^\s+/,'');return} // Optionen können kein SVG zeigen
+  if(p.closest(IC_AUS)||p.closest('select'))return;
+  const t=document.createElement('template');t.innerHTML=v.split(IC_RX).map((s,i)=>i%2?icSvg(IC_Z[s]):s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[c])).join('');n.replaceWith(t.content)}
+function icTausch(r){if(!r)return;if(r.nodeType===3)return icText(r);if(r.nodeType!==1)return;
+  const tw=document.createTreeWalker(r,NodeFilter.SHOW_TEXT),L=[];while(tw.nextNode())L.push(tw.currentNode);L.forEach(icText)}
+{const r0=render;render=function(...a){const x=r0.apply(this,a),an=!!DB&&erw('icons');document.body.classList.toggle('ic53',an);
+  if(an&&!IC_MO){IC_MO=new MutationObserver(M=>{for(const m of M){if(m.type==='characterData')icText(m.target);else m.addedNodes.forEach(icTausch)}});
+    icTausch(document.body);IC_MO.observe(document.body,{childList:true,subtree:true,characterData:true})}
+  else if(!an&&IC_MO){IC_MO.disconnect();IC_MO=null}return x}}
+{const st=document.createElement('style'),
+  m=d=>`url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`)}") center/contain no-repeat`,
+  rt=m('m9 6 6 6-6 6'),s='body.ic53 details.akk>summary::before,body.ic53 .gl details>summary::before,body.ic53 nav.nk .grp::before';
+  st.textContent=`.i53{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.21em;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none;overflow:visible}
+.i53-dots circle{fill:currentColor}.i53-play,.i53-stop,.i53-pause{fill:currentColor;stroke-width:1.2}.i53-warn{color:var(--warn)}.i53-runter,.i53-rechts{width:.95em;height:.95em;vertical-align:-.12em;stroke-width:2.2}
+body{--f53b:#0f6cbd;--f53g:#107c10;--f53o:#ca5010;--f53r:#c50f1f;--f53v:#5c2e91}body.dunkel{--f53b:#479ef5;--f53g:#54b054;--f53o:#f7894a;--f53r:#dc626d;--f53v:#a079d8}
+.f53-b{color:var(--f53b)}.f53-g{color:var(--f53g)}.f53-o{color:var(--f53o)}.f53-r{color:var(--f53r)}.f53-v{color:var(--f53v)}
+.i53>rect:first-child,.i53>circle:first-child,:is(.i53-file,.i53-files,.i53-pkg,.i53-bon,.i53-ordner,.i53-ordner2,.i53-tag,.i53-nadel,.i53-werkz,.i53-tel,.i53-save,.i53-gear,.i53-cam,.i53-mond,.i53-warn,.i53-ort,.i53-buch)>path:first-child{fill:currentColor;fill-opacity:.14}
+:is(button.p,.btn.p,nav,.topbar,#tabl,.mi.d) .i53,.i53-dots,.i53-menu{color:inherit}
+details.ih>summary .i53{width:1.05em;height:1.05em;vertical-align:-.15em}
+${s}{content:''!important;display:inline-block;width:12px;height:12px;font-size:inherit;vertical-align:-1px;background:currentColor;-webkit-mask:${rt};mask:${rt};transform:none!important;transition:transform .15s}
+body.ic53 details.akk[open]>summary::before,body.ic53 .gl details[open]>summary::before,body.ic53 nav.nk .grp:not(.nkzu)::before{transform:rotate(90deg)!important}`;document.head.appendChild(st)}
+/* Schnellfunktionen in der Seitenleiste (P52, Wunsch 26.10.2026): mit erw.schnell Eintrag „Schnellfunktionen“ (a.navsf, data-n="schnell") direkt nach „Überblick“ – Weg zurück zur Kachelseite, auch am Handy über „Mehr“; mit erw.schnellStart führt das Logo (a.home, a.logo) zur Kachelseite. */
+{const r0=render;render=function(...a){const x=r0.apply(this,a),N=document.querySelector('nav');if(!N)return x;let e=N.querySelector('a.navsf');const an=!!DB&&erw('schnell');
+  if(an&&!e){N.querySelector('a[data-n="dash"]')?.insertAdjacentHTML('afterend','<a href="#/schnell" data-n="schnell" class="navsf">Schnellfunktionen</a>');e=N.querySelector('a.navsf')}else if(!an)e?.remove();
+  if(e){const on=location.hash.startsWith('#/schnell');e.classList.toggle('on',on);if(on)N.querySelector('a[data-n="dash"]')?.classList.remove('on')}
+  const st=an&&erw('schnellStart');for(const l of document.querySelectorAll('.topbar a.home,nav a.logo')){l.setAttribute('href',st?'#/schnell':'#/dash');l.title=st?'Schnellfunktionen (Startseite)':'Überblick'} // Logo = Startseite
+  return x}}
+
+/* Statusband (P55, erw.statusBand, Standard aus): ein Band #stb oben in der Mitte (Form wie #testb) zeigt genau einen Zustand nach Vorrang SB_Z (Test, Fehler, Offline, ungespeichert, Abgleich, online, lokaler Ordner);
+   sbZeigen() aus render()/saveState()/dirtyBar() und bei online/offline, SB_BAD = letzte Meldung von saveState() war ein Fehler (nicht offline). Tippen = ACT.netz (nur OneDrive). Nur Anzeige. */
+erwPlus({k:'statusBand',std:false,p:'Statusband (P55)',l:'Statusband oben: Online, Offline, Abgleich …',info:'Zeigt oben in der Mitte ein farbiges Band mit dem Zustand: grün = online und abgeglichen, blau = Abgleich läuft, gelb = nicht gespeichert, dunkelrot = offline mit wartenden Änderungen, grau = offline bzw. lokaler Ordner, rot = Speichern fehlgeschlagen, orange = Testbetrieb. Antippen gleicht sofort ab.'});
+queueMicrotask(()=>{if(typeof EB_K!=='undefined')EB_K.statusBand='app'});
+let SB_BAD=false;
+const SB_Z={test:['TESTBETRIEB – Daten nur in diesem Browser','#d97706','Programm läuft mit „Nur im Browser testen“'],fehler:['FEHLER – nicht gespeichert','#dc2626','Speichern ist fehlgeschlagen – antippen für einen neuen Versuch'],
+  offw:['OFFLINE · Änderungen warten','#991b1b','Keine Verbindung zum OneDrive. Die Änderungen bleiben auf diesem Gerät und werden abgeglichen, sobald wieder Internet da ist.'],off:['OFFLINE','#4b5563','Keine Verbindung zum OneDrive'],
+  dirty:['NICHT GESPEICHERT','#a16207','Änderungen sind noch nicht gespeichert'],sync:['ABGLEICH …','#2563eb','Speichern bzw. Abgleich mit dem OneDrive läuft'],on:['ONLINE','#15803d','Mit dem OneDrive verbunden und abgeglichen – antippen zum Abgleichen'],
+  dir:['LOKALER ORDNER','#4b5563','Daten im lokalen Ordner – kein Abgleich mit anderen Geräten']};
+function sbZustand(){const od=STORE.art==='od',off=od&&(navigator.onLine===false||OFFSTART||NETZFEHL);
+  return STORE===CACHESTORE?'test':SB_BAD&&!off?'fehler':off?(pending?'offw':'off'):DIRTY?'dirty':pending||saving||NHL?'sync':od?'on':'dir'}
+function sbZeigen(){let an=false;try{an=!!DB&&!!erw('statusBand')}catch(e){return}document.body.classList.toggle('sb55',an);let e=$('#stb');if(!an){e?.remove();return}
+  if(!e){e=document.createElement('div');e.id='stb';e.setAttribute('role','status');document.body.append(e)}
+  const k=sbZustand(),[t,c,ti]=SB_Z[k];if(e.dataset.k===k)return;e.dataset.k=k;e.textContent=t;e.title=ti;e.style.background=c;
+  if(STORE.art==='od')e.dataset.act='netz';else delete e.dataset.act}
+{const s0=saveState;saveState=function(t,bad){SB_BAD=!!bad&&STORE.art==='od'&&!(navigator.onLine===false||OFFSTART||NETZFEHL);const x=s0.apply(this,arguments);sbZeigen();return x}}
+{const d0=dirtyBar;dirtyBar=function(...a){const x=d0.apply(this,a);sbZeigen();return x}}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);sbZeigen();return x}}
+for(const ev of ['online','offline'])window.addEventListener(ev,()=>sbZeigen());
+{const st=document.createElement('style');st.textContent=`#stb{position:fixed;top:env(safe-area-inset-top);left:50%;transform:translateX(-50%);z-index:9999;color:#fff;font:600 11px/1.6 system-ui,sans-serif;letter-spacing:.04em;padding:1px 10px;border-radius:0 0 6px 6px;opacity:.92;white-space:nowrap;cursor:default}
+#stb[data-act]{cursor:pointer}body.sb55 #testb{display:none}@media print{#stb{display:none}}body.nav #stb{display:none}`;document.head.append(st)}
 start();
 </script>
 </body>

@@ -8771,6 +8771,35 @@ Object.assign(ACT,{sford:()=>{UI.sfBea=!UI.sfBea;render()},
 {const st=document.createElement('style');st.textContent=`.sfbar{margin-bottom:0}.sfbar .sfzr{font-size:18px;padding:4px 10px}.sfhw{margin:6px 0 0}
 .sfk.sfed .sfb{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab;border-style:dashed;border-color:var(--acc)}
 .sfk.sfed .sfb:hover{transform:none}.sfk .sfb.sfzieh{position:relative;z-index:5;cursor:grabbing;opacity:.92;box-shadow:0 10px 28px rgba(20,30,50,.25);transition:none}`;document.head.append(st)}
+/* Kopfleiste beim Bildlauf (P61, erw.kopfScroll, Standard aus): wo die Kopfleiste .topbar klebt (Handy, iPad bis 1100 px), schiebt sie sich beim Bildlauf nach unten hinaus (body.kb61w,
+   Versatz --kb61; der sichere Bereich unter der Statusleiste bleibt in Leistenfarbe, Inhalt der Leiste ausgeblendet) und kommt beim Bildlauf nach oben sofort wieder (wie Amazon).
+   Ganz oben, bei offener Seitenleiste, Pop-up, Menü oder fokussiertem Eingabefeld bleibt der Zustand; neue Seite = Leiste sichtbar. Klebende Überschriften (P56 --sk56, Wrapper um skFrei())
+   und der Protokollkopf (P43 --prtb/--prtop) rücken nach. Am PC ohne Kopfleiste ohne Wirkung. */
+erwPlus({k:'kopfScroll',std:false,p:'Kopfleiste beim Bildlauf (P61)',l:'Kopfleiste beim Runterscrollen ausblenden',info:'Am Handy und iPad verschwindet die obere Leiste (Menü, Zurück, Speichern) beim Scrollen nach unten und kommt beim Scrollen nach oben sofort wieder – wie in der Amazon-App. Mehr Platz für den Inhalt. Am PC ohne Wirkung.'});
+queueMicrotask(()=>{if(typeof EB_K!=='undefined')EB_K.kopfScroll='ansicht'});
+let KB_Y=0,KB_S=0;
+function kbAn(){try{return!!DB&&!!erw('kopfScroll')}catch(e){return false}}
+function kbTb(){const t=$('.topbar');if(!t)return null;const cs=getComputedStyle(t);return cs.display!=='none'&&cs.position==='sticky'?t:null}
+function kbSafe(){let p=$('#kbsafe');if(!p){p=document.createElement('div');p.id='kbsafe';p.style.cssText='position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none';document.body.append(p)}return p.offsetHeight}
+function kbVersatz(){const t=kbTb(),w=document.body.classList.contains('kb61w'),sf=kbSafe();
+  if(t)document.documentElement.style.setProperty('--kb61',Math.max(0,(parseFloat(getComputedStyle(t).top)||0)+t.offsetHeight-sf)+'px');
+  if(t&&$('.pred,.prkopf')){const kp=$('#main .prkopf'),kh=kp&&getComputedStyle(kp).position==='sticky'?kp.offsetHeight:0,hh=w?sf:t.offsetHeight;
+    document.documentElement.style.setProperty('--prtb',hh+'px');document.documentElement.style.setProperty('--prtop',hh+kh+'px')}
+  skFrei()}
+function kbZeigen(weg){const b=document.body;if(b.classList.contains('kb61w')===weg)return;if(weg)kbVersatz();b.classList.toggle('kb61w',weg);kbVersatz()}
+{const s0=skFrei;skFrei=function(){s0();const b=document.body;if(!b.classList.contains('kb61w')||!b.classList.contains('sk56'))return; // ausgeblendete Kopfleiste zählt nur mit dem sicheren Bereich
+  let o=kbSafe();for(const e of document.querySelectorAll(SK_L)){if(e.matches('.topbar'))continue;const cs=getComputedStyle(e);if(cs.display==='none'||!/sticky|fixed/.test(cs.position)||cs.top==='auto')continue;o=Math.max(o,(parseFloat(cs.top)||0)+e.offsetHeight)}
+  document.documentElement.style.setProperty('--sk56',o+'px');document.documentElement.style.scrollPaddingTop=(o+44)+'px'}}
+window.addEventListener('scroll',()=>{const b=document.body,t=kbAn()&&kbTb(),y=Math.max(0,Math.min(scrollY,document.documentElement.scrollHeight-innerHeight)),d=y-KB_Y;KB_Y=y;
+  if(!t){if(b.classList.contains('kb61w'))kbZeigen(false);return}
+  if(b.classList.contains('nav')||$('.modal,.mpop')||document.activeElement?.matches('input,textarea,select,[contenteditable="true"]'))return;
+  if(y<=t.offsetHeight){KB_S=0;kbZeigen(false);return}
+  KB_S=d&&Math.sign(d)===Math.sign(KB_S)?KB_S+d:d;if(KB_S>12)kbZeigen(true);else if(KB_S<-12)kbZeigen(false)},{passive:true});
+window.addEventListener('hashchange',()=>{KB_S=0;kbZeigen(false)});
+{const r0=render;render=function(...a){const x=r0.apply(this,a);if(document.body.classList.contains('kb61w')){if(!kbAn()||!kbTb())kbZeigen(false);else kbVersatz()}return x}}
+{const st=document.createElement('style');st.textContent=`.topbar{transition:transform .22s ease}.topbar>*{transition:opacity .15s}
+body.kb61w .topbar{transform:translateY(calc(0px - var(--kb61,0px)))}body.kb61w .topbar>*{opacity:0;pointer-events:none}
+body.kb61w.ipad main>#sleiste{top:calc(8px + env(safe-area-inset-top,0px))}@media print{body.kb61w .topbar{transform:none}}`;document.head.append(st)}
 start();
 </script>
 </body>

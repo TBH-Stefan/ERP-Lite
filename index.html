@@ -9387,12 +9387,15 @@ function mlToast(L){mlToastZu();const m=L[0],t=document.createElement('div');t.i
   t.innerHTML=`<span class="mlic">${ML_GLO}</span><div class="mli"><b>${esc(m.t)}</b><div class="mlx">${esc(m.x)}${L.length>1?` <span class="mut">+${L.length-1} weitere</span>`:''}</div><div class="mla"><button class="p s" data-act="mlgo" data-k="${m.k}">${esc(m.a.l)}</button><button class="s" data-act="mlspaet">Später</button></div></div><button class="mlxx" data-act="mlspaet" title="Schließen" aria-label="Schließen">×</button><span class="mlpr"></span>`;
   document.body.append(t);const lauf=()=>{clearTimeout(ML_T);ML_T=setTimeout(mlToastZu,8000)};t.onmouseenter=()=>{clearTimeout(ML_T);t.classList.add('mlstop')};t.onmouseleave=()=>{t.classList.remove('mlstop');lauf()};lauf()}
 function mlSetzen(){let g=$('#mlg');if(!mlAn()){g?.remove();mlPanelZu();mlToastZu();document.body.classList.remove('ml64');ML_GES=null;return}
-  const L=mlListe(),tb=document.querySelector('.topbar'),inTb=!!tb&&getComputedStyle(tb).display!=='none';document.body.classList.add('ml64');document.body.classList.toggle('ml64f',!inTb);
-  if(!g){g=document.createElement('button');g.id='mlg';g.dataset.act='mlpan';g.title='Offene Meldungen';g.setAttribute('aria-label','Offene Meldungen')}
-  if(inTb){const s=tb.querySelector('button.su')||tb.querySelector('.zl');if(g.parentElement!==tb)s?s.before(g):tb.append(g)}else if(g.parentElement!==document.body)document.body.append(g);
+  const L=mlListe();document.body.classList.add('ml64');
+  if(!g){g=document.createElement('button');g.id='mlg';g.dataset.act='mlpan';g.title='Offene Meldungen';g.setAttribute('aria-label','Offene Meldungen')}mlPlatz(g);
   g.innerHTML=ML_GLO+(L.length?`<span class="mlzz">${L.length>99?'99+':L.length}</span>`:'');g.classList.toggle('mlleer',!L.length);
   const neu=L.filter(m=>!ML_GES||!(m.k in ML_GES)||String(ML_GES[m.k])!==String(m.n??''));ML_GES=Object.fromEntries(L.map(m=>[m.k,m.n??'']));
   if(neu.length&&!$('#mlp'))mlToast(neu);if($('#mlp'))mlPanel()}
+// Platz der Glocke: mit sichtbarer .topbar vor der Lupe, sonst in der Speicherleiste #sleiste nach „Speichern“ (P39/P49), sonst fest rechts oben (body.ml64f)
+function mlPlatz(g){const tb=document.querySelector('.topbar'),inTb=!!tb&&getComputedStyle(tb).display!=='none',sl=!inTb&&!HANDY.matches?$('#sleiste'):null;document.body.classList.toggle('ml64f',!inTb&&!sl);
+  if(inTb){const s=tb.querySelector('button.su')||tb.querySelector('.zl');if(g.parentElement!==tb)s?s.before(g):tb.append(g)}else if(sl){if(g.parentElement!==sl)sl.append(g)}else if(g.parentElement!==document.body)document.body.append(g)}
+{const s0=sLeiste;sLeiste=function(){const x=s0.apply(this,arguments),g=$('#mlg');if(g&&mlAn())mlPlatz(g);return x}} // sLeiste() zeichnet #sleiste neu (auch aus dirtyBar())
 {const r0=render;render=function(...a){const x=r0.apply(this,a);try{mlSetzen()}catch(e){console.error(e)}return x}}
 {const d0=V.dash;V.dash=(...x)=>{let h=d0(...x);if(!mlAn())return h;
   for(const s of[sichDash(),archDash(),vollDash(),'<div class="hint">Bitte zuerst unter <a href="#/einstellungen">Einstellungen</a> die Firmendaten erfassen.</div>'])if(s)h=h.split(s).join('');
@@ -9405,7 +9408,7 @@ queueMicrotask(()=>Object.assign(ACT,{mlpan:()=>{if($('#mlp'))mlPanelZu();else{m
   mlsnz:el=>{const k=el.dataset.k;mlZuSetzen(k?[k]:mlListe().map(m=>m.k));mlToastZu();mlSetzen();if(!mlListe().length)mlPanelZu()}}));
 {const st=document.createElement('style');st.textContent=`#mlg{position:relative;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border-radius:50%;flex-shrink:0;cursor:pointer}
 #mlg>svg{width:22px;height:22px}body.ml64f #mlg{position:fixed;top:14px;right:16px;z-index:40;background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.15)}
-body.ml64f main{padding-right:max(72px,env(safe-area-inset-right,0px))}.topbar #mlg{background:none;border:0;color:#fff;width:44px;height:44px;box-shadow:none}.topbar #mlg>svg{width:24px;height:24px}
+body.ml64f main{padding-right:max(72px,env(safe-area-inset-right,0px))}#sleiste #mlg{width:34px;height:30px;border-radius:6px;margin-left:4px}#sleiste #mlg>svg{width:20px;height:20px}#sleiste .mlzz{top:-6px;right:-6px}.topbar #mlg{background:none;border:0;color:#fff;width:44px;height:44px;box-shadow:none}.topbar #mlg>svg{width:24px;height:24px}
 #mlg.mlleer{opacity:.6}.mlzz{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;box-sizing:border-box;padding:0 4px;border-radius:9px;background:#c42b1c;color:#fff;font-size:11px;font-weight:600;line-height:14px;text-align:center;border:2px solid var(--card)}
 .topbar .mlzz{top:3px;right:3px;border-color:var(--side)}
 #mlt{position:fixed;right:20px;bottom:20px;z-index:1200;width:360px;max-width:calc(100vw - 24px);box-sizing:border-box;display:flex;gap:12px;padding:14px 12px 16px 16px;background:var(--card);color:var(--ink);border-radius:8px;border-left:4px solid var(--mlf);box-shadow:0 8px 28px rgba(0,0,0,.22),0 0 0 1px rgba(0,0,0,.06);overflow:hidden;animation:mlein .25s ease-out}

@@ -8890,25 +8890,25 @@ const CK_ST={'':'Office 365 (hell/dunkel)',neon:'Dunkles Panel in Programmfarben
 const ckNeon=()=>!CK_DR&&!!ckStil(),ckKl=()=>ckNeon()?' neon'+(ckStil()==='neonb'?' neonb':''):'';
 const ckDefs=()=>{const D=[],M={};return{gr:(c,o1=.95,o2=.12)=>{const k=c+o1+o2;if(!M[k]){M[k]='ckg'+(++CKID);D.push(`<linearGradient id="${M[k]}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${c};stop-opacity:${o1}"/><stop offset="1" style="stop-color:${c};stop-opacity:${o2}"/></linearGradient>`)}return`url(#${M[k]})`},h:()=>D.length?`<defs>${D.join('')}</defs>`:''}};
 const ckGlatt=P=>{if(P.length<3)return P.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join('');let d=`M${P[0][0].toFixed(1)} ${P[0][1].toFixed(1)}`;for(let i=0;i<P.length-1;i++){const a=P[i-1]||P[i],b=P[i],c=P[i+1],e=P[i+2]||c;d+=`C${(b[0]+(c[0]-a[0])/6).toFixed(1)} ${(b[1]+(c[1]-a[1])/6).toFixed(1)} ${(c[0]-(e[0]-b[0])/6).toFixed(1)} ${(c[1]-(e[1]-b[1])/6).toFixed(1)} ${c[0].toFixed(1)} ${c[1].toFixed(1)}`}return d};
-function ckBalken(G,ser,{stack=false,vj=null,linie=null,h=150,klein=false,W=0}={}){ // G: [{l,v:{k:Wert}}], ser: Schlüssel aus CK_S, vj: Schlüssel → Vorjahreswerte je Gruppe, linie: Schlüssel als Punkte/Linie
+function ckBalken(G,ser,{stack=false,vj=null,linie=null,h=150,klein=false,W=0,frei=false}={}){ // G: [{l,v:{k:Wert}}], ser: Schlüssel aus CK_S, vj: Schlüssel → Vorjahreswerte je Gruppe, linie: Schlüssel als Punkte/Linie
   W=W||(HANDY.matches?340:440);const P={l:klein?4:44,r:6,t:8,b:klein?6:20},iw=W-P.l-P.r,ih=h-P.t-P.b,n=G.length;
   const sw=g=>stack?ser.reduce((s,k)=>s+Math.max(0,g.v[k]||0),0):Math.max(...ser.map(k=>g.v[k]||0)),neg=Math.min(0,...G.flatMap(g=>ser.map(k=>g.v[k]||0)));
   let mx=Math.max(1,...G.map(sw),...(vj?G.map(g=>g.vj||0):[0]),...(linie?G.map(g=>g.v[linie]||0):[0])),mn=stack?0:neg;
-  const st=10**Math.floor(Math.log10((mx-mn)/3||1)),sch=[1,2,2.5,5,10].map(f=>f*st).find(s=>(mx-mn)/s<=4)||st*10;mx=Math.ceil(mx/sch)*sch;mn=Math.floor(mn/sch)*sch;
+  const st=10**Math.floor(Math.log10((mx-mn)/3||1)),sch=[1,2,2.5,5,10].map(f=>f*st).find(s=>(mx-mn)/s<=(frei?Math.max(2,Math.min(8,Math.floor(ih/40))):4))||st*10;mx=Math.ceil(mx/sch)*sch;mn=Math.floor(mn/sch)*sch;
   const y=v=>P.t+ih*(mx-v)/(mx-mn||1),bw=iw/n,gw=bw*.7,nb=stack?1:ser.length,eb=Math.max(2,(gw-(nb-1)*2)/nb),N=ckNeon(),D=ckDefs(),gr=D.gr;let o='',lp='',jp=null,lc='';
-  if(!klein)for(let v=mn;v<=mx+1e-9;v+=sch)o+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" class="${v===0?'ck0':'ckg'}"/><text x="${P.l-6}" y="${y(v)+4}" class="cka" text-anchor="end">${ckK(v)}</text>`;
+  if(!klein)for(let v=mn;v<=mx+1e-9;v+=sch)o+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" class="${v===0?'ck0':'ckg'}"/><text x="${P.l-6}" y="${y(v)+4}" class="cka" text-anchor="end">${frei&&sch%1e3&&Math.abs(v)>=1e3&&Math.abs(v)<1e6?(v/1e3).toLocaleString('de-AT',{maximumFractionDigits:2})+' T':ckK(v)}</text>`;
   G.forEach((g,i)=>{o+=`<g style="--f:${n>1?(i/(n-1)).toFixed(3):0}">`;const x0=P.l+i*bw+(bw-gw)/2,tt=[g.t||g.l,...ser.map(k=>`${CK_S[k]?.[0]||k}: ${fmt(g.v[k])} €`),...(vj?[`Vorjahr: ${fmt(g.vj)} €`]:[])].join('\n');
     if(vj)o+=ckBar(x0-3,y(Math.max(0,g.vj||0)),gw+6,Math.max(0,y(0)-y(Math.max(0,g.vj||0))),'var(--ckv)',1);
     let acc=0;const top=stack?ser.reduce((t,k)=>(g.v[k]||0)>0?k:t,''):'';ser.forEach((k,j)=>{const v=g.v[k]||0,c=g.c?.[k]||`var(${CK_S[k]?.[1]||'--ck1'})`;if(stack){if(v<=0)return;const a=y(acc),b=y(acc+v);o+=ckBar(x0,b,gw,Math.max(0,a-b-(acc?2:0)),N?gr(c,.95,.35):c,k===top?1:0);acc+=v}
       else{const x=x0+j*(eb+2),a=y(Math.max(0,v)),b=y(Math.min(0,v));o+=ckBar(x,a,eb,Math.max(v?1:0,b-a),N?gr(c,.95,.3):c,v<0?-1:1)}});
     o+=`</g><rect x="${P.l+i*bw}" y="${P.t}" width="${bw}" height="${ih}" fill="transparent"><title>${esc(tt)}</title></rect>`;
-    if(!klein)o+=`<text x="${P.l+i*bw+bw/2}" y="${h-5}" class="cka" text-anchor="middle">${esc(g.l)}</text>`});
+    if(!klein&&(!frei||bw>=34||(n-1-i)%Math.ceil(34/bw)===0))o+=`<text x="${P.l+i*bw+bw/2}" y="${h-5}" class="cka" text-anchor="middle">${esc(g.l)}</text>`});
   if(linie&&N){const Q=G.map((g,i)=>g.zuk?null:[P.l+i*bw+bw/2,y(g.v[linie]||0)]).filter(Boolean),c=`var(${CK_S[linie][1]})`,d=ckGlatt(Q);if(Q.length>1)lp=d;jp=Q[Q.length-1];lc=c;o+=`<path d="${d}L${Q[Q.length-1][0]} ${y(Math.max(mn,0))}L${Q[0][0]} ${y(Math.max(mn,0))}Z" fill="${gr(c,.35,0)}" class="ckfl"/><path d="${d}" class="ckli ckglow" pathLength="1" style="stroke:${c};color:${c}"/>`+Q.map((q,i,A)=>`<circle cx="${q[0]}" cy="${q[1]}" r="3.2" class="ckpt" style="stroke:${c};--f:${(i/Math.max(1,A.length-1)).toFixed(3)}"/>`).join('')}
 else if(linie){const pts=G.map((g,i)=>g.zuk?'':`${P.l+i*bw+bw/2},${y(g.v[linie]||0)}`).filter(Boolean);if(pts.length>1){lp='M'+pts.join(' L');jp=pts[pts.length-1].split(',');lc=`var(${CK_S[linie][1]})`}o+=`<polyline points="${pts.join(' ')}" class="ckli" pathLength="1" style="stroke:var(${CK_S[linie][1]})"/>`+pts.map((p,i)=>{const[a,b]=p.split(',');return`<circle cx="${a}" cy="${b}" r="3.5" class="ckpt" style="stroke:var(${CK_S[linie][1]});--f:${(i/Math.max(1,pts.length-1)).toFixed(3)}"/>`}).join('')}
   return`<svg class="ckc" viewBox="0 0 ${W} ${h}" role="img" aria-label="Diagramm">${D.h()}${o}${ckLv(o,lp,jp,lc,W,h)}</svg>`}
 const ckBar=(x,y,w,h,c,r)=>{if(h<=0||w<=0)return'';const q=Math.min(4,w/2,h);if(!r||q<1)return`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}" class="ckb${r<0?' ckbn':''}"/>`; // Fluent: abgerundetes Balkenende (r=1 oben, −1 unten)
   return r>0?`<path d="M${x} ${y+h}V${y+q}Q${x} ${y} ${x+q} ${y}H${x+w-q}Q${x+w} ${y} ${x+w} ${y+q}V${y+h}Z" fill="${c}" class="ckb"/>`:`<path d="M${x} ${y}V${y+h-q}Q${x} ${y+h} ${x+q} ${y+h}H${x+w-q}Q${x+w} ${y+h} ${x+w} ${y+h-q}V${y}Z" fill="${c}" class="ckb ckbn"/>`};
-function ckSpark(G,k,{vj=false,h=64}={}){const W=300,P=4,n=G.length,v=G.map(g=>g.zuk?null:g.v[k]||0),w=G.map(g=>g.vj||0),mx=Math.max(1,...v.filter(x=>x!=null),...(vj?w:[0])),X=i=>P+i*(W-2*P)/(n-1),Y=x=>h-P-(h-2*P)*Math.max(0,x)/mx;
+function ckSpark(G,k,{vj=false,h=64,W=300}={}){const P=4,n=G.length,v=G.map(g=>g.zuk?null:g.v[k]||0),w=G.map(g=>g.vj||0),mx=Math.max(1,...v.filter(x=>x!=null),...(vj?w:[0])),X=i=>P+i*(W-2*P)/(n-1),Y=x=>h-P-(h-2*P)*Math.max(0,x)/mx;
   const pt=v.map((x,i)=>x==null?null:[X(i),Y(x)]).filter(Boolean),c=`var(${CK_S[k][1]})`,L=pt.map(p=>p.map(z=>z.toFixed(1)).join(',')).join(' ');
   if(ckNeon()&&pt.length>1){const D=ckDefs(),d=ckGlatt(pt),q=pt[pt.length-1];return`<svg class="ckc cksp" viewBox="0 0 ${W} ${h}" role="img" aria-label="Verlauf">${vj?`<path d="${ckGlatt(w.map((x,i)=>[X(i),Y(x)]))}" class="ckvl"/>`:''}<path d="${d}L${q[0]} ${h-P}L${pt[0][0]} ${h-P}Z" fill="${D.gr(c,.45,0)}" class="ckfl"/><path d="${d}" class="ckli ckglow" pathLength="1" style="stroke:${c};color:${c}"/><circle cx="${q[0]}" cy="${q[1]}" r="4" class="ckpt ckglow" style="stroke:${c};color:${c};--f:1"/>${G.map((g,i)=>`<rect x="${X(i)-(W-2*P)/(n-1)/2}" y="0" width="${(W-2*P)/(n-1)}" height="${h}" fill="transparent"><title>${esc(g.t)}: ${fmt(g.v[k])} €${vj?` (Vorjahr ${fmt(g.vj)} €)`:''}</title></rect>`).join('')}${ckLv('',d,q,c,W,h)}${D.h().replace('<defs>','<defs>')}</svg>`}
   return`<svg class="ckc cksp" viewBox="0 0 ${W} ${h}" role="img" aria-label="Verlauf">${vj?`<polyline points="${w.map((x,i)=>`${X(i).toFixed(1)},${Y(x).toFixed(1)}`).join(' ')}" class="ckvl"/>`:''}${pt.length>1?`<path d="M${pt[0][0]} ${h-P}L${L.replace(/ /g,'L')}L${pt[pt.length-1][0]} ${h-P}Z" fill="${c}" class="ckar"/><polyline points="${L}" class="ckli" pathLength="1" style="stroke:${c}"/>`:''}${pt.length?`<circle cx="${pt[pt.length-1][0]}" cy="${pt[pt.length-1][1]}" r="4" class="ckpt" style="stroke:${c};--f:1"/>`:''}${G.map((g,i)=>`<rect x="${X(i)-(W-2*P)/(n-1)/2}" y="0" width="${(W-2*P)/(n-1)}" height="${h}" fill="transparent"><title>${esc(g.t)}: ${fmt(g.v[k])} €${vj?` (Vorjahr ${fmt(g.vj)} €)`:''}</title></rect>`).join('')}${pt.length>1?ckLv('','M'+L.replace(/ /g,' L'),pt[pt.length-1],c,W,h):''}</svg>`}
@@ -9285,6 +9285,73 @@ async function prArtBea(){const L=prArtL(),o=await formDialog({titel:'Arten der 
 window.addEventListener('change',async e=>{const el=e.target,d=el.dataset||{};if(el.tagName!=='SELECT'||!d.r?.startsWith('prot|')||!/\.art$/.test(d.f||'')||(el.value!==PRA_N&&el.value!==PRA_B))return;
   e.stopImmediatePropagation();const was=el.value,p=ROOT.prot(d.r.slice(5)),T=d.f.split('.'),z=T.pop(),o=p&&T.reduce((a,t)=>a?.[t],p);el.value=o?.[z]||'I';if(!o||protFest(p))return;
   if(was===PRA_N){const k=await prArtNeu();if(!k)return;o[z]=k}else if(!await prArtBea())return;persist();render()},true);
+/* Überblick frei anordnen (P63, erw.ckFrei, Standard aus): Kacheln und Überschriften des Cockpits (Überblick, Auswertungen) im Raster ziehen und in der Größe ändern.
+   Anordnung je Ansicht und Gerät S().cockpit.frei[art][dashG()] = {<Schlüssel>:[x,y,w,h]} (Spalten ckfSp(): 24, am Handy 4; Zeile CKF_R px; tablet fällt auf pc zurück), fehlt = bisheriges Raster.
+   „Anordnen“ (ACT.ckfrei) misst das aktuelle Raster aus (ckfMessen()), überlappende Kacheln rutschen nach unten (ckfPack()); Schlüssel ckfK(): Überschrift h<i>, Tacho t:<k>, sonst data-k.
+   Diagramme mit Achsen (ckBalken/ckSpark) zeichnet ckfPlatz() in der Pixelgröße der Kachel neu (ResizeObserver, ckfAufbau()): Schrift bleibt gleich groß, Achsen werden neu eingeteilt. */
+erwPlus({k:'ckFrei',std:false,p:'Controlling (P57)',l:'Überblick: Diagramme mit der Maus anordnen und in der Größe ändern',info:'Im Überblick und in den Auswertungen erscheint der Knopf „Anordnen“. Dann lassen sich Kacheln und Überschriften mit der Maus (am iPad mit dem Finger) verschieben und an der Ecke rechts unten größer oder kleiner ziehen; sie rasten im Raster ein. Diagramme werden in der neuen Größe neu gezeichnet, Schrift und Achsen bleiben lesbar. Die Anordnung gilt je Gerät (Bildschirm, iPad, Handy), „Standard“ stellt das bisherige Raster wieder her.'});
+queueMicrotask(()=>{if(typeof EB_K!=='undefined')EB_K.ckFrei='ansicht'});
+const CKF_R=20; // Zeilenraster: 10 px Zeile + 10 px Abstand
+const ckfSp=()=>dashG()==='handy'?4:24,ckfArt=()=>/auswertung/.test(location.hash)?'aw':'dash',ckfKopie=o=>JSON.parse(JSON.stringify(o));
+let CKF_ON=false,CKF_FN=[],CKF_RO=null;
+const ckfL=art=>{const f=S().cockpit?.frei?.[art];return f?.[dashG()]||(dashG()==='tablet'?f?.pc:null)||null};
+const ckfK=e=>e.dataset.fk||(e.tagName==='H2'?'h':e.closest('.ckt')?'t:':'')+e.dataset.k;
+function ckfPack(L,fix,O=ckfKopie(L)){const ov=(a,b)=>a[0]<b[0]+b[2]&&b[0]<a[0]+a[2]&&a[1]<b[1]+b[3]&&b[1]<a[1]+a[3],P=[]; // O = Stand vorher: was darunter lag, rutscht mit (Abstand bleibt), Lücken bleiben
+  for(const k of Object.keys(L).sort((a,b)=>(a===fix?-1:b===fix?1:0)||O[a][1]-O[b][1]||O[a][0]-O[b][0])){const p=L[k],o=O[k];
+    if(k!==fix){for(const[j,q]of P)if(j!==fix&&q[0]<p[0]+p[2]&&p[0]<q[0]+q[2]&&O[j][1]+O[j][3]<=o[1])p[1]=Math.max(p[1],q[1]+q[3]+o[1]-O[j][1]-O[j][3]);while(P.some(([,q])=>ov(p,q)))p[1]++}P.push([k,p])}
+  return L}
+function ckfMessen(){const ck=$('#main .ck');if(!ck)return{};const r0=ck.getBoundingClientRect(),sp=ckfSp(),cw=(r0.width+10)/sp,L={};
+  ck.querySelectorAll('section.ckgr').forEach((s,i)=>{const T=[[s.querySelector('h2.ckh'),'h'+i],...[...s.querySelectorAll('.ckk')].map(e=>[e,ckfK(e)])];
+    for(const[e,k]of T){if(!e)continue;const r=e.getBoundingClientRect(),x=Math.max(0,Math.min(sp-1,Math.round((r.left-r0.left)/cw)));
+      const y=Math.max(0,Math.round((r.top-r0.top)/CKF_R));L[k]=[x,y,Math.max(1,Math.min(sp-x,Math.round((r.right-r0.left+10)/cw)-x)),Math.max(2,Math.round((r.bottom-r0.top+10)/CKF_R)-y)]}});
+  return ckfPack(L)}
+const ckfPlatz=f=>{CKF_FN.push(f);return`<div class="ckfc" data-fc="${CKF_FN.length-1}"></div>`};
+function ckfBrett(h,L,ed){const t=document.createElement('template');t.innerHTML=h;const ck=t.content.firstElementChild,sp=ckfSp(),I=[];
+  ck.querySelectorAll('section.ckgr').forEach((s,i)=>{const hh=s.querySelector('h2.ckh');if(hh){hh.dataset.fk='h'+i;I.push(hh)}s.querySelectorAll('.ckk').forEach(e=>{e.dataset.fk=ckfK(e);I.push(e)})});
+  let y=Math.max(0,...Object.values(L).map(p=>p[1]+p[3]));const B=document.createElement('div');B.className='ckfr'+(ed?' ckfed':'');B.style.setProperty('--cks',sp);
+  for(const e of I){const h2=e.tagName==='H2';let p=L[e.dataset.fk];if(!p){p=L[e.dataset.fk]=[0,y,h2?sp:Math.min(sp,3),h2?2:9];y+=p[3]} // neue Kachel: unten anhängen
+    e.classList.add('ckfi');e.style.gridArea=`${p[1]+1}/${p[0]+1}/span ${p[3]}/span ${p[2]}`;
+    if(ed){if(e.dataset.act){e.dataset.actx=e.dataset.act;e.removeAttribute('data-act')}e.removeAttribute('tabindex');e.title='Ziehen zum Verschieben';e.insertAdjacentHTML('beforeend','<i class="ckfgr" title="Größe ziehen"></i>')}
+    B.append(e)}
+  ck.replaceChildren(...(ed?[Object.assign(document.createElement('p'),{className:'hint ckfh',textContent:'Kachel oder Überschrift ziehen = verschieben, Ecke rechts unten ziehen = Größe ändern. Die Anordnung gilt für dieses Gerät.'})]:[]),B);return ck.outerHTML}
+{const f0=ckFeld;ckFeld=function(Z,art){if(!DB||!erw('ckFrei'))return f0(Z,art);const ed=UI.ckfEd===art,L=ed?UI.ckfW:ckfL(art);if(!L)return f0(Z,art);
+  CKF_ON=true;CKF_FN=[];let h;try{h=f0(Z,art)}finally{CKF_ON=false}return ckfBrett(h,ed?L:ckfKopie(L),ed)}}
+{const b0=ckBalken;ckBalken=(G,ser,o={})=>CKF_ON?ckfPlatz((W,h)=>b0(G,ser,{...o,W,h:Math.max(o.klein?36:80,h),frei:true})):b0(G,ser,o)}
+{const s0=ckSpark;ckSpark=(G,k,o={})=>CKF_ON?ckfPlatz((W,h)=>s0(G,k,{...o,W,h:Math.max(28,h)})):s0(G,k,o)}
+function ckfAufbau(){CKF_RO?.disconnect();CKF_RO=null;const C=[...document.querySelectorAll('#main .ckfc')];if(!C.length)return;
+  const zeich=el=>{const W=Math.round(el.clientWidth),h=Math.round(el.clientHeight);if(!W||!h||el._g===W+'x'+h)return;el._g=W+'x'+h;el.innerHTML=CKF_FN[+el.dataset.fc]?.(W,h)||''};
+  C.forEach(zeich);let q=null;CKF_RO=new ResizeObserver(E=>{if(!q){q=new Set;requestAnimationFrame(()=>{const s=q;q=null;s.forEach(zeich)})}E.forEach(x=>q.add(x.target))});C.forEach(el=>CKF_RO.observe(el))}
+const ckfKn=art=>UI.ckfEd===art?'<button class="on" data-act="ckfrei" title="Anordnen beenden">Fertig</button><button data-act="ckfstd" title="Bisheriges Raster für dieses Gerät">Standard</button>':'<button data-act="ckfrei" title="Kacheln verschieben und Größe ändern">Anordnen</button>';
+for(const[v,art,s]of[['dash','dash','cockpit'],['auswertung','aw','awGrafik']]){const v0=V[v];V[v]=(...x)=>{if(UI.ckfEd&&UI.ckfEd!==art)UI.ckfEd=null;const h=v0(...x);
+  return DB&&erw('ckFrei')&&erw(s)?h.replace(ckCfgKn(),ckfKn(art)+ckCfgKn()):h}}
+function ckfSpeichern(art){const f=((S().cockpit??={}).frei??={});(f[art]??={})[dashG()]=ckfKopie(UI.ckfW);persist()}
+queueMicrotask(()=>Object.assign(ACT,{
+  ckfrei:()=>{const art=ckfArt();if(UI.ckfEd===art){UI.ckfEd=null;UI.ckfW=null}else{UI.ckfW=ckfKopie(ckfL(art)||ckfMessen());UI.ckfEd=art}render()},
+  ckfstd:()=>{const art=ckfArt(),f=S().cockpit?.frei?.[art];if(f){delete f[dashG()];persist()}UI.ckfEd=null;render();UI.ckfW=ckfMessen();UI.ckfEd=art;render()}}));
+document.addEventListener('pointerdown',ev=>{const e=ev.target.closest?.('.ckfed>.ckfi');if(!e||ev.button>0||!UI.ckfW)return;ev.preventDefault();
+  const B=e.parentNode,L=UI.ckfW,k=e.dataset.fk,gr=ev.target.classList.contains('ckfgr'),sp=ckfSp(),cw=(B.getBoundingClientRect().width+10)/sp,S0=ckfKopie(L),p0=S0[k],x0=ev.clientX,y0=ev.clientY,r0=e.getBoundingClientRect();
+  if(!p0)return;try{e.setPointerCapture(ev.pointerId)}catch(_){}e.classList.add(gr?'ckfgz':'ckfz');document.body.classList.add('ckfzieht');
+  const ph=gr?null:B.appendChild(Object.assign(document.createElement('div'),{className:'ckfph'}));let last='';
+  const setzen=()=>{for(const c of B.children){const p=c===ph?L[k]:L[c.dataset.fk];if(p)c.style.gridArea=`${p[1]+1}/${p[0]+1}/span ${p[3]}/span ${p[2]}`}};
+  const mv=v=>{if(v.pointerId!==ev.pointerId)return;const dx=v.clientX-x0,dy=v.clientY-y0;
+    const p=gr?[p0[0],p0[1],Math.max(1,Math.min(sp-p0[0],Math.round(p0[2]+dx/cw))),Math.max(2,Math.round(p0[3]+dy/CKF_R))]:[Math.max(0,Math.min(sp-p0[2],Math.round(p0[0]+dx/cw))),Math.max(0,Math.round(p0[1]+dy/CKF_R)),p0[2],p0[3]];
+    if(String(p)!==last){last=String(p);const N=ckfKopie(S0);N[k]=p;ckfPack(N,k,S0);for(const x in N)L[x]=N[x];setzen()}
+    if(!gr){e.style.transform='';const r=e.getBoundingClientRect();e.style.transform=`translate(${r0.left+dx-r.left}px,${r0.top+dy-r.top}px)`}};
+  const ende=v=>{if(v.pointerId!==ev.pointerId)return;e.removeEventListener('pointermove',mv);e.removeEventListener('pointerup',ende);e.removeEventListener('pointercancel',ende);
+    e.style.transform='';e.classList.remove('ckfz','ckfgz');document.body.classList.remove('ckfzieht');ph?.remove();setzen();if(last)ckfSpeichern(UI.ckfEd)};
+  e.addEventListener('pointermove',mv);e.addEventListener('pointerup',ende);e.addEventListener('pointercancel',ende)});
+{const r0=render;render=function(...a){const x=r0.apply(this,a);if(!$('#main .ck'))UI.ckfEd=null;ckfAufbau();return x}}
+{const st=document.createElement('style');st.textContent=`.ckfr{display:grid;grid-template-columns:repeat(var(--cks),minmax(0,1fr));grid-auto-rows:${CKF_R-10}px;gap:10px;position:relative}
+.ckfr>.ckfi{margin:0;min-height:0;min-width:0;overflow:hidden;position:relative}.ckfr>.ckk{animation-delay:0s!important}.ckfr>h2.ckh{align-self:end;padding-bottom:2px}
+.ckfc{flex:1 1 0;min-height:0;position:relative}.ckfc>svg{position:absolute;inset:0;width:100%;height:100%}
+.ckfr .ckta{flex:1 1 0;min-height:0;justify-content:center}.ckfr .ckta>svg{flex:1 1 0;min-height:0;width:100%;height:100%}
+.ckfr.ckfed{background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--acc) 7%,transparent) 0 calc((100% + 10px)/var(--cks) - 10px),transparent 0 calc((100% + 10px)/var(--cks)));border-radius:8px}
+.ckfed>.ckfi{cursor:grab;touch-action:none;user-select:none;outline:1px dashed color-mix(in srgb,var(--acc) 60%,transparent);outline-offset:-1px}.ckfed>h2.ckfi{background:var(--card);border-radius:6px;padding:0 8px}
+.ckfed .ckfi *:not(.ckfgr){pointer-events:none}.ckfz{z-index:5;cursor:grabbing!important;box-shadow:0 14px 30px rgba(0,0,0,.25)!important;opacity:.94}
+.ckfph{border:2px dashed var(--acc);border-radius:8px;background:color-mix(in srgb,var(--acc) 12%,transparent)}
+.ckfgr{position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize;touch-action:none;z-index:3;background:linear-gradient(135deg,transparent 52%,var(--acc) 52%);border-radius:0 0 8px 0}
+.ckfgz{outline:2px solid var(--acc)!important}body.ckfzieht{user-select:none}body.ckfzieht.ckfg *{cursor:nwse-resize!important}.ckfh{margin:0 0 10px}
+@media(max-width:760px){.ckfgr{width:26px;height:26px}}`;document.head.append(st)}
 start();
 </script>
 </body>

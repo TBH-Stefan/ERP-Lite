@@ -9286,15 +9286,17 @@ window.addEventListener('change',async e=>{const el=e.target,d=el.dataset||{};if
   e.stopImmediatePropagation();const was=el.value,p=ROOT.prot(d.r.slice(5)),T=d.f.split('.'),z=T.pop(),o=p&&T.reduce((a,t)=>a?.[t],p);el.value=o?.[z]||'I';if(!o||protFest(p))return;
   if(was===PRA_N){const k=await prArtNeu();if(!k)return;o[z]=k}else if(!await prArtBea())return;persist();render()},true);
 /* Überblick frei anordnen (P63, erw.ckFrei, Standard aus): Kacheln und Überschriften des Cockpits (Überblick, Auswertungen) im Raster ziehen und in der Größe ändern.
-   Anordnung je Ansicht und Gerät S().cockpit.frei[art][dashG()] = {<Schlüssel>:[x,y,w,h]} (Spalten ckfSp(): 24, am Handy 4; Zeile CKF_R px; tablet fällt auf pc zurück), fehlt = bisheriges Raster.
+   Anordnung je Ansicht und Gerät S().cockpit.frei[art][dashG()] = {<Schlüssel>:[x,y,w,h]} (gespeichert {sp,L}, Spalten ckfSp(): 48, am Handy 4, ältere Anordnungen ohne sp = 24 werden umgerechnet; Zeile CKF_R px; tablet fällt auf pc zurück), fehlt = bisheriges Raster.
    „Anordnen“ (ACT.ckfrei) misst das aktuelle Raster aus (ckfMessen()), überlappende Kacheln rutschen nach unten (ckfPack()); Schlüssel ckfK(): Überschrift h<i>, Tacho t:<k>, sonst data-k.
    Diagramme mit Achsen (ckBalken/ckSpark) zeichnet ckfPlatz() in der Pixelgröße der Kachel neu (ResizeObserver, ckfAufbau()): Schrift bleibt gleich groß, Achsen werden neu eingeteilt. */
 erwPlus({k:'ckFrei',std:false,p:'Controlling (P57)',l:'Überblick: Diagramme mit der Maus anordnen und in der Größe ändern',info:'Im Überblick und in den Auswertungen erscheint der Knopf „Anordnen“. Dann lassen sich Kacheln und Überschriften mit der Maus (am iPad mit dem Finger) verschieben und an der Ecke rechts unten größer oder kleiner ziehen; sie rasten im Raster ein. Diagramme werden in der neuen Größe neu gezeichnet, Schrift und Achsen bleiben lesbar. Die Anordnung gilt je Gerät (Bildschirm, iPad, Handy), „Standard“ stellt das bisherige Raster wieder her.'});
 queueMicrotask(()=>{if(typeof EB_K!=='undefined')EB_K.ckFrei='ansicht'});
 const CKF_R=20; // Zeilenraster: 10 px Zeile + 10 px Abstand
-const ckfSp=()=>dashG()==='handy'?4:24,ckfArt=()=>/auswertung/.test(location.hash)?'aw':'dash',ckfKopie=o=>JSON.parse(JSON.stringify(o));
+const ckfSp=()=>dashG()==='handy'?4:48,ckfArt=()=>/auswertung/.test(location.hash)?'aw':'dash',ckfKopie=o=>JSON.parse(JSON.stringify(o));
 let CKF_ON=false,CKF_FN=[],CKF_RO=null;
-const ckfL=art=>{const f=S().cockpit?.frei?.[art];return f?.[dashG()]||(dashG()==='tablet'?f?.pc:null)||null};
+const ckfL=art=>{const f=S().cockpit?.frei?.[art],v=f?.[dashG()]||(dashG()==='tablet'?f?.pc:null);if(!v)return null;const L=v.L||v,sp=ckfSp(),a=v.sp||(dashG()==='handy'?4:24);if(a===sp)return L;
+  const q=sp/a,N={};for(const k in L){const[x,y,w,h]=L[k],x2=Math.round(x*q);N[k]=[x2,y,Math.max(1,Math.round((x+w)*q)-x2),h]}return N};
+const ckfFelder=art=>(S().cockpit?.felder||[]).filter(f=>f.art===art); // eigene Textfelder {id,art,t,txt} (Inhalt auf allen Geräten, Platz je Gerät unter f:<id>)
 const ckfK=e=>e.dataset.fk||(e.tagName==='H2'?'h':e.closest('.ckt')?'t:':'')+e.dataset.k;
 function ckfPack(L,fix,O=ckfKopie(L)){const ov=(a,b)=>a[0]<b[0]+b[2]&&b[0]<a[0]+a[2]&&a[1]<b[1]+b[3]&&b[1]<a[1]+a[3],P=[]; // O = Stand vorher: was darunter lag, rutscht mit (Abstand bleibt), Lücken bleiben
   for(const k of Object.keys(L).sort((a,b)=>(a===fix?-1:b===fix?1:0)||O[a][1]-O[b][1]||O[a][0]-O[b][0])){const p=L[k],o=O[k];
@@ -9306,39 +9308,49 @@ function ckfMessen(){const ck=$('#main .ck');if(!ck)return{};const r0=ck.getBoun
       const y=Math.max(0,Math.round((r.top-r0.top)/CKF_R));L[k]=[x,y,Math.max(1,Math.min(sp-x,Math.round((r.right-r0.left+10)/cw)-x)),Math.max(2,Math.round((r.bottom-r0.top+10)/CKF_R)-y)]}});
   return ckfPack(L)}
 const ckfPlatz=f=>{CKF_FN.push(f);return`<div class="ckfc" data-fc="${CKF_FN.length-1}"></div>`};
-function ckfBrett(h,L,ed){const t=document.createElement('template');t.innerHTML=h;const ck=t.content.firstElementChild,sp=ckfSp(),I=[];
+function ckfBrett(h,L,ed,art){const t=document.createElement('template');t.innerHTML=h;const ck=t.content.firstElementChild,sp=ckfSp(),I=[];
   ck.querySelectorAll('section.ckgr').forEach((s,i)=>{const hh=s.querySelector('h2.ckh');if(hh){hh.dataset.fk='h'+i;I.push(hh)}s.querySelectorAll('.ckk').forEach(e=>{e.dataset.fk=ckfK(e);I.push(e)})});
+  for(const f of ckfFelder(art)){const d=document.createElement('div');d.className='ckk ckfx';d.dataset.fk='f:'+f.id;d.innerHTML=`<h3>${esc(f.t||'')}</h3><div class="ckftx">${esc(f.txt||'').replace(/\n/g,'<br>')}</div>`;I.push(d)}
   let y=Math.max(0,...Object.values(L).map(p=>p[1]+p[3]));const B=document.createElement('div');B.className='ckfr'+(ed?' ckfed':'');B.style.setProperty('--cks',sp);
-  for(const e of I){const h2=e.tagName==='H2';let p=L[e.dataset.fk];if(!p){p=L[e.dataset.fk]=[0,y,h2?sp:Math.min(sp,3),h2?2:9];y+=p[3]} // neue Kachel: unten anhängen
+  for(const e of I){const h2=e.tagName==='H2';let p=L[e.dataset.fk];if(!p){p=L[e.dataset.fk]=[0,y,h2?sp:Math.min(sp,Math.max(2,Math.round(sp/(e.classList.contains('ckfx')?4:6)))),h2?2:9];y+=p[3]} // neue Kachel: unten anhängen
     e.classList.add('ckfi');e.style.gridArea=`${p[1]+1}/${p[0]+1}/span ${p[3]}/span ${p[2]}`;
-    if(ed){if(e.dataset.act){e.dataset.actx=e.dataset.act;e.removeAttribute('data-act')}e.removeAttribute('tabindex');e.title='Ziehen zum Verschieben';e.insertAdjacentHTML('beforeend','<i class="ckfgr" title="Größe ziehen"></i>')}
+    if(ed){if(e.dataset.act){e.dataset.actx=e.dataset.act;e.removeAttribute('data-act')}e.removeAttribute('tabindex');e.title=e.classList.contains('ckfx')?'Ziehen zum Verschieben, Klick zum Bearbeiten':'Ziehen zum Verschieben';e.insertAdjacentHTML('beforeend','<i class="ckfgr" title="Größe ziehen"></i>')}
     B.append(e)}
-  ck.replaceChildren(B);return(ed?'<p class="hint ckfh">Kachel oder Überschrift ziehen = verschieben, Ecke rechts unten ziehen = Größe ändern. Die Anordnung gilt für dieses Gerät.</p>':'')+ck.outerHTML}
+  ck.replaceChildren(B);return(ed?'<p class="hint ckfh">Kachel oder Überschrift ziehen = verschieben (andere Kacheln weichen erst beim Absetzen aus), Ecke rechts unten ziehen = Größe ändern, Textfeld anklicken = bearbeiten. Die Anordnung gilt für dieses Gerät.</p>':'')+ck.outerHTML}
 {const f0=ckFeld;ckFeld=function(Z,art){if(!DB||!erw('ckFrei'))return f0(Z,art);const ed=UI.ckfEd===art,L=ed?UI.ckfW:ckfL(art);if(!L)return f0(Z,art);
-  CKF_ON=true;CKF_FN=[];let h;try{h=f0(Z,art)}finally{CKF_ON=false}return ckfBrett(h,ed?L:ckfKopie(L),ed)}}
+  CKF_ON=true;CKF_FN=[];let h;try{h=f0(Z,art)}finally{CKF_ON=false}return ckfBrett(h,ed?L:ckfKopie(L),ed,art)}}
 {const b0=ckBalken;ckBalken=(G,ser,o={})=>CKF_ON?ckfPlatz((W,h)=>b0(G,ser,{...o,W,h:Math.max(o.klein?36:80,h),frei:true})):b0(G,ser,o)}
 {const s0=ckSpark;ckSpark=(G,k,o={})=>CKF_ON?ckfPlatz((W,h)=>s0(G,k,{...o,W,h:Math.max(28,h)})):s0(G,k,o)}
 function ckfAufbau(){CKF_RO?.disconnect();CKF_RO=null;const C=[...document.querySelectorAll('#main .ckfc')];if(!C.length)return;
   const zeich=el=>{const W=Math.round(el.clientWidth),h=Math.round(el.clientHeight);if(!W||!h||el._g===W+'x'+h)return;el._g=W+'x'+h;el.innerHTML=CKF_FN[+el.dataset.fc]?.(W,h)||''};
   C.forEach(zeich);let q=null;CKF_RO=new ResizeObserver(E=>{if(!q){q=new Set;requestAnimationFrame(()=>{const s=q;q=null;s.forEach(zeich)})}E.forEach(x=>q.add(x.target))});C.forEach(el=>CKF_RO.observe(el))}
-const ckfKn=art=>UI.ckfEd===art?'<button class="on" data-act="ckfrei" title="Anordnen beenden">Fertig</button><button data-act="ckfstd" title="Bisheriges Raster für dieses Gerät">Standard</button>':'<button data-act="ckfrei" title="Kacheln verschieben und Größe ändern">Anordnen</button>';
+const ckfKn=art=>UI.ckfEd===art?'<button data-act="ckffeld" title="Eigenes Feld mit Text anlegen">+ Textfeld</button><button class="on" data-act="ckfrei" title="Anordnen beenden">Fertig</button><button data-act="ckfstd" title="Bisheriges Raster für dieses Gerät">Standard</button>':'<button data-act="ckfrei" title="Kacheln verschieben und Größe ändern">Anordnen</button>';
 for(const[v,art,s]of[['dash','dash','cockpit'],['auswertung','aw','awGrafik']]){const v0=V[v];V[v]=(...x)=>{if(UI.ckfEd&&UI.ckfEd!==art)UI.ckfEd=null;const h=v0(...x);
-  return DB&&erw('ckFrei')&&erw(s)?h.replace(ckCfgKn(),ckfKn(art)+ckCfgKn()):h}}
-function ckfSpeichern(art){const f=((S().cockpit??={}).frei??={});(f[art]??={})[dashG()]=ckfKopie(UI.ckfW);persist()}
+  if(!DB||!erw('ckFrei')||!erw(s))return h;const t=document.createElement('template');t.innerHTML=h.replace(ckCfgKn(),ckfKn(art)+ckCfgKn());
+  t.content.querySelector('.ckq')?.closest('section.ckgr')?.remove();return t.innerHTML}} // Schnellzugriff entfällt im frei angeordneten Überblick (Wunsch Anwender 27.10.2026)
+function ckfSpeichern(art){const f=((S().cockpit??={}).frei??={});(f[art]??={})[dashG()]={sp:ckfSp(),L:ckfKopie(UI.ckfW)};persist()}
+async function ckfFeldDlg(f){const art=ckfArt(),o=await formDialog({titel:f?'Textfeld bearbeiten':'Neues Textfeld',ok:f?'Übernehmen':'Anlegen',extra:f?'Löschen':undefined,felder:[{k:'t',l:'Überschrift',wert:f?.t||'',max:60},{k:'txt',l:'Text',typ:'textarea',wert:f?.txt||''}]});
+  if(!o)return;const c=(S().cockpit??={}),F=(c.felder??=[]);if(o==='extra'){c.felder=F.filter(x=>x.id!==f.id);delete UI.ckfW['f:'+f.id]}else if(f)Object.assign(F.find(x=>x.id===f.id)||{},{t:o.t.trim(),txt:o.txt});
+  else{const id=uid(),sp=ckfSp();F.push({id,art,t:o.t.trim(),txt:o.txt});UI.ckfW['f:'+id]=[0,Math.max(0,...Object.values(UI.ckfW).map(p=>p[1]+p[3])),Math.min(sp,Math.max(2,Math.round(sp/4))),8]}
+  ckfSpeichern(art);render()}
 queueMicrotask(()=>Object.assign(ACT,{
   ckfrei:()=>{const art=ckfArt();if(UI.ckfEd===art){UI.ckfEd=null;UI.ckfW=null}else{UI.ckfW=ckfKopie(ckfL(art)||ckfMessen());UI.ckfEd=art}render()},
-  ckfstd:()=>{const art=ckfArt(),f=S().cockpit?.frei?.[art];if(f){delete f[dashG()];persist()}UI.ckfEd=null;render();UI.ckfW=ckfMessen();UI.ckfEd=art;render()}}));
+  ckfstd:()=>{const art=ckfArt(),f=S().cockpit?.frei?.[art];if(f){delete f[dashG()];persist()}UI.ckfEd=null;render();UI.ckfW=ckfMessen();UI.ckfEd=art;if(ckfFelder(art).length)ckfSpeichern(art);render()},
+  ckffeld:()=>{if(UI.ckfW)ckfFeldDlg()}}));
 document.addEventListener('pointerdown',ev=>{const e=ev.target.closest?.('.ckfed>.ckfi');if(!e||ev.button>0||!UI.ckfW)return;ev.preventDefault();
   const B=e.parentNode,L=UI.ckfW,k=e.dataset.fk,gr=ev.target.classList.contains('ckfgr'),sp=ckfSp(),cw=(B.getBoundingClientRect().width+10)/sp,S0=ckfKopie(L),p0=S0[k],x0=ev.clientX,y0=ev.clientY,r0=e.getBoundingClientRect();
   if(!p0)return;try{e.setPointerCapture(ev.pointerId)}catch(_){}e.classList.add(gr?'ckfgz':'ckfz');document.body.classList.add('ckfzieht');
-  const ph=gr?null:B.appendChild(Object.assign(document.createElement('div'),{className:'ckfph'}));let last='';
+  const ph=gr?null:B.appendChild(Object.assign(document.createElement('div'),{className:'ckfph'}));let last='',zog=false,pz=null;if(ph)ph.style.gridArea=e.style.gridArea;
   const setzen=()=>{for(const c of B.children){const p=c===ph?L[k]:L[c.dataset.fk];if(p)c.style.gridArea=`${p[1]+1}/${p[0]+1}/span ${p[3]}/span ${p[2]}`}};
   const mv=v=>{if(v.pointerId!==ev.pointerId)return;const dx=v.clientX-x0,dy=v.clientY-y0;
     const p=gr?[p0[0],p0[1],Math.max(1,Math.min(sp-p0[0],Math.round(p0[2]+dx/cw))),Math.max(2,Math.round(p0[3]+dy/CKF_R))]:[Math.max(0,Math.min(sp-p0[2],Math.round(p0[0]+dx/cw))),Math.max(0,Math.round(p0[1]+dy/CKF_R)),p0[2],p0[3]];
-    if(String(p)!==last){last=String(p);const N=ckfKopie(S0);N[k]=p;ckfPack(N,k,S0);for(const x in N)L[x]=N[x];setzen()}
-    if(!gr){e.style.transform='';const r=e.getBoundingClientRect();e.style.transform=`translate(${r0.left+dx-r.left}px,${r0.top+dy-r.top}px)`}};
+    if(Math.abs(dx)+Math.abs(dy)>4)zog=true;if(!zog)return;
+    if(String(p)!==last){last=String(p);if(gr){const N=ckfKopie(S0);N[k]=p;ckfPack(N,k,S0);for(const x in N)L[x]=N[x];setzen()}else{pz=p;ph.style.gridArea=`${p[1]+1}/${p[0]+1}/span ${p[3]}/span ${p[2]}`}}
+    if(!gr)e.style.transform=`translate(${dx}px,${dy}px)`}; // Verschieben: die anderen Kacheln bleiben stehen, bis abgesetzt wird
   const ende=v=>{if(v.pointerId!==ev.pointerId)return;e.removeEventListener('pointermove',mv);e.removeEventListener('pointerup',ende);e.removeEventListener('pointercancel',ende);
-    e.style.transform='';e.classList.remove('ckfz','ckfgz');document.body.classList.remove('ckfzieht');ph?.remove();setzen();if(last)ckfSpeichern(UI.ckfEd)};
+    e.style.transform='';e.classList.remove('ckfz','ckfgz');document.body.classList.remove('ckfzieht');ph?.remove();
+    if(pz){const N=ckfKopie(S0);N[k]=pz;ckfPack(N,k,S0);for(const x in N)L[x]=N[x]}setzen();if(zog&&last)ckfSpeichern(UI.ckfEd);
+    else if(!zog&&k.startsWith('f:')){const f=ckfFelder(UI.ckfEd).find(x=>'f:'+x.id===k);if(f)ckfFeldDlg(f)}};
   e.addEventListener('pointermove',mv);e.addEventListener('pointerup',ende);e.addEventListener('pointercancel',ende)});
 {const r0=render;render=function(...a){const x=r0.apply(this,a);if(!$('#main .ck'))UI.ckfEd=null;ckfAufbau();return x}}
 {const st=document.createElement('style');st.textContent=`.ckfr{display:grid;grid-template-columns:repeat(var(--cks),minmax(0,1fr));grid-auto-rows:${CKF_R-10}px;gap:10px;position:relative}
@@ -9351,7 +9363,7 @@ document.addEventListener('pointerdown',ev=>{const e=ev.target.closest?.('.ckfed
 .ckfed .ckfi *:not(.ckfgr){pointer-events:none}.ckfz{z-index:5;cursor:grabbing!important;box-shadow:0 14px 30px rgba(0,0,0,.25)!important;opacity:.94}
 .ckfph{border:2px dashed var(--acc);border-radius:8px;background:color-mix(in srgb,var(--acc) 12%,transparent)}
 .ckfgr{position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize;touch-action:none;z-index:3;background:linear-gradient(135deg,transparent 52%,var(--acc) 52%);border-radius:0 0 8px 0}
-.ckfgz{outline:2px solid var(--acc)!important}body.ckfzieht{user-select:none}body.ckfzieht.ckfg *{cursor:nwse-resize!important}.ckfh{margin:0 0 10px}
+.ckftx{font-size:14px;line-height:1.45;overflow-wrap:anywhere;overflow:auto;min-height:0}.ckfx h3:empty{display:none}.ckfgz{outline:2px solid var(--acc)!important}body.ckfzieht{user-select:none}body.ckfzieht.ckfg *{cursor:nwse-resize!important}.ckfh{margin:0 0 10px}
 @media(max-width:760px){.ckfgr{width:26px;height:26px}}`;document.head.append(st)}
 start();
 </script>

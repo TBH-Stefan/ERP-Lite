@@ -9321,7 +9321,7 @@ function nfSuche(q){let ak=-1,t=null;const erg=()=>{let e=$('#nferg');if(!e){e=d
   const zeich=()=>{SUQ=q.value;if(!q.value.trim()){nfErgZu();return}NF_E=NF_E||suIndex();erg().innerHTML=suHTML(NF_E,q.value);ak=-1;mark(0)};
   q.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(zeich,60)});
   q.addEventListener('focus',()=>{if(q.value.trim())zeich()});
-  q.addEventListener('blur',()=>setTimeout(()=>{if(document.activeElement!==q)nfErgZu()},150));
+  q.addEventListener('blur',()=>setTimeout(()=>{if(document.activeElement===q)return;if(document.hasFocus()){q.value='';SUQ=''}nfErgZu()},150)); // anderswo hingeklickt = Feld leeren (nicht bei Fenster-/App-Wechsel)
   q.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();if(q.value){q.value='';SUQ='';nfErgZu()}else q.blur()}
     else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();mark(ak+(e.key==='ArrowDown'?1:-1))}
     else if(e.key==='Enter'){e.preventDefault();const a=L()[ak>=0?ak:0];if(a)a.click()}})}

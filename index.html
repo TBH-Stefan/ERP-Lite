@@ -9285,7 +9285,7 @@ async function prArtBea(){const L=prArtL(),o=await formDialog({titel:'Arten der 
 window.addEventListener('change',async e=>{const el=e.target,d=el.dataset||{};if(el.tagName!=='SELECT'||!d.r?.startsWith('prot|')||!/\.art$/.test(d.f||'')||(el.value!==PRA_N&&el.value!==PRA_B))return;
   e.stopImmediatePropagation();const was=el.value,p=ROOT.prot(d.r.slice(5)),T=d.f.split('.'),z=T.pop(),o=p&&T.reduce((a,t)=>a?.[t],p);el.value=o?.[z]||'I';if(!o||protFest(p))return;
   if(was===PRA_N){const k=await prArtNeu();if(!k)return;o[z]=k}else if(!await prArtBea())return;persist();render()},true);
-/* Überblick frei anordnen (P63, erw.ckFrei, Standard aus): Kacheln und Überschriften des Cockpits (Überblick, Auswertungen) im Raster ziehen und in der Größe ändern.
+/* Überblick frei anordnen (P65, erw.ckFrei, Standard aus): Kacheln und Überschriften des Cockpits (Überblick, Auswertungen) im Raster ziehen und in der Größe ändern.
    Anordnung je Ansicht und Gerät S().cockpit.frei[art][dashG()] = {<Schlüssel>:[x,y,w,h]} (gespeichert {sp,L}, Spalten ckfSp(): 48, am Handy 4, ältere Anordnungen ohne sp = 24 werden umgerechnet; Zeile CKF_R px; tablet fällt auf pc zurück), fehlt = bisheriges Raster.
    „Anordnen“ (ACT.ckfrei) misst das aktuelle Raster aus (ckfMessen()), überlappende Kacheln rutschen nach unten (ckfPack()); Schlüssel ckfK(): Überschrift h<i>, Tacho t:<k>, sonst data-k.
    Diagramme mit Achsen (ckBalken/ckSpark) zeichnet ckfPlatz() in der Pixelgröße der Kachel neu (ResizeObserver, ckfAufbau()): Schrift bleibt gleich groß, Achsen werden neu eingeteilt. */

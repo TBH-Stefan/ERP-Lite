@@ -9199,6 +9199,31 @@ window.addEventListener('hashchange',()=>{KB_S=0;kbZeigen(false)});
 {const st=document.createElement('style');st.textContent=`.topbar{transition:transform .22s ease}.topbar>*{transition:opacity .15s}
 body.kb61w .topbar{transform:translateY(calc(0px - var(--kb61,0px)))}body.kb61w .topbar>*{opacity:0;pointer-events:none}
 body.kb61w.ipad main>#sleiste{top:calc(8px + env(safe-area-inset-top,0px))}@media print{body.kb61w .topbar{transform:none}}`;document.head.append(st)}
+/* Seitenleiste verbreitern (P62, erw.navBreite): am Bildschirm Ziehgriff am rechten Rand der Seitenleiste, Breite je Gerät in erp-navb, Doppelklick = Standard */
+erwPlus({k:'navBreite',std:false,p:'Seitenleiste verbreitern (P62)',l:'Breite der Seitenleiste mit der Maus ziehen',info:'Am PC lässt sich die linke Seitenleiste am rechten Rand mit der Maus breiter oder schmäler ziehen (160–480 px), damit lange Menüeinträge ganz sichtbar sind. Die Breite wird je Gerät gemerkt, Doppelklick auf den Rand stellt sie zurück. Handy und iPad-Menü bleiben unverändert.'});
+queueMicrotask(()=>{if(typeof EB_K!=='undefined')EB_K.navBreite='ansicht'});
+const NB_MIN=160,NB_MAX=480;
+function nbAn(){try{return!!DB&&!!erw('navBreite')}catch(e){return false}}
+function nbW(){try{const w=+localStorage.getItem('erp-navb');return w>=NB_MIN&&w<=NB_MAX?w:0}catch(e){return 0}}
+function nbSetzen(){const b=document.body,n=$('nav');let g=$('#nbg');
+  const ok=nbAn()&&n&&b.classList.contains('loaded')&&getComputedStyle(n).position==='sticky'&&getComputedStyle(n).display!=='none';
+  b.classList.toggle('nb62',!!ok);const w=nbW();if(ok&&w)document.documentElement.style.setProperty('--navb',w+'px');else document.documentElement.style.removeProperty('--navb');
+  if(!ok){g?.remove();return}
+  if(!g){g=document.createElement('div');g.id='nbg';g.title='Breite ziehen – Doppelklick: Standard';document.body.append(g);
+    g.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();g.setPointerCapture(e.pointerId);g.classList.add('zieht');b.classList.add('nbz')});
+    g.addEventListener('pointermove',e=>{if(!g.classList.contains('zieht'))return;const l=$('nav').getBoundingClientRect().left,w=Math.round(Math.min(NB_MAX,Math.max(NB_MIN,e.clientX-l)));
+      document.documentElement.style.setProperty('--navb',w+'px');nbGriff()});
+    const ende=()=>{if(!g.classList.contains('zieht'))return;g.classList.remove('zieht');b.classList.remove('nbz');
+      const w=Math.round($('nav').getBoundingClientRect().width);try{localStorage.setItem('erp-navb',String(w))}catch(e){}};
+    g.addEventListener('pointerup',ende);g.addEventListener('pointercancel',ende);
+    g.addEventListener('dblclick',()=>{try{localStorage.removeItem('erp-navb')}catch(e){}document.documentElement.style.removeProperty('--navb');nbGriff()})}
+  nbGriff()}
+function nbGriff(){const g=$('#nbg'),n=$('nav');if(!g||!n)return;const r=n.getBoundingClientRect();g.style.left=(r.right-3)+'px'}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);nbSetzen();return x}}
+window.addEventListener('resize',()=>{if(document.body.classList.contains('loaded'))nbSetzen()});
+{const st=document.createElement('style');st.textContent=`body.nb62 nav{width:var(--navb,200px)}
+#nbg{position:fixed;top:0;bottom:0;width:6px;z-index:30;cursor:col-resize;touch-action:none}#nbg:hover,#nbg.zieht{background:var(--acc);opacity:.5}
+body.nbz{cursor:col-resize;user-select:none}body.nbz *{cursor:col-resize!important}@media print{#nbg{display:none}}`;document.head.append(st)}
 start();
 </script>
 </body>

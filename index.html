@@ -8285,7 +8285,7 @@ Object.assign(ACT,{zoalle:el=>document.querySelectorAll('.zoaw').forEach(c=>c.ch
   zoazu:async el=>{const ids=el.dataset.id?[el.dataset.id]:[...document.querySelectorAll('.zoaw:checked')].map(c=>c.dataset.id),Z=DB.zeiten.filter(z=>ids.includes(z.id)&&!z.auftragId&&!z.belegId);
     if(!Z.length){alert('Bitte zuerst die Zeiten anhaken.');return}const A=btbAuftraege();if(!A.length){alert('Zuerst ein Angebot oder einen Auftrag anlegen.');return}const lA=lsGet('erp-lastA');
     const o=await formDialog({titel:Z.length===1?'Zeit zuordnen':`${Z.length} Zeiten zuordnen`,ok:'Zuordnen',felder:[{typ:'hinweis',l:`${Z.length===1?`${dAT(Z[0].datum)} · ${esc(Z[0].tarif)} · `:''}${fmtQ(Z.reduce((s,z)=>s+(+z.stunden||0),0))} h`},
-      {k:'a',l:'Auftrag',wert:A.some(x=>x.id===lA)?lA:A[0].id,opts:A.map(a=>[a.id,auftragLabel(a.id)]),cls:'w2',pflicht:true}]});
+      {k:'a',l:'Auftrag',wert:A.some(x=>x.id===lA)?lA:A[0].id,opts:A.map(a=>[a.id,auftragLabel(a.id)]),cls:'w2',pflicht:true}],ein:d=>erw('zoaSuche')?zoaSu(d,A):null});
     if(!o?.a)return;for(const z of Z)z.auftragId=o.a;lsSet('erp-lastA',o.a);log('Zeiten zugeordnet',`${Z.length} Eintrag/Einträge (${fmtQ(Z.reduce((s,z)=>s+(+z.stunden||0),0))} h) → ${auftragKurz(o.a)}`);await commit();render()}});
 {const st=document.createElement('style');st.textContent='.zoat{width:100%}.zoat td,.zoat th{padding:4px 6px;vertical-align:middle}.zoak{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.zoak small{display:block}.zoa .bar{flex-wrap:wrap;gap:8px}body:has(>.modal) #uhrp{display:none}';document.head.appendChild(st)}
 
@@ -9442,6 +9442,31 @@ body.nf63 #nfu #undobtn{margin:0 18px}body.nf63 nav>a[data-n="dash"],body.nf63 n
 #nfo a.nfz{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 18px;white-space:nowrap;min-width:0}#nfo .nft{overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
 #nfo .nfg{color:#5d6880;font-size:12px;cursor:grab;padding:0 2px;touch-action:none;user-select:none}#nfo a.nfz:hover .nfg{color:#a9b3c7}#nfo a.nfzieht{background:#33405a;opacity:.85}
 #nferg{position:fixed;z-index:60;width:460px;max-width:calc(100vw - 230px);max-height:70vh;overflow:auto;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.25);padding:8px}`;document.head.append(st)}
+/* Auftrag beim Zuordnen live suchen (erw.zoaSuche, Standard aus): im Dialog von ACT.zoazu (P47, einzeln und mehrere) ersetzt ein Suchfeld mit Trefferliste die Auswahl
+   „Auftrag“. zoaSu(d,A) über ein() von formDialog(): die Auswahlliste bleibt versteckt als Wert (lesen() unverändert), Suche nach Nummer, Kunde, Betreff, Projekt
+   (alle Wörter, esN), der markierte Treffer ist gewählt; ↑↓ wählt, Enter auf dem gewählten = Zuordnen, Esc setzt zurück, Tippen/Klick wählt. */
+erwPlus({k:'zoaSuche',std:false,p:'Zeiten ohne Auftrag (P47)',l:'Auftrag beim Zuordnen live suchen',info:'Beim Zuordnen von Zeiten ohne Auftrag (einzeln oder mehrere) wird der Auftrag in ein Suchfeld getippt statt aus einer langen Liste gewählt: Nummer, Kunde, Bezeichnung oder Projekt. Die Treffer erscheinen sofort darunter, der markierte ist gewählt. Pfeiltasten ↑↓ wechseln, Enter ordnet zu, am Handy den Treffer antippen. Aus = Auswahlliste wie bisher.'});
+EB_K.zoaSuche='bau';
+function zoaSu(d,A){const sel=d.querySelector('select[data-k="a"]'),lb=sel?.closest('label');if(!sel||!lb)return null;
+  const E=A.map(a=>{const r=beleg(a.id)||DB.belege.find(b=>b.auftragId===a.id),e={id:a.id,nr:r?bNr(r):'',k:r?kName(r.kontaktId):'',t:r?.betreff||'',p:r?.projekt&&r.projekt!==r.betreff?r.projekt:''};e.s=esN([e.nr,e.k,e.t,e.p].join(' '));return e}),
+    lab=e=>e?[e.nr,e.k,e.t].filter(Boolean).join(' · '):'',inp=document.createElement('input'),L=document.createElement('div'),MX=60;
+  inp.type='search';inp.autocomplete='off';inp.setAttribute('enterkeyhint','done');inp.placeholder='Nummer, Kunde oder Bezeichnung …';inp.className='zsui';
+  L.className='zsul';L.setAttribute('role','listbox');sel.replaceWith(inp);lb.after(L);sel.style.display='none';d.querySelector('.mbox').appendChild(sel);
+  let T=E,ak=Math.max(0,E.findIndex(e=>e.id===sel.value));inp.value=lab(E[ak]);
+  const hl=(s,w)=>{s=String(s);if(!w.length)return esc(s);const re=new RegExp('('+w.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')','ig');return s.split(re).map((x,i)=>i%2?`<mark>${esc(x)}</mark>`:esc(x)).join('')},
+    zeig=w=>{L.innerHTML=T.slice(0,MX).map((e,i)=>`<div class="zsuz${i===ak?' on':''}" role="option" data-i="${i}"><b>${hl(e.nr,w)}</b> ${hl(e.k,w)}${e.t||e.p?`<small>${hl([e.t,e.p].filter(Boolean).join(' · '),w)}</small>`:''}</div>`).join('')
+      +(T.length>MX?`<div class="zsum">… ${T.length-MX} weitere, bitte genauer suchen</div>`:'')+(T.length?'':'<div class="zsum">Kein Auftrag gefunden.</div>');sel.value=T[ak]?.id||'';L.querySelector('.on')?.scrollIntoView({block:'nearest'})},
+    wort=()=>inp.value.trim().split(/\s+/).filter(Boolean),
+    such=()=>{const w=wort(),q=w.map(esN);T=E.filter(e=>q.every(x=>e.s.includes(x)));ak=0;zeig(w)},
+    wahl=i=>{if(!T[i])return;ak=i;const e=T[i];T=E;ak=E.indexOf(e);inp.value=lab(e);zeig([])};
+  inp.addEventListener('input',such);inp.addEventListener('focus',()=>inp.select());
+  inp.addEventListener('keydown',e=>{if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const n=Math.min(T.length,MX);if(!n)return;ak=(ak+(e.key==='ArrowDown'?1:n-1))%n;zeig(wort())}
+    else if(e.key==='Enter'&&T!==E&&T.length>1&&T[ak]){e.preventDefault();e.stopPropagation();wahl(ak)} // Suche läuft: Enter übernimmt den Treffer (bei genau einem gleich weiter zum Zuordnen)
+    else if(e.key==='Escape'&&T!==E){e.stopPropagation();const i=E.findIndex(x=>x.id===sel.value);T=E;ak=Math.max(0,i);inp.value=lab(E[ak]);zeig([])}});
+  L.addEventListener('pointerdown',e=>e.preventDefault()); // Feld behält den Fokus (Tastatur bleibt)
+  L.addEventListener('click',e=>{const z=e.target.closest('.zsuz');if(!z)return;wahl(+z.dataset.i);if(matchMedia('(pointer:coarse)').matches)inp.blur()});
+  zeig([]);return null}
+{const st=document.createElement('style');st.textContent='.zsul{flex-basis:100%;max-height:min(300px,38vh);overflow:auto;border:1px solid var(--line);border-radius:6px;margin-top:-4px;background:var(--card)}.zsuz{padding:6px 10px;cursor:pointer;border-bottom:1px solid var(--line);line-height:1.35}.zsuz:last-child{border-bottom:0}.zsuz small{display:block;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(hover:hover){.zsuz:hover{background:var(--bg)}}.zsuz.on{background:var(--acc2);box-shadow:inset 3px 0 0 var(--acc)}.zsuz mark{background:#fff3b0;color:inherit;padding:0}.zsum{padding:6px 10px;color:var(--mut);font-size:12px}.zsui{width:100%}';document.head.appendChild(st)}
 start();
 </script>
 </body>

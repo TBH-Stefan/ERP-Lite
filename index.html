@@ -9313,7 +9313,7 @@ function ckfBrett(h,L,ed){const t=document.createElement('template');t.innerHTML
     e.classList.add('ckfi');e.style.gridArea=`${p[1]+1}/${p[0]+1}/span ${p[3]}/span ${p[2]}`;
     if(ed){if(e.dataset.act){e.dataset.actx=e.dataset.act;e.removeAttribute('data-act')}e.removeAttribute('tabindex');e.title='Ziehen zum Verschieben';e.insertAdjacentHTML('beforeend','<i class="ckfgr" title="Größe ziehen"></i>')}
     B.append(e)}
-  ck.replaceChildren(...(ed?[Object.assign(document.createElement('p'),{className:'hint ckfh',textContent:'Kachel oder Überschrift ziehen = verschieben, Ecke rechts unten ziehen = Größe ändern. Die Anordnung gilt für dieses Gerät.'})]:[]),B);return ck.outerHTML}
+  ck.replaceChildren(B);return(ed?'<p class="hint ckfh">Kachel oder Überschrift ziehen = verschieben, Ecke rechts unten ziehen = Größe ändern. Die Anordnung gilt für dieses Gerät.</p>':'')+ck.outerHTML}
 {const f0=ckFeld;ckFeld=function(Z,art){if(!DB||!erw('ckFrei'))return f0(Z,art);const ed=UI.ckfEd===art,L=ed?UI.ckfW:ckfL(art);if(!L)return f0(Z,art);
   CKF_ON=true;CKF_FN=[];let h;try{h=f0(Z,art)}finally{CKF_ON=false}return ckfBrett(h,ed?L:ckfKopie(L),ed)}}
 {const b0=ckBalken;ckBalken=(G,ser,o={})=>CKF_ON?ckfPlatz((W,h)=>b0(G,ser,{...o,W,h:Math.max(o.klein?36:80,h),frei:true})):b0(G,ser,o)}
@@ -9344,7 +9344,8 @@ document.addEventListener('pointerdown',ev=>{const e=ev.target.closest?.('.ckfed
 {const st=document.createElement('style');st.textContent=`.ckfr{display:grid;grid-template-columns:repeat(var(--cks),minmax(0,1fr));grid-auto-rows:${CKF_R-10}px;gap:10px;position:relative}
 .ckfr>.ckfi{margin:0;min-height:0;min-width:0;overflow:hidden;position:relative}.ckfr>.ckk{animation-delay:0s!important}.ckfr>h2.ckh{align-self:end;padding-bottom:2px}
 .ckfc{flex:1 1 0;min-height:0;position:relative}.ckfc>svg{position:absolute;inset:0;width:100%;height:100%}
-.ckfr .ckta{flex:1 1 0;min-height:0;justify-content:center}.ckfr .ckta>svg{flex:1 1 0;min-height:0;width:100%;height:100%}
+.ckfr .ckta{flex:1 1 0;min-height:0;justify-content:center}.ckfr .ckta>svg{flex:1 1 0;min-height:0;width:100%;height:100%;max-width:none}
+.ckfr .ckkd{flex:1 1 0;min-height:0}.ckfr .ckdn{width:auto;height:100%;max-height:100%;aspect-ratio:1;max-width:45%;min-width:70px}.ckfr .ckhb{max-width:none}
 .ckfr.ckfed{background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--acc) 7%,transparent) 0 calc((100% + 10px)/var(--cks) - 10px),transparent 0 calc((100% + 10px)/var(--cks)));border-radius:8px}
 .ckfed>.ckfi{cursor:grab;touch-action:none;user-select:none;outline:1px dashed color-mix(in srgb,var(--acc) 60%,transparent);outline-offset:-1px}.ckfed>h2.ckfi{background:var(--card);border-radius:6px;padding:0 8px}
 .ckfed .ckfi *:not(.ckfgr){pointer-events:none}.ckfz{z-index:5;cursor:grabbing!important;box-shadow:0 14px 30px rgba(0,0,0,.25)!important;opacity:.94}

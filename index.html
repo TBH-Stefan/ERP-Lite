@@ -588,6 +588,7 @@ nav button.netz{margin:0 12px 2px}
     <a href="#/auftraege" data-n="auftraege">Aufträge &amp; DB II</a>
     <a href="#/kosten" data-n="kosten">Laufende Kosten</a>
     <a href="#/zeiten" data-n="zeiten">Zeiterfassung</a>
+    <a href="#/kalender" data-n="kalender" class="navkal">Kalender</a>
     <a href="#/berichte" data-n="berichte" class="navbtb">Bautagesberichte</a>
     <a href="#/projekte" data-n="projekte" class="navprj">Projekte</a>
     <a href="#/protokolle" data-n="protokolle" class="navprot">Protokolle</a>
@@ -8651,7 +8652,7 @@ async function odShareLesen(){const u=lsGet('erp-odShareUrl');if(!u){lsSet('erp-
 /* Moderne Piktogramme (P53, immer ein ohne Schalter – Wunsch Anwender 26.10.2026: nur Office-365-Icons im ganzen Programm; ein gespeichertes erw.icons wird nicht mehr gelesen): einheitliche Icons im Stil Office 365/Fluent (inline SVG, Farbgruppen IC_F, offline, Farbe = Schrift → hell/dunkel) statt Emoji und Symbolzeichen.
    Geändert wird nur die Anzeige: icTausch(el) ersetzt in Textknoten die Zeichen aus IC_Z durch <svg class="i53 i53-<name>"> (Pfade IC_P); Auswahl-Optionen mit value verlieren das Zeichen.
    Ausgenommen IC_AUS (Blatt, Druck, K-Blätter, Eingabefelder, contenteditable). Nach render() und für Pop-ups/Menüs über IC_MO (MutationObserver), Klappzeichen ▸/▾/◢/▷ per CSS-Maske (body.ic53). */
-const IC_P={file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+const IC_P={cal:'<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
   files:'<path d="M15 2H9a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7z"/><path d="M15 2v5h5M4 8v12a2 2 0 0 0 2 2h9"/>',
   filepen:'<path d="M12 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v3"/><path d="M14 3v5h5"/><path d="M19.4 13.6a1.5 1.5 0 0 1 2.1 2.1L16 21.2l-3 .8.8-3z"/>',
   clip:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 12h6M9 16h4"/>',
@@ -8730,7 +8731,7 @@ const IC_P={file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2
   frost:'<path d="M2 12h20M12 2v20M20 16l-4-4 4-4M4 8l4 4-4 4M16 4l-4 4-4-4M8 20l4-4 4 4"/>',
   wind:'<path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"/>',
   runter:'<path d="m6 9 6 6 6-6"/>',rechts:'<path d="m9 6 6 6-6 6"/>'};
-const IC_Z={'📄':'file','📑':'files','📝':'filepen','📋':'clip','📷':'cam','📸':'cam','🖼':'img','⚙':'gear','ⓘ':'info','✉':'mail','⏱':'timer','🕘':'clock','🕑':'clock','🕒':'clock','⏳':'glas',
+const IC_Z={'📅':'cal','📄':'file','📑':'files','📝':'filepen','📋':'clip','📷':'cam','📸':'cam','🖼':'img','⚙':'gear','ⓘ':'info','✉':'mail','⏱':'timer','🕘':'clock','🕑':'clock','🕒':'clock','⏳':'glas',
   '🗑':'trash','📦':'pkg','🔍':'such','⚠':'warn','☰':'menu','⋯':'dots','↶':'undo','↷':'redo','↩':'zur','↺':'rotl','↻':'rotr','✓':'ok','✅':'okk','☑':'oks','✕':'x','✗':'x','✎':'stift','✍':'sig',
   '🧮':'calc','🧾':'bon','💶':'geld','💳':'karte','🏦':'bank','👤':'user','👥':'users','👷':'helm','🏗':'bau','🖨':'druck','⏹':'stop','▶':'play','⏸':'pause','⏻':'aus','↗':'ext','➜':'pfeil',
   '⧉':'kopie','▦':'raster','≡':'liste','💤':'mond','📊':'chart','📁':'ordner','🗂':'ordner2','🚚':'lkw','🧩':'teil','⤓':'ab','⇪':'auf','📥':'inbox','📍':'ort','📌':'nadel','🏷':'tag','🛠':'werkz',
@@ -10010,6 +10011,132 @@ details.aw6>.akb{padding:0 14px 12px}.aw6z{display:flex;flex-wrap:wrap;align-ite
 .aw6s{max-height:max(300px,calc(100vh - 230px));max-height:max(300px,calc(100dvh - 230px));overflow:auto;overscroll-behavior:contain}.aw6s table.awt>thead{position:sticky;top:0;z-index:2;background:var(--card)}.aw6s table.awt>thead th{background:var(--card)}
 .aw6s table.awt>thead tr.sumz td{background:var(--card);box-shadow:inset 0 0 0 999px rgba(127,127,127,.08)}.aw6h{font-size:14px;margin:12px 0 6px}.aw6h:first-child{margin-top:0}
 @media(max-width:760px){.aw6s{max-height:max(260px,calc(100dvh - 200px))}details.aw6>summary .akz{margin-left:0;width:100%}.aw6kopf h1{width:100%}}`;document.head.append(st)}
+/* Kalender (P69, Paket „Kalender (P69)“, Schalter über erwPlus(), alle Standard aus, Block vor start()): Teil 1 erw.kalender – V.kalender (#/kalender, Seitenleiste a.navkal in „Projektmanagement“ (PM_N), body.kal69, Modul „Aufträge & Zeiten“, Schnellfunktion 'kalender'); Ansicht UI.kal = kU() {s:'m'|'w'|'l' (je Gerät erp-kalS),d (Bezugstag),t (gewählter Tag),ma (Mitarbeiter)}; Feiertage feiertage(j) → {iso:{n,a}} (a 'f' gesetzlich, 'l' Landesfeiertag nach S().kal.land (KAL_LF, Standard N), 'h' halber Tag 24./31.12. bei S().kal.halb (Standard ja) – Entscheidung Anwender 28.10.2026), Ostern ostern(j); Einstellungen in der Seite (Pfad-Setter kal.land/kal.halb, kalS()).
+   Teil 2 erw.kalZeiten – Zeiteinträge je Tag (kIdx), Tages- und Wochensumme, Soll kSoll() aus wochenStd des gewählten Mitarbeiters (Feiertag 0, halber Tag die Hälfte), Arbeit an Sonn- und Feiertagen markiert (.kwarn); Klick → ACT.ztbear (P48) bzw. Bericht/Zeiterfassung, „+ Zeit“ → Zeiterfassung mit Datum.
+   Teil 3 erw.kalTermine – DB.termine [{id,art:'termin'|'einsatz',titel,datum,von,bis,ganztag?,ort?,notiz?,auftragId?,maIds?,erstellt}] (von/bis lokal JJJJ-MM-TTTHH:MM, ganztägig JJJJ-MM-TT, bis einschließlich; Einsatz = geplanter Arbeitsauftrag mit auftragId/maIds); vorbereitet für Outlook: t.o365 {id,changeKey,kalender,stand} (Graph /me/calendarView bzw. /me/events, Scope Calendars.ReadWrite) – noch keine Verbindung. ktDialog(t,d), ACT.ktneu/kted, Papierkorb PK.termine. */
+erwPlus({k:'kalender',std:false,p:'Kalender (P69)',l:'Kalender mit Feiertagen (Monat, Woche, Liste)',info:'Seitenleiste „Kalender“ unter Projektmanagement: Monat, Woche und Liste mit allen gesetzlichen Feiertagen in Österreich, wahlweise Landesfeiertag des Bundeslands und 24./31.12. als halber Tag. Wird jedes Jahr automatisch berechnet, ohne Internet.'},
+  {k:'kalZeiten',std:false,p:'Kalender (P69)',l:'Kalender: erfasste Zeiten anzeigen',info:'Zeiteinträge stehen am Tag (mit Beginn/Ende in der Wochenansicht zur Uhrzeit), mit Tages- und Wochensumme; mit Personal Vergleich zur Wochenarbeitszeit. Arbeit an Sonn- und Feiertagen wird markiert. Braucht „Kalender mit Feiertagen“.'},
+  {k:'kalTermine',std:false,p:'Kalender (P69)',l:'Kalender: Termine und Arbeitseinsätze eintragen',info:'Eigene Termine und geplante Arbeitseinsätze (mit Auftrag und Mitarbeiter) im Kalender anlegen, ändern und löschen. Vorbereitet für einen späteren Abgleich mit Outlook (Microsoft 365) – noch keine Verbindung. Braucht „Kalender mit Feiertagen“.'});
+for(const k of['kalender','kalZeiten','kalTermine']){EB_K[k]=EB_K.zeitStempel||EB_K.stoppuhr||'weitere';MOD_SW[k]='auftraege'}
+{const m=MODULE.find(x=>x.k==='auftraege');if(m){m.n.push('kalender');m.sw=(m.sw||'')+' kalender kalZeiten kalTermine'}}
+PM_N.splice(PM_N.indexOf('zeiten')+1,0,'kalender');
+Object.assign(PK,{termine:{n:'Termin',info:t=>`${dAT(t.datum)} ${t.titel||''}`}});
+const KAL_LAND=[['','– keiner –'],['B','Burgenland'],['K','Kärnten'],['N','Niederösterreich'],['O','Oberösterreich'],['S','Salzburg'],['St','Steiermark'],['T','Tirol'],['V','Vorarlberg'],['W','Wien']],
+  KAL_LF={B:[['11-11','Hl. Martin']],K:[['03-19','Hl. Josef'],['10-10','Tag der Volksabstimmung']],N:[['11-15','Hl. Leopold']],O:[['05-04','Hl. Florian']],S:[['09-24','Hl. Rupert']],St:[['03-19','Hl. Josef']],T:[['03-19','Hl. Josef']],V:[['03-19','Hl. Josef']],W:[['11-15','Hl. Leopold']]},
+  KAL_WT=['Mo','Di','Mi','Do','Fr','Sa','So'],KAL_WTL=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'],KAL_FT={};
+const kalS=()=>({land:'N',halb:true,...(S().kal||{})}),kZ=()=>erw('kalender')&&erw('kalZeiten'),kT=()=>erw('kalender')&&erw('kalTermine'),tmL=()=>DB.termine||[],
+  kU=()=>UI.kal||(UI.kal={s:lsGet('erp-kalS')||'m',d:isoD(),t:isoD(),ma:''}),
+  kD=iso=>new Date(iso+'T12:00'),kPlus=(iso,n)=>{const d=kD(iso);d.setDate(d.getDate()+n);return isoD(d)},kWd=iso=>(kD(iso).getDay()+6)%7, // 0 = Montag
+  kMo=iso=>kPlus(iso,-kWd(iso)),kKW=iso=>{const t=kPlus(iso,3-kWd(iso));return 1+Math.floor(Math.round((kD(t)-kD(t.slice(0,4)+'-01-01'))/864e5)/7)}, // ISO-Kalenderwoche
+  kH=L=>sum(L,z=>+z.stunden||0),kFt=iso=>feiertage(iso.slice(0,4))[iso];
+function ostern(j){const a=j%19,b=Math.floor(j/100),c=j%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),x=h+l-7*m+114;
+  return`${j}-${String(Math.floor(x/31)).padStart(2,'0')}-${String(x%31+1).padStart(2,'0')}`} // Ostersonntag (gregorianisch)
+function feiertage(j){const s=kalS(),ck=j+'|'+s.land+'|'+s.halb;if(KAL_FT[ck])return KAL_FT[ck];const M={},f=(d,n,a='f')=>{if(!M[d])M[d]={n,a}},o=ostern(+j);
+  [['01-01','Neujahr'],['01-06','Heilige Drei Könige'],['05-01','Staatsfeiertag'],['08-15','Mariä Himmelfahrt'],['10-26','Nationalfeiertag'],['11-01','Allerheiligen'],['12-08','Mariä Empfängnis'],['12-25','Christtag'],['12-26','Stefanitag']].forEach(([d,n])=>f(j+'-'+d,n));
+  [[0,'Ostersonntag'],[1,'Ostermontag'],[39,'Christi Himmelfahrt'],[49,'Pfingstsonntag'],[50,'Pfingstmontag'],[60,'Fronleichnam']].forEach(([x,n])=>f(kPlus(o,x),n));
+  for(const[d,n]of KAL_LF[s.land]||[])f(j+'-'+d,n,'l');
+  if(s.halb){f(j+'-12-24','Heiliger Abend (halber Tag)','h');f(j+'-12-31','Silvester (halber Tag)','h')}
+  return KAL_FT[ck]=M}
+function kSoll(iso){const w=+(maVon(kU().ma)?.wochenStd)||0;if(!w)return null;const f=kFt(iso);return kWd(iso)>4||f?.a==='f'?0:f?.a==='h'?w/10:w/5} // Soll je Tag (Mo–Fr)
+function kIdx(a,b){const z={},t={},ma=kU().ma;
+  if(kZ())for(const x of DB.zeiten||[])if(x.datum>=a&&x.datum<=b&&(!ma||x.maId===ma))(z[x.datum]||(z[x.datum]=[])).push(x);
+  if(kT())for(const x of tmL()){if(ma&&x.maIds?.length&&!x.maIds.includes(ma))continue;const v=(x.von||x.datum||'').slice(0,10),e=(x.bis||'').slice(0,10)>v?x.bis.slice(0,10):v;if(!v||e<a||v>b)continue;
+    for(let d=v>a?v:a,i=0;d<=e&&d<=b&&i<62;d=kPlus(d,1),i++)(t[d]||(t[d]=[])).push(x)}
+  for(const k in t)t[k].sort((p,q)=>(p.ganztag?'':p.von||'').localeCompare(q.ganztag?'':q.von||''));
+  for(const k in z)z[k].sort((p,q)=>(p.von||'').localeCompare(q.von||''));return{z,t}}
+const kKl=t=>t.art==='einsatz'?'es':'tm',kUhr=(t,d)=>t.ganztag?'':(t.von||'').slice(0,10)===d?t.von.slice(11,16):'…',
+  kUhrB=(t,d)=>t.ganztag?'ganztägig':`${kUhr(t,d)}–${(t.bis||'').slice(0,10)===d?t.bis.slice(11,16):'…'}`,
+  kZk=z=>`${fmtQ(z.stunden)} h ${auftragKurz(z.auftragId)}`,
+  kCls=(d,mon,I)=>{const f=kFt(d),w=kWd(d);return[w>4?'we':'',f?'ft-'+f.a:'',d===isoD()?'heute':'',d===kU().t?'sel':'',mon&&d.slice(0,7)!==mon?'aus':'',I.z[d]?.length&&(w===6||f?.a==='f')?'kwarn':''].filter(Boolean).join(' ')};
+function kZelle(d,I,max){const T=I.t[d]||[],Z=I.z[d]||[],L=T.slice(0,max).map(t=>`<div class="ke ${kKl(t)}">${t.ganztag?'':esc(kUhr(t,d))+' '}${esc(t.titel)}</div>`);
+  if(T.length>max)L.push(`<div class="ke mehr">+${T.length-max} weitere</div>`);if(Z.length)L.push(`<div class="ke zt">🕒 ${fmtQ(kH(Z))} h</div>`);return L.join('')}
+function kalMon(I,a,b,mon){let h=`<div class="kal km"><div class="kh">KW</div>${KAL_WT.map((w,i)=>`<div class="kh${i>4?' we':''}">${w}</div>`).join('')}`;
+  for(let w=a;w<=b;w=kPlus(w,7)){const D=[0,1,2,3,4,5,6].map(i=>kPlus(w,i)),hs=kZ()?sum(D,d=>kH(I.z[d]||[])):0,so=kZ()&&kSoll(w)!=null?sum(D,kSoll):null;
+    h+=`<div class="kw">${kKW(w)}${hs?`<small>${fmtQ(hs)} h</small>`:''}${so!=null?`<small class="mut">/ ${fmtQ(so)}</small>`:''}</div>`+D.map(d=>{const f=kFt(d);
+      return`<div class="kt ${kCls(d,mon,I)}" data-act="ktag" data-d="${d}"><div class="kn"><b>${+d.slice(8)}</b>${f?`<span class="kft">${esc(f.n)}</span>`:''}</div>${kZelle(d,I,3)}</div>`}).join('')}
+  return h+'</div>'}
+function kalWoche(I,a){const D=[0,1,2,3,4,5,6].map(i=>kPlus(a,i)),uhr=x=>{const m=/T(\d\d):(\d\d)/.exec(x||'');return m?+m[1]*60+ +m[2]:null},B={},PX=40;let h0=420,h1=1020;
+  for(const d of D){const L=[];
+    for(const t of I.t[d]||[])if(!t.ganztag){const v=(t.von||'').slice(0,10)===d?uhr(t.von)??0:0;let e=(t.bis||'').slice(0,10)===d?uhr(t.bis):1440;if(e==null||e<=v)e=Math.min(1440,v+30);L.push({v,e,t})}
+    for(const z of I.z[d]||[])if(z.von&&z.bis){const v=uhr(z.von)??0;let e=z.bis.slice(0,10)===d?uhr(z.bis):1440;if(e<=v)e=Math.min(1440,v+15);L.push({v,e,z})}
+    L.sort((p,q)=>p.v-q.v);const sp=[];for(const x of L){let i=sp.findIndex(s=>s<=x.v);if(i<0){i=sp.length;sp.push(0)}sp[i]=x.e;x.i=i;h0=Math.min(h0,Math.floor(x.v/60)*60);h1=Math.max(h1,Math.ceil(x.e/60)*60)}
+    for(const x of L)x.n=sp.length;B[d]=L}
+  const top=m=>(m-h0)/60*PX,H=top(h1);
+  return`<div class="kal kwo"><div class="kwk"></div>${D.map(d=>{const f=kFt(d),Z=I.z[d]||[];return`<div class="kwk ${kCls(d,'',I)}" data-act="ktag" data-d="${d}"><b>${KAL_WT[kWd(d)]} ${dAT(d).slice(0,6)}</b>${f?`<span class="kft">${esc(f.n)}</span>`:''}${Z.length?`<small>${fmtQ(kH(Z))} h</small>`:''}</div>`}).join('')}
+    <div class="kwa mut">ganzt.</div>${D.map(d=>`<div class="kwa ${kCls(d,'',I)}">${(I.t[d]||[]).filter(t=>t.ganztag).map(t=>`<div class="ke ${kKl(t)}" data-act="kted" data-id="${t.id}">${esc(t.titel)}</div>`).join('')}${(I.z[d]||[]).filter(z=>!(z.von&&z.bis)).map(z=>`<div class="ke zt" data-act="kzt" data-id="${z.id}">${esc(kZk(z))}</div>`).join('')}</div>`).join('')}
+    <div class="kwz" style="height:${H}px">${Array.from({length:(h1-h0)/60},(_,i)=>`<span style="top:${i*PX}px">${String(h0/60+i).padStart(2,'0')}:00</span>`).join('')}</div>${D.map(d=>`<div class="kws ${kCls(d,'',I)}" style="height:${H}px">${B[d].map(x=>`<div class="kb ${x.z?'zt':kKl(x.t)}" style="top:${top(x.v)}px;height:${Math.max(18,top(x.e)-top(x.v)-2)}px;left:${x.i/x.n*100}%;width:${100/x.n}%" data-act="${x.z?'kzt':'kted'}" data-id="${(x.z||x.t).id}" title="${esc(x.z?kZk(x.z):x.t.titel)}">${esc(x.z?kZk(x.z):kUhr(x.t,d)+' '+x.t.titel)}</div>`).join('')}</div>`).join('')}</div>`}
+function kTagKarte(d,I){const f=kFt(d),T=I.t[d]||[],Z=I.z[d]||[],so=kZ()?kSoll(d):null,w=kWd(d);
+  return`<div class="card ktk" data-d="${d}"><div class="bar"><h2 style="margin:0">${KAL_WTL[kD(d).getDay()]}, ${dAT(d)}</h2>${f?tag(esc(f.n),f.a==='f'?'warn':''):''}<span class="sp"></span>${kT()?`<button data-act="ktneu" data-d="${d}">+ Termin</button>`:''}${kZ()?`<button data-act="kzneu" data-d="${d}">+ Zeit</button>`:''}</div>
+  ${T.map(t=>`<div class="kl" data-act="kted" data-id="${t.id}"><span class="kli ${kKl(t)}"></span><span class="klz">${esc(kUhrB(t,d))}</span><span class="klt"><b>${esc(t.titel)}</b><small>${esc([t.art==='einsatz'?'Arbeitseinsatz':'',t.ort,t.auftragId?auftragKurz(t.auftragId):'',(t.maIds||[]).map(maName).filter(Boolean).join(', ')].filter(Boolean).join(' · '))}</small></span></div>`).join('')}
+  ${Z.map(z=>`<div class="kl" data-act="kzt" data-id="${z.id}"><span class="kli zt"></span><span class="klz">${z.von&&z.bis?z.von.slice(11,16)+'–'+z.bis.slice(11,16):fmtQ(z.stunden)+' h'}</span><span class="klt"><b>${esc(auftragKurz(z.auftragId))}</b><small>${esc([z.von&&z.bis?fmtQ(z.stunden)+' h':'',z.tarif,z.maId?maName(z.maId):'',z.text].filter(Boolean).join(' · '))}</small></span></div>`).join('')}
+  ${!T.length&&!Z.length?'<p class="mut" style="margin:6px 0 0">Keine Einträge.</p>':''}${Z.length||so?`<p style="margin:8px 0 0">${Z.length?`<b>Summe ${fmtQ(kH(Z))} h</b>`:''}${so!=null?` · Soll ${fmtQ(so)} h`:''}${Z.length&&(w===6||f?.a==='f')?' '+tag('Arbeit am '+(f?.a==='f'?'Feiertag':'Sonntag'),'warn'):''}</p>`:''}</div>`}
+V.kalender=()=>{if(!erw('kalender'))return`<h1>Kalender</h1><div class="card"><p style="margin:0">Der Kalender ist ausgeschaltet (Einstellungen → Erweiterungen → „Kalender mit Feiertagen“).</p></div>`;
+  const u=kU(),s=u.s,d=u.d,mon=d.slice(0,7),m1=mon+'-01',mE=kPlus(kPlus(m1,32).slice(0,8)+'01',-1),ks=kalS(),M=erw('mitarbeiter')&&(kZ()||kT())?maAkt():[];
+  let a,b,ti;if(s==='w'){a=kMo(d);b=kPlus(a,6);ti=`KW ${kKW(a)} · ${dAT(a).slice(0,6)}–${dAT(b)}`}else{a=s==='m'?kMo(m1):m1;b=s==='m'?kPlus(kMo(mE),6):mE;ti=`${MONATE[+mon.slice(5)-1]} ${mon.slice(0,4)}`}
+  const I=kIdx(a,b),tk=u.t>=a&&u.t<=b?kTagKarte(u.t,I):'';
+  const inh=s==='m'?kalMon(I,a,b,mon)+tk:s==='w'?(kmpH()?Array.from({length:7},(_,i)=>kTagKarte(kPlus(a,i),I)).join(''):kalWoche(I,a)+tk):(()=>{let h='';for(let x=a;x<=b;x=kPlus(x,1))if(I.t[x]||I.z[x]||kFt(x))h+=kTagKarte(x,I);return h||'<div class="card"><p class="mut" style="margin:0">Keine Einträge in diesem Monat.</p></div>'})();
+  return`<div class="bar kalbar"><h1 style="margin:0">Kalender</h1><span class="sp"></span>${kT()?`<button class="p" data-act="ktneu" data-d="${u.t}">+ Termin</button>`:''}</div>
+  <div class="bar kalnav"><button data-act="kalnav" data-x="-1" title="zurück">◀</button><button data-act="kalnav" data-x="0">Heute</button><button data-act="kalnav" data-x="1" title="weiter">▶</button><b class="kalti">${ti}</b><span class="sp"></span>
+  ${M.length?`<select class="kalma" onchange="kU().ma=this.value;render()"><option value="">Alle Mitarbeiter</option>${M.map(m=>opt(m.id,m.name,u.ma)).join('')}</select>`:''}<span class="kals">${[['m','Monat'],['w','Woche'],['l','Liste']].map(([k,l])=>`<button class="${s===k?'p':''}" data-act="kalsicht" data-s="${k}">${l}</button>`).join('')}</span></div>
+  ${inh}<p class="mut kleg"><span><i class="kli ft-f"></i> Feiertag</span>${ks.land?'<span><i class="kli ft-l"></i> Landesfeiertag</span>':''}${ks.halb?'<span><i class="kli ft-h"></i> halber Tag</span>':''}${kT()?'<span><i class="kli tm"></i> Termin</span><span><i class="kli es"></i> Arbeitseinsatz</span>':''}${kZ()?'<span><i class="kli zt"></i> erfasste Zeit</span>':''}</p>
+  <details class="card kalein"><summary><b>Einstellungen Kalender</b></summary><div class="row"><label class="w2">Landesfeiertag (Bundesland)<select data-o="s" data-f="kal.land">${KAL_LAND.map(([v,t])=>opt(v,t,ks.land)).join('')}</select></label><label class="w2">24.12. und 31.12.<select data-o="s" data-f="kal.halb" data-t="b">${opt('true','halber Tag',String(ks.halb))}${opt('false','normaler Arbeitstag',String(ks.halb))}</select></label></div>${kT()?'<p class="mut" style="margin:6px 0 0">Outlook (Microsoft 365): Abgleich der Termine ist vorbereitet, aber noch nicht verbunden.</p>':''}</details>`};
+{const m=MODULE.find(x=>x.k==='auftraege'),v0=V.kalender;V.kalender=(...a)=>!m||mod(m.k)?v0(...a):modAusHTML(m)}
+function ktWerte(o){const g=o.ganz==='1',d=o.d||isoD(),e=o.e&&o.e>d?o.e:d;return{ganztag:g,datum:d,von:g?d:d+'T'+(o.v||'00:00'),bis:g?e:e+'T'+(o.b||o.v||'00:00')}}
+async function ktDialog(t,d0){const neu=!t,A=auftragsListe(),M=erw('mitarbeiter')?maAkt():[],v=t?.von||'',b=t?.bis||'',d1=(v||d0||isoD()).slice(0,10);
+  const o=await formDialog({titel:neu?'Neuer Termin':'Termin bearbeiten',ok:neu?'Anlegen':'Speichern',extra:neu?'':'Löschen',felder:[
+    {k:'titel',l:'Titel',wert:t?.titel||'',pflicht:true,max:120,cls:'w2'},
+    {k:'art',l:'Art',opts:[['termin','Termin'],['einsatz','Arbeitseinsatz']],wert:t?.art||'termin',neu:1},{k:'ganz',l:'Dauer',opts:[['0','mit Uhrzeit'],['1','ganztägig']],wert:t?.ganztag?'1':'0'},
+    {k:'d',l:'Beginn',typ:'date',wert:d1,neu:1,cls:'w05'},{k:'v',l:'Uhrzeit',typ:'time',wert:v.slice(11,16)||'08:00',cls:'w05'},
+    {k:'e',l:'Ende',typ:'date',wert:(b||d1).slice(0,10),neu:1,cls:'w05'},{k:'b',l:'Uhrzeit',typ:'time',wert:b.slice(11,16)||'09:00',cls:'w05'},
+    {k:'ort',l:'Ort',wert:t?.ort||'',neu:1,cls:'w2'},
+    {k:'aid',l:'Auftrag',opts:[['','– ohne –'],...A.map(x=>[x.id,auftragKurz(x.id)])],wert:t?.auftragId||'',neu:1,cls:'w2'},
+    ...(M.length?[{k:'ma',l:'Mitarbeiter',opts:[['','– keiner –'],...M.map(m=>[m.id,m.name])],wert:t?.maIds?.[0]||'',neu:1,cls:'w2'}]:[]),
+    {k:'notiz',l:'Notiz',wert:t?.notiz||'',neu:1,cls:'w2'}],
+    ein:d=>{const f=()=>{const g=d.querySelector('[data-k="ganz"]')?.value==='1';d.querySelectorAll('[data-k="v"],[data-k="b"]').forEach(e=>{const l=e.closest('label');if(l)l.style.display=g?'none':''})};setTimeout(f);return f},
+    pruef:o=>{if(o.e&&o.e<o.d){alert('Das Ende liegt vor dem Beginn.');return false}const x=ktWerte(o);if(o.ganz!=='1'&&x.bis<x.von){alert('Das Ende liegt vor dem Beginn.');return false}}});
+  if(o==='extra'){if(confirm(`Termin „${t.titel}“ löschen?`)){wegwerfen('termine',[t]);render()}return}if(!o)return;
+  const n=t||{id:uid(),erstellt:new Date().toISOString()};Object.assign(n,{art:o.art==='einsatz'?'einsatz':'termin',titel:String(o.titel||'').trim(),...ktWerte(o),ort:String(o.ort||'').trim(),notiz:String(o.notiz||'').trim(),auftragId:o.aid||'',maIds:o.ma?[o.ma]:(M.length?[]:t?.maIds||[])});
+  for(const k of['ganztag','ort','notiz','auftragId'])if(!n[k])delete n[k];if(!n.maIds.length)delete n.maIds; // leere Felder nicht anlegen
+  if(neu)(DB.termine||(DB.termine=[])).push(n);log(neu?'Termin angelegt':'Termin geändert',`${dAT(n.datum)} ${n.titel}`);commit();const u=kU();u.t=n.datum;if(u.s!=='w'&&n.datum.slice(0,7)!==u.d.slice(0,7))u.d=n.datum;render()}
+queueMicrotask(()=>Object.assign(ACT,{
+  kalnav:el=>{const u=kU(),x=+el.dataset.x;if(!x)u.d=u.t=isoD();else if(u.s==='w')u.d=u.t=kPlus(u.d,7*x);else{const m=kD(u.d.slice(0,8)+'01');m.setMonth(m.getMonth()+x);u.d=isoD(m);u.t=isoD().slice(0,7)===u.d.slice(0,7)?isoD():u.d}render()},
+  kalsicht:el=>{const u=kU();u.s=el.dataset.s;lsSet('erp-kalS',u.s);u.d=u.t;render()},
+  ktag:el=>{const u=kU();u.t=el.dataset.d;if(u.s!=='w'&&u.t.slice(0,7)!==u.d.slice(0,7))u.d=u.t;render();if(kmpH())setTimeout(()=>$('.ktk')?.scrollIntoView({block:'nearest',behavior:'smooth'}),30)},
+  ktneu:el=>ktDialog(null,el.dataset.d),
+  kted:el=>{const t=tmL().find(x=>x.id===el.dataset.id);if(t)ktDialog(t)},
+  kzt:el=>{const z=(DB.zeiten||[]).find(x=>x.id===el.dataset.id);if(!z)return;if(z.berichtId)return go('bericht/'+z.berichtId);if(!z.belegId&&ACT.ztbear&&erw('zeitStempel'))return ACT.ztbear(el);go('zeiten')},
+  kzneu:el=>{const d=el.dataset.d;go('zeiten');setTimeout(()=>{const e=$('#zt-d');if(e){e.value=d;e.dispatchEvent(new Event('input',{bubbles:true}))}$('#zt-h')?.focus()},60)}}));
+document.addEventListener('change',e=>{if(e.target.matches?.('select[data-f^="kal."]'))setTimeout(render)}); // Bundesland/halber Tag sofort zeigen
+{const i=SF.findIndex(x=>x.k==='erfassen');SF.splice(i<0?SF.length:i+1,0,{k:'kalender',ic:'📅',l:'Kalender',nur:()=>erw('kalender')})}
+{const i=SF67.findIndex(x=>x.h==='zeiten');SF67.splice(i<0?SF67.length:i+1,0,{h:'kalender',n:'kalender',ic:'📅',l:'Kalender'})}
+{const a0=sfAus;sfAus=async k=>k==='kalender'?go('kalender'):a0(k)}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);document.body.classList.toggle('kal69',!!DB&&erw('kalender'));return x}}
+{const st=document.createElement('style');st.textContent=`body:not(.kal69) nav a.navkal{display:none!important}
+.kalnav{flex-wrap:wrap;gap:6px;margin:8px 0}.kalti{font-size:16px;margin-left:6px;white-space:nowrap}.kals{display:inline-flex}.kals button{border-radius:0;margin:0}.kals button:first-child{border-radius:6px 0 0 6px}.kals button:last-child{border-radius:0 6px 6px 0}
+.kal{display:grid;grid-template-columns:40px repeat(7,minmax(0,1fr));background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:0 0 12px}
+.kal .kh{font-size:12px;font-weight:600;color:var(--mut);padding:6px;text-align:center;border-bottom:1px solid var(--line)}
+.kal .kw{font-size:11px;color:var(--mut);padding:6px 2px;text-align:center;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}.kal .kw small{font-size:10px;white-space:nowrap}
+.kal .kt{min-height:92px;padding:4px 5px;border-top:1px solid var(--line);border-left:1px solid var(--line);cursor:pointer;overflow:hidden;min-width:0}
+.kal .kt:hover{background:rgba(31,95,191,.05)}.kal .we{background:rgba(127,127,127,.06)}.kal .aus{opacity:.45}
+.kal .ft-f{background:rgba(180,35,24,.08)}.kal .ft-l{background:rgba(154,91,0,.07)}.kal .ft-h{background:rgba(154,91,0,.05)}
+.kal .kn{display:flex;align-items:baseline;gap:4px;min-width:0}.kal .kn b{font-size:13px;flex:none}.kal .heute .kn b{background:var(--acc);color:#fff;border-radius:10px;padding:0 6px}
+.kal .sel{box-shadow:inset 0 0 0 2px var(--acc)}.kal .kwarn{box-shadow:inset 0 -3px 0 var(--warn)}.kal .sel.kwarn{box-shadow:inset 0 0 0 2px var(--acc),inset 0 -5px 0 var(--warn)}
+.kft{font-size:10.5px;color:var(--err);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.ft-l .kft,.ft-h .kft{color:var(--warn)}
+.ke{font-size:11.5px;line-height:1.35;padding:1px 5px;margin-top:2px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid}
+.ke.tm,.kb.tm{background:rgba(31,95,191,.12);border-color:var(--acc)}.ke.es,.kb.es{background:rgba(30,122,70,.13);border-color:var(--ok)}.ke.zt,.kb.zt{background:rgba(127,127,127,.12);border-color:var(--mut)}.ke.mehr{border:0;color:var(--mut)}
+.kwo{grid-template-columns:48px repeat(7,minmax(0,1fr))}.kwo .kwk{padding:6px;border-left:1px solid var(--line);border-bottom:1px solid var(--line);font-size:12px;display:flex;flex-direction:column;gap:1px;min-width:0;cursor:pointer}.kwo .kwk:first-child{border-left:0;cursor:default}
+.kwo .kwk small{color:var(--mut)}.kwo .kwa{border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:2px 3px;min-height:24px;min-width:0;font-size:11px}.kwo .kwa.mut{border-left:0;padding-top:6px;text-align:center}
+.kwz{position:relative}.kwz span{position:absolute;right:6px;font-size:10.5px;color:var(--mut);transform:translateY(-1px)}
+.kws{position:relative;border-left:1px solid var(--line);background-image:repeating-linear-gradient(to bottom,var(--line) 0 1px,transparent 1px 40px);min-width:0}
+.kb{position:absolute;box-sizing:border-box;font-size:11px;line-height:1.3;padding:2px 4px;border-radius:4px;border-left:3px solid;overflow:hidden;cursor:pointer;color:var(--ink)}
+.ktk .kl{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line);cursor:pointer}.ktk .kl:first-of-type{border-top:0}
+.kli{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none;margin-top:4px;background:var(--mut)}.kli.tm{background:var(--acc)}.kli.es{background:var(--ok)}.kli.ft-f{background:rgba(180,35,24,.35)}.kli.ft-l,.kli.ft-h{background:rgba(154,91,0,.3)}
+.klz{flex:none;width:92px;font-size:13px;color:var(--mut)}.klt{min-width:0;display:flex;flex-direction:column}.klt small{color:var(--mut);overflow-wrap:anywhere}
+.kleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px}.kleg span{display:inline-flex;align-items:center;gap:5px}.kleg .kli{margin:0}
+.kalein summary{cursor:pointer}.kalein .row{margin-top:8px}
+@media(max-width:760px){.kal{grid-template-columns:26px repeat(7,minmax(0,1fr))}.kal .kh{padding:5px 0}.kal .kw{font-size:10px;padding:4px 0}.kal .kw small{display:none}
+  .kal .kt{min-height:52px;padding:3px 2px}.kal .kn{justify-content:center}.kal .kft{display:none}.kal .ke{font-size:0;height:4px;padding:0;margin:3px 1px 0;border-left:0;background:var(--acc)}.kal .ke.es{background:var(--ok)}.kal .ke.zt{background:var(--mut)}.kal .ke.mehr{display:none}
+  .kalti{flex-basis:100%;order:-1;margin:0}.klz{width:auto;font-size:12px;white-space:nowrap}}`;document.head.appendChild(st)}
 start();
 </script>
 </body>

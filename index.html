@@ -8855,11 +8855,11 @@ function ckZeit(z,j){const h=isoD(),J=j||h.slice(0,4),m=+h.slice(5,7),q=Math.cei
   return{von:J+'-01-01',bis:h,t:J,z:'jahr'}}
 const ckVJ=Z=>{const v=d=>(+d.slice(0,4)-1)+d.slice(4).replace('-02-29','-02-28');return{von:v(Z.von),bis:v(Z.bis),t:'Vorjahr'}};
 const ckIn=(d,Z)=>!!d&&d>=Z.von&&d<=Z.bis;
-function ckW(){const W={},w=k=>W[k]??={u:0,mat:0,pj:0,pk:0,pr:0,lk:0,lo:0},h=isoD();let pf=false;
-  for(const b of DB.belege)if(zaehltUmsatz(b))w(b.datum.slice(0,7)).u+=sgn(b)*summen(b).nettoEff;
-  for(const e of journal()){const x=w(e.datum.slice(0,7));for(const[nr,g]of[[e.soll,1],[e.haben,-1]]){const c=String(nr||'')[0];if(c==='5')x.mat+=g*e.betrag;else if(c==='6'){x.pj+=g*e.betrag;pf=true}else if(c==='7')x.lk+=g*e.betrag}}
-  for(const z of DB.zeiten||[])if(z.datum)w(z.datum.slice(0,7)).pk+=(+z.stunden||0)*(+z.kosten||0);
-  for(const k of(DB.kosten||[]).filter(k=>k.aktiv!==false))for(const d of kTermine(k,h))if(d>=(k.buchenAb||'')&&!kGebucht(k,d)){const x=w(d.slice(0,7)),n=(+k.betrag||0)/(k.stArt?1+(+k.satz||0)/100:1);if(kKonto(k)[0]==='6')x.pr+=n;else x.lk+=n;x.lo+=n}
+function ckW(ks=7){const W={},w=k=>W[k]??={u:0,mat:0,pj:0,pk:0,pr:0,lk:0,lo:0},h=isoD();let pf=false;
+  for(const b of DB.belege)if(zaehltUmsatz(b))w(b.datum.slice(0,ks)).u+=sgn(b)*summen(b).nettoEff;
+  for(const e of journal()){const x=w(e.datum.slice(0,ks));for(const[nr,g]of[[e.soll,1],[e.haben,-1]]){const c=String(nr||'')[0];if(c==='5')x.mat+=g*e.betrag;else if(c==='6'){x.pj+=g*e.betrag;pf=true}else if(c==='7')x.lk+=g*e.betrag}}
+  for(const z of DB.zeiten||[])if(z.datum)w(z.datum.slice(0,ks)).pk+=(+z.stunden||0)*(+z.kosten||0);
+  for(const k of(DB.kosten||[]).filter(k=>k.aktiv!==false))for(const d of kTermine(k,h))if(d>=(k.buchenAb||'')&&!kGebucht(k,d)){const x=w(d.slice(0,ks)),n=(+k.betrag||0)/(k.stArt?1+(+k.satz||0)/100:1);if(kKonto(k)[0]==='6')x.pr+=n;else x.lk+=n;x.lo+=n}
   for(const x of Object.values(W)){x.pers=(pf?x.pj:x.pk)+x.pr;x.kost=x.mat+x.pers+x.lk;x.erg=x.u-x.kost}
   return{W,pf}}
 const CK_F=['u','mat','pers','lk','kost','erg','lo'];
@@ -8889,7 +8889,9 @@ let CKID=0,CK_DR=false; // Stil „Neon“ (S().cockpit.stil): Verläufe je SVG 
 const CK_ST={'':'Office 365 (hell/dunkel)',neon:'Dunkles Panel in Programmfarben',neonb:'Neon (Farben wie im Vorlagebild)'},ckStil=()=>{const x=lsGet('erp-ckStil')??ckS().stil??'';return x in CK_ST?x:''}; // Stil je Gerät (localStorage), sonst gemeinsame Vorgabe
 const ckNeon=()=>!CK_DR&&!!ckStil(),ckKl=()=>ckNeon()?' neon'+(ckStil()==='neonb'?' neonb':''):'';
 const ckDefs=()=>{const D=[],M={};return{gr:(c,o1=.95,o2=.12)=>{const k=c+o1+o2;if(!M[k]){M[k]='ckg'+(++CKID);D.push(`<linearGradient id="${M[k]}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${c};stop-opacity:${o1}"/><stop offset="1" style="stop-color:${c};stop-opacity:${o2}"/></linearGradient>`)}return`url(#${M[k]})`},h:()=>D.length?`<defs>${D.join('')}</defs>`:''}};
-const ckGlatt=P=>{if(P.length<3)return P.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join('');let d=`M${P[0][0].toFixed(1)} ${P[0][1].toFixed(1)}`;for(let i=0;i<P.length-1;i++){const a=P[i-1]||P[i],b=P[i],c=P[i+1],e=P[i+2]||c;d+=`C${(b[0]+(c[0]-a[0])/6).toFixed(1)} ${(b[1]+(c[1]-a[1])/6).toFixed(1)} ${(c[0]-(e[0]-b[0])/6).toFixed(1)} ${(c[1]-(e[1]-b[1])/6).toFixed(1)} ${c[0].toFixed(1)} ${c[1].toFixed(1)}`}return d};
+const ckGlatt=P=>{if(P.length<3)return P.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join('');const n=P.length,dx=[],s=[],m=[];for(let i=0;i<n-1;i++){dx[i]=P[i+1][0]-P[i][0]||1;s[i]=(P[i+1][1]-P[i][1])/dx[i]} // monoton (Fritsch-Carlson): Kurve schwingt nicht über die Werte hinaus
+  m[0]=s[0];m[n-1]=s[n-2];for(let i=1;i<n-1;i++)m[i]=s[i-1]*s[i]<=0?0:(s[i-1]+s[i])/2;for(let i=0;i<n-1;i++){if(!s[i]){m[i]=m[i+1]=0;continue}const a=m[i]/s[i],c=m[i+1]/s[i],h=a*a+c*c;if(h>9){const t=3/Math.sqrt(h);m[i]=t*a*s[i];m[i+1]=t*c*s[i]}}
+  let d=`M${P[0][0].toFixed(1)} ${P[0][1].toFixed(1)}`;for(let i=0;i<n-1;i++){const b=P[i],c=P[i+1],q=dx[i]/3;d+=`C${(b[0]+q).toFixed(1)} ${(b[1]+m[i]*q).toFixed(1)} ${(c[0]-q).toFixed(1)} ${(c[1]-m[i+1]*q).toFixed(1)} ${c[0].toFixed(1)} ${c[1].toFixed(1)}`}return d};
 function ckBalken(G,ser,{stack=false,vj=null,linie=null,h=150,klein=false,W=0,frei=false}={}){ // G: [{l,v:{k:Wert}}], ser: Schlüssel aus CK_S, vj: Schlüssel → Vorjahreswerte je Gruppe, linie: Schlüssel als Punkte/Linie
   W=W||(HANDY.matches?340:440);const P={l:klein?4:44,r:6,t:8,b:klein?6:20},iw=W-P.l-P.r,ih=h-P.t-P.b,n=G.length;
   const sw=g=>stack?ser.reduce((s,k)=>s+Math.max(0,g.v[k]||0),0):Math.max(...ser.map(k=>g.v[k]||0)),neg=Math.min(0,...G.flatMap(g=>ser.map(k=>g.v[k]||0)));
@@ -8897,12 +8899,13 @@ function ckBalken(G,ser,{stack=false,vj=null,linie=null,h=150,klein=false,W=0,fr
   const st=10**Math.floor(Math.log10((mx-mn)/3||1)),sch=[1,2,2.5,5,10].map(f=>f*st).find(s=>(mx-mn)/s<=(frei?Math.max(2,Math.min(8,Math.floor(ih/40))):4))||st*10;mx=Math.ceil(mx/sch)*sch;mn=Math.floor(mn/sch)*sch;
   const dpr=frei?window.devicePixelRatio||1:0,sn=v=>dpr?Math.round(v*dpr)/dpr:v,y=v=>sn(P.t+ih*(mx-v)/(mx-mn||1)),bw=iw/n,gw=sn(bw*.7),nb=stack?1:ser.length,eb=Math.max(2,(gw-(nb-1)*2)/nb),N=ckNeon(),D=ckDefs(),gr=D.gr;let o='',lp='',jp=null,lc='';
   if(!klein)for(let v=mn;v<=mx+1e-9;v+=sch)o+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)+(dpr?.5/dpr:0)}" y2="${y(v)+(dpr?.5/dpr:0)}" class="${v===0?'ck0':'ckg'}"/><text x="${P.l-6}" y="${y(v)+4}" class="cka" text-anchor="end">${frei&&sch%1e3&&Math.abs(v)>=1e3&&Math.abs(v)<1e6?(v/1e3).toLocaleString('de-AT',{maximumFractionDigits:2})+' T':ckK(v)}</text>`;
+  const zg=new Set();if(!klein){const B=[],I=[...G.keys()].reverse();for(const i of[...I.filter(i=>G[i].w),...I.filter(i=>!G[i].w)]){const lx=P.l+i*bw+bw/2,lb=String(G[i].l||'').length*6+6;if(lb>6&&B.every(([a,c])=>lx+lb/2<=a-4||lx-lb/2>=c+4)){zg.add(i);B.push([lx-lb/2,lx+lb/2])}}} // Achsenbeschriftung ohne Überschneidung: wichtige (w) zuerst, dann von rechts mit Abstand
   G.forEach((g,i)=>{o+=`<g style="--f:${n>1?(i/(n-1)).toFixed(3):0}">`;const x0=sn(P.l+i*bw+(bw-gw)/2),tt=[g.t||g.l,...ser.map(k=>`${CK_S[k]?.[0]||k}: ${fmt(g.v[k])} €`),...(vj?[`Vorjahr: ${fmt(g.vj)} €`]:[])].join('\n');
     if(vj)o+=ckBar(x0-3,y(Math.max(0,g.vj||0)),gw+6,Math.max(0,y(0)-y(Math.max(0,g.vj||0))),'var(--ckv)',1);
     let acc=0;const top=stack?ser.reduce((t,k)=>(g.v[k]||0)>0?k:t,''):'';ser.forEach((k,j)=>{const v=g.v[k]||0,c=g.c?.[k]||`var(${CK_S[k]?.[1]||'--ck1'})`;if(stack){if(v<=0)return;const a=y(acc),b=y(acc+v);o+=ckBar(x0,b,gw,Math.max(0,a-b-(acc?2:0)),N?gr(c,.95,.35):c,k===top?1:0);acc+=v}
       else{const x=x0+j*(eb+2),a=y(Math.max(0,v)),b=y(Math.min(0,v));o+=ckBar(x,a,eb,Math.max(v?1:0,b-a),N?gr(c,.95,.3):c,v<0?-1:1)}});
     o+=`</g><rect x="${P.l+i*bw}" y="${P.t}" width="${bw}" height="${ih}" fill="transparent"><title>${esc(tt)}</title></rect>`;
-    if(!klein&&(!frei||bw>=34||(n-1-i)%Math.ceil(34/bw)===0))o+=`<text x="${P.l+i*bw+bw/2}" y="${h-5}" class="cka" text-anchor="middle">${esc(g.l)}</text>`});
+    if(zg.has(i))o+=`<text x="${P.l+i*bw+bw/2}" y="${h-5}" class="cka" text-anchor="middle">${esc(g.l)}</text>`});
   if(linie&&N){const Q=G.map((g,i)=>g.zuk?null:[P.l+i*bw+bw/2,y(g.v[linie]||0)]).filter(Boolean),c=`var(${CK_S[linie][1]})`,d=ckGlatt(Q);if(Q.length>1)lp=d;jp=Q[Q.length-1];lc=c;o+=`<path d="${d}L${Q[Q.length-1][0]} ${y(Math.max(mn,0))}L${Q[0][0]} ${y(Math.max(mn,0))}Z" fill="${gr(c,.35,0)}" class="ckfl"/><path d="${d}" class="ckli ckglow" pathLength="1" style="stroke:${c};color:${c}"/>`+Q.map((q,i,A)=>`<circle cx="${q[0]}" cy="${q[1]}" r="3.2" class="ckpt" style="stroke:${c};--f:${(i/Math.max(1,A.length-1)).toFixed(3)}"/>`).join('')}
 else if(linie){const pts=G.map((g,i)=>g.zuk?'':`${P.l+i*bw+bw/2},${y(g.v[linie]||0)}`).filter(Boolean);if(pts.length>1){lp='M'+pts.join(' L');jp=pts[pts.length-1].split(',');lc=`var(${CK_S[linie][1]})`}o+=`<polyline points="${pts.join(' ')}" class="ckli" pathLength="1" style="stroke:var(${CK_S[linie][1]})"/>`+pts.map((p,i)=>{const[a,b]=p.split(',');return`<circle cx="${a}" cy="${b}" r="3.5" class="ckpt" style="stroke:var(${CK_S[linie][1]});--f:${(i/Math.max(1,pts.length-1)).toFixed(3)}"/>`}).join('')}
   return`<svg class="ckc" viewBox="0 0 ${W} ${h}" role="img" aria-label="Diagramm">${D.h()}${o}${ckLv(o,lp,jp,lc,W,h)}</svg>`}
@@ -9530,6 +9533,379 @@ body.ml64f main{padding-right:max(72px,env(safe-area-inset-right,0px))}#sleiste 
 @media(max-width:760px){#mlt{left:12px;right:12px;width:auto;max-width:none;bottom:calc(12px + env(safe-area-inset-bottom,0px))}body.tl #mlt,body:has(.aktl) #mlt{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
  #mlp{left:0;right:0;bottom:0;top:auto;width:auto;max-width:none;max-height:75vh;border-radius:16px 16px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}#mlbg{position:fixed;inset:0;z-index:1140;background:rgba(0,0,0,.3)}
  .mle{padding:14px 16px}.mla{gap:10px 18px;font-size:15px}.mla a{padding:4px 0}}`;document.head.append(st)}
+/* Auswertungen erweitert (P66, Paket „Auswertungen (P66)“, Schalter über erwPlus(), alle Standard aus, Block vor start()):
+   Teil 1 erw.awProjekt – Projekt-Nachkalkulation Soll/Ist pnk(aid) (Soll = vorkalk() der AB bzw. AN + weitere AB als Nachträge, Ist = nachkalk(), Stunden je Tarif, DB I/DB II,
+     Fertigstellung nach Stunden bzw. Umsatz, Prognose = Ist-HK + Soll-HK × (1 − Fortschritt)); Karte pnkKarte() ersetzt im Auftrag „Vor- / Nachkalkulation“, Liste pnkListe() in den Auswertungen (ersetzt die Auftragsliste).
+   Teil 2 erw.awOP – offene Posten nach Alter opAlter() (je Kunde/Lieferant, Ø Zahlungsdauer); erw.mahnung – Mahnwesen: Einträge b.mahn=[{ts,datum,stufe,offen,spesen,zinsen,frist}] an abgeschlossenen
+     Rechnungen (nie im Rechnungsdruck), Einstellung mS() (S().mahnung, Vorgaben MAHN_STD), Vorschlag mahnVorschlag() (überfällig + Karenz, Frist der letzten Mahnung vorbei), Seite V.mahnung (#/mahnung),
+     Schreiben mahnDoc() über druckHTML(), Nachdruck aus dem Verlauf mahnVerlauf(), Vermerk in statusTag().
+   Teil 3 erw.inventur – Sammlung DB.inventuren {id,datum,text,lp,gr,status:'offen'|'gebucht',gebucht,pos:[{artikelId,ist,soll?,ek?}]} (soll/ek erst beim Buchen festgehalten), Bestand zum Stichtag invBestand(),
+     Bewertung invAnsatz() (Ø-EK zum Stichtag, höchstens aktueller EK – Niederstwert), V.inventur (#/inventur, #/inventur/<id>), Eingabe input[data-inv] (eigener change-Listener), Buchen über lagerBuchung().
+   Teil 4 erw.liquiditaet – liqPlan(w): Wochen ab Montag, Kontostand S().liq.stand (leer = Bank + Kassa aus dem Journal), offene Rechnungen nach Fälligkeit, offene Eingangsrechnungen, laufende Kosten (kostenStand()),
+     optional Restbeträge abgeschlossener AB (S().liq.ab), Mindestbestand S().liq.min; Abschnitt in den Auswertungen. */
+erwPlus({k:'awProjekt',std:false,p:'Auswertungen (P66)',l:'Projekt-Nachkalkulation Soll/Ist',info:'Im Auftrag und in den Auswertungen: Soll (Auftragsbestätigung bzw. Angebot, weitere Auftragsbestätigungen als Nachträge) gegen Ist für Umsatz, Material und Fremdleistung, Lohn, Gemeinkosten, DB I und DB II, Stunden je Tarif, Fertigstellungsgrad und voraussichtliches Endergebnis laufender Aufträge.'});
+erwPlus({k:'awOP',std:false,p:'Auswertungen (P66)',l:'Offene Posten nach Alter',info:'In den Auswertungen: offene Rechnungen je Kunde bzw. Lieferant nach Überfälligkeit (nicht fällig, 1–30, 31–60, 61–90, über 90 Tage) und durchschnittliche Zahlungsdauer der Kunden.'});
+erwPlus({k:'mahnung',std:false,p:'Auswertungen (P66)',l:'Mahnwesen (Zahlungserinnerung, 1. und 2. Mahnung)',info:'Seite „Mahnungen“ (in den Auswertungen bei den offenen Posten): Vorschlag aller überfälligen Rechnungen je Kunde mit der nächsten Mahnstufe, Mahnschreiben drucken bzw. als PDF speichern oder per E-Mail senden, Verlauf mit Nachdruck. Mahnspesen, Verzugszinsen, Fristen und Texte unter Einstellungen. Die Rechnung selbst bleibt unverändert.'});
+erwPlus({k:'inventur',std:false,p:'Auswertungen (P66)',l:'Inventur zum Stichtag',info:'Im Lager der Knopf „Inventur …“: Zählliste je Lagerplatz bzw. Artikelgruppe drucken, Ist-Mengen erfassen (auch am Handy), Differenzliste, alle Differenzen in einem Schritt buchen, Inventurliste mit Bewertung (Ø-Einstandspreis, höchstens aktueller EK) für den Jahresabschluss, Lagerwert zu jedem Stichtag.'});
+erwPlus({k:'liquiditaet',std:false,p:'Auswertungen (P66)',l:'Liquiditätsvorschau',info:'In den Auswertungen: Kontostand der nächsten 4 bis 13 Wochen aus offenen Rechnungen (nach Fälligkeit), offenen Eingangsrechnungen, laufenden Kosten und auf Wunsch noch nicht verrechneten Auftragsbestätigungen, mit Warnung unter dem Mindestbestand.'});
+queueMicrotask(()=>{if(typeof EB_K==='object')Object.assign(EB_K,{awProjekt:'kalk',awOP:'belege',mahnung:'belege',inventur:'einkauf',liquiditaet:'firma'})});
+const p66Tg=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5);
+const p66Hilfe=t=>kmp()?`<div style="margin-top:6px">${hilfe(t)}</div>`:`<p class="mut" style="font-size:12px;margin:8px 0 0">${t}</p>`;
+const p66Abw=(x,gut)=>{if(!isFinite(x)||Math.abs(x)<0.005)return'<span class="mut">–</span>';const ok=gut==='hoch'?x>0:x<0;return`<span class="${ok?'ok66':'err'}">${x>0?'+':''}${fmt(x)}</span>`};
+const p66Druck=(titel,innen)=>`<div class="doc p66d">${briefkopf(S().firma)}<h3 style="margin:4mm 0 3mm">${esc(titel)}</h3>${innen}</div>`;
+
+/* ---------- Teil 1: Projekt-Nachkalkulation ---------- */
+function pnk(aid){const docs=DB.belege.filter(b=>b.auftragId===aid);if(!docs.length)return null;
+  const root=beleg(aid)||docs[0],n=nachkalk(aid);
+  const vb=docs.filter(d=>['AB','AN'].includes(d.typ)&&!d.storno&&d.status!=='ersetzt').sort((x,y)=>(x.typ==='AB'?-1:1)-(y.typ==='AB'?-1:1))[0];
+  const nt=docs.filter(d=>d.typ==='AB'&&d.fest&&!d.storno&&d!==vb),sb=[vb,...nt].filter(Boolean),vk=sb.map(vorkalk);
+  const s={uS:r2(sum(vk,v=>v.uS)),mat:r2(sum(vk,v=>v.mat)),eig:r2(sum(vk,v=>v.eig)),mgk:r2(sum(vk,v=>v.mgk)),hk:r2(sum(vk,v=>v.hk)),std:sum(vk,v=>v.std||0)};
+  s.db1=r2(s.uS-s.mat);s.db2=r2(s.uS-s.hk);s.db2p=s.uS?s.db2/s.uS:NaN;
+  const ist={...n,db1:r2(n.uN-n.material-n.fremd)};
+  const TF={},tf=k=>TF[k||'–']??={s:0,i:0,k:0};
+  for(const b of sb){const gi=gruppenInfo(b);for(const p of b.pos){if(isInfo(p)||effKz(p,gi))continue;const h=posStd(p);if(h)tf(posTarif(p)).s+=h}}
+  for(const z of DB.zeiten)if(z.auftragId===aid){const t=tf(z.tarif);t.i+=+z.stunden||0;t.k+=(+z.stunden||0)*(+z.kosten||0)}
+  const fertig=docs.some(d=>d.typ==='SR'&&d.fest&&!d.storno);
+  const nS=s.std>0&&n.std>0,f=fertig?1:nS?Math.min(1,n.std/s.std):s.uS>0?Math.min(1,n.uN/s.uS):null,fa=fertig?'Schlussrechnung':nS?'nach Stunden':'nach verrechnetem Umsatz'; // ohne erfasste Stunden nach Umsatz
+  const prog=!fertig&&f!=null&&s.hk>0?(()=>{const u=Math.max(s.uS,n.uN),hk=r2(n.hk+Math.max(0,s.hk*(1-f)));return{u,hk,db2:r2(u-hk),db2p:u?(u-hk)/u:NaN}})():null;
+  return{aid,root,docs,vb,nt,s,ist,TF,fertig,f,fa,prog}}
+function pnkKarte(x){if(!x)return'';const{s,ist}=x,mz=!!S().mgz,v=!!x.vb;
+  const z=(l,a,b,g,c='')=>`<tr${c?` class="${c}"`:''}><td>${l}</td><td class="n">${v?fmt(a):'–'}</td><td class="n">${fmt(b)}</td><td class="n">${v?p66Abw(b-a,g):'–'}</td></tr>`;
+  const TF=Object.entries(x.TF).filter(([,t])=>t.s||t.i).sort((a,b)=>(b[1].s+b[1].i)-(a[1].s+a[1].i));
+  return`<div class="card pnk"><h2>Projekt-Nachkalkulation</h2>
+  <div style="overflow-x:auto"><table><thead><tr><th></th><th class="n">Soll</th><th class="n">Ist</th><th class="n">Abweichung</th></tr></thead><tbody>
+  ${z('Umsatz nach Skonto'+(x.nt.length?` <span class="mut">(inkl. ${x.nt.length} Nachtrag)</span>`:''),s.uS,ist.uN,'hoch')}
+  ${z('Material &amp; Fremdleistung',s.mat,ist.material+ist.fremd,'tief')}
+  ${ist.fremd?`<tr class="mut"><td style="padding-left:16px">davon Eingangsrechnungen</td><td></td><td class="n">${fmt(ist.fremd)}</td><td></td></tr>`:''}
+  ${z('<b>DB I</b>',s.db1,ist.db1,'hoch','pnks')}
+  ${z(`Lohn <span class="mut">(${fmtQ(r2(s.std))} / ${fmtQ(r2(ist.std))} h)</span>`,s.eig,ist.eigen,'tief')}
+  ${mz?z('Materialgemeinkosten',s.mgk,ist.mgk,'tief'):''}
+  ${z('<b>Herstellkosten</b>',s.hk,ist.hk,'tief','pnks')}
+  ${z('<b>DB II</b>',s.db2,ist.db2,'hoch','pnks')}
+  <tr><td>DB II % vom Umsatz</td><td class="n">${v?dbTag(s.db2p):'–'}</td><td class="n">${dbTag(ist.db2p)}</td><td></td></tr>
+  ${ist.std>0||s.std>0?`<tr><td>DB II je Lohnstunde</td><td class="n">${v&&s.std>0?fmt(s.db2/s.std):'–'}</td><td class="n">${ist.std>0?fmt(ist.db2/ist.std):'–'}</td><td></td></tr>`:''}
+  </tbody></table></div>
+  ${TF.length?`<h3 style="margin:12px 0 4px;font-size:14px">Stunden je Tarif</h3><div style="overflow-x:auto"><table><thead><tr><th>Tarif</th><th class="n">Soll h</th><th class="n">Ist h</th><th class="n">Differenz</th><th class="n">Kosten Ist</th></tr></thead><tbody>
+  ${TF.map(([k,t])=>`<tr><td>${esc(k)}</td><td class="n">${fmtQ(r2(t.s))}</td><td class="n">${fmtQ(r2(t.i))}</td><td class="n ${t.i>t.s+0.005&&t.s?'err':''}">${fmtQ(r2(t.i-t.s))}</td><td class="n">${fmt(t.k)}</td></tr>`).join('')}</tbody></table></div>`:''}
+  <div class="pnkf">${x.f!=null?`<div><span class="mut">Fertigstellung</span><b>${pct(x.f)}</b><span class="mut">${x.fa}</span><div class="pnkb"><i style="width:${Math.round(x.f*100)}%"></i></div></div>`:''}
+  ${x.prog?`<div><span class="mut">Voraussichtlicher DB II</span><b>${fmt(x.prog.db2)} € ${dbTag(x.prog.db2p)}</b><span class="mut">Umsatz ${fmt(x.prog.u)} € · HK ${fmt(x.prog.hk)} € (Schätzung)</span></div>`:''}</div>
+  ${p66Hilfe('Soll: Vorkalkulation der Auftragsbestätigung (sonst des Angebots) nach Skonto, weitere abgeschlossene Auftragsbestätigungen als Nachträge. Ist: Rechnungen abzgl. Gutschriften und Skonto, Lagerabgänge zu Ø-EK, Eingangsrechnungen des Auftrags, Stunden × Kostensatz. DB I = Umsatz − Material/Fremdleistung, DB II = Umsatz − Herstellkosten. Die Prognose rechnet die noch offenen Soll-Kosten anteilig nach dem Fertigstellungsgrad dazu (nach Stunden, ohne erfasste Stunden nach verrechnetem Umsatz).')}</div>`}
+{const a0=V.auftrag;V.auftrag=aid=>{const h=a0(aid);if(!DB||!erw('awProjekt'))return h;
+  const i=h.indexOf('<div class="card"><h2>Vor- / Nachkalkulation</h2>'),e=h.lastIndexOf('\n  </div></div>');
+  return i<0||e<i?h+pnkKarte(pnk(aid)):h.slice(0,i)+pnkKarte(pnk(aid))+h.slice(e)}}
+let PNK_Z=null; // Zeitraum der zuletzt gezeigten Liste (Teil 5) für Drucken/CSV
+function pnkDaten(Z=PNK_Z){const j=UI.jahr,alle=!!UI.pnkAlle,im=d=>Z?d.datum>=Z.von&&d.datum<=Z.bis:d.datum.startsWith(j);
+  return auftragsListe().map(a=>pnk(a.id)).filter(x=>x&&(x.vb||x.ist.uN||x.ist.hk)&&(alle?x.docs.some(d=>d.fest&&im(d)):!x.fertig&&x.docs.some(d=>d.typ==='AB'&&d.fest&&!d.storno)))} // laufend = abgeschlossene AB, noch keine Schlussrechnung
+const PNK_SP=[['Auftrag',x=>`${bNr(x.root)} ${x.root.betreff||''}`],['Kunde',x=>kName(x.root.kontaktId)],['Umsatz Soll',x=>x.vb?x.s.uS:''],['Umsatz Ist',x=>x.ist.uN],['DB I Ist',x=>x.ist.db1],
+  ['DB II Soll',x=>x.vb?x.s.db2:''],['DB II Ist',x=>x.ist.db2],['DB II % Ist',x=>isFinite(x.ist.db2p)?r2(x.ist.db2p*100):''],['Std. Soll',x=>r2(x.s.std)],['Std. Ist',x=>r2(x.ist.std)],['Fertig %',x=>x.f!=null?Math.round(x.f*100):''],['DB II Prognose',x=>x.prog?x.prog.db2:'']];
+function pnkTab(L,druck){const S_=k=>sum(L,x=>x[k[0]][k[1]]);
+  return`<table class="pnkt awt" data-sid="pnk"><thead><tr><th>Auftrag</th><th>Kunde</th>${druck?'':'<th>Status</th>'}<th class="n">Umsatz Soll</th><th class="n">Umsatz Ist</th><th class="n">DB I</th><th class="n">DB II</th><th class="n">DB II %</th><th class="n">Std. Soll / Ist</th><th class="n">Fertig</th><th class="n">DB II Prognose</th></tr>${L.length?`<tr class="sumz"><td>Summe</td><td></td>${druck?'':'<td></td>'}<td class="n">${fmt(sum(L,x=>x.vb?x.s.uS:0))}</td><td class="n">${fmt(S_(['ist','uN']))}</td><td class="n">${fmt(S_(['ist','db1']))}</td><td class="n">${fmt(S_(['ist','db2']))}</td><td class="n">${dbTag(S_(['ist','db2'])/S_(['ist','uN']))}</td><td class="n">${fmtQ(r2(S_(['s','std'])))} / ${fmtQ(r2(S_(['ist','std'])))}</td><td></td><td class="n">${fmt(sum(L,x=>x.prog?x.prog.db2:0))}</td></tr>`:''}</thead><tbody>
+  ${L.map(x=>`<tr${druck?'':` class="click" onclick="nav('auftrag/${x.aid}')"`}><td>${esc(bNr(x.root))} ${esc(x.root.betreff||'')}</td><td>${esc(kName(x.root.kontaktId))}</td>${druck?'':`<td>${phase(x.docs)}</td>`}
+   <td class="n">${x.vb?fmt(x.s.uS):'–'}</td><td class="n">${fmt(x.ist.uN)}</td><td class="n">${fmt(x.ist.db1)}</td><td class="n">${fmt(x.ist.db2)}</td><td class="n">${dbTag(x.ist.db2p)}</td>
+   <td class="n ${x.s.std&&x.ist.std>x.s.std?'err':''}" data-v="${r2(x.ist.std)}">${fmtQ(r2(x.s.std))} / ${fmtQ(r2(x.ist.std))}</td><td class="n">${x.f!=null?pct(x.f):'–'}</td><td class="n">${x.prog?fmt(x.prog.db2)+' '+dbTag(x.prog.db2p):x.fertig?'<span class="mut">fertig</span>':'–'}</td></tr>`).join('')||`<tr><td colspan="11" class="mut">keine</td></tr>`}</tbody>
+  </table>`}
+function pnkListe(Z){PNK_Z=Z||null;const L=pnkDaten();
+  return`<div class="card" style="padding:0"><div class="bar" style="padding:10px 12px;margin:0;flex-wrap:wrap">${kmp()?'':'<h2 style="margin:0">Projekt-Nachkalkulation</h2>'}<span class="seg"><button class="${UI.pnkAlle?'':'on'}" data-act="pnkalle" data-v="">laufende</button><button class="${UI.pnkAlle?'on':''}" data-act="pnkalle" data-v="1">alle ${Z?'im Zeitraum':UI.jahr}</button></span><span class="sp"></span>
+  <button class="s" data-act="pnkdr">Drucken</button><button class="s" data-act="pnkcsv">CSV</button></div><div style="overflow-x:auto">${pnkTab(L)}</div></div>`}
+{const w0=V.auswertung;V.auswertung=(...a)=>{let h=w0(...a);if(!DB)return h;const add=[];
+  if(erw('awProjekt')){const re=/<div class="card" style="padding:0"><table><thead><tr><th>Auftrag \d{4}<\/th>[\s\S]*?<\/table><\/div>/;if(re.test(h))h=h.replace(re,()=>pnkListe());else add.push(akk('aw-pnk','Projekt-Nachkalkulation',pnkListe(),{offen:true}))}
+  if(erw('liquiditaet'))add.push(akk('aw-liq','Liquiditätsvorschau',liqKarte(),{offen:true}));
+  if(erw('awOP')||erw('mahnung'))add.push(akk('aw-opa','Offene Posten nach Alter',opAlterKarte(),{offen:true}));
+  return h+add.join('')}}
+
+/* ---------- Teil 2: Offene Posten nach Alter, Mahnwesen ---------- */
+const OPA_K=[['nf','nicht fällig'],['b1','1–30'],['b2','31–60'],['b3','61–90'],['b4','über 90']];
+function opAlter(V_,bis){const h=isoD(),G={};
+  const L=DB.belege.filter(b=>T[b.typ].re&&b.fest&&T[b.typ].b===V_&&offen(b)>0.005&&(!bis||b.datum<=bis));
+  for(const b of L){const t=p66Tg(faellig(b),h),k=t<=0?'nf':t<=30?'b1':t<=60?'b2':t<=90?'b3':'b4',g=G[b.kontaktId]??={k:b.kontaktId,nf:0,b1:0,b2:0,b3:0,b4:0,s:0,n:0,st:-1};
+    g[k]+=offen(b);g.s+=offen(b);g.n++;g.st=Math.max(g.st,mahnSt(b))}
+  if(V_==='V'){const ab=addDays(h,-365);for(const b of DB.belege.filter(b=>RE_V.includes(b.typ)&&b.typ!=='GS'&&b.fest&&!b.storno&&b.datum>=ab&&Math.abs(offen(b))<=0.005&&(b.zahlungen||[]).length)){
+    const g=G[b.kontaktId]??={k:b.kontaktId,nf:0,b1:0,b2:0,b3:0,b4:0,s:0,n:0,st:-1},d=(b.zahlungen||[]).map(z=>z.datum).sort().pop();g.zt=(g.zt||0)+p66Tg(b.datum,d);g.zv=(g.zv||0)+Math.max(0,p66Tg(faellig(b),d));g.zn=(g.zn||0)+1}}
+  return Object.values(G).sort((a,b)=>b.s-a.s)}
+function opAlterTab(V_,bis){const G=opAlter(V_,bis),O=G.filter(g=>g.s>0.005),mz=V_==='V'&&erw('mahnung');
+  return`<div style="overflow-x:auto"><table class="opa awt" data-sid="opa${V_}"><thead><tr><th>${V_==='V'?'Kunde':'Lieferant'}</th>${OPA_K.map(([,l])=>`<th class="n">${l}</th>`).join('')}<th class="n">Summe</th>${V_==='V'?'<th class="n">Ø Tage bis Zahlung</th>':''}${mz?'<th>Mahnstufe</th>':''}</tr>${O.length?`<tr class="sumz"><td>Summe</td>${OPA_K.map(([k])=>`<td class="n">${fmt(sum(O,g=>g[k]))}</td>`).join('')}<td class="n">${fmt(sum(O,g=>g.s))}</td>${V_==='V'?'<td></td>':''}${mz?'<td></td>':''}</tr>`:''}</thead><tbody>
+  ${O.map(g=>`<tr class="click" onclick="nav('kontakt/${g.k}')"><td data-v="${esc(kName(g.k))}">${esc(kName(g.k))} <span class="mut">(${g.n})</span></td>${OPA_K.map(([k],i)=>`<td class="n ${i>=2&&g[k]>0.005?'err':''}">${g[k]>0.005?fmt(g[k]):''}</td>`).join('')}<td class="n"><b>${fmt(g.s)}</b></td>
+   ${V_==='V'?`<td class="n">${g.zn?Math.round(g.zt/g.zn)+(g.zv?` <span class="mut">(${Math.round(g.zv/g.zn)} zu spät)</span>`:''):'–'}</td>`:''}${mz?`<td>${g.st>=0?tag(mS().stufen[g.st],g.st?'err':'warn'):''}</td>`:''}</tr>`).join('')||`<tr><td colspan="9" class="mut">keine offenen Posten</td></tr>`}</tbody>
+  </table></div>`}
+function opAlterKarte(bis,ohneKn){const mv=erw('mahnung')&&!ohneKn?mahnVorschlag():[];
+  return`<div class="card"><div class="bar" style="margin:0 0 8px;flex-wrap:wrap"><h2 style="margin:0">Kunden</h2><span class="sp"></span>${erw('mahnung')&&!ohneKn?`<button class="${mv.length?'p':''}" onclick="nav('mahnung')">Mahnungen${mv.length?` (${mv.length})`:''} …</button>`:''}</div>${opAlterTab('V',bis)}
+  <h2 style="margin:14px 0 8px">Lieferanten</h2>${opAlterTab('E',bis)}${p66Hilfe('Tage überfällig ab dem Fälligkeitsdatum (Rechnungsdatum + Zahlungsziel). Ø Tage bis Zahlung: bezahlte Rechnungen der letzten 12 Monate, Rechnungsdatum bis zur letzten Zahlung; in Klammern Tage nach Fälligkeit.')}</div>`}
+
+const MAHN_STD={karenz:3,frist:14,spesen:[0,10,20],zins:0,stufen:['Zahlungserinnerung','1. Mahnung','2. Mahnung'],
+  txt:['wir dürfen Sie freundlich daran erinnern, dass die unten angeführten Rechnungen noch offen sind. Vermutlich ist die Zahlung nur übersehen worden. Wir ersuchen um Überweisung bis {frist}. Sollten Sie inzwischen bezahlt haben, betrachten Sie dieses Schreiben bitte als gegenstandslos.',
+    'leider konnten wir zu den unten angeführten Rechnungen bis heute keinen Zahlungseingang feststellen. Wir ersuchen Sie, den offenen Betrag samt Mahnspesen bis {frist} zu überweisen.',
+    'trotz unserer bisherigen Erinnerungen sind die unten angeführten Rechnungen weiterhin offen. Wir fordern Sie letztmalig auf, den Gesamtbetrag bis {frist} zu bezahlen. Nach Ablauf dieser Frist übergeben wir die Forderung ohne weitere Ankündigung zur Eintreibung; die dadurch entstehenden Kosten gehen zu Ihren Lasten.']};
+function mS(){const m=S().mahnung||{},o={...MAHN_STD,...m};for(const k of['spesen','stufen','txt'])o[k]=MAHN_STD[k].map((x,i)=>m[k]?.[i]??x);return o}
+const mahnSt=b=>Math.max(-1,...(b.mahn||[]).map(m=>+m.stufe));
+const mahnLetzte=b=>(b.mahn||[]).slice().sort((a,c)=>a.ts.localeCompare(c.ts)).pop();
+const mahnZins=(o,t)=>{const z=+mS().zins||0;return z>0&&t>0?r2(o*z/100*t/365):0};
+function mahnVorschlag(){const h=isoD(),m=mS(),G={};
+  for(const b of DB.belege){if(!RE_V.includes(b.typ)||b.typ==='GS'||!b.fest||b.storno)continue;const o=offen(b);if(o<=0.005)continue;
+    const t=p66Tg(faellig(b),h);if(t<=(+m.karenz||0))continue;const l=mahnLetzte(b);if(l&&(l.frist||l.datum)>=h)continue;
+    const st=Math.min(2,(l?+l.stufe:-1)+1),ende=l&&+l.stufe>=2;(G[b.kontaktId]??={k:b.kontaktId,L:[],st:-1,ende:true}).L.push({b,o,t,st,ende});}
+  return Object.values(G).map(g=>{g.st=Math.max(...g.L.map(x=>x.st));g.ende=g.L.every(x=>x.ende);g.s=sum(g.L,x=>x.o);return g}).sort((a,b)=>b.s-a.s)}
+// Schreiben je Kunde; E = [{b,o,t,zinsen}], st = Stufe, dat = Datum, frist
+function mahnDoc(k,E,st,dat,frist,spesen){const m=mS(),f=S().firma,zs=sum(E,x=>x.zinsen||0),os=sum(E,x=>x.o),ges=r2(os+zs+(+spesen||0));
+  const txt=esc(m.txt[st]||'').replace(/\{frist\}/g,dAT(frist)).replace(/\{summe\}/g,fmt(ges)+' €').replace(/\{kunde\}/g,esc(k?.name||''));
+  return`<div class="doc p66d mahnd">${briefkopf(f)}<div class="adr"><div class="to">${k?`${esc(k.name)}<br>${k.zusatz?esc(k.zusatz)+'<br>':''}${esc(k.strasse||'')}<br>${esc(k.plz||'')} ${esc(k.ort||'')}${k.land&&k.land!=='Österreich'?'<br>'+esc(k.land):''}`:''}</div>
+  <div class="mi">Datum: ${dAT(dat)}${k?.nr?`<br>Kunden-Nr.: ${esc(k.nr)}`:''}</div></div>
+  <h3 style="margin:0 0 5mm">${esc(m.stufen[st])}</h3><p>${esc(k?briefAnrede(k):'Sehr geehrte Damen und Herren,')}</p><p>${txt}</p>
+  <table class="p mahnt"><thead><tr><th>Rechnung</th><th>Datum</th><th>fällig seit</th><th class="n">Betrag</th><th class="n">bezahlt</th><th class="n">offen</th>${zs?'<th class="n">Zinsen</th>':''}</tr></thead><tbody>
+  ${E.map(x=>`<tr><td>${esc(bNr(x.b))}</td><td>${dAT(x.b.datum)}</td><td>${dAT(faellig(x.b))}</td><td class="n">${fmt(summen(x.b).zahlbar)}</td><td class="n">${fmt(r2(summen(x.b).zahlbar-x.o))}</td><td class="n">${fmt(x.o)}</td>${zs?`<td class="n">${fmt(x.zinsen||0)}</td>`:''}</tr>`).join('')}</tbody></table>
+  <table class="mahns"><tr><td>Offene Rechnungsbeträge</td><td class="n">${fmt(os)} €</td></tr>${zs?`<tr><td>Verzugszinsen (${String(m.zins).replace('.',',')} % p. a.)</td><td class="n">${fmt(zs)} €</td></tr>`:''}${+spesen?`<tr><td>Mahnspesen</td><td class="n">${fmt(spesen)} €</td></tr>`:''}<tr class="g"><td>Zu bezahlen bis ${dAT(frist)}</td><td class="n">${fmt(ges)} €</td></tr></table>
+  ${f.iban?`<p>Bankverbindung: ${esc(f.bank||'')} IBAN ${esc(f.iban)}${f.bic?' BIC '+esc(f.bic):''}</p>`:''}<p>Mit freundlichen Grüßen<br>${esc(f.name||'')}</p>${fusszeile(fussZeilen(f))}</div>`}
+// Mahnung je Kunde anlegen (an den Rechnungen vermerkt) – liefert HTML des Schreibens
+function mahnAnlegen(g,ts){const m=mS(),h=isoD(),frist=addDays(h,+m.frist||14),st=g.st,sp=+m.spesen[st]||0,E=g.L.map(x=>({...x,zinsen:mahnZins(x.o,x.t)}));
+  E.forEach((x,i)=>(x.b.mahn??=[]).push({ts,datum:h,stufe:st,offen:x.o,zinsen:x.zinsen,spesen:i?0:sp,frist}));
+  log('Mahnung',`${m.stufen[st]} an ${kName(g.k)}: ${E.map(x=>bNr(x.b)).join(', ')} – ${fmt(sum(E,x=>x.o))} €`);
+  return mahnDoc(kontakt(g.k),E,st,h,frist,sp)}
+function mahnVerlauf(){const G={};for(const b of DB.belege)for(const m of b.mahn||[]){const g=G[m.ts+'|'+b.kontaktId]??={ts:m.ts,k:b.kontaktId,m,E:[],sp:0};g.E.push({b,o:m.offen,t:0,zinsen:m.zinsen||0});g.sp+=+m.spesen||0}
+  return Object.values(G).sort((a,b)=>b.ts.localeCompare(a.ts))}
+const mahnSeite=html=>html.join('<div style="break-after:page;page-break-after:always"></div>');
+function mahnMail(g){const k=kontakt(g.k),m=mS(),fr=addDays(isoD(),+m.frist||14),st=g.st;
+  const t=`${k?briefAnrede(k):'Sehr geehrte Damen und Herren,'}\n\n${String(m.txt[st]).replace(/\{frist\}/g,dAT(fr)).replace(/\{summe\}/g,fmt(g.s)+' €').replace(/\{kunde\}/g,k?.name||'')}\n\n${g.L.map(x=>`${bNr(x.b)} vom ${dAT(x.b.datum)}, fällig ${dAT(faellig(x.b))}: offen ${fmt(x.o)} €`).join('\n')}\n\nMit freundlichen Grüßen\n${S().firma.name||''}`;
+  location.href=`mailto:${encodeURIComponent(k?.email||'')}?subject=${encodeURIComponent(m.stufen[st]+' – '+(S().firma.name||''))}&body=${encodeURIComponent(t)}`}
+V.mahnung=()=>{if(!erw('mahnung'))return'<p>Mahnwesen ist ausgeschaltet (Einstellungen → Erweiterungen).</p>';const G=mahnVorschlag(),m=mS(),VL=mahnVerlauf().slice(0,30),A=G.filter(g=>!g.ende);
+  return`<div class="bar"><h1 style="margin:0">Mahnungen</h1><span class="sp"></span>${A.length>1?`<button class="p" data-act="mahnalle">Alle ${A.length} erstellen und drucken</button>`:''}</div>
+  <div class="card"><h2>Vorschlag</h2>${G.map(g=>`<div class="mahng"><div class="bar" style="margin:0 0 6px;flex-wrap:wrap"><b><a href="#/kontakt/${g.k}">${esc(kName(g.k))}</a></b>${g.ende?tag('2. Mahnung ohne Erfolg','err'):tag(m.stufen[g.st],g.st?'err':'warn')}<span class="mut">${fmt(g.s)} €</span><span class="sp"></span>
+    ${g.ende?'':`<button class="s" data-act="mahnmail" data-k="${g.k}">E-Mail</button><button class="s p" data-act="mahnen" data-k="${g.k}">Erstellen und drucken</button>`}</div>
+    <table><tbody>${g.L.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${esc(bNr(x.b))}</td><td>${dAT(x.b.datum)}</td><td class="err">${x.t} Tage überfällig</td><td>${mahnSt(x.b)>=0?esc(m.stufen[mahnSt(x.b)])+' am '+dAT(mahnLetzte(x.b).datum):''}</td><td class="n">${fmt(x.o)}</td></tr>`).join('')}</tbody></table></div>`).join('')||'<p class="mut">Keine Rechnung ist zu mahnen.</p>'}
+  ${G.some(g=>g.ende)?p66Hilfe('Nach der 2. Mahnung schlägt das Programm keine weitere Mahnung vor – Inkasso bzw. Klage selbst entscheiden.'):''}</div>
+  <div class="card"><h2>Verlauf</h2><div style="overflow-x:auto"><table><thead><tr><th>Datum</th><th>Kunde</th><th>Stufe</th><th>Rechnungen</th><th class="n">offen</th><th></th></tr></thead><tbody>
+  ${VL.map(v=>`<tr><td>${dAT(v.m.datum)}</td><td>${esc(kName(v.k))}</td><td>${esc(m.stufen[v.m.stufe])}</td><td>${v.E.map(x=>esc(bNr(x.b))).join(', ')}</td><td class="n">${fmt(sum(v.E,x=>x.o))}</td><td><button class="s" data-act="mahndr" data-ts="${esc(v.ts)}" data-k="${v.k}">Nachdruck</button></td></tr>`).join('')||'<tr><td colspan="6" class="mut">noch keine Mahnungen</td></tr>'}</tbody></table></div></div>
+  <div class="card"><h2>Einstellungen</h2><div class="row">
+   <label class="w05">Karenz (Tage nach Fälligkeit)<input type="number" min="0" data-o="s" data-f="mahnung.karenz" value="${m.karenz}"></label>
+   <label class="w05">Zahlungsfrist (Tage)<input type="number" min="1" data-o="s" data-f="mahnung.frist" value="${m.frist}"></label>
+   <label class="w05">Verzugszinsen % p. a. (0 = keine)<input type="number" min="0" step="0.01" data-o="s" data-f="mahnung.zins" value="${m.zins}"></label></div>
+   ${m.stufen.map((s,i)=>`<div class="row"><label>Bezeichnung Stufe ${i+1}<input data-o="s" data-f="mahnung.stufen.${i}" value="${esc(s)}"></label><label class="w05">Mahnspesen €<input type="number" min="0" step="0.01" data-o="s" data-f="mahnung.spesen.${i}" value="${m.spesen[i]}"></label></div>
+   <div class="row"><label>Text<textarea rows="3" data-o="s" data-f="mahnung.txt.${i}">${esc(m.txt[i])}</textarea></label></div>`).join('')}
+   ${p66Hilfe('Platzhalter im Text: {frist} (Zahlungsfrist), {summe} (zu bezahlender Gesamtbetrag), {kunde}. Gesetzliche Verzugszinsen in Österreich: zwischen Unternehmen 9,2 Prozentpunkte über dem Basiszinssatz (§ 456 UGB), gegenüber Verbrauchern 4 % (§ 1000 ABGB). Mahnspesen müssen angemessen sein. Spesen und Zinsen stehen nur im Schreiben, gebucht wird erst die Zahlung.')}</div>`};
+{const s0=statusTag;statusTag=function(b){const t=s0.apply(this,arguments);try{if(b&&b.mahn?.length&&erw('mahnung')&&!b.storno&&Math.abs(offen(b))>0.005)return t+' '+tag(mS().stufen[mahnSt(b)],'err')}catch(e){}return t}}
+queueMicrotask(()=>Object.assign(ACT,{
+  mahnen:el=>{const g=mahnVorschlag().find(x=>x.k===el.dataset.k);if(!g)return;const m=mS();if(!confirm(`${m.stufen[g.st]} an ${kName(g.k)} über ${fmt(g.s)} € erstellen?\n\nDie Mahnung wird bei den Rechnungen vermerkt und gespeichert.`))return;
+    const h=mahnAnlegen(g,new Date().toISOString());commit();render();druckHTML(h,`${m.stufen[g.st]} ${kName(g.k)} ${isoD()}`)},
+  mahnalle:()=>{const A=mahnVorschlag().filter(g=>!g.ende);if(!A.length||!confirm(`${A.length} Mahnschreiben erstellen und drucken?`))return;const ts=new Date().toISOString(),H=A.map(g=>mahnAnlegen(g,ts));commit();render();druckHTML(mahnSeite(H),`Mahnungen ${isoD()}`)},
+  mahndr:el=>{const v=mahnVerlauf().find(x=>x.ts===el.dataset.ts&&x.k===el.dataset.k);if(v)druckHTML(mahnDoc(kontakt(v.k),v.E,+v.m.stufe,v.m.datum,v.m.frist,v.sp),`${mS().stufen[v.m.stufe]} ${kName(v.k)} ${v.m.datum}`)},
+  mahnmail:el=>{const g=mahnVorschlag().find(x=>x.k===el.dataset.k);if(g)mahnMail(g)},
+  pnkalle:el=>{UI.pnkAlle=!!el.dataset.v;render()},
+  pnkdr:()=>druckHTML(p66Druck(`Projekt-Nachkalkulation ${UI.pnkAlle?(PNK_Z?PNK_Z.t:UI.jahr):'– laufende Aufträge'} (Stand ${dAT(isoD())})`,pnkTab(pnkDaten(),true)),`Projekt-Nachkalkulation ${isoD()}`),
+  pnkcsv:()=>csvDownload(`Projekt-Nachkalkulation_${isoD()}.csv`,PNK_SP.map(x=>x[0]),pnkDaten().map(x=>PNK_SP.map(c=>c[1](x))))}));
+
+/* ---------- Teil 3: Inventur zum Stichtag ---------- */
+const invL=()=>DB.inventuren||[],invG=id=>invL().find(x=>x.id===id);
+function invBestand(id,d){let m=0,w=0;for(const e of DB.lager)if(e.artikelId===id&&e.datum<=d){m+=e.menge;w+=e.wert}return{menge:r3(m),wert:r2(w)}}
+function invAnsatz(a,bs){const oe=bs.menge>0?bs.wert/bs.menge:avgEK(a.id),ek=+a.ek||0;return ek>0?Math.min(oe,ek):oe}
+function invArtikel(inv){const lp=inv.lp?LP.unter(inv.lp):null,gr=inv.gr?GR.unter(inv.gr):null;
+  return DB.artikel.filter(a=>a.lager&&(!lp||lp.has(a.lagerplatz))&&(!gr||gr.has(a.gruppe))).sort((a,c)=>(LP.pfad(a.lagerplatz)||'~').localeCompare(LP.pfad(c.lagerplatz)||'~','de',{numeric:true})||String(a.nr).localeCompare(String(c.nr),'de',{numeric:true}))}
+// Zeilen: gebuchte Inventur aus dem festgehaltenen Stand, offene live
+function invZeilen(inv){const P=Object.fromEntries((inv.pos||[]).map(p=>[p.artikelId,p])),geb=inv.status==='gebucht';
+  const A=geb?(inv.pos||[]).map(p=>artikel(p.artikelId)).filter(Boolean):invArtikel(inv);
+  return A.map(a=>{const p=P[a.id]||{},bs=invBestand(a.id,inv.datum),soll=geb&&p.soll!=null?p.soll:bs.menge,ek=geb&&p.ek!=null?p.ek:invAnsatz(a,bs),ist=p.ist??null,dif=ist==null?null:r3(ist-soll);
+    return{a,soll,ist,dif,ek,wert:r2((ist??soll)*ek),dw:dif==null?0:r2(dif*ek)}})}
+function invNeu(){const lpO=LP.opts(),grO=GR.opts();
+  return formDialog({titel:'Neue Inventur',ok:'Anlegen',felder:[{k:'datum',l:'Stichtag',typ:'date',wert:isoD(),pflicht:true},{k:'text',l:'Bezeichnung',wert:'Inventur '+isoD().slice(0,4),ph:'z. B. Inventur 31.12.'},
+    ...(lpO.length?[{k:'lp',l:'Lagerplatz (leer = alle)',opts:[['','alle'],...lpO]}]:[]),...(grO.length?[{k:'gr',l:'Artikelgruppe (leer = alle)',opts:[['','alle'],...grO]}]:[])]})
+   .then(o=>{if(!o)return;const inv={id:uid(),datum:o.datum,text:o.text||'',lp:o.lp||'',gr:o.gr||'',status:'offen',ts:new Date().toISOString(),pos:[]};(DB.inventuren??=[]).push(inv);log('Inventur angelegt',`${inv.text} zum ${dAT(inv.datum)}`);persist();nav('inventur/'+inv.id)})}
+function invDruck(inv,art){const Z=invZeilen(inv),lp=a=>esc(LP.pfad(a.lagerplatz)||''),mitS=art!=='zael'||UI.invSoll,tit={zael:'Zählliste',diff:'Differenzliste',bew:'Inventurliste mit Bewertung'}[art];
+  const R=art==='diff'?Z.filter(z=>z.dif):Z;
+  const kopf=`<p>${esc(inv.text||'')} · Stichtag ${dAT(inv.datum)}${inv.lp?' · Lagerplatz '+esc(LP.pfad(inv.lp)):''}${inv.gr?' · Gruppe '+esc(GR.pfad(inv.gr)):''}${art==='zael'?'':' · Stand '+dAT(isoD())}</p>`;
+  const th=art==='zael'?`<th>Art.-Nr.</th><th>Bezeichnung</th><th>Lagerplatz</th><th>Einheit</th>${mitS?'<th class="n">Soll</th>':''}<th class="n">Ist gezählt</th>`
+    :art==='diff'?'<th>Art.-Nr.</th><th>Bezeichnung</th><th>Einheit</th><th class="n">Soll</th><th class="n">Ist</th><th class="n">Differenz</th><th class="n">Preis</th><th class="n">Wert Differenz</th>'
+    :'<th>Art.-Nr.</th><th>Bezeichnung</th><th>Einheit</th><th class="n">Menge</th><th class="n">Preis</th><th class="n">Wert</th>';
+  const tr=z=>art==='zael'?`<td>${esc(z.a.nr)}</td><td>${esc(z.a.bez)}</td><td>${lp(z.a)}</td><td>${esc(z.a.einheit)}</td>${mitS?`<td class="n">${fmtQ(z.soll)}</td>`:''}<td class="invz"></td>`
+    :art==='diff'?`<td>${esc(z.a.nr)}</td><td>${esc(z.a.bez)}</td><td>${esc(z.a.einheit)}</td><td class="n">${fmtQ(z.soll)}</td><td class="n">${fmtQ(z.ist)}</td><td class="n">${fmtQ(z.dif)}</td><td class="n">${fmt(z.ek)}</td><td class="n">${fmt(z.dw)}</td>`
+    :`<td>${esc(z.a.nr)}</td><td>${esc(z.a.bez)}</td><td>${esc(z.a.einheit)}</td><td class="n">${fmtQ(z.ist??z.soll)}</td><td class="n">${fmt(z.ek)}</td><td class="n">${fmt(z.wert)}</td>`;
+  const ft=art==='diff'?`<tfoot><tr><td colspan="7">Summe Differenzen</td><td class="n">${fmt(sum(R,z=>z.dw))}</td></tr></tfoot>`:art==='bew'?`<tfoot><tr><td colspan="5">Inventurwert</td><td class="n">${fmt(sum(R,z=>z.wert))}</td></tr></tfoot>`:'';
+  const unt=art==='zael'?'<p style="margin-top:10mm">Gezählt von: ____________________ &nbsp; Datum: ____________ &nbsp; Unterschrift: ____________________</p>'
+    :art==='bew'?`<p class="mut" style="font-size:9pt">Bewertung je Artikel zum gleitenden Ø-Einstandspreis zum Stichtag, höchstens zum aktuellen Einkaufspreis (Niederstwertprinzip, § 207 UGB). Menge = gezählte Ist-Menge, sonst Buchbestand.</p><p style="margin-top:10mm">Aufgenommen: ____________________ &nbsp; Unterschrift: ____________________</p>`:'';
+  druckHTML(p66Druck(tit,`${kopf}<table class="p invp"><thead><tr>${th}</tr></thead><tbody>${R.map(z=>`<tr>${tr(z)}</tr>`).join('')||'<tr><td>keine</td></tr>'}</tbody>${ft}</table>${unt}`),`${tit} ${inv.datum}`)}
+V.inventur=id=>{if(!erw('inventur'))return'<p>Inventur ist ausgeschaltet (Einstellungen → Erweiterungen).</p>';
+  if(!id){const d=UI.invLw||isoD(),A=DB.artikel.filter(a=>a.lager),lw=sum(A,a=>invBestand(a.id,d).wert);
+    return`<div class="bar"><h1 style="margin:0">Inventur</h1><span class="sp"></span><button class="p" data-act="invneu">+ Neue Inventur</button></div>
+    <div class="card"><h2>Inventuren</h2><table><thead><tr><th>Stichtag</th><th>Bezeichnung</th><th>Bereich</th><th>Status</th><th class="n">Inventurwert</th></tr></thead><tbody>
+    ${invL().slice().sort((a,b)=>b.datum.localeCompare(a.datum)).map(v=>`<tr class="click" onclick="nav('inventur/${v.id}')"><td>${dAT(v.datum)}</td><td>${esc(v.text)}</td><td>${[v.lp&&LP.pfad(v.lp),v.gr&&GR.pfad(v.gr)].filter(Boolean).map(esc).join(' · ')||'alle Lagerartikel'}</td><td>${v.status==='gebucht'?tag('gebucht','ok'):tag(`${(v.pos||[]).filter(p=>p.ist!=null).length} gezählt`,'acc')}</td><td class="n">${fmt(sum(invZeilen(v),z=>z.wert))}</td></tr>`).join('')||'<tr><td colspan="5" class="mut">noch keine Inventur</td></tr>'}</tbody></table></div>
+    <div class="card"><h2>Lagerwert zum Stichtag</h2><div class="row"><label class="w05">Stichtag<input type="date" data-o="ui" data-f="invLw" value="${d}"></label><div class="kpi" style="flex:1">Lagerwert<b>${fmt(lw)} €</b><span class="mut">${A.length} Lagerartikel, Buchbestand zu Ø-EK</span></div></div></div>`}
+  const inv=invG(id);if(!inv)return'<p>Inventur nicht gefunden.</p>';const geb=inv.status==='gebucht',Z=invZeilen(inv),q=(UI.invQ||'').toLowerCase();
+  const R=Z.filter(z=>!q||[z.a.nr,z.a.bez,LP.pfad(z.a.lagerplatz)].join(' ').toLowerCase().includes(q)),n=Z.filter(z=>z.ist!=null).length;
+  return`<div class="bar" style="flex-wrap:wrap"><a href="#/inventur">Inventur</a><span class="mut">›</span><h1 style="margin:0">${esc(inv.text||'Inventur')} · ${dAT(inv.datum)}</h1>${geb?tag('gebucht '+dAT(inv.gebucht.slice(0,10)),'ok'):tag(`${n} von ${Z.length} gezählt`,'acc')}<span class="sp"></span>
+   <button class="s" data-act="invdr" data-id="${inv.id}" data-a="zael">Zählliste</button><button class="s" data-act="invdr" data-id="${inv.id}" data-a="diff">Differenzliste</button><button class="s" data-act="invdr" data-id="${inv.id}" data-a="bew">Inventurliste</button><button class="s" data-act="invcsv" data-id="${inv.id}">CSV</button>
+   ${geb?'':`<button class="p" data-act="invbuch" data-id="${inv.id}">Differenzen buchen</button><button class="s" data-act="invdel" data-id="${inv.id}" title="Inventur löschen">Löschen</button>`}</div>
+  <div class="grid"><div class="kpi">Inventurwert<b>${fmt(sum(Z,z=>z.wert))} €</b><span class="mut">Ist, sonst Buchbestand</span></div><div class="kpi">Differenzen<b class="${sum(Z,z=>z.dw)<-0.005?'err':''}">${fmt(sum(Z,z=>z.dw))} €</b><span class="mut">${Z.filter(z=>z.dif).length} Artikel</span></div></div>
+  <div class="card"><div class="row" style="align-items:center"><label>Suchen<input type="search" data-o="ui" data-f="invQ" value="${esc(UI.invQ||'')}" placeholder="Art.-Nr., Bezeichnung, Lagerplatz"></label>
+   <label class="chk" style="flex:0 0 auto"><input type="checkbox" data-o="ui" data-f="invSoll" ${UI.invSoll?'checked':''}> Soll auf der Zählliste</label></div>
+  <div style="overflow-x:auto"><table class="invt"><thead><tr><th>Art.-Nr.</th><th>Bezeichnung</th><th class="invlp">Lagerplatz</th><th class="n">Soll</th><th class="n">Ist</th><th class="n">Differenz</th><th class="n invlp">Preis</th><th class="n">Wert Diff.</th></tr></thead><tbody>
+  ${R.map(z=>`<tr><td>${esc(z.a.nr)}</td><td>${esc(z.a.bez)} <span class="mut">${esc(z.a.einheit)}</span></td><td class="invlp">${esc(LP.pfad(z.a.lagerplatz)||'')}</td><td class="n">${fmtQ(z.soll)}</td>
+   <td class="n">${geb?fmtQ(z.ist):`<input class="invin" type="number" step="any" inputmode="decimal" data-inv="${inv.id}" data-a="${z.a.id}" value="${z.ist??''}">`}</td><td class="n invd ${z.dif<0?'err':''}">${z.dif==null?'':fmtQ(z.dif)}</td><td class="n invlp">${fmt(z.ek)}</td><td class="n invw">${z.dif?fmt(z.dw):''}</td></tr>`).join('')||'<tr><td colspan="8" class="mut">keine Lagerartikel</td></tr>'}</tbody></table></div>
+  ${p66Hilfe('Soll = Buchbestand zum Stichtag (Lagerbuchungen bis einschließlich Stichtag). Leer gelassene Ist-Mengen werden nicht gebucht. Enter springt zur nächsten Zeile. „Differenzen buchen“ bucht je Artikel Ist − Soll mit dem Datum des Stichtags und schließt die Inventur ab.')}</div>`};
+document.addEventListener('change',e=>{const el=e.target;if(!el?.dataset?.inv)return;e.stopImmediatePropagation();const inv=invG(el.dataset.inv);if(!inv||inv.status==='gebucht')return;
+  const a=el.dataset.a,v=String(el.value).trim(),p=(inv.pos??=[]).find(x=>x.artikelId===a)||(inv.pos.push({artikelId:a}),inv.pos[inv.pos.length-1]);p.ist=v===''?null:r3(num(v));if(p.ist==null)inv.pos=inv.pos.filter(x=>x!==p);persist();
+  const z=invZeilen(inv).find(x=>x.a.id===a),tr=el.closest('tr');if(z&&tr){const d=tr.querySelector('.invd'),w=tr.querySelector('.invw');d.textContent=z.dif==null?'':fmtQ(z.dif);d.classList.toggle('err',z.dif<0);w.textContent=z.dif?fmt(z.dw):''}},true);
+document.addEventListener('keydown',e=>{const el=e.target;if(e.key!=='Enter'||!el?.classList?.contains('invin'))return;e.preventDefault();const I=[...document.querySelectorAll('input.invin')],n=I[I.indexOf(el)+1];el.dispatchEvent(new Event('change',{bubbles:true}));if(n){n.focus();n.select()}else el.blur()},true);
+{const l0=V.lager;V.lager=(...x)=>{const h=l0(...x);if(!DB||!erw('inventur'))return h;const k='<button data-act="invliste">Inventur …</button>';
+  return h.includes('<h1>Lager</h1>')?h.replace('<h1>Lager</h1>',`<div class="bar"><h1 style="margin:0">Lager</h1><span class="sp"></span>${k}</div>`):h}} // kompakt: Eintrag im ⋯-Menü (MENUE.lager)
+queueMicrotask(()=>{const m0=MENUE.lager;MENUE.lager=b=>[...(erw('inventur')?[{l:'Inventur …',ic:'📋',href:'#/inventur'}]:[]),...m0(b)]});
+queueMicrotask(()=>Object.assign(ACT,{
+  invliste:()=>nav('inventur'),invneu:()=>invNeu(),
+  invdr:el=>{const v=invG(el.dataset.id);if(v)invDruck(v,el.dataset.a)},
+  invcsv:el=>{const v=invG(el.dataset.id);if(v)csvDownload(`Inventur_${v.datum}.csv`,['Art.-Nr.','Bezeichnung','Einheit','Lagerplatz','Soll','Ist','Differenz','Preis','Wert','Wert Differenz'],invZeilen(v).map(z=>[z.a.nr,z.a.bez,z.a.einheit,LP.pfad(z.a.lagerplatz)||'',z.soll,z.ist??'',z.dif??'',r2(z.ek),z.wert,z.dw]))},
+  invdel:el=>{const v=invG(el.dataset.id);if(!v||v.status==='gebucht'||!confirm('Inventur löschen? Erfasste Mengen gehen verloren.'))return;DB.inventuren=invL().filter(x=>x!==v);log('Inventur gelöscht',`${v.text} zum ${dAT(v.datum)}`);commit();nav('inventur')},
+  invbuch:el=>{const v=invG(el.dataset.id);if(!v||v.status==='gebucht')return;const Z=invZeilen(v),D=Z.filter(z=>z.dif),ng=Z.length-Z.filter(z=>z.ist!=null).length;
+    if(!confirm(`Inventur zum ${dAT(v.datum)} buchen?\n\n${D.length} Differenz(en), Wert ${fmt(sum(D,z=>z.dw))} €${ng?`\n${ng} Artikel ohne Ist-Menge bleiben unverändert.`:''}\n\nDie Inventur ist danach abgeschlossen.`))return;
+    const t='Inventur '+(v.text||dAT(v.datum));for(const z of D)lagerBuchung({artikelId:z.a.id,menge:z.dif,datum:v.datum,text:t});
+    v.pos=Z.map(z=>({artikelId:z.a.id,ist:z.ist,soll:z.soll,ek:r2(z.ek)}));v.status='gebucht';v.gebucht=new Date().toISOString();log('Inventur gebucht',`${t}: ${D.length} Differenzen, ${fmt(sum(D,z=>z.dw))} €`);commit();render()}}));
+
+/* ---------- Teil 4: Liquiditätsvorschau ---------- */
+function liqStart(){const l=S().liq||{};if(l.stand!==''&&l.stand!=null&&isFinite(+l.stand))return{b:+l.stand,q:'eingegeben'};
+  const M=FB().map,K=[M.bank,M.kassa].filter(Boolean),h=isoD();let x=0;for(const e of journal())if(e.datum<=h){if(K.includes(e.soll))x+=+e.betrag||0;if(K.includes(e.haben))x-=+e.betrag||0}return{b:r2(x),q:'Bank und Kassa laut Buchhaltung'}}
+function liqPlan(w){const h=isoD(),d0=new Date(h+'T12:00:00'),mo=addDays(h,-((d0.getDay()+6)%7)),bis=addDays(mo,7*w-1),P=[],l=S().liq||{};
+  for(const b of DB.belege){if(!T[b.typ].re||!b.fest)continue;const o=offen(b);if(Math.abs(o)<=0.005)continue;const V_=T[b.typ].b==='V',d=faellig(b);
+    P.push({d,betr:V_?o:-o,t:`${T[b.typ].bez} ${bNr(b)} · ${kName(b.kontaktId)}`,h:'beleg/'+b.id,ueb:d<h})}
+  for(const{k,d}of kostenStand(p66Tg(h,bis)).offen)if(d>=h)P.push({d,betr:-(+k.betrag||0),t:`${k.bez}${k.partner?' – '+k.partner:''}`,h:'kosten'}); // vergangene, nicht gebuchte Termine gelten als bezahlt
+  if(l.ab)for(const ab of DB.belege.filter(b=>b.typ==='AB'&&b.fest&&!b.storno)){const re=DB.belege.filter(x=>x.auftragId&&x.auftragId===ab.auftragId&&zaehltUmsatz(x)),rest=r2(summen(ab).brutto-sum(re,x=>sgn(x)*summen(x).brutto));
+    if(rest>0.005&&erledigung(ab)<0.9999||rest>0.005&&!re.length){const d=addDays(ab.liefertermin&&ab.liefertermin>h?ab.liefertermin:addDays(h,30),+ab.zahlungsziel||0);P.push({d,betr:rest,t:`noch nicht verrechnet: AB ${bNr(ab)} · ${kName(ab.kontaktId)}`,h:'beleg/'+ab.id,plan:true})}}
+  const W=Array.from({length:w},(_,i)=>({von:addDays(mo,7*i),bis:addDays(mo,7*i+6),ein:0,aus:0,P:[]}));
+  for(const p of P){const i=p.d<=W[0].bis?0:Math.floor(p66Tg(mo,p.d)/7);if(i>=w)continue;const x=W[i];x.P.push(p);if(p.betr>0)x.ein+=p.betr;else x.aus-=p.betr}
+  const st=liqStart();let s=st.b;for(const x of W){x.anf=r2(s);s+=x.ein-x.aus;x.end=r2(s);x.P.sort((a,b)=>a.d.localeCompare(b.d))}
+  return{st,W,min:+l.min||0}}
+const kw=iso=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+3-(d.getDay()+6)%7);const j=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-j)/864e5-3+(j.getDay()+6)%7)/7)};
+function liqSvg(W,min){const v=[...W.map(x=>x.end),W[0].anf,min],mx=Math.max(0,...v),mn=Math.min(0,...v),H=140,B=W.length,w=100/B,y=x=>8+(mx-x)/((mx-mn)||1)*(H-24);
+  return`<svg class="liqc" viewBox="0 0 100 ${H}" preserveAspectRatio="none" role="img" aria-label="Kontostand je Woche"><line x1="0" x2="100" y1="${y(0)}" y2="${y(0)}" stroke="currentColor" stroke-opacity=".35" stroke-width=".3" vector-effect="non-scaling-stroke"/>
+  ${W.map((x,i)=>`<rect x="${i*w+w*.18}" width="${w*.64}" y="${Math.min(y(0),y(x.end))}" height="${Math.max(.5,Math.abs(y(x.end)-y(0)))}" fill="${x.end<min?'var(--ck4,#c42b1c)':'var(--ck1,#2563eb)'}" rx=".6"><title>KW ${kw(x.von)}: ${fmt(x.end)} €</title></rect>`).join('')}
+  ${min?`<line x1="0" x2="100" y1="${y(min)}" y2="${y(min)}" stroke="#d97706" stroke-dasharray="2 1.5" stroke-width="1" vector-effect="non-scaling-stroke"/>`:''}</svg>
+  <div class="liqx">${W.map(x=>`<span>KW ${kw(x.von)}</span>`).join('')}</div>`}
+const liqP=p=>`<div class="liqp"><a href="#/${p.h}">${esc(p.t)}</a> <span class="mut">${dAT(p.d)}</span>${p.ueb?' '+tag('überfällig','warn'):''}${p.plan?' '+tag('geplant'):''}<b class="${p.betr<0?'err':''}">${fmt(p.betr)}</b></div>`;
+function liqKarte(){const w=+UI.liqW||8,{st,W,min}=liqPlan(w),l=S().liq||{},knapp=W.find(x=>x.end<min);
+  return`<div class="card liq"><div class="bar" style="margin:0 0 8px;flex-wrap:wrap">${kmp()?'':'<h2 style="margin:0">Liquiditätsvorschau</h2>'}<span class="seg">${[4,8,13].map(n=>`<button class="${w===n?'on':''}" data-act="liqw" data-v="${n}">${n} Wochen</button>`).join('')}</span><span class="sp"></span><button class="s" data-act="liqcsv">CSV</button></div>
+  ${knapp?`<div class="hint err">Achtung: In KW ${kw(knapp.von)} (${dAT(knapp.von)}) sinkt der Kontostand auf ${fmt(knapp.end)} €${min?` – unter dem Mindestbestand von ${fmt(min)} €`:''}.</div>`:''}
+  <div class="row"><label class="w05">Kontostand heute € (leer = aus der Buchhaltung)<input type="number" step="0.01" data-o="s" data-f="liq.stand" value="${l.stand??''}" placeholder="${fmt(liqStart().b)}"></label>
+   <label class="w05">Mindestbestand €<input type="number" min="0" step="100" data-o="s" data-f="liq.min" value="${l.min||''}"></label>
+   <label class="chk" style="flex:0 0 auto;align-self:flex-end"><input type="checkbox" data-o="s" data-f="liq.ab" ${l.ab?'checked':''}> noch nicht verrechnete Aufträge einrechnen</label></div>
+  ${liqSvg(W,min)}
+  ${kmpH()?W.map((x,i)=>`<details class="liqh"${i===0&&x.P.some(p=>p.ueb)?' open':''}><summary><span>KW ${kw(x.von)} <span class="mut">${dAT(x.von).slice(0,6)}–${dAT(x.bis).slice(0,6)}</span></span><b class="${x.end<min?'err':''}">${fmt(x.end)}</b></summary><div class="mut" style="font-size:13px">Anfang ${fmt(x.anf)} · Ein ${fmt(x.ein)} · Aus ${fmt(-x.aus)}</div>${x.P.map(liqP).join('')||'<div class="mut">keine Zahlungen</div>'}</details>`).join(''):`<div style="overflow-x:auto"><table class="liqt"><thead><tr><th>Woche</th><th class="n">Anfang</th><th class="n">Einnahmen</th><th class="n">Ausgaben</th><th class="n">Ende</th></tr></thead><tbody>
+  ${W.map((x,i)=>`<tr><td><details${i===0&&x.P.some(p=>p.ueb)?' open':''}><summary>KW ${kw(x.von)} <span class="mut">${dAT(x.von).slice(0,6)}–${dAT(x.bis).slice(0,6)}</span> <span class="mut">(${x.P.length})</span></summary>
+   ${x.P.map(liqP).join('')||'<div class="mut">keine Zahlungen</div>'}</details></td>
+   <td class="n">${fmt(x.anf)}</td><td class="n">${fmt(x.ein)}</td><td class="n">${fmt(-x.aus)}</td><td class="n ${x.end<min?'err':''}"><b>${fmt(x.end)}</b></td></tr>`).join('')}</tbody></table></div>`}
+  ${p66Hilfe(`Anfang: ${st.q} (${fmt(st.b)} €). Offene Rechnungen und Eingangsrechnungen nach Fälligkeit, Überfälliges in der ersten Woche; laufende Kosten laut Register ab heute (vergangene Termine gelten als bezahlt). Noch nicht verrechnete Aufträge: Restbetrag der Auftragsbestätigung zum Liefertermin (sonst in 30 Tagen) plus Zahlungsziel. UVA und Löhne nur, soweit sie im Kostenregister stehen.`)}</div>`}
+queueMicrotask(()=>Object.assign(ACT,{liqw:el=>{UI.liqW=+el.dataset.v;render()},
+  liqcsv:()=>{const{W}=liqPlan(+UI.liqW||8);csvDownload(`Liquiditaet_${isoD()}.csv`,['Woche','von','bis','Datum','Text','Betrag'],W.flatMap(x=>x.P.length?x.P.map(p=>['KW '+kw(x.von),x.von,x.bis,p.d,p.t,r2(p.betr)]):[['KW '+kw(x.von),x.von,x.bis,'','',0]]))}}));
+{const st=document.createElement('style');st.textContent=`.ok66{color:#107c10}.pnk tr.pnks td{border-top:1px solid var(--line)}
+.pnkf{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:12px}.pnkf>div{display:flex;flex-direction:column;min-width:180px}.pnkf b{font-size:17px}.pnkb{height:6px;border-radius:3px;background:rgba(127,127,127,.2);margin-top:4px;overflow:hidden}.pnkb i{display:block;height:100%;background:var(--ck1,#2563eb)}
+table.pnkt td,table.pnkt th,table.opa td,table.opa th{white-space:nowrap}.mahng{padding:8px 0;border-bottom:1px solid var(--line)}.mahng:last-child{border-bottom:0}.mahng table td{padding:3px 6px}
+.mahnd .adr .mi{text-align:right}.mahnd table.mahns{margin:4mm 0 4mm auto;min-width:80mm}.mahnd table.mahns td{padding:1mm 2mm}.mahnd table.mahns tr.g td{font-weight:700;border-top:1px solid #000}.mahnd p{margin:0 0 3mm}
+.p66d table.p{width:100%;border-collapse:collapse}.p66d table.p th,.p66d table.p td{padding:1.2mm 1.5mm;border-bottom:1px solid #ccc;text-align:left}.p66d table.p .n{text-align:right}.p66d table.p tfoot td{font-weight:700;border-top:1px solid #000}.p66d td.invz{min-width:28mm;border-bottom:1px solid #000}
+.p66d table.pnkt{width:100%;border-collapse:collapse;font-size:8.5pt}.p66d table.pnkt th,.p66d table.pnkt td{padding:1mm;border-bottom:1px solid #ccc}.p66d .n{text-align:right}
+input.invin{width:90px;text-align:right}.liqc{width:100%;height:140px;display:block;margin:8px 0 2px}.liqx{display:flex;font-size:11px;color:var(--mut,#666)}.liqx span{flex:1;text-align:center;overflow:hidden;white-space:nowrap}
+details.liqh{border-top:1px solid var(--line);padding:8px 0}details.liqh summary{display:flex;gap:8px;cursor:pointer}details.liqh summary b{margin-left:auto}details.liqh .liqp{padding-left:0}
+.liqt details summary{cursor:pointer;white-space:nowrap}.liqp{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:3px 0 3px 14px;font-size:13px}.liqp b{margin-left:auto}
+@media(max-width:760px){.invt .invlp{display:none}input.invin{width:72px}.pnkf>div{min-width:140px}}`;document.head.append(st)}
+/* Auswertungen mit Zeitraum (P66 Teil 5, erw.awZeit, Standard aus): eigene Seite V.auswertung (äußerster Wrapper) mit gemeinsamem Zeitraum UI.awP {a:'j'|'q'|'m'|'f',j,q,m,von,bis}
+   (awZCtl('') oben) und je Abschnitt einer Abweichung UI.awPs[sec] (awZCtl(sec), wird bei jeder Änderung oben verworfen); awZ(sec) → {von,bis,t,z}. Abschnitte aw6Sek() als details.akk.aw6
+   (Zustand wie akk() in erp-akk, Inhalt .aw6s mit fester Höhe je Bildschirm, Bildlauf darin, Tabellenkopf bleibt stehen). Tabellen table.awt[data-sid] (aw6T()): Summenzeile tr.sumz oben im Kopf,
+   Sortieren per Klick auf jede Spaltenüberschrift (UI.awSort[sid]={i,d}, awSortieren(), nach jedem render() erneut; Wert data-v bzw. Zahl/Datum aus dem Text). Grafiken P57 über ckFeld(Z,'aw'). */
+erwPlus({k:'awZeit',std:false,p:'Auswertungen (P66)',l:'Auswertungen mit Zeitraum, Sortierung und Summen oben',info:'Die Seite „Auswertungen“ bekommt oben einen Zeitraum für alle Abschnitte (Jahr, Quartal, Monat oder frei von–bis). Jeder Abschnitt lässt sich auf einen eigenen Zeitraum stellen; eine Änderung oben setzt alle wieder gleich. Summen stehen über den Tabellen, jede Spalte lässt sich per Klick auf die Überschrift sortieren, aufgeklappte Abschnitte haben eine feste Höhe und scrollen in sich.'});
+queueMicrotask(()=>{if(typeof EB_K==='object')EB_K.awZeit='ansicht'});
+UI.awP=UI.awP||{a:'j',j:isoD().slice(0,4)};UI.awPs=UI.awPs||{};UI.awSort=UI.awSort||{};
+const AWZ_A=[['j','Jahr'],['q','Quartal'],['m','Monat'],['f','frei']];
+const awLetzter=(j,m)=>addDays(`${m===12?+j+1:j}-${pad2(m===12?1:m+1)}-01`,-1);
+function awZ(sec){const p=(sec&&UI.awPs[sec])||UI.awP,h=isoD(),j=p.j||h.slice(0,4),m=+p.m||+h.slice(5,7),q=+p.q||Math.ceil(+h.slice(5,7)/3);
+  if(p.a==='q')return{von:`${j}-${pad2(q*3-2)}-01`,bis:awLetzter(j,q*3),t:`Q${q} ${j}`,z:'quartal'};
+  if(p.a==='m')return{von:`${j}-${pad2(m)}-01`,bis:awLetzter(j,m),t:`${MONATE[m-1]} ${j}`,z:'monat'};
+  if(p.a==='f'){const von=p.von||j+'-01-01',bis=p.bis&&p.bis>=von?p.bis:h>=von?h:von;return{von,bis,t:`${dAT(von)} – ${dAT(bis)}`,z:'frei'}}
+  return{von:j+'-01-01',bis:j+'-12-31',t:j,z:'jahr'}}
+const awJahre=()=>[...new Set([isoD().slice(0,4),...DB.belege.map(b=>b.datum.slice(0,4))])].sort().reverse();
+function awZCtl(sec){const p=(sec&&UI.awPs[sec])||UI.awP,h=isoD(),a=p.a||'j',at=`data-awz="${sec}"`;
+  return`<span class="awz"><span class="seg">${AWZ_A.map(([k,l])=>`<button class="${a===k?'on':''}" data-act="awza" data-s="${sec}" data-a="${k}">${l}</button>`).join('')}</span>
+  ${a!=='f'?`<select ${at} data-k="j" aria-label="Jahr">${awJahre().map(x=>opt(x,x,p.j||h.slice(0,4))).join('')}</select>`:''}
+  ${a==='q'?`<select ${at} data-k="q" aria-label="Quartal">${[1,2,3,4].map(x=>opt(String(x),'Q'+x,String(p.q||Math.ceil(+h.slice(5,7)/3)))).join('')}</select>`:''}
+  ${a==='m'?`<select ${at} data-k="m" aria-label="Monat">${MONATE.map((x,i)=>opt(String(i+1),x,String(p.m||+h.slice(5,7)))).join('')}</select>`:''}
+  ${a==='f'?(Z=>`<input type="date" ${at} data-k="von" value="${Z.von}" aria-label="von"><span>–</span><input type="date" ${at} data-k="bis" value="${Z.bis}" aria-label="bis">`)(awZ(sec)):''}
+  ${sec&&UI.awPs[sec]?`<button class="s" data-act="awzx" data-s="${sec}" title="Zeitraum wie oben">wie oben</button>`:''}</span>`}
+function awZSetzen(sec,f){if(sec){UI.awPs[sec]={...(UI.awPs[sec]||UI.awP)};f(UI.awPs[sec])}else{UI.awP={...UI.awP};f(UI.awP);UI.awPs={}}render()}
+document.addEventListener('change',e=>{const el=e.target;if(el?.dataset?.awz==null)return;e.stopImmediatePropagation();const k=el.dataset.k,v=el.value;
+  awZSetzen(el.dataset.awz,p=>{if(k==='von'||k==='bis'){const Z=awZ(el.dataset.awz);p.von=p.von||Z.von;p.bis=p.bis||Z.bis}p[k]=v})},true);
+// Tabelle: K=[{l,n}], R=fertige <tr>, S=Werte der Summenzeile (oben)
+const aw6T=(sid,K,R,S)=>`<table class="awt" data-sid="${sid}"><thead><tr>${K.map(k=>`<th class="${k.n?'n':''}">${k.l}</th>`).join('')}</tr>${S&&R.length?`<tr class="sumz">${S.map((x,i)=>`<td class="${K[i].n?'n':''}">${x??''}</td>`).join('')}</tr>`:''}</thead>
+  <tbody>${R.join('')||`<tr class="leer"><td colspan="${K.length}" class="mut">keine</td></tr>`}</tbody></table>`;
+function aw6Sek(id,titel,zus,inhalt,{zeit=true,kopf=''}={}){const z=akkZ(),k='aw6-'+id,auf=k in z?!!z[k]:false,Z=awZ(id),abw=!!UI.awPs[id];
+  return`<details class="akk aw6" data-akk="${k}" data-std="0" data-auf="${auf?1:0}"${auf?' open':''}><summary><span class="akt">${titel}</span>${zeit?`<span class="aw6t${abw?' abw':''}">${esc(Z.t)}</span>`:''}${zus?`<span class="akz">${zus}</span>`:''}</summary>
+  <div class="akb">${zeit||kopf?`<div class="aw6z">${zeit?awZCtl(id):''}${kopf}</div>`:''}<div class="aw6s">${inhalt}</div></div></details>`}
+const awIn=(d,Z)=>d>=Z.von&&d<=Z.bis;
+const aw6Anteil=(x,g)=>g?pct(x/g):'–';
+function aw6Ust(Z){const K=[];for(let d=Z.von.slice(0,7);d<=Z.bis.slice(0,7);d=(+d.slice(5)===12?`${+d.slice(0,4)+1}-01`:`${d.slice(0,4)}-${pad2(+d.slice(5)+1)}`))K.push(d);
+  const M=Object.fromEntries(K.map(k=>[k,{k,u:0,ust:{},vst:0,ein:0,aus:0}])),mk=d=>M[d.slice(0,7)],reV=DB.belege.filter(zaehltUmsatz);
+  for(const b of reV)if(awIn(b.datum,Z))mk(b.datum).u+=sgn(b)*summen(b).nettoEff;
+  for(const b of reV)for(const v of ustVerteilung(b)){if(!awIn(v.datum,Z))continue;const m=mk(v.datum);for(const t of summen(b).steuernEff){m.ust[t.code]=(m.ust[t.code]||0)+sgn(b)*t.betrag*v.f;m.ust['B'+t.code]=(m.ust['B'+t.code]||0)+sgn(b)*t.basis*v.f}}
+  for(const b of DB.belege)if(b.typ==='ER'&&b.fest&&!b.storno&&awIn(b.datum,Z))mk(b.datum).vst+=summen(b).steuer;
+  for(const b of DB.belege.filter(b=>T[b.typ].re&&b.fest))for(const z of b.zahlungen||[])if(awIn(z.datum,Z)){const m=mk(z.datum);if(T[b.typ].b==='V')m.ein+=sgn(b)*z.betrag;else m.aus+=z.betrag}
+  const L=Object.values(M),codes=S().steuer.map(s=>s.code).filter(c=>L.some(m=>m.ust[c]||m.ust['B'+c])),zl=m=>codes.reduce((s,c)=>s+(m.ust[c]||0),0)-m.vst,mj=K.length>12||K[0].slice(0,4)!==K[K.length-1].slice(0,4);
+  const Kp=[{l:'Monat'},{l:'Umsatz netto',n:1},...codes.flatMap(c=>[{l:'Bem.-Gr. '+esc(steuerDef(c).bez),n:1},{l:'USt '+esc(c),n:1}]),{l:'Vorsteuer',n:1},{l:'Zahllast',n:1},{l:'Einnahmen',n:1},{l:'Ausgaben',n:1}];
+  const R=L.filter(m=>UI.awAlle||m.u||m.vst||m.ein||m.aus||codes.some(c=>m.ust[c]||m.ust['B'+c])).map(m=>`<tr><td data-v="${m.k}">${MONATE[+m.k.slice(5)-1]}${mj?' '+m.k.slice(0,4):''}</td><td class="n">${fmt(m.u)}</td>${codes.map(c=>`<td class="n">${fmt(m.ust['B'+c])}</td><td class="n">${fmt(m.ust[c])}</td>`).join('')}<td class="n">${fmt(m.vst)}</td><td class="n">${fmt(zl(m))}</td><td class="n">${fmt(m.ein)}</td><td class="n">${fmt(m.aus)}</td></tr>`);
+  const Sm=['Summe',fmt(sum(L,m=>m.u)),...codes.flatMap(c=>[fmt(sum(L,m=>m.ust['B'+c]||0)),fmt(sum(L,m=>m.ust[c]||0))]),fmt(sum(L,m=>m.vst)),fmt(sum(L,zl)),fmt(sum(L,m=>m.ein)),fmt(sum(L,m=>m.aus))];
+  return{u:sum(L,m=>m.u),zl:sum(L,zl),h:`<div style="overflow-x:auto">${aw6T('ust',Kp,R,Sm)}</div>`}}
+function aw6Ku(Z){const G={};for(const b of DB.belege.filter(b=>zaehltUmsatz(b)&&awIn(b.datum,Z))){const g=G[b.kontaktId]??={k:b.kontaktId,n:0,u:0};g.n++;g.u+=sgn(b)*summen(b).nettoEff}
+  const L=Object.values(G).sort((a,b)=>b.u-a.u),t=sum(L,g=>g.u);
+  return{n:L.length,u:t,h:aw6T('ku',[{l:'Kunde'},{l:'Rechnungen',n:1},{l:'Umsatz netto',n:1},{l:'Anteil',n:1}],L.map(g=>`<tr class="click" onclick="nav('kontakt/${g.k}')"><td>${esc(kName(g.k))}</td><td class="n">${g.n}</td><td class="n">${fmt(g.u)}</td><td class="n">${aw6Anteil(g.u,t)}</td></tr>`),['Summe',sum(L,g=>g.n),fmt(t),t?'100,0 %':''])}}
+function aw6Art(Z){const A={};for(const b of DB.belege.filter(b=>zaehltUmsatz(b)&&awIn(b.datum,Z))){const s=sgn(b),sb=summen(b);for(const p of b.pos){if(isInfo(p)||effKz(p,sb.gi))continue;const a=p.artikelId&&artikel(p.artikelId),k=a?a.nr+' '+a.bez:p.bez,x=A[k]??={k,m:0,u:0,e:p.einheit};x.m+=s*(+p.menge||0);x.u+=s*posGP(p)}}
+  const L=Object.values(A).sort((a,b)=>b.u-a.u),t=sum(L,x=>x.u);
+  return{n:L.length,h:aw6T('art',[{l:'Artikel / Leistung'},{l:'Menge',n:1},{l:'Einheit'},{l:'Umsatz netto',n:1},{l:'Anteil',n:1}],L.map(x=>`<tr><td>${esc(x.k)}</td><td class="n">${fmtQ(x.m)}</td><td>${esc(x.e||'')}</td><td class="n">${fmt(x.u)}</td><td class="n">${aw6Anteil(x.u,t)}</td></tr>`),['Summe','','',fmt(t),t?'100,0 %':''])}}
+function aw6Sk(Z){const P=[];for(const b of DB.belege.filter(b=>T[b.typ].re&&b.fest))for(const z of b.zahlungen||[]){if(!+z.skonto||!awIn(z.datum,Z))continue;const s=summen(b),V_=T[b.typ].b==='V';P.push({b,z,V_,net:s.brutto?z.skonto*s.netto/s.brutto:z.skonto,frist:+b.skonto>0&&z.datum<=skontoBis(b)})}
+  const v=sum(P.filter(x=>x.V_),x=>x.z.skonto),e=sum(P.filter(x=>!x.V_),x=>x.z.skonto),h=isoD();
+  const verp=DB.belege.filter(b=>b.typ==='ER'&&b.fest&&!b.storno&&+b.skonto>0&&awIn(skontoBis(b),Z)&&Math.abs(offen(b))<=0.005&&!(b.zahlungen||[]).some(z=>+z.skonto)).map(b=>r2(summen(b).zahlbar*b.skonto/100));
+  return{v,e,h:`<div class="grid" style="margin-bottom:10px"><div class="kpi">Kundenskonto gewährt<b>${fmt(v)} €</b></div><div class="kpi">Lieferantenskonto erhalten<b>${fmt(e)} €</b></div><div class="kpi">Lieferantenskonto nicht genutzt<b class="${verp.length?'err':''}">${fmt(sum(verp,x=>x))} €</b><span class="mut">${verp.length} Rechnung(en)</span></div></div>
+  <div style="overflow-x:auto">${aw6T('sk',[{l:'Zahlung'},{l:'Beleg'},{l:'Partner'},{l:'Art'},{l:'Zahlbetrag',n:1},{l:'Skonto',n:1},{l:'netto',n:1},{l:'Frist'}],
+   P.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${dAT(x.z.datum)}</td><td>${esc(bNr(x.b))}</td><td>${esc(kName(x.b.kontaktId))}</td><td>${x.V_?'Kunde':'Lieferant'}</td><td class="n">${fmt(x.z.betrag)}</td><td class="n">${fmt(x.z.skonto)}</td><td class="n">${fmt(x.net)}</td><td>${x.frist?'bis '+dAT(skontoBis(x.b)):tag('außerhalb','err')}</td></tr>`),
+   ['Summe','','','',fmt(sum(P,x=>+x.z.betrag||0)),fmt(sum(P,x=>+x.z.skonto||0)),fmt(sum(P,x=>x.net)),''])}</div>`}}
+function aw6Op(Z){const h=isoD(),tab=V_=>{const L=DB.belege.filter(b=>T[b.typ].re&&b.fest&&T[b.typ].b===V_&&Math.abs(offen(b))>0.005&&b.datum<=Z.bis).sort((a,c)=>faellig(a).localeCompare(faellig(c)));
+    return{s:sum(L,offen),h:aw6T('op'+V_,[{l:'Beleg'},{l:V_==='V'?'Kunde':'Lieferant'},{l:'Datum'},{l:'fällig'},{l:'Tage überfällig',n:1},{l:'offen',n:1}],
+     L.map(b=>{const t=p66Tg(faellig(b),h);return`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${esc(bNr(b))}${b.fremdNr?' / '+esc(b.fremdNr):''}</td><td>${esc(kName(b.kontaktId))}</td><td>${dAT(b.datum)}</td><td class="${t>0?'err':''}">${dAT(faellig(b))}</td><td class="n">${t>0?t:''}</td><td class="n">${fmt(offen(b))}</td></tr>`}),
+     ['Summe','','','','',fmt(sum(L,offen))])}};const d=tab('V'),k=tab('E'),mv=erw('mahnung')?mahnVorschlag():[];
+  return{d:d.s,k:k.s,h:`<h3 class="aw6h">Kunden</h3><div style="overflow-x:auto">${d.h}</div><h3 class="aw6h">Lieferanten</h3><div style="overflow-x:auto">${k.h}</div>
+   ${erw('awOP')?`<h3 class="aw6h">Nach Alter</h3>${opAlterKarte(Z.bis,true).replace(/^<div class="card">/,'<div>')}`:''}`,mv}}
+{const w0=V.auswertung;V.auswertung=(...x)=>{if(!DB||!erw('awZeit'))return w0(...x);const Z=awZ(''),gr=erw('awGrafik');UI.jahr=Z.bis.slice(0,4); // Detail-Pop-ups der Grafiken (ckZAkt) zeigen das Jahr
+  const u=aw6Ust(awZ('ust')),ku=aw6Ku(awZ('ku')),ar=aw6Art(awZ('art')),sk=aw6Sk(awZ('sk')),op=aw6Op(awZ('op')),Zp=awZ('pnk'),L=pnkDaten(Zp);PNK_Z=Zp;
+  const an=DB.belege.filter(b=>b.typ==='AN'&&b.fest&&!b.storno&&b.status!=='ersetzt'&&awIn(b.datum,Z)),anA=an.filter(b=>b.status==='angenommen');
+  const kpi=`<div class="grid"><div class="kpi">Umsatz netto<b>${fmt(aw6Ust(Z).u)} €</b><span class="mut">${esc(Z.t)}</span></div><div class="kpi">DB II Aufträge<b>${fmt(sum(L,x=>x.ist.db2))} € ${dbTag(sum(L,x=>x.ist.db2)/sum(L,x=>x.ist.uN))}</b></div>
+   <div class="kpi">Angebote<b>${an.length} · ${fmt(sum(an,b=>summen(b).netto))} €</b><span class="mut">Trefferquote ${an.length?pct(anA.length/an.length):'–'}</span></div><div class="kpi">Lagerwert zum ${dAT(Z.bis>isoD()?isoD():Z.bis)}<b>${fmt(sum(DB.artikel.filter(a=>a.lager),a=>invBestand(a.id,Z.bis>isoD()?isoD():Z.bis).wert))} €</b></div></div>`;
+  return`<div class="bar aw6kopf"><h1 style="margin:0">Auswertungen</h1>${awZCtl('')}<span class="sp"></span>${erw('ckBericht')?ckBerKn():''}${gr?ckCfgKn():''}</div>
+  ${gr?awGrafik({...Z,fein:true}):kpi}
+  ${aw6Sek('ust','Umsatz &amp; USt',`${fmt(u.u)} € netto · Zahllast ${fmt(u.zl)} €`,u.h,{kopf:`<label class="chk" style="display:inline-flex;margin:0"><input type="checkbox" data-o="ui" data-f="awAlle" ${UI.awAlle?'checked':''}> alle Monate</label>`})}
+  ${aw6Sek('pnk',erw('awProjekt')?'Projekt-Nachkalkulation':'Aufträge',`${L.length} Aufträge · DB II ${fmt(sum(L,x=>x.ist.db2))} €`,`<div style="overflow-x:auto">${pnkTab(L)}</div>`,{kopf:`<span class="seg"><button class="${UI.pnkAlle?'':'on'}" data-act="pnkalle" data-v="">laufende</button><button class="${UI.pnkAlle?'on':''}" data-act="pnkalle" data-v="1">im Zeitraum</button></span><span class="sp"></span><button class="s" data-act="pnkdr">Drucken</button><button class="s" data-act="pnkcsv">CSV</button>`})}
+  ${aw6Sek('ku','Umsatz nach Kunde',`${ku.n} Kunden · ${fmt(ku.u)} €`,ku.h)}
+  ${aw6Sek('art','Umsatz nach Artikel / Leistung',`${ar.n} Positionen`,ar.h)}
+  ${aw6Sek('sk','Skonto',`gewährt ${fmt(sk.v)} € · erhalten ${fmt(sk.e)} €`,sk.h)}
+  ${aw6Sek('op','Offene Posten',`Kunden ${fmt(op.d)} € · Lieferanten ${fmt(op.k)} €`,op.h,{kopf:`<span class="mut">Rechnungen bis ${dAT(awZ('op').bis)}, offen heute</span><span class="sp"></span>${erw('mahnung')?`<button class="${op.mv.length?'p':''}" onclick="nav('mahnung')">Mahnungen${op.mv.length?` (${op.mv.length})`:''} …</button>`:''}`})}
+  ${erw('liquiditaet')?aw6Sek('liq','Liquiditätsvorschau','ab heute',liqKarte().replace(/^<div class="card liq">/,'<div class="liq">'),{zeit:false}):''}`}}
+// Grafiken im gewählten Zeitraum (Teil 5): Z.fein → ckSerie() je Tag (Monat bzw. bis 62 Tage), je Woche (bis 200 Tage) oder je Monat im Zeitraum; Überschriften mit Zeitraum
+function awFein(Z){const n=ckTage(Z.von,Z.bis)+1,B=[];
+  if(Z.z==='monat'||n<=62){for(let d=Z.von;d<=Z.bis;d=addDays(d,1)){const t=+d.slice(8);B.push({von:d,bis:d,l:t===1||t%5===0?String(t):'',t:dAT(d)})}return{B,e:'Tag'}}
+  if(n<=200){for(let d=Z.von;d<=Z.bis;){const wt=(new Date(d+'T12:00:00').getDay()+6)%7,e=addDays(d,6-wt),b=e<Z.bis?e:Z.bis;B.push({von:d,bis:b,l:'KW '+kw(d),t:`KW ${kw(d)}: ${dAT(d)} – ${dAT(b)}`});d=addDays(b,1)}return{B,e:'Woche'}}
+  for(let m=Z.von.slice(0,7);m<=Z.bis.slice(0,7);m=+m.slice(5)===12?`${+m.slice(0,4)+1}-01`:`${m.slice(0,4)}-${pad2(+m.slice(5)+1)}`){const v=m+'-01',b=awLetzter(m.slice(0,4),+m.slice(5));B.push({von:v<Z.von?Z.von:v,bis:b>Z.bis?Z.bis:b,...(Z.von.slice(0,4)<Z.bis.slice(0,4)&&m.slice(5)==='01'?{l:m.slice(0,4),w:1}:{l:ckML(m)}),t:`${MONATE[+m.slice(5)-1]} ${m.slice(0,4)}`})}return{B,e:'Monat'}}
+{const s0=ckSerie;ckSerie=function(c){if(!c.Z?.fein)return s0(c);const{W}=ckW(10),h=c.h,vj=d=>(+d.slice(0,4)-1)+d.slice(4).replace('-02-29','-02-28');
+  const su=(a,b)=>{const o=Object.fromEntries(CK_F.map(k=>[k,0]));for(const[d,x]of Object.entries(W))if(d>=a&&d<=b)for(const k of CK_F)o[k]+=x[k]||0;return o};
+  return awFein(c.Z).B.map(x=>({zuk:x.von>h,l:x.l,w:x.w,t:x.t,m:x.von.slice(0,7),v:su(x.von,x.bis),vj:su(vj(x.von),vj(x.bis)).u}))}}
+function awGrafik(Z){const e=awFein(Z).e;return ckFeld(Z,'aw').replace(/(Kosten und Umsatz|Verlauf) je Monat/g,`$1 je ${e}`).replace(/(<div class="ckk[^"]*"[^>]*><h3>)([^<]*)<\/h3>/g,(m,a,t)=>/^(Offene|Saldo|Laufende Kosten)/.test(t)?m:`${a}${t} <span class="ckzt">${esc(Z.t)}</span></h3>`)} // Stand heute bzw. je Monat: ohne Zeitraum
+{const l0=LIVE.ck;LIVE.ck=el=>{if(!DB||!erw('awZeit')||!/auswertung/.test(location.hash))return l0(el);const k=el.dataset.k,Z={...awZ(''),fein:true};
+  livePop(`${CK_T[k]||''} · ${esc(Z.t)}`,()=>`<div class="ck ckp${ckKl()}${ckLive()?' cklive':''}">${ckPop(k,Z).replace(/(Kosten und Umsatz|Verlauf) je Monat/g,`$1 je ${awFein(Z).e}`).replace(/<th>Monat<\/th>/g,`<th>${awFein(Z).e}</th>`)}</div>`,{breit:true});const b=document.querySelector('.modal.live .mbox');if(b)b.style.maxWidth='980px'}}
+// Sortieren
+const awWert=td=>{if(td.dataset.v!=null){const n=+td.dataset.v;return isNaN(n)||td.dataset.v===''?td.dataset.v:n}const t=td.innerText.trim(),d=t.match(/^(\d\d)\.(\d\d)\.(\d{4})/);if(d)return+(d[3]+d[2]+d[1]);
+  const c=t.replace(/[\s  €%h]/g,'').replace(/\(.*$/,'');if(/^[+-]?\d[\d.]*(,\d+)?$/.test(c))return+c.replace(/\./g,'').replace(',','.');return t.toLowerCase()};
+function awSortieren(tb){const s=UI.awSort[tb.dataset.sid],th=tb.tHead?.rows[0]?.cells;if(!th)return;[...th].forEach((c,i)=>{c.classList.toggle('so-a',!!s&&s.i===i&&s.d>0);c.classList.toggle('so-d',!!s&&s.i===i&&s.d<0)});
+  if(!s)return;const b=tb.tBodies[0],R=[...b.rows];if(R.some(r=>r.classList.contains('leer')))return;
+  R.map(r=>[awWert(r.cells[s.i]||r.cells[0]),r]).sort((x,y)=>{const a=x[0],c=y[0];const v=typeof a==='number'&&typeof c==='number'?a-c:typeof a==='number'?-1:typeof c==='number'?1:String(a).localeCompare(String(c),'de',{numeric:true});return v*s.d}).forEach(([,r])=>b.append(r))}
+document.addEventListener('click',e=>{const th=e.target.closest?.('table.awt>thead>tr:first-child>th');if(!th)return;const tb=th.closest('table'),i=th.cellIndex,s=UI.awSort[tb.dataset.sid];
+  const d0=th.classList.contains('n')?-1:1;UI.awSort[tb.dataset.sid]=s&&s.i===i?(s.d===d0?{i,d:-d0}:null):{i,d:d0}; /* Zahlen zuerst absteigend, Text aufsteigend; dritter Klick = ursprüngliche Reihenfolge */if(!UI.awSort[tb.dataset.sid])delete UI.awSort[tb.dataset.sid];if(!UI.awSort[tb.dataset.sid])render();else awSortieren(tb)},true);
+{const r0=render;render=function(...a){const x=r0.apply(this,a);try{document.querySelectorAll('#main table.awt[data-sid]').forEach(awSortieren)}catch(e){}return x}}
+queueMicrotask(()=>Object.assign(ACT,{awza:el=>awZSetzen(el.dataset.s,p=>{p.a=el.dataset.a;if(p.a==='f'){const Z=awZ(el.dataset.s);p.von=p.von||Z.von;p.bis=p.bis||Z.bis}}),awzx:el=>{delete UI.awPs[el.dataset.s];render()}}));
+{const st=document.createElement('style');st.textContent=`table.awt>thead>tr:first-child>th{cursor:pointer;user-select:none;white-space:nowrap}table.awt th.so-a::after{content:' ▲';font-size:9px}table.awt th.so-d::after{content:' ▼';font-size:9px}
+.ck .ckk h3 .ckzt{display:inline-block;max-width:100%;box-sizing:border-box;font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;padding:1px 7px;margin-left:6px;border-radius:9px;background:rgba(127,127,127,.18);white-space:nowrap}.ck .ckt .ckk h3 .ckzt{white-space:normal;margin-left:0}
+table.awt tr.sumz td{font-weight:700;background:rgba(127,127,127,.08);border-bottom:2px solid var(--line)}
+.aw6kopf{flex-wrap:wrap;gap:8px 12px}.awz{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}.awz select,.awz input{width:auto;min-width:0;margin:0}.awz .seg button{padding:5px 10px}
+details.aw6{background:var(--card);border:1px solid var(--line);border-radius:8px;margin:0 0 10px}details.aw6>summary{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:10px 14px;cursor:pointer;font-weight:600}
+details.aw6>summary .akz{font-weight:400;color:var(--mut,#666);margin-left:auto}.aw6t{font-weight:400;font-size:12px;padding:1px 8px;border-radius:10px;background:rgba(127,127,127,.12)}.aw6t.abw{background:#fff4ce;color:#835c00}
+details.aw6>.akb{padding:0 14px 12px}.aw6z{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:4px 0 10px}
+.aw6s{max-height:max(300px,calc(100vh - 230px));max-height:max(300px,calc(100dvh - 230px));overflow:auto;overscroll-behavior:contain}.aw6s table.awt>thead{position:sticky;top:0;z-index:2;background:var(--card)}.aw6s table.awt>thead th{background:var(--card)}
+.aw6s table.awt>thead tr.sumz td{background:var(--card);box-shadow:inset 0 0 0 999px rgba(127,127,127,.08)}.aw6h{font-size:14px;margin:12px 0 6px}.aw6h:first-child{margin-top:0}
+@media(max-width:760px){.aw6s{max-height:max(260px,calc(100dvh - 200px))}details.aw6>summary .akz{margin-left:0;width:100%}.aw6kopf h1{width:100%}}`;document.head.append(st)}
 start();
 </script>
 </body>

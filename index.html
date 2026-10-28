@@ -9537,17 +9537,19 @@ const SF67=[{h:'kontakte/K',n:'kontakte',ic:'👥',l:'Meine Kunden',kf:1},{h:'ko
   {h:'auftraege',ic:'🛠',l:'Aufträge'},{h:'lager',ic:'📦',l:'Lager'},{h:'protokolle',ic:'📋',l:'Protokolle'},{h:'lvs',ic:'📑',l:'Leistungs\u00adverzeichnisse'},{h:'projekte',ic:'📁',l:'Projekte'},{h:'zeiten',ic:'🕒',l:'Zeiterfassung'},{h:'berichte',ic:'👷',l:'Bautages\u00adberichte'}],
   SF67_PC=matchMedia('(min-width:761px) and (pointer:fine)'); // Menü nur am PC (Maus); Handy/iPad behalten die Kacheln
 const sf67Da=x=>{if(x.kf!=null&&!!x.kf!==erw('kFilter'))return false;const a=document.querySelector(`nav a[data-n="${x.n||x.h}"]`);return!!a&&!a.classList.contains('mweg')&&getComputedStyle(a).display!=='none'};
-const sf67Fuss=k=>`<div class="sff"><a class="sfu" href="#/artikel"><span>🗂</span><em>Stammdaten</em></a><a class="sfu" href="#/einstellungen"><span>⚙</span><em>Einstellungen</em></a>${SF67_PC.matches?`<a class="sfu sfr" href="javascript:void 0" data-act="sf67k"><span>${k?'▦':'⏱'}</span><em>${k?'Startseite':'Schnellfunktionen'}</em></a>`:''}</div>`;
+const sf67Fuss=k=>`<div class="sff"><a class="sfu" href="#/artikel"><span>🗂</span><em>Stammdaten</em></a><a class="sfu" href="#/einstellungen"><span>⚙</span><em>Einstellungen</em></a>${SF67_PC.matches&&!k?`<label class="sfu sfr sfhgw">Hintergrund <select onchange="sf67Hg(this.value)">${SF67_HG.map(([v,l])=>`<option value="${v}"${v===sf67HgW()?' selected':''}>${l}</option>`).join('')}</select></label>`:''}${SF67_PC.matches?`<a class="sfu${k?' sfr':''}" href="javascript:void 0" data-act="sf67k"><span>${k?'▦':'⏱'}</span><em>${k?'Startseite':'Schnellfunktionen'}</em></a>`:''}</div>`;
+const SF67_HG=[['','ohne'],['flaeche','Flächen'],['fluss','Farbverlauf (bewegt)'],['raster','Raster mit Lichtpunkt (bewegt)']],sf67HgW=()=>{const v=lsGet('erp-sfHg')||'';return SF67_HG.some(x=>x[0]===v)?v:''},sf67Hg=v=>{lsSet('erp-sfHg',v||null);render()}; // Hintergrund der Startseite je Gerät
 queueMicrotask(()=>Object.assign(ACT,{sf67k:()=>{UI.sf67K=!UI.sf67K;render()}}));
 {const s0=V.schnell;V.schnell=(...x)=>{if(DB&&erw('schnell')&&erw('sfPc')&&SF67_PC.matches&&!UI.sf67K&&!UI.sfBea){if(x[0])queueMicrotask(()=>sfLink(x[0]));
     queueMicrotask(()=>document.querySelectorAll('.sf67 a[data-i67]').forEach(e=>{if(!sf67Da(SF67[e.dataset.i67]))e.remove()})); // Seitenleiste ist erst nach render() fertig (Module, Schalter)
-    return`<div class="sf67w"><h1>Startseite</h1><div class="sfk sf67">${SF67.map((e,i)=>`<a class="sfb" href="#/${e.h}" data-i67="${i}"><span>${e.ic}</span><em class="sfx">${esc(e.l)}</em></a>`).join('')}</div>${sf67Fuss(0)}</div>`}
+    return`<div class="sf67w${sf67HgW()?' hg-'+sf67HgW():''}"><h1>Startseite</h1><div class="sfk sf67">${SF67.map((e,i)=>`<a class="sfb" href="#/${e.h}" data-i67="${i}"><span>${e.ic}</span><em class="sfx">${esc(e.l)}</em></a>`).join('')}</div>${sf67Fuss(0)}</div>`}
   const h=s0(...x);if(!DB||!erw('schnell')||!erw('sfPc'))return h;
   const t=document.createElement('template');t.innerHTML=h;const K=t.content.querySelector('.sfk');if(!K)return h;K.classList.add('sf67');
   for(const e of K.querySelectorAll('.sfb')){const w=document.createElement('em');w.className='sfx';[...e.childNodes].filter(n=>!(n.nodeName==='SPAN'&&n===e.firstElementChild)&&n.nodeName!=='INPUT').forEach(n=>w.append(n));e.append(w)}
   const f=UI.sfBea?'':sf67Fuss(1);
   return`<div class="sf67w">${t.innerHTML}${f}</div>`}}
-{const st=document.createElement('style');st.textContent=`.sfk.sf67 .sfx{display:contents;font-style:normal}.sff{display:none}
+{const st=document.createElement('style');st.textContent=`@property --hgx{syntax:'<percentage>';inherits:false;initial-value:20%}@property --hgy{syntax:'<percentage>';inherits:false;initial-value:30%}
+.sfk.sf67 .sfx{display:contents;font-style:normal}.sff{display:none}
 .sfk.sf67 .sfb{touch-action:manipulation;-webkit-tap-highlight-color:transparent}.sfk.sf67:not(.sfed) .sfb:active{transform:scale(.97);background:var(--acc2)}
 @media(pointer:coarse){.sfk.sf67{gap:14px}.sfk.sf67 .sfb{min-height:124px;padding:14px 10px;font-size:15px}.sfk.sf67 .sfb small{font-size:13px}.sf67w .sfbar button{min-width:44px;min-height:44px}}
 @media(pointer:coarse) and (min-width:761px){.sfk.sf67{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px}}
@@ -9561,7 +9563,15 @@ queueMicrotask(()=>Object.assign(ACT,{sf67k:()=>{UI.sf67K=!UI.sf67K;render()}}))
  .sfk.sf67 .sfhl{outline:0}.sfk.sf67 .sfhl .sfx{outline:3px solid #2f6fdf;outline-offset:2px}.sfk.sf67.sfed .sfb{border:0}.sfk.sf67.sfed .sfx{border:1px dashed var(--acc)}
  .sff{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:auto;padding-top:16px}
  .sfu{display:flex;align-items:center;gap:8px;color:inherit;text-decoration:none}.sfu span{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:var(--acc2);color:var(--acc);font-size:18px}
- .sfu em{font-style:normal;font-weight:600;font-size:13.5px;padding:6px 18px;background:var(--card);border:1px solid var(--line);border-radius:6px;white-space:nowrap}.sfu:hover em{border-color:var(--acc)}.sfu.sfr{margin-left:auto}.sfk.sf67 a.sfb{color:inherit;text-decoration:none}}`;document.head.append(st)}
+ .sfu em{font-style:normal;font-weight:600;font-size:13.5px;padding:6px 18px;background:var(--card);border:1px solid var(--line);border-radius:6px;white-space:nowrap}.sfu:hover em{border-color:var(--acc)}.sfu.sfr{margin-left:auto}.sfhgw{font-size:13px;color:var(--mut,#666)}.sfhgw select{width:auto!important;max-width:230px;font-size:13px}
+ .sf67w[class*=hg-]{position:relative;isolation:isolate;--hg1:#f5f7fb;--hg2:#e3e8f0}body.dunkel .sf67w[class*=hg-]{--hg1:#151a22;--hg2:#1e2530}.sf67w[class*=hg-]::before,.sf67w.hg-raster::after{content:'';position:absolute;inset:-20px -26px -60px;z-index:-1;pointer-events:none}
+ .sf67w.hg-flaeche::before{background:linear-gradient(115deg,transparent 0 57%,rgba(192,57,43,.13) 57% 57.6%,transparent 57.6%),linear-gradient(115deg,transparent 0 60%,rgba(47,111,223,.07) 60% 78%,transparent 78%),linear-gradient(65deg,rgba(30,45,75,.07) 0 22%,transparent 22%),linear-gradient(65deg,transparent 0 24%,rgba(192,57,43,.10) 24% 24.5%,transparent 24.5%),linear-gradient(150deg,rgba(30,45,75,.05) 0 30%,transparent 30%),linear-gradient(160deg,var(--hg1),var(--hg2))}
+ .sf67w.hg-fluss::before{background:radial-gradient(30% 40% at 25% 30%,rgba(47,111,223,.24),transparent 70%),radial-gradient(28% 38% at 75% 25%,rgba(192,57,43,.13),transparent 70%),radial-gradient(35% 45% at 55% 80%,rgba(20,150,130,.15),transparent 70%),linear-gradient(160deg,var(--hg1),var(--hg2));background-size:200% 200%,200% 200%,200% 200%,100% 100%;animation:sfhgF 36s ease-in-out infinite alternate}
+ @keyframes sfhgF{0%{background-position:0 0,100% 0,50% 100%,0 0}50%{background-position:60% 40%,30% 70%,0 30%,0 0}100%{background-position:100% 100%,0 100%,100% 0,0 0}}
+ .sf67w.hg-raster::before{background:repeating-linear-gradient(0deg,rgba(47,111,223,.10) 0 1px,transparent 1px 160px),repeating-linear-gradient(90deg,rgba(47,111,223,.10) 0 1px,transparent 1px 160px),repeating-linear-gradient(0deg,rgba(47,111,223,.05) 0 1px,transparent 1px 32px),repeating-linear-gradient(90deg,rgba(47,111,223,.05) 0 1px,transparent 1px 32px),linear-gradient(160deg,var(--hg1),var(--hg2))}
+ .sf67w.hg-raster::after{background:radial-gradient(circle 220px at var(--hgx,20%) var(--hgy,30%),rgba(47,111,223,.16),transparent 70%),radial-gradient(circle 5px at var(--hgx,20%) var(--hgy,30%),rgba(47,111,223,.55),transparent);animation:sfhgR 28s linear infinite}
+ @keyframes sfhgR{0%{--hgx:10%;--hgy:20%}25%{--hgx:80%;--hgy:30%}50%{--hgx:70%;--hgy:85%}75%{--hgx:25%;--hgy:70%}100%{--hgx:10%;--hgy:20%}}
+ @media(prefers-reduced-motion:reduce){.sf67w[class*=hg-]::before,.sf67w[class*=hg-]::after{animation:none}}.sfk.sf67 a.sfb{color:inherit;text-decoration:none}}`;document.head.append(st)}
 start();
 </script>
 </body>

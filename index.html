@@ -569,6 +569,8 @@ button.netz.off{color:#ffd27a}button.netz.off::before{background:#ff9f0a}
 button.netz.sync::before{background:#0a84ff;animation:netzp .8s infinite alternate}@keyframes netzp{to{opacity:.25}}
 nav button.netz{margin:0 12px 2px}
 @media(max-width:760px){.topbar button.netz{min-height:44px;justify-content:center}.topbar button.netz.on{font-size:0;gap:0;min-width:24px}.topbar button.netz .nzx{display:none}}
+/* Kopfleiste schmaler Handys (≤ 420 px, z. B. 390 px): mit Glocke, Suche, Zuletzt und Speicherleiste sonst zu breit – Seite ließ sich seitlich schieben (Prüfung 28.10.2026) */
+@media(max-width:420px){body.kompakt .topbar{gap:2px;padding-left:8px;padding-right:8px}body.kompakt .topbar>button,body.kompakt .topbar #sleiste button{min-width:40px!important;width:40px!important;padding-left:0!important;padding-right:0!important}}
 </style>
 </head>
 <body>
@@ -944,12 +946,19 @@ function frageSpeichern(){
   });
 }
 function cacheLaden(){try{const t=localStorage.getItem('erp-lite-cache');return t?JSON.parse(t):null}catch(e){return null}}
+// Browser-Kopie: localStorage (ca. 5 MB je Adresse); passt sie nicht hinein, in IndexedDB (kv 'cache') – sonst bliebe still ein alter Stand liegen (Prüfung 28.10.2026)
+let CACHE_IDB=false;
+function cacheSchreiben(txt){try{localStorage.setItem('erp-lite-cache',txt);if(CACHE_IDB){CACHE_IDB=false;kvSet('cache',null).catch(()=>{})}}
+  catch(e){lsSet('erp-lite-cache',null);CACHE_IDB=true;kvSet('cache',txt).catch(()=>{})}}
+async function cacheLadenA(){const c=cacheLaden();if(c)return c;try{const t=await kvGet('cache');return t?JSON.parse(t):null}catch(e){return null}}
 window.addEventListener('beforeunload',e=>{if(DIRTY||pending){e.preventDefault();e.returnValue=''}});
 
 /* ---------- Anmeldung Microsoft 365 (OAuth 2.0 Code-Flow mit PKCE, ohne Fremdbibliothek) ---------- */
 const SCOPES='openid profile offline_access User.Read Files.ReadWrite'+(lsGet('erp-odShareUrl')?' Files.ReadWrite.All':''); // freigegebener Ordner (P52 Etappe 4)
 const odCfg=()=>({clientId:CONFIG.clientId||lsGet('erp-cid')||'',tenant:CONFIG.tenantId||lsGet('erp-tid')||'organizations',ordner:CONFIG.ordner||'ERP-Lite'});
 const redirectUri=()=>location.origin+location.pathname.replace(/index\.html$/,'');
+// Testlink (raw.githack u. ä.): diese Adressen teilen sich alle Nutzer – Browser-Speicher wäre für fremde Seiten lesbar. Daher keine Anmeldung, kein Datenordner, nur Demo-Daten (Prüfung 28.10.2026)
+const TESTLINK=/(^|\.)(githack\.com|statically\.io)$|^htmlpreview\.github\.io$/i.test(location.hostname);
 const b64u=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const rnd=n=>b64u(crypto.getRandomValues(new Uint8Array(n)));
 const AUTH={
@@ -957,6 +966,7 @@ const AUTH={
   tok(){try{return JSON.parse(lsGet('erp-tok')||'null')}catch(e){return null}},
   setTok(t){lsSet('erp-tok',t?JSON.stringify(t):null)},
   async login(extra=''){
+    if(TESTLINK){alert('Testlink: Anmeldung gesperrt – bitte nur „Nur im Browser testen“ mit Demo-Daten verwenden.');return}
     const c=odCfg();if(!c.clientId){alert('Client-ID fehlt (siehe Anleitung).');return}
     if(!window.isSecureContext||!crypto.subtle){alert('Die Anmeldung funktioniert nur über https:// (oder localhost).');return}
     const verifier=rnd(48),challenge=b64u(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))),state=rnd(16);
@@ -1116,7 +1126,7 @@ async function saveNow(){
   try{
     do{
       saveAgain=false;txt=JSON.stringify(DB);
-      try{localStorage.setItem('erp-lite-cache',txt)}catch(e){}
+      cacheSchreiben(txt);
       if(OFFSTART){pending=true;kvSet('unsynced',{local:txt,base:STORE.lastText,ts:Date.now()}).catch(()=>{});saveState('Offline – wird abgeglichen, sobald Internet da ist',true);setTimeout(nachholen,0);return} // ohne Netz gestartet (P40): nie ohne eTag hochladen, erst abgleichen
       if(STORE.art==='cache'){pending=false;saveState('Nur Browser-Cache – keine Synchronisierung!',true);return}
       if(ZUNEU){kvSet('unsynced',{local:txt,base:STORE.lastText,ts:Date.now()}).catch(()=>{});saveState('Neuere Programmversion – bitte neu laden',true);zuNeuHinweis();return} // P38: nichts überschreiben, Änderungen bleiben im Browser
@@ -1412,6 +1422,8 @@ async function vorFest(){
 
 /* ---------- Start ---------- */
 async function start(){
+  if(TESTLINK){AUTH.setTok(null);lsSet('erp-tok-mail',null);lsSet('erp-modus',null);lsSet('erp-ki-key',null); // Reste früherer Anmeldungen auf der geteilten Adresse entfernen
+    const w=document.createElement('div');w.id='tlwarn';w.style.cssText='position:fixed;top:0;left:0;right:0;z-index:10000;background:#b91c1c;color:#fff;font:600 11px/1.6 system-ui,sans-serif;text-align:center;white-space:nowrap;overflow:hidden;padding-top:env(safe-area-inset-top);pointer-events:none;opacity:.92';w.textContent='TESTLINK – nur Demo-Daten, keine echten Daten';w.title='Diese Adresse teilen sich viele Nutzer: keine echten Daten eingeben oder importieren';document.body.append(w)}
   let neu=false;
   try{neu=await AUTH.redirectVerarbeiten()}catch(e){alert('Anmeldung: '+e.message)}
   if(neu)lsSet('erp-modus','od');
@@ -1432,7 +1444,7 @@ function swPruefen(){const an=!!DB&&STORE.art!=='cache'&&!!erw('appOffline');if(
   else navigator.serviceWorker.getRegistrations().then(L=>{for(const r of L)if(/\/sw\.js$/.test(r.active?.scriptURL||r.installing?.scriptURL||r.waiting?.scriptURL||''))r.unregister();if(window.caches)caches.keys().then(k=>k.filter(x=>x.startsWith('erp-app')).forEach(x=>caches.delete(x)))}).catch(()=>{})}
 async function offlineStart(){
   if(!appOffAn())return false;
-  const c=cacheLaden(),u=await kvGet('unsynced').catch(()=>null),d=c||(u?.local?JSON.parse(u.local):null);if(!d)return false;
+  const u=await kvGet('unsynced').catch(()=>null),d=u?.local?JSON.parse(u.local):await cacheLadenA();if(!d)return false; // nicht abgeglichene Änderungen sind immer der neueste Stand
   STORE=ODSTORE;STORE.etag=null;STORE.lastText=u?u.base:JSON.stringify(d);OFFSTART=true;NETZFEHL=true;pending=!!u;
   laden(d);saveState('Offline – Daten von diesem Gerät',true);return true}
 async function nachholen(){
@@ -1475,7 +1487,7 @@ async function odStart(){
   const txt=await STORE.load();
   let data=await startDaten(STORE,txt);
   if(data?.settings?.erw?.mfaPflicht&&!mfaOk()){mfaSperre();return}
-  if(!data){const c=cacheLaden();data=(c&&c.belege?.length&&confirm('Im OneDrive liegt noch keine Datenbank.\nDaten aus diesem Browser übernehmen?\n\n(Abbrechen = neue, leere Datenbank)'))?c:neueDB()}
+  if(!data){const c=await cacheLadenA();data=(c&&c.belege?.length&&confirm('Im OneDrive liegt noch keine Datenbank.\nDaten aus diesem Browser übernehmen?\n\n(Abbrechen = neue, leere Datenbank)'))?c:neueDB()}
   laden(data);
   const u=await kvGet('unsynced').catch(()=>null);
   if(u&&u.local){
@@ -1488,16 +1500,18 @@ async function startScreen(){
   const fs='showDirectoryPicker' in window,c=odCfg();
   let h=null;try{h=await kvGet('dir')}catch(e){}
   $('#start').innerHTML=`<div class="card"><h1><span class="logo-tbh">${logoSVG('#000')}</span>ERP-Lite</h1>
+  ${TESTLINK?`<p class="err" style="font-weight:600">Testlink: Anmeldung und Datenordner sind hier gesperrt. Diese Adresse teilen sich viele Nutzer – bitte nur „Nur im Browser testen“ mit Demo-Daten verwenden, nie echte Daten.</p><div class="bar"><button class="p" id="st-cache">Nur im Browser testen</button></div></div>`:`
   <h2>OneDrive (PC und Handy)</h2>
   <p>Anmeldung mit dem Microsoft-365-Konto des Unternehmens. Daten: <b>${esc(c.ordner)}/${FILE}</b> im OneDrive, tägliche Sicherung in <b>backup</b>.</p>
   ${CONFIG.clientId?'':`<div class="row"><label>Anwendungs-ID (Client)<input id="st-cid" value="${esc(lsGet('erp-cid')||'')}"></label><label>Verzeichnis-ID (Mandant)<input id="st-tid" value="${esc(lsGet('erp-tid')||'')}"></label></div>`}
   ${odShareFeld()}<div class="bar"><button class="p" id="st-od">Mit Microsoft anmelden</button></div>
   ${fs?`<h2 style="margin-top:18px">Lokaler Ordner (nur dieser PC)</h2><div class="bar">${h?`<button id="st-last">Ordner „${esc(h.name)}“ öffnen</button>`:''}<button id="st-pick">Datenordner wählen …</button></div>`:''}
-  <div class="bar" style="margin-top:18px"><button id="st-cache">Nur im Browser testen</button></div></div>`;
+  <div class="bar" style="margin-top:18px"><button id="st-cache">Nur im Browser testen</button></div></div>`}`;
+  if(TESTLINK){$('#st-cache').onclick=async()=>{STORE=CACHESTORE;laden(await cacheLadenA()||neueDB());saveNow()};return}
   $('#st-od').onclick=()=>{odShareMerk();if(!CONFIG.clientId){lsSet('erp-cid',$('#st-cid').value.trim());lsSet('erp-tid',$('#st-tid').value.trim())}AUTH.login()};
   if(h&&fs)$('#st-last').onclick=()=>verbinde(h);
   if(fs)$('#st-pick').onclick=async()=>{try{verbinde(await window.showDirectoryPicker({id:'erp-lite',mode:'readwrite'}))}catch(e){}};
-  $('#st-cache').onclick=()=>{STORE=CACHESTORE;lsSet('erp-modus',null);laden(cacheLaden()||neueDB());saveNow()};
+  $('#st-cache').onclick=async()=>{STORE=CACHESTORE;lsSet('erp-modus',null);laden(await cacheLadenA()||neueDB());saveNow()};
 }
 async function verbinde(h){
   try{
@@ -1506,7 +1520,7 @@ async function verbinde(h){
   DIRSTORE.h=h;let txt=null;
   try{txt=await DIRSTORE.load()}catch(e){alert('Datei '+FILE+' konnte nicht gelesen werden:\n'+e.message);return}
   let data;try{data=await startDaten(DIRSTORE,txt)}catch(e){alert('Datei '+FILE+' ist beschädigt:\n'+e.message);return}
-  if(!data){const c=cacheLaden();data=(c&&c.belege?.length&&confirm('Im Ordner liegt noch keine Datenbank.\nDaten aus dem Browser-Cache übernehmen?\n\n(Abbrechen = neue, leere Datenbank)'))?c:neueDB()}
+  if(!data){const c=await cacheLadenA();data=(c&&c.belege?.length&&confirm('Im Ordner liegt noch keine Datenbank.\nDaten aus dem Browser-Cache übernehmen?\n\n(Abbrechen = neue, leere Datenbank)'))?c:neueDB()}
   STORE=DIRSTORE;lsSet('erp-modus','dir');await kvSet('dir',h);laden(data);pending=true;await saveNow();
 }
 function laden(d){
@@ -5125,14 +5139,14 @@ function guv(S_){
 V.fibu=()=>{
   const fb=FB(),tab=UI.fbTab||'journal',J=journal(),z=fibuZeitraum(),jahre=[...new Set([String(new Date().getFullYear()),...J.map(e=>e.datum.slice(0,4))])].sort().reverse();
   const kSel=(id,v,cls='')=>`<select id="${id}" class="${cls}">${opt('','–',v)}${fb.konten.map(k=>opt(k.nr,k.nr+' '+k.bez,v)).join('')}</select>`;
-  const kLink=nr=>`<a href="javascript:void 0" data-act="fbkonto" data-k="${nr}">${nr}</a>`;
+  const kLink=nr=>`<a href="javascript:void 0" data-act="fbkonto" data-k="${esc(nr)}">${esc(nr)}</a>`;
   let body='';
   const filt=`<select data-o="ui" data-f="fbJahr">${jahre.map(x=>opt(x,x,UI.fbJahr||jahre[0])).join('')}</select><select data-o="ui" data-f="fbMon">${opt('','ganzes Jahr',UI.fbMon||'')}${['Q1','Q2','Q3','Q4'].map(q=>opt(q,q,UI.fbMon||'')).join('')}${Array.from({length:12},(_,i)=>opt(pad2(i+1),'Monat '+pad2(i+1),UI.fbMon||'')).join('')}</select>`;
   if(tab==='journal'){
     const L=J.filter(e=>e.datum>=z.von&&e.datum<=z.bis&&(!UI.fbKonto||e.soll===UI.fbKonto||e.haben===UI.fbKonto));
     let saldo=0;const kb=UI.fbKonto;
     if(kb){const v=salden(J,z.von,z.bis)[kb];saldo=v?r2(v.vortrag):0}
-    body=`<div class="bar">${filt}${kb?`<span>Kontoblatt <b>${kb} ${esc(kontoBez(kb))}</b></span><button class="s" data-act="fbkonto" data-k="">alle Konten</button>`:''}<span class="sp"></span><button data-act="fbexp">Journal exportieren (CSV)</button></div>
+    body=`<div class="bar">${filt}${kb?`<span>Kontoblatt <b>${esc(kb)} ${esc(kontoBez(kb))}</b></span><button class="s" data-act="fbkonto" data-k="">alle Konten</button>`:''}<span class="sp"></span><button data-act="fbexp">Journal exportieren (CSV)</button></div>
     ${kmpH()?(()=>{let sd=saldo; // am Handy (P30): Buchungen als Karten
       return`<div class="card kkl" style="padding:0">${kb?karte({t:'Vortrag',b:fmt(sd)}):''}${L.map(e=>{if(kb)sd=r2(sd+(e.soll===kb?e.betrag:-e.betrag));return karte({t:`${dAT(e.datum)} · ${e.ref&&e.auto?`<a href="#/beleg/${e.ref}">${esc(e.beleg)}</a>`:esc(e.beleg)}`,s:e.manuell?tag('manuell'):'',u:esc(e.text),z:`${kLink(e.soll)} an ${kLink(e.haben)}${kb?` · Saldo ${fmt(sd)}`:''}`,b:fmt(e.betrag)})}).join('')||'<p class="mut" style="margin:0;padding:10px 12px">Keine Buchungen im Zeitraum.</p>'}${karte({t:'Summe '+z.label,b:fmt(sum(L,e=>e.betrag))})}</div>`})():`<div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Datum</th><th>Beleg</th><th>Text</th><th>Soll</th><th>Haben</th><th class="n">Betrag</th>${kb?'<th class="n">Saldo</th>':''}</tr></thead><tbody>
     ${kb?`<tr><td></td><td></td><td class="mut">Vortrag</td><td></td><td></td><td></td><td class="n">${fmt(saldo)}</td></tr>`:''}
@@ -5147,12 +5161,12 @@ V.fibu=()=>{
       <button class="p" data-act="fbbuch">Buchen</button></div>
     ${fb.sperre?`<p class="mut">Gesperrt bis ${dAT(fb.sperre)}.</p>`:''}</div>
     <div class="card" style="padding:0"><table><thead><tr><th>Datum</th><th>Beleg</th><th>Text</th><th>Soll</th><th>Haben</th><th class="n">Betrag</th><th>Steuer</th><th></th></tr></thead><tbody>
-    ${[...fb.buchungen].reverse().slice(0,200).map(m=>`<tr style="${m.storno?'opacity:.5':''}"><td>${dAT(m.datum)}</td><td>${esc(m.beleg)}</td><td>${esc(m.text)}</td><td>${m.soll}</td><td>${m.haben}</td><td class="n">${fmt(m.betrag)}</td><td>${m.stArt?m.stArt+' '+fmtQ(m.satz)+' %':''}</td><td>${m.storno?tag('storniert','err'):`<button class="s d" data-act="fbstorno" data-id="${m.id}">Storno</button>`}</td></tr>`).join('')||'<tr><td colspan="8" class="mut">Keine manuellen Buchungen.</td></tr>'}</tbody></table></div>`;
+    ${[...fb.buchungen].reverse().slice(0,200).map(m=>`<tr style="${m.storno?'opacity:.5':''}"><td>${dAT(m.datum)}</td><td>${esc(m.beleg)}</td><td>${esc(m.text)}</td><td>${esc(m.soll)}</td><td>${esc(m.haben)}</td><td class="n">${fmt(m.betrag)}</td><td>${m.stArt?m.stArt+' '+fmtQ(m.satz)+' %':''}</td><td>${m.storno?tag('storniert','err'):`<button class="s d" data-act="fbstorno" data-id="${m.id}">Storno</button>`}</td></tr>`).join('')||'<tr><td colspan="8" class="mut">Keine manuellen Buchungen.</td></tr>'}</tbody></table></div>`;
   }
   if(tab==='salden'){
     const S_=salden(J,z.von,z.bis),nrs=Object.keys(S_).sort();
     body=`<div class="bar">${filt}</div><div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Konto</th><th>Bezeichnung</th><th class="n">Vortrag</th><th class="n">Soll</th><th class="n">Haben</th><th class="n">Saldo</th></tr></thead><tbody>
-    ${nrs.map(nr=>{const x=S_[nr];return`<tr class="click" data-act="fbkonto" data-k="${nr}"><td>${nr}</td><td>${esc(kontoBez(nr))}</td><td class="n">${x.vortrag?fmt(x.vortrag):''}</td><td class="n">${fmt(x.soll)}</td><td class="n">${fmt(x.haben)}</td><td class="n">${fmt(x.saldo)} ${x.saldo>=0?'S':'H'}</td></tr>`}).join('')}
+    ${nrs.map(nr=>{const x=S_[nr];return`<tr class="click" data-act="fbkonto" data-k="${esc(nr)}"><td>${esc(nr)}</td><td>${esc(kontoBez(nr))}</td><td class="n">${x.vortrag?fmt(x.vortrag):''}</td><td class="n">${fmt(x.soll)}</td><td class="n">${fmt(x.haben)}</td><td class="n">${fmt(x.saldo)} ${x.saldo>=0?'S':'H'}</td></tr>`}).join('')}
     </tbody><tfoot><tr><td colspan="3">Summen (Soll = Haben)</td><td class="n">${fmt(sum(nrs,n=>S_[n].soll))}</td><td class="n">${fmt(sum(nrs,n=>S_[n].haben))}</td><td></td></tr></tfoot></table></div>`;
   }
   if(tab==='uva'){
@@ -5161,10 +5175,10 @@ V.fibu=()=>{
     const ust=mv(M.ust),vst=-mv(M.vst);
     body=`<div class="bar">${filt}<span class="mut">Zeitraum ${dAT(z.von)} – ${dAT(z.bis)}</span></div>
     <div class="card"><table><thead><tr><th>Konto</th><th>UVA-Kennzahl</th><th class="n">Bemessungsgrundlage</th></tr></thead><tbody>
-    ${erl.map(k=>`<tr><td>${k.nr} ${esc(k.bez)}</td><td>${k.kz?'KZ '+esc(k.kz):'<span class="warnc">zuordnen</span>'}</td><td class="n">${fmt(mv(k.nr))}</td></tr>`).join('')||'<tr><td colspan="3" class="mut">Keine Erlöse im Zeitraum.</td></tr>'}
+    ${erl.map(k=>`<tr><td>${esc(k.nr)} ${esc(k.bez)}</td><td>${k.kz?'KZ '+esc(k.kz):'<span class="warnc">zuordnen</span>'}</td><td class="n">${fmt(mv(k.nr))}</td></tr>`).join('')||'<tr><td colspan="3" class="mut">Keine Erlöse im Zeitraum.</td></tr>'}
     <tr><td><b>Summe Entgelte</b></td><td>KZ 000 (prüfen)</td><td class="n"><b>${fmt(sum(erl,k=>mv(k.nr)))}</b></td></tr>
-    <tr><td>Umsatzsteuer (Konto ${M.ust})</td><td></td><td class="n">${fmt(ust)}</td></tr>
-    <tr><td>Vorsteuer (Konto ${M.vst})</td><td>KZ 060</td><td class="n">${fmt(vst)}</td></tr>
+    <tr><td>Umsatzsteuer (Konto ${esc(M.ust)})</td><td></td><td class="n">${fmt(ust)}</td></tr>
+    <tr><td>Vorsteuer (Konto ${esc(M.vst)})</td><td>KZ 060</td><td class="n">${fmt(vst)}</td></tr>
     <tr class="kt"><td><b>${ust-vst>=0?'Zahllast':'Gutschrift'}</b></td><td>KZ 095</td><td class="n"><b>${fmt(ust-vst)}</b></td></tr></tbody></table>
     <p class="mut" style="font-size:12px">Werte aus der Finanzbuchhaltung (Sollbesteuerung, für die GmbH zwingend). <b>Hilfswerte</b> – Kennzahlen und Sonderfälle (Reverse Charge, ig. Erwerbe, Eigenverbrauch) mit dem Steuerberater abstimmen. Nach Abgabe die Periode unter „Einstellungen“ sperren.</p></div>`;
   }

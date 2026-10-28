@@ -9533,6 +9533,44 @@ body.ml64f main{padding-right:max(72px,env(safe-area-inset-right,0px))}#sleiste 
 @media(max-width:760px){#mlt{left:12px;right:12px;width:auto;max-width:none;bottom:calc(12px + env(safe-area-inset-bottom,0px))}body.tl #mlt,body:has(.aktl) #mlt{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
  #mlp{left:0;right:0;bottom:0;top:auto;width:auto;max-width:none;max-height:75vh;border-radius:16px 16px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}#mlbg{position:fixed;inset:0;z-index:1140;background:rgba(0,0,0,.3)}
  .mle{padding:14px 16px}.mla{gap:10px 18px;font-size:15px}.mla a{padding:4px 0}}`;document.head.append(st)}
+/* Seitenleiste anpinnen (P68, erw.navPin, Standard aus, nur wo nav sticky ist – PC/iPad quer, nicht Handy/iPad-Menü): Nadel #nsk neben dem Logo; gelöst (je Gerät erp-navpin='0') → body.ns68z,
+   nav als schmale Leiste (--ns68w) nur mit Logo und ☰, nur ☰ klappt sie über den Inhalt auf (body.ns68o, margin-right negativ, Inhalt bleibt stehen); Maus verlässt das Menü, Klick daneben oder Esc klappt wieder zu */
+erwPlus({k:'navPin',std:false,p:'Seitenleiste anpinnen (P68)',l:'Seitenleiste ausblenden und anpinnen',info:'Am PC zeigt eine Nadel neben dem Logo, ob die linke Seitenleiste angepinnt ist. Ein Klick löst sie: Dann bleibt links nur eine schmale Leiste mit dem TBH-Logo, und der Inhalt bekommt die volle Breite. Ein Klick auf ☰ klappt das Menü über dem Inhalt auf; es schließt wieder, sobald die Maus es verlässt, mit einem Klick daneben oder mit Esc. Das Logo führt immer zur Startseite. Nadel erneut klicken = wieder fest angepinnt. Gemerkt je Gerät. Handy und iPad-Menü bleiben unverändert.'});
+queueMicrotask(()=>{if(typeof EB_K!=='undefined')EB_K.navPin='ansicht'});
+let NS_T=0;
+function nsAn(){try{return!!DB&&!!erw('navPin')}catch(e){return false}}
+function nsFest(){try{return localStorage.getItem('erp-navpin')!=='0'}catch(e){return true}}
+function nsAuf(x){clearTimeout(NS_T);document.body.classList.toggle('ns68o',!!x&&document.body.classList.contains('ns68z'));nsKn();if(typeof nbGriff==='function')nbGriff()}
+function nsKn(){const k=$('#nsk');if(!k)return;const z=document.body.classList.contains('ns68z'),o=document.body.classList.contains('ns68o');
+  k.textContent=z&&!o?'☰':'📌';k.classList.toggle('an',!z);k.title=z&&!o?'Menü einblenden':z?'Seitenleiste anpinnen':'Seitenleiste lösen (ausblenden)';k.setAttribute('aria-label',k.title)}
+function nsSetzen(){const b=document.body,N=$('nav');let k=$('#nsk');if(!N)return;
+  const ok=nsAn()&&b.classList.contains('loaded')&&getComputedStyle(N).position==='sticky'&&getComputedStyle(N).display!=='none';
+  if(!ok){k?.remove();b.classList.remove('ns68z','ns68o');return}
+  b.classList.toggle('ns68z',!nsFest());if(nsFest())b.classList.remove('ns68o');
+  if(!k){k=document.createElement('button');k.id='nsk';k.type='button';
+    k.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const z=b.classList.contains('ns68z');
+      if(z&&!b.classList.contains('ns68o')){nsAuf(1);return}
+      try{if(z)localStorage.removeItem('erp-navpin');else localStorage.setItem('erp-navpin','0')}catch(x){}
+      b.classList.toggle('ns68z',!z);nsAuf(0);if(typeof nbSetzen==='function')nbSetzen()})}
+  const l=N.querySelector('a.logo');if(l&&l.nextElementSibling!==k)l.after(k);nsKn()}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);nsSetzen();return x}}
+window.addEventListener('resize',()=>{if(document.body.classList.contains('loaded'))nsSetzen()});
+{const z=()=>document.body.classList.contains('ns68z'),offen=()=>document.body.classList.contains('ns68o');
+  document.addEventListener('pointerdown',e=>{if(z()&&offen()&&!e.target.closest?.('nav,#nferg,.mpop,.modal'))nsAuf(0)},true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&z()&&offen()&&!document.querySelector('.modal,.mpop')&&!e.target.closest?.('#nfq'))nsAuf(0)});
+  const bleibt=()=>!!document.querySelector('.mpop')||document.activeElement?.closest?.('nav')&&document.activeElement.matches('input,select,textarea'); // Menü/Suchfeld offen
+  document.addEventListener('mouseover',e=>{if(!z()||!offen())return;clearTimeout(NS_T);if(!e.target.closest?.('nav,#nferg,.mpop'))NS_T=setTimeout(()=>{if(!bleibt())nsAuf(0)},200)});
+  document.documentElement.addEventListener('mouseleave',()=>{clearTimeout(NS_T);if(z()&&offen()&&!bleibt())NS_T=setTimeout(()=>nsAuf(0),200)})}
+{const st=document.createElement('style');st.textContent=`:root{--ns68w:60px}
+#nsk{position:absolute;top:15px;right:8px;z-index:4;width:32px;height:32px;padding:0;display:flex;flex-shrink:0;align-items:center;justify-content:center;background:none;border:1px solid transparent;border-radius:4px;color:#c8d0de;font-size:16px;line-height:1;cursor:pointer;min-height:0!important;min-width:0!important;box-sizing:border-box}
+#nsk:hover{background:rgba(255,255,255,.1);color:#fff}#nsk:focus-visible{border-color:#4f8ff7;outline:0}#nsk.an{color:#fff}body.ns68o #nsk .i53{transform:rotate(45deg)}nav a.logo{padding-right:42px}
+body.ns68z nav{width:var(--ns68w)!important;overflow:hidden;transition:width .6s cubic-bezier(.4,0,.2,1),margin-right .6s cubic-bezier(.4,0,.2,1),box-shadow .6s}
+body.ns68z nav>*,body.ns68z #nfo>*{transition:opacity .4s .2s}body.ns68z #nbg{display:none}
+body.ns68z:not(.ns68o) nav>*:not(a.logo):not(#nfo):not(#nsk),body.ns68z:not(.ns68o) #nfo>*:not(a.logo):not(#nsk){opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s,visibility 0s .6s}
+body.ns68z:not(.ns68o) nav a.logo{padding:14px 0 6px;justify-content:center;font-size:0;gap:0}body.ns68z:not(.ns68o) nav a.logo .logo-tbh svg{width:calc(var(--ns68w) - 16px);height:auto}
+body.ns68z:not(.ns68o) #nsk{position:static;transform:none;margin:4px auto;width:40px;height:36px;font-size:18px;color:#cfd6e4}body.ns68z:not(.ns68o) #nfo{border:0}
+body.ns68z.ns68o nav{width:var(--navb,200px)!important;margin-right:calc(var(--ns68w) - var(--navb,200px));z-index:45;overflow:auto;box-shadow:6px 0 18px rgba(0,0,0,.35)}
+@media print{#nsk{display:none}}`;document.head.append(st)}
 /* Startseite am PC (P67, erw.sfPc, Standard aus): Kachelseite (Logo) am PC (Maus, ab 761 px) in zwei Spalten mit großem Symbol links und beschriftetem Knopf daneben, unten links „Stammdaten“ und „Einstellungen“ (wie Vorlage 28.10.2026). Handy/iPad behalten das Raster, nur größere Tippflächen, Rückmeldung beim Tippen. Wrapper (zuletzt) um V.schnell: Text der Kachel in .sfx (am Handy display:contents = wie bisher), Reihenfolge/eigene Kacheln (P59/P60) unverändert. */
 erwPlus({k:'sfPc',std:false,p:'Schnellfunktionen (P45)',l:'Startseite am PC in zwei Spalten',info:'Die Startseite (Tippen auf das Logo) zeigt am PC die Bereiche Kunden, Lieferanten, Verkauf, Einkauf, Aufträge, Lager, Protokolle, Leistungsverzeichnisse, Projekte usw. in zwei Spalten: großes Symbol links, beschrifteter Knopf daneben; unten links „Stammdaten“ (Artikel) und „Einstellungen“, rechts „Schnellfunktionen“ für die bisherigen Kacheln. Ausgeschaltete Module erscheinen nicht. Am Handy und iPad bleibt das Kachelraster, mit größeren Tippflächen und Rückmeldung beim Antippen. Wirkt nur mit „Schnellfunktionen und Direktlinks“.'});
 if(typeof EB_K==='object')EB_K.sfPc='app';

@@ -9531,12 +9531,21 @@ body.ml64f main{padding-right:max(72px,env(safe-area-inset-right,0px))}#sleiste 
  #mlp{left:0;right:0;bottom:0;top:auto;width:auto;max-width:none;max-height:75vh;border-radius:16px 16px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}#mlbg{position:fixed;inset:0;z-index:1140;background:rgba(0,0,0,.3)}
  .mle{padding:14px 16px}.mla{gap:10px 18px;font-size:15px}.mla a{padding:4px 0}}`;document.head.append(st)}
 /* Startseite am PC (P67, erw.sfPc, Standard aus): Kachelseite (Logo) am PC (Maus, ab 761 px) in zwei Spalten mit großem Symbol links und beschriftetem Knopf daneben, unten links „Stammdaten“ und „Einstellungen“ (wie Vorlage 28.10.2026). Handy/iPad behalten das Raster, nur größere Tippflächen, Rückmeldung beim Tippen. Wrapper (zuletzt) um V.schnell: Text der Kachel in .sfx (am Handy display:contents = wie bisher), Reihenfolge/eigene Kacheln (P59/P60) unverändert. */
-erwPlus({k:'sfPc',std:false,p:'Schnellfunktionen (P45)',l:'Startseite am PC in zwei Spalten',info:'Die Seite mit den Kacheln (Tippen auf das Logo) zeigt am PC die Funktionen in zwei Spalten: großes Symbol links, beschrifteter Knopf daneben; unten links „Stammdaten“ (Artikel) und „Einstellungen“. Am Handy und iPad bleibt das Kachelraster, mit größeren Tippflächen und Rückmeldung beim Antippen. Wirkt nur mit „Schnellfunktionen und Direktlinks“.'});
+erwPlus({k:'sfPc',std:false,p:'Schnellfunktionen (P45)',l:'Startseite am PC in zwei Spalten',info:'Die Startseite (Tippen auf das Logo) zeigt am PC die Bereiche Kunden, Lieferanten, Verkauf, Einkauf, Aufträge, Lager, Protokolle, Leistungsverzeichnisse, Projekte usw. in zwei Spalten: großes Symbol links, beschrifteter Knopf daneben; unten links „Stammdaten“ (Artikel) und „Einstellungen“, rechts „Schnellfunktionen“ für die bisherigen Kacheln. Ausgeschaltete Module erscheinen nicht. Am Handy und iPad bleibt das Kachelraster, mit größeren Tippflächen und Rückmeldung beim Antippen. Wirkt nur mit „Schnellfunktionen und Direktlinks“.'});
 if(typeof EB_K==='object')EB_K.sfPc='app';
-{const s0=V.schnell;V.schnell=(...x)=>{const h=s0(...x);if(!DB||!erw('schnell')||!erw('sfPc'))return h;
+const SF67=[{h:'kontakte/K',n:'kontakte',ic:'👥',l:'Meine Kunden',kf:1},{h:'kontakte/L',n:'kontakte',ic:'👥',l:'Meine Lieferanten',kf:1},{h:'kontakte',ic:'👥',l:'Kunden & Lieferanten',kf:0},{h:'belege/V',ic:'🧾',l:'Verkauf'},{h:'belege/E',ic:'🧮',l:'Einkauf'},
+  {h:'auftraege',ic:'🛠',l:'Aufträge'},{h:'lager',ic:'📦',l:'Lager'},{h:'protokolle',ic:'📋',l:'Protokolle'},{h:'lvs',ic:'📑',l:'Leistungs\u00adverzeichnisse'},{h:'projekte',ic:'📁',l:'Projekte'},{h:'zeiten',ic:'🕒',l:'Zeiterfassung'},{h:'berichte',ic:'👷',l:'Bautages\u00adberichte'}],
+  SF67_PC=matchMedia('(min-width:761px) and (pointer:fine)'); // Menü nur am PC (Maus); Handy/iPad behalten die Kacheln
+const sf67Da=x=>{if(x.kf!=null&&!!x.kf!==erw('kFilter'))return false;const a=document.querySelector(`nav a[data-n="${x.n||x.h}"]`);return!!a&&!a.classList.contains('mweg')&&getComputedStyle(a).display!=='none'};
+const sf67Fuss=k=>`<div class="sff"><a class="sfu" href="#/artikel"><span>🗂</span><em>Stammdaten</em></a><a class="sfu" href="#/einstellungen"><span>⚙</span><em>Einstellungen</em></a>${SF67_PC.matches?`<a class="sfu sfr" href="javascript:void 0" data-act="sf67k"><span>${k?'▦':'⏱'}</span><em>${k?'Startseite':'Schnellfunktionen'}</em></a>`:''}</div>`;
+queueMicrotask(()=>Object.assign(ACT,{sf67k:()=>{UI.sf67K=!UI.sf67K;render()}}));
+{const s0=V.schnell;V.schnell=(...x)=>{if(DB&&erw('schnell')&&erw('sfPc')&&SF67_PC.matches&&!UI.sf67K&&!UI.sfBea){if(x[0])queueMicrotask(()=>sfLink(x[0]));
+    queueMicrotask(()=>document.querySelectorAll('.sf67 a[data-i67]').forEach(e=>{if(!sf67Da(SF67[e.dataset.i67]))e.remove()})); // Seitenleiste ist erst nach render() fertig (Module, Schalter)
+    return`<div class="sf67w"><h1>Startseite</h1><div class="sfk sf67">${SF67.map((e,i)=>`<a class="sfb" href="#/${e.h}" data-i67="${i}"><span>${e.ic}</span><em class="sfx">${esc(e.l)}</em></a>`).join('')}</div>${sf67Fuss(0)}</div>`}
+  const h=s0(...x);if(!DB||!erw('schnell')||!erw('sfPc'))return h;
   const t=document.createElement('template');t.innerHTML=h;const K=t.content.querySelector('.sfk');if(!K)return h;K.classList.add('sf67');
   for(const e of K.querySelectorAll('.sfb')){const w=document.createElement('em');w.className='sfx';[...e.childNodes].filter(n=>!(n.nodeName==='SPAN'&&n===e.firstElementChild)&&n.nodeName!=='INPUT').forEach(n=>w.append(n));e.append(w)}
-  const f=UI.sfBea?'':'<div class="sff"><a class="sfu" href="#/artikel"><span>🗂</span><em>Stammdaten</em></a><a class="sfu" href="#/einstellungen"><span>⚙</span><em>Einstellungen</em></a></div>';
+  const f=UI.sfBea?'':sf67Fuss(1);
   return`<div class="sf67w">${t.innerHTML}${f}</div>`}}
 {const st=document.createElement('style');st.textContent=`.sfk.sf67 .sfx{display:contents;font-style:normal}.sff{display:none}
 .sfk.sf67 .sfb{touch-action:manipulation;-webkit-tap-highlight-color:transparent}.sfk.sf67:not(.sfed) .sfb:active{transform:scale(.97);background:var(--acc2)}
@@ -9552,7 +9561,7 @@ if(typeof EB_K==='object')EB_K.sfPc='app';
  .sfk.sf67 .sfhl{outline:0}.sfk.sf67 .sfhl .sfx{outline:3px solid #2f6fdf;outline-offset:2px}.sfk.sf67.sfed .sfb{border:0}.sfk.sf67.sfed .sfx{border:1px dashed var(--acc)}
  .sff{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:auto;padding-top:16px}
  .sfu{display:flex;align-items:center;gap:8px;color:inherit;text-decoration:none}.sfu span{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:var(--acc2);color:var(--acc);font-size:18px}
- .sfu em{font-style:normal;font-weight:600;font-size:13.5px;padding:6px 18px;background:var(--card);border:1px solid var(--line);border-radius:6px;white-space:nowrap}.sfu:hover em{border-color:var(--acc)}}`;document.head.append(st)}
+ .sfu em{font-style:normal;font-weight:600;font-size:13.5px;padding:6px 18px;background:var(--card);border:1px solid var(--line);border-radius:6px;white-space:nowrap}.sfu:hover em{border-color:var(--acc)}.sfu.sfr{margin-left:auto}.sfk.sf67 a.sfb{color:inherit;text-decoration:none}}`;document.head.append(st)}
 start();
 </script>
 </body>

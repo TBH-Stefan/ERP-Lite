@@ -8855,11 +8855,11 @@ function ckZeit(z,j){const h=isoD(),J=j||h.slice(0,4),m=+h.slice(5,7),q=Math.cei
   return{von:J+'-01-01',bis:h,t:J,z:'jahr'}}
 const ckVJ=Z=>{const v=d=>(+d.slice(0,4)-1)+d.slice(4).replace('-02-29','-02-28');return{von:v(Z.von),bis:v(Z.bis),t:'Vorjahr'}};
 const ckIn=(d,Z)=>!!d&&d>=Z.von&&d<=Z.bis;
-function ckW(){const W={},w=k=>W[k]??={u:0,mat:0,pj:0,pk:0,pr:0,lk:0,lo:0},h=isoD();let pf=false;
-  for(const b of DB.belege)if(zaehltUmsatz(b))w(b.datum.slice(0,7)).u+=sgn(b)*summen(b).nettoEff;
-  for(const e of journal()){const x=w(e.datum.slice(0,7));for(const[nr,g]of[[e.soll,1],[e.haben,-1]]){const c=String(nr||'')[0];if(c==='5')x.mat+=g*e.betrag;else if(c==='6'){x.pj+=g*e.betrag;pf=true}else if(c==='7')x.lk+=g*e.betrag}}
-  for(const z of DB.zeiten||[])if(z.datum)w(z.datum.slice(0,7)).pk+=(+z.stunden||0)*(+z.kosten||0);
-  for(const k of(DB.kosten||[]).filter(k=>k.aktiv!==false))for(const d of kTermine(k,h))if(d>=(k.buchenAb||'')&&!kGebucht(k,d)){const x=w(d.slice(0,7)),n=(+k.betrag||0)/(k.stArt?1+(+k.satz||0)/100:1);if(kKonto(k)[0]==='6')x.pr+=n;else x.lk+=n;x.lo+=n}
+function ckW(ks=7){const W={},w=k=>W[k]??={u:0,mat:0,pj:0,pk:0,pr:0,lk:0,lo:0},h=isoD();let pf=false;
+  for(const b of DB.belege)if(zaehltUmsatz(b))w(b.datum.slice(0,ks)).u+=sgn(b)*summen(b).nettoEff;
+  for(const e of journal()){const x=w(e.datum.slice(0,ks));for(const[nr,g]of[[e.soll,1],[e.haben,-1]]){const c=String(nr||'')[0];if(c==='5')x.mat+=g*e.betrag;else if(c==='6'){x.pj+=g*e.betrag;pf=true}else if(c==='7')x.lk+=g*e.betrag}}
+  for(const z of DB.zeiten||[])if(z.datum)w(z.datum.slice(0,ks)).pk+=(+z.stunden||0)*(+z.kosten||0);
+  for(const k of(DB.kosten||[]).filter(k=>k.aktiv!==false))for(const d of kTermine(k,h))if(d>=(k.buchenAb||'')&&!kGebucht(k,d)){const x=w(d.slice(0,ks)),n=(+k.betrag||0)/(k.stArt?1+(+k.satz||0)/100:1);if(kKonto(k)[0]==='6')x.pr+=n;else x.lk+=n;x.lo+=n}
   for(const x of Object.values(W)){x.pers=(pf?x.pj:x.pk)+x.pr;x.kost=x.mat+x.pers+x.lk;x.erg=x.u-x.kost}
   return{W,pf}}
 const CK_F=['u','mat','pers','lk','kost','erg','lo'];
@@ -9864,7 +9864,7 @@ function aw6Op(Z){const h=isoD(),tab=V_=>{const L=DB.belege.filter(b=>T[b.typ].r
   const kpi=`<div class="grid"><div class="kpi">Umsatz netto<b>${fmt(aw6Ust(Z).u)} €</b><span class="mut">${esc(Z.t)}</span></div><div class="kpi">DB II Aufträge<b>${fmt(sum(L,x=>x.ist.db2))} € ${dbTag(sum(L,x=>x.ist.db2)/sum(L,x=>x.ist.uN))}</b></div>
    <div class="kpi">Angebote<b>${an.length} · ${fmt(sum(an,b=>summen(b).netto))} €</b><span class="mut">Trefferquote ${an.length?pct(anA.length/an.length):'–'}</span></div><div class="kpi">Lagerwert zum ${dAT(Z.bis>isoD()?isoD():Z.bis)}<b>${fmt(sum(DB.artikel.filter(a=>a.lager),a=>invBestand(a.id,Z.bis>isoD()?isoD():Z.bis).wert))} €</b></div></div>`;
   return`<div class="bar aw6kopf"><h1 style="margin:0">Auswertungen</h1>${awZCtl('')}<span class="sp"></span>${erw('ckBericht')?ckBerKn():''}${gr?ckCfgKn():''}</div>
-  ${gr?ckFeld(Z,'aw'):kpi}
+  ${gr?awGrafik({...Z,fein:true}):kpi}
   ${aw6Sek('ust','Umsatz &amp; USt',`${fmt(u.u)} € netto · Zahllast ${fmt(u.zl)} €`,u.h,{kopf:`<label class="chk" style="display:inline-flex;margin:0"><input type="checkbox" data-o="ui" data-f="awAlle" ${UI.awAlle?'checked':''}> alle Monate</label>`})}
   ${aw6Sek('pnk',erw('awProjekt')?'Projekt-Nachkalkulation':'Aufträge',`${L.length} Aufträge · DB II ${fmt(sum(L,x=>x.ist.db2))} €`,`<div style="overflow-x:auto">${pnkTab(L)}</div>`,{kopf:`<span class="seg"><button class="${UI.pnkAlle?'':'on'}" data-act="pnkalle" data-v="">laufende</button><button class="${UI.pnkAlle?'on':''}" data-act="pnkalle" data-v="1">im Zeitraum</button></span><span class="sp"></span><button class="s" data-act="pnkdr">Drucken</button><button class="s" data-act="pnkcsv">CSV</button>`})}
   ${aw6Sek('ku','Umsatz nach Kunde',`${ku.n} Kunden · ${fmt(ku.u)} €`,ku.h)}
@@ -9872,6 +9872,17 @@ function aw6Op(Z){const h=isoD(),tab=V_=>{const L=DB.belege.filter(b=>T[b.typ].r
   ${aw6Sek('sk','Skonto',`gewährt ${fmt(sk.v)} € · erhalten ${fmt(sk.e)} €`,sk.h)}
   ${aw6Sek('op','Offene Posten',`Kunden ${fmt(op.d)} € · Lieferanten ${fmt(op.k)} €`,op.h,{kopf:`<span class="mut">Rechnungen bis ${dAT(awZ('op').bis)}, offen heute</span><span class="sp"></span>${erw('mahnung')?`<button class="${op.mv.length?'p':''}" onclick="nav('mahnung')">Mahnungen${op.mv.length?` (${op.mv.length})`:''} …</button>`:''}`})}
   ${erw('liquiditaet')?aw6Sek('liq','Liquiditätsvorschau','ab heute',liqKarte().replace(/^<div class="card liq">/,'<div class="liq">'),{zeit:false}):''}`}}
+// Grafiken im gewählten Zeitraum (Teil 5): Z.fein → ckSerie() je Tag (Monat bzw. bis 62 Tage), je Woche (bis 200 Tage) oder je Monat im Zeitraum; Überschriften mit Zeitraum
+function awFein(Z){const n=ckTage(Z.von,Z.bis)+1,B=[];
+  if(Z.z==='monat'||n<=62){for(let d=Z.von;d<=Z.bis;d=addDays(d,1)){const t=+d.slice(8);B.push({von:d,bis:d,l:t===1||t%5===0?String(t):'',t:dAT(d)})}return{B,e:'Tag'}}
+  if(n<=200){for(let d=Z.von;d<=Z.bis;){const wt=(new Date(d+'T12:00:00').getDay()+6)%7,e=addDays(d,6-wt),b=e<Z.bis?e:Z.bis;B.push({von:d,bis:b,l:'KW '+kw(d),t:`KW ${kw(d)}: ${dAT(d)} – ${dAT(b)}`});d=addDays(b,1)}return{B,e:'Woche'}}
+  for(let m=Z.von.slice(0,7);m<=Z.bis.slice(0,7);m=+m.slice(5)===12?`${+m.slice(0,4)+1}-01`:`${m.slice(0,4)}-${pad2(+m.slice(5)+1)}`){const v=m+'-01',b=awLetzter(m.slice(0,4),+m.slice(5));B.push({von:v<Z.von?Z.von:v,bis:b>Z.bis?Z.bis:b,l:ckML(m),t:`${MONATE[+m.slice(5)-1]} ${m.slice(0,4)}`})}return{B,e:'Monat'}}
+{const s0=ckSerie;ckSerie=function(c){if(!c.Z?.fein)return s0(c);const{W}=ckW(10),h=c.h,vj=d=>(+d.slice(0,4)-1)+d.slice(4).replace('-02-29','-02-28');
+  const su=(a,b)=>{const o=Object.fromEntries(CK_F.map(k=>[k,0]));for(const[d,x]of Object.entries(W))if(d>=a&&d<=b)for(const k of CK_F)o[k]+=x[k]||0;return o};
+  return awFein(c.Z).B.map(x=>({zuk:x.von>h,l:x.l,t:x.t,m:x.von.slice(0,7),v:su(x.von,x.bis),vj:su(vj(x.von),vj(x.bis)).u}))}}
+function awGrafik(Z){const e=awFein(Z).e;return ckFeld(Z,'aw').replace(/(Kosten und Umsatz|Verlauf) je Monat/g,`$1 je ${e}`).replace(/(<div class="ckk[^"]*"[^>]*><h3>)([^<]*)<\/h3>/g,(m,a,t)=>/^(Offene|Saldo|Laufende Kosten)/.test(t)?m:`${a}${t} <span class="ckzt">${esc(Z.t)}</span></h3>`)} // Stand heute bzw. je Monat: ohne Zeitraum
+{const l0=LIVE.ck;LIVE.ck=el=>{if(!DB||!erw('awZeit')||!/auswertung/.test(location.hash))return l0(el);const k=el.dataset.k,Z={...awZ(''),fein:true};
+  livePop(`${CK_T[k]||''} · ${esc(Z.t)}`,()=>`<div class="ck ckp${ckKl()}${ckLive()?' cklive':''}">${ckPop(k,Z).replace(/(Kosten und Umsatz|Verlauf) je Monat/g,`$1 je ${awFein(Z).e}`).replace(/<th>Monat<\/th>/g,`<th>${awFein(Z).e}</th>`)}</div>`,{breit:true});const b=document.querySelector('.modal.live .mbox');if(b)b.style.maxWidth='980px'}}
 // Sortieren
 const awWert=td=>{if(td.dataset.v!=null){const n=+td.dataset.v;return isNaN(n)||td.dataset.v===''?td.dataset.v:n}const t=td.innerText.trim(),d=t.match(/^(\d\d)\.(\d\d)\.(\d{4})/);if(d)return+(d[3]+d[2]+d[1]);
   const c=t.replace(/[\s  €%h]/g,'').replace(/\(.*$/,'');if(/^[+-]?\d[\d.]*(,\d+)?$/.test(c))return+c.replace(/\./g,'').replace(',','.');return t.toLowerCase()};
@@ -9883,6 +9894,7 @@ document.addEventListener('click',e=>{const th=e.target.closest?.('table.awt>the
 {const r0=render;render=function(...a){const x=r0.apply(this,a);try{document.querySelectorAll('#main table.awt[data-sid]').forEach(awSortieren)}catch(e){}return x}}
 queueMicrotask(()=>Object.assign(ACT,{awza:el=>awZSetzen(el.dataset.s,p=>{p.a=el.dataset.a;if(p.a==='f'){const Z=awZ(el.dataset.s);p.von=p.von||Z.von;p.bis=p.bis||Z.bis}}),awzx:el=>{delete UI.awPs[el.dataset.s];render()}}));
 {const st=document.createElement('style');st.textContent=`table.awt>thead>tr:first-child>th{cursor:pointer;user-select:none;white-space:nowrap}table.awt th.so-a::after{content:' ▲';font-size:9px}table.awt th.so-d::after{content:' ▼';font-size:9px}
+.ck .ckk h3 .ckzt{font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;padding:1px 7px;margin-left:6px;border-radius:9px;background:rgba(127,127,127,.18);white-space:nowrap}
 table.awt tr.sumz td{font-weight:700;background:rgba(127,127,127,.08);border-bottom:2px solid var(--line)}
 .aw6kopf{flex-wrap:wrap;gap:8px 12px}.awz{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}.awz select,.awz input{width:auto;min-width:0;margin:0}.awz .seg button{padding:5px 10px}
 details.aw6{background:var(--card);border:1px solid var(--line);border-radius:8px;margin:0 0 10px}details.aw6>summary{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:10px 14px;cursor:pointer;font-weight:600}

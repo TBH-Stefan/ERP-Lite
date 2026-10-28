@@ -9590,18 +9590,19 @@ function pnkKarte(x){if(!x)return'';const{s,ist}=x,mz=!!S().mgz,v=!!x.vb;
 {const a0=V.auftrag;V.auftrag=aid=>{const h=a0(aid);if(!DB||!erw('awProjekt'))return h;
   const i=h.indexOf('<div class="card"><h2>Vor- / Nachkalkulation</h2>'),e=h.lastIndexOf('\n  </div></div>');
   return i<0||e<i?h+pnkKarte(pnk(aid)):h.slice(0,i)+pnkKarte(pnk(aid))+h.slice(e)}}
-function pnkDaten(){const j=UI.jahr,alle=!!UI.pnkAlle;
-  return auftragsListe().map(a=>pnk(a.id)).filter(x=>x&&(x.vb||x.ist.uN||x.ist.hk)&&(alle?x.docs.some(d=>d.fest&&d.datum.startsWith(j)):!x.fertig&&x.docs.some(d=>d.typ==='AB'&&d.fest&&!d.storno)))} // laufend = abgeschlossene AB, noch keine Schlussrechnung
+let PNK_Z=null; // Zeitraum der zuletzt gezeigten Liste (Teil 5) für Drucken/CSV
+function pnkDaten(Z=PNK_Z){const j=UI.jahr,alle=!!UI.pnkAlle,im=d=>Z?d.datum>=Z.von&&d.datum<=Z.bis:d.datum.startsWith(j);
+  return auftragsListe().map(a=>pnk(a.id)).filter(x=>x&&(x.vb||x.ist.uN||x.ist.hk)&&(alle?x.docs.some(d=>d.fest&&im(d)):!x.fertig&&x.docs.some(d=>d.typ==='AB'&&d.fest&&!d.storno)))} // laufend = abgeschlossene AB, noch keine Schlussrechnung
 const PNK_SP=[['Auftrag',x=>`${bNr(x.root)} ${x.root.betreff||''}`],['Kunde',x=>kName(x.root.kontaktId)],['Umsatz Soll',x=>x.vb?x.s.uS:''],['Umsatz Ist',x=>x.ist.uN],['DB I Ist',x=>x.ist.db1],
   ['DB II Soll',x=>x.vb?x.s.db2:''],['DB II Ist',x=>x.ist.db2],['DB II % Ist',x=>isFinite(x.ist.db2p)?r2(x.ist.db2p*100):''],['Std. Soll',x=>r2(x.s.std)],['Std. Ist',x=>r2(x.ist.std)],['Fertig %',x=>x.f!=null?Math.round(x.f*100):''],['DB II Prognose',x=>x.prog?x.prog.db2:'']];
 function pnkTab(L,druck){const S_=k=>sum(L,x=>x[k[0]][k[1]]);
-  return`<table class="pnkt"><thead><tr><th>Auftrag</th><th>Kunde</th>${druck?'':'<th>Status</th>'}<th class="n">Umsatz Soll</th><th class="n">Umsatz Ist</th><th class="n">DB I</th><th class="n">DB II</th><th class="n">DB II %</th><th class="n">Std. Soll / Ist</th><th class="n">Fertig</th><th class="n">DB II Prognose</th></tr></thead><tbody>
+  return`<table class="pnkt awt" data-sid="pnk"><thead><tr><th>Auftrag</th><th>Kunde</th>${druck?'':'<th>Status</th>'}<th class="n">Umsatz Soll</th><th class="n">Umsatz Ist</th><th class="n">DB I</th><th class="n">DB II</th><th class="n">DB II %</th><th class="n">Std. Soll / Ist</th><th class="n">Fertig</th><th class="n">DB II Prognose</th></tr>${L.length?`<tr class="sumz"><td>Summe</td><td></td>${druck?'':'<td></td>'}<td class="n">${fmt(sum(L,x=>x.vb?x.s.uS:0))}</td><td class="n">${fmt(S_(['ist','uN']))}</td><td class="n">${fmt(S_(['ist','db1']))}</td><td class="n">${fmt(S_(['ist','db2']))}</td><td class="n">${dbTag(S_(['ist','db2'])/S_(['ist','uN']))}</td><td class="n">${fmtQ(r2(S_(['s','std'])))} / ${fmtQ(r2(S_(['ist','std'])))}</td><td></td><td class="n">${fmt(sum(L,x=>x.prog?x.prog.db2:0))}</td></tr>`:''}</thead><tbody>
   ${L.map(x=>`<tr${druck?'':` class="click" onclick="nav('auftrag/${x.aid}')"`}><td>${esc(bNr(x.root))} ${esc(x.root.betreff||'')}</td><td>${esc(kName(x.root.kontaktId))}</td>${druck?'':`<td>${phase(x.docs)}</td>`}
    <td class="n">${x.vb?fmt(x.s.uS):'–'}</td><td class="n">${fmt(x.ist.uN)}</td><td class="n">${fmt(x.ist.db1)}</td><td class="n">${fmt(x.ist.db2)}</td><td class="n">${dbTag(x.ist.db2p)}</td>
-   <td class="n ${x.s.std&&x.ist.std>x.s.std?'err':''}">${fmtQ(r2(x.s.std))} / ${fmtQ(r2(x.ist.std))}</td><td class="n">${x.f!=null?pct(x.f):'–'}</td><td class="n">${x.prog?fmt(x.prog.db2)+' '+dbTag(x.prog.db2p):x.fertig?'<span class="mut">fertig</span>':'–'}</td></tr>`).join('')||`<tr><td colspan="11" class="mut">keine</td></tr>`}</tbody>
-  ${L.length?`<tfoot><tr><td>Summe</td><td></td>${druck?'':'<td></td>'}<td class="n">${fmt(sum(L,x=>x.vb?x.s.uS:0))}</td><td class="n">${fmt(S_(['ist','uN']))}</td><td class="n">${fmt(S_(['ist','db1']))}</td><td class="n">${fmt(S_(['ist','db2']))}</td><td class="n">${dbTag(S_(['ist','db2'])/S_(['ist','uN']))}</td><td class="n">${fmtQ(r2(S_(['s','std'])))} / ${fmtQ(r2(S_(['ist','std'])))}</td><td></td><td class="n">${fmt(sum(L,x=>x.prog?x.prog.db2:0))}</td></tr></tfoot>`:''}</table>`}
-function pnkListe(){const L=pnkDaten();
-  return`<div class="card" style="padding:0"><div class="bar" style="padding:10px 12px;margin:0;flex-wrap:wrap">${kmp()?'':'<h2 style="margin:0">Projekt-Nachkalkulation</h2>'}<span class="seg"><button class="${UI.pnkAlle?'':'on'}" data-act="pnkalle" data-v="">laufende</button><button class="${UI.pnkAlle?'on':''}" data-act="pnkalle" data-v="1">alle ${UI.jahr}</button></span><span class="sp"></span>
+   <td class="n ${x.s.std&&x.ist.std>x.s.std?'err':''}" data-v="${r2(x.ist.std)}">${fmtQ(r2(x.s.std))} / ${fmtQ(r2(x.ist.std))}</td><td class="n">${x.f!=null?pct(x.f):'–'}</td><td class="n">${x.prog?fmt(x.prog.db2)+' '+dbTag(x.prog.db2p):x.fertig?'<span class="mut">fertig</span>':'–'}</td></tr>`).join('')||`<tr><td colspan="11" class="mut">keine</td></tr>`}</tbody>
+  </table>`}
+function pnkListe(Z){PNK_Z=Z||null;const L=pnkDaten();
+  return`<div class="card" style="padding:0"><div class="bar" style="padding:10px 12px;margin:0;flex-wrap:wrap">${kmp()?'':'<h2 style="margin:0">Projekt-Nachkalkulation</h2>'}<span class="seg"><button class="${UI.pnkAlle?'':'on'}" data-act="pnkalle" data-v="">laufende</button><button class="${UI.pnkAlle?'on':''}" data-act="pnkalle" data-v="1">alle ${Z?'im Zeitraum':UI.jahr}</button></span><span class="sp"></span>
   <button class="s" data-act="pnkdr">Drucken</button><button class="s" data-act="pnkcsv">CSV</button></div><div style="overflow-x:auto">${pnkTab(L)}</div></div>`}
 {const w0=V.auswertung;V.auswertung=(...a)=>{let h=w0(...a);if(!DB)return h;const add=[];
   if(erw('awProjekt')){const re=/<div class="card" style="padding:0"><table><thead><tr><th>Auftrag \d{4}<\/th>[\s\S]*?<\/table><\/div>/;if(re.test(h))h=h.replace(re,()=>pnkListe());else add.push(akk('aw-pnk','Projekt-Nachkalkulation',pnkListe(),{offen:true}))}
@@ -9611,21 +9612,21 @@ function pnkListe(){const L=pnkDaten();
 
 /* ---------- Teil 2: Offene Posten nach Alter, Mahnwesen ---------- */
 const OPA_K=[['nf','nicht fällig'],['b1','1–30'],['b2','31–60'],['b3','61–90'],['b4','über 90']];
-function opAlter(V_){const h=isoD(),G={};
-  const L=DB.belege.filter(b=>T[b.typ].re&&b.fest&&T[b.typ].b===V_&&offen(b)>0.005);
+function opAlter(V_,bis){const h=isoD(),G={};
+  const L=DB.belege.filter(b=>T[b.typ].re&&b.fest&&T[b.typ].b===V_&&offen(b)>0.005&&(!bis||b.datum<=bis));
   for(const b of L){const t=p66Tg(faellig(b),h),k=t<=0?'nf':t<=30?'b1':t<=60?'b2':t<=90?'b3':'b4',g=G[b.kontaktId]??={k:b.kontaktId,nf:0,b1:0,b2:0,b3:0,b4:0,s:0,n:0,st:-1};
     g[k]+=offen(b);g.s+=offen(b);g.n++;g.st=Math.max(g.st,mahnSt(b))}
   if(V_==='V'){const ab=addDays(h,-365);for(const b of DB.belege.filter(b=>RE_V.includes(b.typ)&&b.typ!=='GS'&&b.fest&&!b.storno&&b.datum>=ab&&Math.abs(offen(b))<=0.005&&(b.zahlungen||[]).length)){
     const g=G[b.kontaktId]??={k:b.kontaktId,nf:0,b1:0,b2:0,b3:0,b4:0,s:0,n:0,st:-1},d=(b.zahlungen||[]).map(z=>z.datum).sort().pop();g.zt=(g.zt||0)+p66Tg(b.datum,d);g.zv=(g.zv||0)+Math.max(0,p66Tg(faellig(b),d));g.zn=(g.zn||0)+1}}
   return Object.values(G).sort((a,b)=>b.s-a.s)}
-function opAlterTab(V_){const G=opAlter(V_),O=G.filter(g=>g.s>0.005),mz=V_==='V'&&erw('mahnung');
-  return`<div style="overflow-x:auto"><table class="opa"><thead><tr><th>${V_==='V'?'Kunde':'Lieferant'}</th>${OPA_K.map(([,l])=>`<th class="n">${l}</th>`).join('')}<th class="n">Summe</th>${V_==='V'?'<th class="n">Ø Tage bis Zahlung</th>':''}${mz?'<th>Mahnstufe</th>':''}</tr></thead><tbody>
-  ${O.map(g=>`<tr class="click" onclick="nav('kontakt/${g.k}')"><td>${esc(kName(g.k))} <span class="mut">(${g.n})</span></td>${OPA_K.map(([k],i)=>`<td class="n ${i>=2&&g[k]>0.005?'err':''}">${g[k]>0.005?fmt(g[k]):''}</td>`).join('')}<td class="n"><b>${fmt(g.s)}</b></td>
+function opAlterTab(V_,bis){const G=opAlter(V_,bis),O=G.filter(g=>g.s>0.005),mz=V_==='V'&&erw('mahnung');
+  return`<div style="overflow-x:auto"><table class="opa awt" data-sid="opa${V_}"><thead><tr><th>${V_==='V'?'Kunde':'Lieferant'}</th>${OPA_K.map(([,l])=>`<th class="n">${l}</th>`).join('')}<th class="n">Summe</th>${V_==='V'?'<th class="n">Ø Tage bis Zahlung</th>':''}${mz?'<th>Mahnstufe</th>':''}</tr>${O.length?`<tr class="sumz"><td>Summe</td>${OPA_K.map(([k])=>`<td class="n">${fmt(sum(O,g=>g[k]))}</td>`).join('')}<td class="n">${fmt(sum(O,g=>g.s))}</td>${V_==='V'?'<td></td>':''}${mz?'<td></td>':''}</tr>`:''}</thead><tbody>
+  ${O.map(g=>`<tr class="click" onclick="nav('kontakt/${g.k}')"><td data-v="${esc(kName(g.k))}">${esc(kName(g.k))} <span class="mut">(${g.n})</span></td>${OPA_K.map(([k],i)=>`<td class="n ${i>=2&&g[k]>0.005?'err':''}">${g[k]>0.005?fmt(g[k]):''}</td>`).join('')}<td class="n"><b>${fmt(g.s)}</b></td>
    ${V_==='V'?`<td class="n">${g.zn?Math.round(g.zt/g.zn)+(g.zv?` <span class="mut">(${Math.round(g.zv/g.zn)} zu spät)</span>`:''):'–'}</td>`:''}${mz?`<td>${g.st>=0?tag(mS().stufen[g.st],g.st?'err':'warn'):''}</td>`:''}</tr>`).join('')||`<tr><td colspan="9" class="mut">keine offenen Posten</td></tr>`}</tbody>
-  ${O.length?`<tfoot><tr><td>Summe</td>${OPA_K.map(([k])=>`<td class="n">${fmt(sum(O,g=>g[k]))}</td>`).join('')}<td class="n">${fmt(sum(O,g=>g.s))}</td>${V_==='V'?'<td></td>':''}${mz?'<td></td>':''}</tr></tfoot>`:''}</table></div>`}
-function opAlterKarte(){const mv=erw('mahnung')?mahnVorschlag():[];
-  return`<div class="card"><div class="bar" style="margin:0 0 8px;flex-wrap:wrap"><h2 style="margin:0">Kunden</h2><span class="sp"></span>${erw('mahnung')?`<button class="${mv.length?'p':''}" onclick="nav('mahnung')">Mahnungen${mv.length?` (${mv.length})`:''} …</button>`:''}</div>${opAlterTab('V')}
-  <h2 style="margin:14px 0 8px">Lieferanten</h2>${opAlterTab('E')}${p66Hilfe('Tage überfällig ab dem Fälligkeitsdatum (Rechnungsdatum + Zahlungsziel). Ø Tage bis Zahlung: bezahlte Rechnungen der letzten 12 Monate, Rechnungsdatum bis zur letzten Zahlung; in Klammern Tage nach Fälligkeit.')}</div>`}
+  </table></div>`}
+function opAlterKarte(bis,ohneKn){const mv=erw('mahnung')&&!ohneKn?mahnVorschlag():[];
+  return`<div class="card"><div class="bar" style="margin:0 0 8px;flex-wrap:wrap"><h2 style="margin:0">Kunden</h2><span class="sp"></span>${erw('mahnung')&&!ohneKn?`<button class="${mv.length?'p':''}" onclick="nav('mahnung')">Mahnungen${mv.length?` (${mv.length})`:''} …</button>`:''}</div>${opAlterTab('V',bis)}
+  <h2 style="margin:14px 0 8px">Lieferanten</h2>${opAlterTab('E',bis)}${p66Hilfe('Tage überfällig ab dem Fälligkeitsdatum (Rechnungsdatum + Zahlungsziel). Ø Tage bis Zahlung: bezahlte Rechnungen der letzten 12 Monate, Rechnungsdatum bis zur letzten Zahlung; in Klammern Tage nach Fälligkeit.')}</div>`}
 
 const MAHN_STD={karenz:3,frist:14,spesen:[0,10,20],zins:0,stufen:['Zahlungserinnerung','1. Mahnung','2. Mahnung'],
   txt:['wir dürfen Sie freundlich daran erinnern, dass die unten angeführten Rechnungen noch offen sind. Vermutlich ist die Zahlung nur übersehen worden. Wir ersuchen um Überweisung bis {frist}. Sollten Sie inzwischen bezahlt haben, betrachten Sie dieses Schreiben bitte als gegenstandslos.',
@@ -9684,7 +9685,7 @@ queueMicrotask(()=>Object.assign(ACT,{
   mahndr:el=>{const v=mahnVerlauf().find(x=>x.ts===el.dataset.ts&&x.k===el.dataset.k);if(v)druckHTML(mahnDoc(kontakt(v.k),v.E,+v.m.stufe,v.m.datum,v.m.frist,v.sp),`${mS().stufen[v.m.stufe]} ${kName(v.k)} ${v.m.datum}`)},
   mahnmail:el=>{const g=mahnVorschlag().find(x=>x.k===el.dataset.k);if(g)mahnMail(g)},
   pnkalle:el=>{UI.pnkAlle=!!el.dataset.v;render()},
-  pnkdr:()=>druckHTML(p66Druck(`Projekt-Nachkalkulation ${UI.pnkAlle?UI.jahr:'– laufende Aufträge'} (Stand ${dAT(isoD())})`,pnkTab(pnkDaten(),true)),`Projekt-Nachkalkulation ${isoD()}`),
+  pnkdr:()=>druckHTML(p66Druck(`Projekt-Nachkalkulation ${UI.pnkAlle?(PNK_Z?PNK_Z.t:UI.jahr):'– laufende Aufträge'} (Stand ${dAT(isoD())})`,pnkTab(pnkDaten(),true)),`Projekt-Nachkalkulation ${isoD()}`),
   pnkcsv:()=>csvDownload(`Projekt-Nachkalkulation_${isoD()}.csv`,PNK_SP.map(x=>x[0]),pnkDaten().map(x=>PNK_SP.map(c=>c[1](x))))}));
 
 /* ---------- Teil 3: Inventur zum Stichtag ---------- */
@@ -9794,6 +9795,102 @@ input.invin{width:90px;text-align:right}.liqc{width:100%;height:140px;display:bl
 details.liqh{border-top:1px solid var(--line);padding:8px 0}details.liqh summary{display:flex;gap:8px;cursor:pointer}details.liqh summary b{margin-left:auto}details.liqh .liqp{padding-left:0}
 .liqt details summary{cursor:pointer;white-space:nowrap}.liqp{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:3px 0 3px 14px;font-size:13px}.liqp b{margin-left:auto}
 @media(max-width:760px){.invt .invlp{display:none}input.invin{width:72px}.pnkf>div{min-width:140px}}`;document.head.append(st)}
+/* Auswertungen mit Zeitraum (P66 Teil 5, erw.awZeit, Standard aus): eigene Seite V.auswertung (äußerster Wrapper) mit gemeinsamem Zeitraum UI.awP {a:'j'|'q'|'m'|'f',j,q,m,von,bis}
+   (awZCtl('') oben) und je Abschnitt einer Abweichung UI.awPs[sec] (awZCtl(sec), wird bei jeder Änderung oben verworfen); awZ(sec) → {von,bis,t,z}. Abschnitte aw6Sek() als details.akk.aw6
+   (Zustand wie akk() in erp-akk, Inhalt .aw6s mit fester Höhe je Bildschirm, Bildlauf darin, Tabellenkopf bleibt stehen). Tabellen table.awt[data-sid] (aw6T()): Summenzeile tr.sumz oben im Kopf,
+   Sortieren per Klick auf jede Spaltenüberschrift (UI.awSort[sid]={i,d}, awSortieren(), nach jedem render() erneut; Wert data-v bzw. Zahl/Datum aus dem Text). Grafiken P57 über ckFeld(Z,'aw'). */
+erwPlus({k:'awZeit',std:false,p:'Auswertungen (P66)',l:'Auswertungen mit Zeitraum, Sortierung und Summen oben',info:'Die Seite „Auswertungen“ bekommt oben einen Zeitraum für alle Abschnitte (Jahr, Quartal, Monat oder frei von–bis). Jeder Abschnitt lässt sich auf einen eigenen Zeitraum stellen; eine Änderung oben setzt alle wieder gleich. Summen stehen über den Tabellen, jede Spalte lässt sich per Klick auf die Überschrift sortieren, aufgeklappte Abschnitte haben eine feste Höhe und scrollen in sich.'});
+queueMicrotask(()=>{if(typeof EB_K==='object')EB_K.awZeit='ansicht'});
+UI.awP=UI.awP||{a:'j',j:isoD().slice(0,4)};UI.awPs=UI.awPs||{};UI.awSort=UI.awSort||{};
+const AWZ_A=[['j','Jahr'],['q','Quartal'],['m','Monat'],['f','frei']];
+const awLetzter=(j,m)=>addDays(`${m===12?+j+1:j}-${pad2(m===12?1:m+1)}-01`,-1);
+function awZ(sec){const p=(sec&&UI.awPs[sec])||UI.awP,h=isoD(),j=p.j||h.slice(0,4),m=+p.m||+h.slice(5,7),q=+p.q||Math.ceil(+h.slice(5,7)/3);
+  if(p.a==='q')return{von:`${j}-${pad2(q*3-2)}-01`,bis:awLetzter(j,q*3),t:`Q${q} ${j}`,z:'quartal'};
+  if(p.a==='m')return{von:`${j}-${pad2(m)}-01`,bis:awLetzter(j,m),t:`${MONATE[m-1]} ${j}`,z:'monat'};
+  if(p.a==='f'){const von=p.von||j+'-01-01',bis=p.bis&&p.bis>=von?p.bis:h>=von?h:von;return{von,bis,t:`${dAT(von)} – ${dAT(bis)}`,z:'frei'}}
+  return{von:j+'-01-01',bis:j+'-12-31',t:j,z:'jahr'}}
+const awJahre=()=>[...new Set([isoD().slice(0,4),...DB.belege.map(b=>b.datum.slice(0,4))])].sort().reverse();
+function awZCtl(sec){const p=(sec&&UI.awPs[sec])||UI.awP,h=isoD(),a=p.a||'j',at=`data-awz="${sec}"`;
+  return`<span class="awz"><span class="seg">${AWZ_A.map(([k,l])=>`<button class="${a===k?'on':''}" data-act="awza" data-s="${sec}" data-a="${k}">${l}</button>`).join('')}</span>
+  ${a!=='f'?`<select ${at} data-k="j" aria-label="Jahr">${awJahre().map(x=>opt(x,x,p.j||h.slice(0,4))).join('')}</select>`:''}
+  ${a==='q'?`<select ${at} data-k="q" aria-label="Quartal">${[1,2,3,4].map(x=>opt(String(x),'Q'+x,String(p.q||Math.ceil(+h.slice(5,7)/3)))).join('')}</select>`:''}
+  ${a==='m'?`<select ${at} data-k="m" aria-label="Monat">${MONATE.map((x,i)=>opt(String(i+1),x,String(p.m||+h.slice(5,7)))).join('')}</select>`:''}
+  ${a==='f'?(Z=>`<input type="date" ${at} data-k="von" value="${Z.von}" aria-label="von"><span>–</span><input type="date" ${at} data-k="bis" value="${Z.bis}" aria-label="bis">`)(awZ(sec)):''}
+  ${sec&&UI.awPs[sec]?`<button class="s" data-act="awzx" data-s="${sec}" title="Zeitraum wie oben">wie oben</button>`:''}</span>`}
+function awZSetzen(sec,f){if(sec){UI.awPs[sec]={...(UI.awPs[sec]||UI.awP)};f(UI.awPs[sec])}else{UI.awP={...UI.awP};f(UI.awP);UI.awPs={}}render()}
+document.addEventListener('change',e=>{const el=e.target;if(el?.dataset?.awz==null)return;e.stopImmediatePropagation();const k=el.dataset.k,v=el.value;
+  awZSetzen(el.dataset.awz,p=>{if(k==='von'||k==='bis'){const Z=awZ(el.dataset.awz);p.von=p.von||Z.von;p.bis=p.bis||Z.bis}p[k]=v})},true);
+// Tabelle: K=[{l,n}], R=fertige <tr>, S=Werte der Summenzeile (oben)
+const aw6T=(sid,K,R,S)=>`<table class="awt" data-sid="${sid}"><thead><tr>${K.map(k=>`<th class="${k.n?'n':''}">${k.l}</th>`).join('')}</tr>${S&&R.length?`<tr class="sumz">${S.map((x,i)=>`<td class="${K[i].n?'n':''}">${x??''}</td>`).join('')}</tr>`:''}</thead>
+  <tbody>${R.join('')||`<tr class="leer"><td colspan="${K.length}" class="mut">keine</td></tr>`}</tbody></table>`;
+function aw6Sek(id,titel,zus,inhalt,{zeit=true,kopf=''}={}){const z=akkZ(),k='aw6-'+id,auf=k in z?!!z[k]:false,Z=awZ(id),abw=!!UI.awPs[id];
+  return`<details class="akk aw6" data-akk="${k}" data-std="0" data-auf="${auf?1:0}"${auf?' open':''}><summary><span class="akt">${titel}</span>${zeit?`<span class="aw6t${abw?' abw':''}">${esc(Z.t)}</span>`:''}${zus?`<span class="akz">${zus}</span>`:''}</summary>
+  <div class="akb">${zeit||kopf?`<div class="aw6z">${zeit?awZCtl(id):''}${kopf}</div>`:''}<div class="aw6s">${inhalt}</div></div></details>`}
+const awIn=(d,Z)=>d>=Z.von&&d<=Z.bis;
+const aw6Anteil=(x,g)=>g?pct(x/g):'–';
+function aw6Ust(Z){const K=[];for(let d=Z.von.slice(0,7);d<=Z.bis.slice(0,7);d=(+d.slice(5)===12?`${+d.slice(0,4)+1}-01`:`${d.slice(0,4)}-${pad2(+d.slice(5)+1)}`))K.push(d);
+  const M=Object.fromEntries(K.map(k=>[k,{k,u:0,ust:{},vst:0,ein:0,aus:0}])),mk=d=>M[d.slice(0,7)],reV=DB.belege.filter(zaehltUmsatz);
+  for(const b of reV)if(awIn(b.datum,Z))mk(b.datum).u+=sgn(b)*summen(b).nettoEff;
+  for(const b of reV)for(const v of ustVerteilung(b)){if(!awIn(v.datum,Z))continue;const m=mk(v.datum);for(const t of summen(b).steuernEff){m.ust[t.code]=(m.ust[t.code]||0)+sgn(b)*t.betrag*v.f;m.ust['B'+t.code]=(m.ust['B'+t.code]||0)+sgn(b)*t.basis*v.f}}
+  for(const b of DB.belege)if(b.typ==='ER'&&b.fest&&!b.storno&&awIn(b.datum,Z))mk(b.datum).vst+=summen(b).steuer;
+  for(const b of DB.belege.filter(b=>T[b.typ].re&&b.fest))for(const z of b.zahlungen||[])if(awIn(z.datum,Z)){const m=mk(z.datum);if(T[b.typ].b==='V')m.ein+=sgn(b)*z.betrag;else m.aus+=z.betrag}
+  const L=Object.values(M),codes=S().steuer.map(s=>s.code).filter(c=>L.some(m=>m.ust[c]||m.ust['B'+c])),zl=m=>codes.reduce((s,c)=>s+(m.ust[c]||0),0)-m.vst,mj=K.length>12||K[0].slice(0,4)!==K[K.length-1].slice(0,4);
+  const Kp=[{l:'Monat'},{l:'Umsatz netto',n:1},...codes.flatMap(c=>[{l:'Bem.-Gr. '+esc(steuerDef(c).bez),n:1},{l:'USt '+esc(c),n:1}]),{l:'Vorsteuer',n:1},{l:'Zahllast',n:1},{l:'Einnahmen',n:1},{l:'Ausgaben',n:1}];
+  const R=L.filter(m=>UI.awAlle||m.u||m.vst||m.ein||m.aus||codes.some(c=>m.ust[c]||m.ust['B'+c])).map(m=>`<tr><td data-v="${m.k}">${MONATE[+m.k.slice(5)-1]}${mj?' '+m.k.slice(0,4):''}</td><td class="n">${fmt(m.u)}</td>${codes.map(c=>`<td class="n">${fmt(m.ust['B'+c])}</td><td class="n">${fmt(m.ust[c])}</td>`).join('')}<td class="n">${fmt(m.vst)}</td><td class="n">${fmt(zl(m))}</td><td class="n">${fmt(m.ein)}</td><td class="n">${fmt(m.aus)}</td></tr>`);
+  const Sm=['Summe',fmt(sum(L,m=>m.u)),...codes.flatMap(c=>[fmt(sum(L,m=>m.ust['B'+c]||0)),fmt(sum(L,m=>m.ust[c]||0))]),fmt(sum(L,m=>m.vst)),fmt(sum(L,zl)),fmt(sum(L,m=>m.ein)),fmt(sum(L,m=>m.aus))];
+  return{u:sum(L,m=>m.u),zl:sum(L,zl),h:`<div style="overflow-x:auto">${aw6T('ust',Kp,R,Sm)}</div>`}}
+function aw6Ku(Z){const G={};for(const b of DB.belege.filter(b=>zaehltUmsatz(b)&&awIn(b.datum,Z))){const g=G[b.kontaktId]??={k:b.kontaktId,n:0,u:0};g.n++;g.u+=sgn(b)*summen(b).nettoEff}
+  const L=Object.values(G).sort((a,b)=>b.u-a.u),t=sum(L,g=>g.u);
+  return{n:L.length,u:t,h:aw6T('ku',[{l:'Kunde'},{l:'Rechnungen',n:1},{l:'Umsatz netto',n:1},{l:'Anteil',n:1}],L.map(g=>`<tr class="click" onclick="nav('kontakt/${g.k}')"><td>${esc(kName(g.k))}</td><td class="n">${g.n}</td><td class="n">${fmt(g.u)}</td><td class="n">${aw6Anteil(g.u,t)}</td></tr>`),['Summe',sum(L,g=>g.n),fmt(t),t?'100,0 %':''])}}
+function aw6Art(Z){const A={};for(const b of DB.belege.filter(b=>zaehltUmsatz(b)&&awIn(b.datum,Z))){const s=sgn(b),sb=summen(b);for(const p of b.pos){if(isInfo(p)||effKz(p,sb.gi))continue;const a=p.artikelId&&artikel(p.artikelId),k=a?a.nr+' '+a.bez:p.bez,x=A[k]??={k,m:0,u:0,e:p.einheit};x.m+=s*(+p.menge||0);x.u+=s*posGP(p)}}
+  const L=Object.values(A).sort((a,b)=>b.u-a.u),t=sum(L,x=>x.u);
+  return{n:L.length,h:aw6T('art',[{l:'Artikel / Leistung'},{l:'Menge',n:1},{l:'Einheit'},{l:'Umsatz netto',n:1},{l:'Anteil',n:1}],L.map(x=>`<tr><td>${esc(x.k)}</td><td class="n">${fmtQ(x.m)}</td><td>${esc(x.e||'')}</td><td class="n">${fmt(x.u)}</td><td class="n">${aw6Anteil(x.u,t)}</td></tr>`),['Summe','','',fmt(t),t?'100,0 %':''])}}
+function aw6Sk(Z){const P=[];for(const b of DB.belege.filter(b=>T[b.typ].re&&b.fest))for(const z of b.zahlungen||[]){if(!+z.skonto||!awIn(z.datum,Z))continue;const s=summen(b),V_=T[b.typ].b==='V';P.push({b,z,V_,net:s.brutto?z.skonto*s.netto/s.brutto:z.skonto,frist:+b.skonto>0&&z.datum<=skontoBis(b)})}
+  const v=sum(P.filter(x=>x.V_),x=>x.z.skonto),e=sum(P.filter(x=>!x.V_),x=>x.z.skonto),h=isoD();
+  const verp=DB.belege.filter(b=>b.typ==='ER'&&b.fest&&!b.storno&&+b.skonto>0&&awIn(skontoBis(b),Z)&&Math.abs(offen(b))<=0.005&&!(b.zahlungen||[]).some(z=>+z.skonto)).map(b=>r2(summen(b).zahlbar*b.skonto/100));
+  return{v,e,h:`<div class="grid" style="margin-bottom:10px"><div class="kpi">Kundenskonto gewährt<b>${fmt(v)} €</b></div><div class="kpi">Lieferantenskonto erhalten<b>${fmt(e)} €</b></div><div class="kpi">Lieferantenskonto nicht genutzt<b class="${verp.length?'err':''}">${fmt(sum(verp,x=>x))} €</b><span class="mut">${verp.length} Rechnung(en)</span></div></div>
+  <div style="overflow-x:auto">${aw6T('sk',[{l:'Zahlung'},{l:'Beleg'},{l:'Partner'},{l:'Art'},{l:'Zahlbetrag',n:1},{l:'Skonto',n:1},{l:'netto',n:1},{l:'Frist'}],
+   P.map(x=>`<tr class="click" onclick="nav('beleg/${x.b.id}')"><td>${dAT(x.z.datum)}</td><td>${esc(bNr(x.b))}</td><td>${esc(kName(x.b.kontaktId))}</td><td>${x.V_?'Kunde':'Lieferant'}</td><td class="n">${fmt(x.z.betrag)}</td><td class="n">${fmt(x.z.skonto)}</td><td class="n">${fmt(x.net)}</td><td>${x.frist?'bis '+dAT(skontoBis(x.b)):tag('außerhalb','err')}</td></tr>`),
+   ['Summe','','','',fmt(sum(P,x=>+x.z.betrag||0)),fmt(sum(P,x=>+x.z.skonto||0)),fmt(sum(P,x=>x.net)),''])}</div>`}}
+function aw6Op(Z){const h=isoD(),tab=V_=>{const L=DB.belege.filter(b=>T[b.typ].re&&b.fest&&T[b.typ].b===V_&&Math.abs(offen(b))>0.005&&b.datum<=Z.bis).sort((a,c)=>faellig(a).localeCompare(faellig(c)));
+    return{s:sum(L,offen),h:aw6T('op'+V_,[{l:'Beleg'},{l:V_==='V'?'Kunde':'Lieferant'},{l:'Datum'},{l:'fällig'},{l:'Tage überfällig',n:1},{l:'offen',n:1}],
+     L.map(b=>{const t=p66Tg(faellig(b),h);return`<tr class="click" onclick="nav('beleg/${b.id}')"><td>${esc(bNr(b))}${b.fremdNr?' / '+esc(b.fremdNr):''}</td><td>${esc(kName(b.kontaktId))}</td><td>${dAT(b.datum)}</td><td class="${t>0?'err':''}">${dAT(faellig(b))}</td><td class="n">${t>0?t:''}</td><td class="n">${fmt(offen(b))}</td></tr>`}),
+     ['Summe','','','','',fmt(sum(L,offen))])}};const d=tab('V'),k=tab('E'),mv=erw('mahnung')?mahnVorschlag():[];
+  return{d:d.s,k:k.s,h:`<h3 class="aw6h">Kunden</h3><div style="overflow-x:auto">${d.h}</div><h3 class="aw6h">Lieferanten</h3><div style="overflow-x:auto">${k.h}</div>
+   ${erw('awOP')?`<h3 class="aw6h">Nach Alter</h3>${opAlterKarte(Z.bis,true).replace(/^<div class="card">/,'<div>')}`:''}`,mv}}
+{const w0=V.auswertung;V.auswertung=(...x)=>{if(!DB||!erw('awZeit'))return w0(...x);const Z=awZ(''),gr=erw('awGrafik');UI.jahr=Z.bis.slice(0,4); // Detail-Pop-ups der Grafiken (ckZAkt) zeigen das Jahr
+  const u=aw6Ust(awZ('ust')),ku=aw6Ku(awZ('ku')),ar=aw6Art(awZ('art')),sk=aw6Sk(awZ('sk')),op=aw6Op(awZ('op')),Zp=awZ('pnk'),L=pnkDaten(Zp);PNK_Z=Zp;
+  const an=DB.belege.filter(b=>b.typ==='AN'&&b.fest&&!b.storno&&b.status!=='ersetzt'&&awIn(b.datum,Z)),anA=an.filter(b=>b.status==='angenommen');
+  const kpi=`<div class="grid"><div class="kpi">Umsatz netto<b>${fmt(aw6Ust(Z).u)} €</b><span class="mut">${esc(Z.t)}</span></div><div class="kpi">DB II Aufträge<b>${fmt(sum(L,x=>x.ist.db2))} € ${dbTag(sum(L,x=>x.ist.db2)/sum(L,x=>x.ist.uN))}</b></div>
+   <div class="kpi">Angebote<b>${an.length} · ${fmt(sum(an,b=>summen(b).netto))} €</b><span class="mut">Trefferquote ${an.length?pct(anA.length/an.length):'–'}</span></div><div class="kpi">Lagerwert zum ${dAT(Z.bis>isoD()?isoD():Z.bis)}<b>${fmt(sum(DB.artikel.filter(a=>a.lager),a=>invBestand(a.id,Z.bis>isoD()?isoD():Z.bis).wert))} €</b></div></div>`;
+  return`<div class="bar aw6kopf"><h1 style="margin:0">Auswertungen</h1>${awZCtl('')}<span class="sp"></span>${erw('ckBericht')?ckBerKn():''}${gr?ckCfgKn():''}</div>
+  ${gr?ckFeld(Z,'aw'):kpi}
+  ${aw6Sek('ust','Umsatz &amp; USt',`${fmt(u.u)} € netto · Zahllast ${fmt(u.zl)} €`,u.h,{kopf:`<label class="chk" style="display:inline-flex;margin:0"><input type="checkbox" data-o="ui" data-f="awAlle" ${UI.awAlle?'checked':''}> alle Monate</label>`})}
+  ${aw6Sek('pnk',erw('awProjekt')?'Projekt-Nachkalkulation':'Aufträge',`${L.length} Aufträge · DB II ${fmt(sum(L,x=>x.ist.db2))} €`,`<div style="overflow-x:auto">${pnkTab(L)}</div>`,{kopf:`<span class="seg"><button class="${UI.pnkAlle?'':'on'}" data-act="pnkalle" data-v="">laufende</button><button class="${UI.pnkAlle?'on':''}" data-act="pnkalle" data-v="1">im Zeitraum</button></span><span class="sp"></span><button class="s" data-act="pnkdr">Drucken</button><button class="s" data-act="pnkcsv">CSV</button>`})}
+  ${aw6Sek('ku','Umsatz nach Kunde',`${ku.n} Kunden · ${fmt(ku.u)} €`,ku.h)}
+  ${aw6Sek('art','Umsatz nach Artikel / Leistung',`${ar.n} Positionen`,ar.h)}
+  ${aw6Sek('sk','Skonto',`gewährt ${fmt(sk.v)} € · erhalten ${fmt(sk.e)} €`,sk.h)}
+  ${aw6Sek('op','Offene Posten',`Kunden ${fmt(op.d)} € · Lieferanten ${fmt(op.k)} €`,op.h,{kopf:`<span class="mut">Rechnungen bis ${dAT(awZ('op').bis)}, offen heute</span><span class="sp"></span>${erw('mahnung')?`<button class="${op.mv.length?'p':''}" onclick="nav('mahnung')">Mahnungen${op.mv.length?` (${op.mv.length})`:''} …</button>`:''}`})}
+  ${erw('liquiditaet')?aw6Sek('liq','Liquiditätsvorschau','ab heute',liqKarte().replace(/^<div class="card liq">/,'<div class="liq">'),{zeit:false}):''}`}}
+// Sortieren
+const awWert=td=>{if(td.dataset.v!=null){const n=+td.dataset.v;return isNaN(n)||td.dataset.v===''?td.dataset.v:n}const t=td.innerText.trim(),d=t.match(/^(\d\d)\.(\d\d)\.(\d{4})/);if(d)return+(d[3]+d[2]+d[1]);
+  const c=t.replace(/[\s  €%h]/g,'').replace(/\(.*$/,'');if(/^[+-]?\d[\d.]*(,\d+)?$/.test(c))return+c.replace(/\./g,'').replace(',','.');return t.toLowerCase()};
+function awSortieren(tb){const s=UI.awSort[tb.dataset.sid],th=tb.tHead?.rows[0]?.cells;if(!th)return;[...th].forEach((c,i)=>{c.classList.toggle('so-a',!!s&&s.i===i&&s.d>0);c.classList.toggle('so-d',!!s&&s.i===i&&s.d<0)});
+  if(!s)return;const b=tb.tBodies[0],R=[...b.rows];if(R.some(r=>r.classList.contains('leer')))return;
+  R.map(r=>[awWert(r.cells[s.i]||r.cells[0]),r]).sort((x,y)=>{const a=x[0],c=y[0];const v=typeof a==='number'&&typeof c==='number'?a-c:typeof a==='number'?-1:typeof c==='number'?1:String(a).localeCompare(String(c),'de',{numeric:true});return v*s.d}).forEach(([,r])=>b.append(r))}
+document.addEventListener('click',e=>{const th=e.target.closest?.('table.awt>thead>tr:first-child>th');if(!th)return;const tb=th.closest('table'),i=th.cellIndex,s=UI.awSort[tb.dataset.sid];
+  const d0=th.classList.contains('n')?-1:1;UI.awSort[tb.dataset.sid]=s&&s.i===i?(s.d===d0?{i,d:-d0}:null):{i,d:d0}; /* Zahlen zuerst absteigend, Text aufsteigend; dritter Klick = ursprüngliche Reihenfolge */if(!UI.awSort[tb.dataset.sid])delete UI.awSort[tb.dataset.sid];if(!UI.awSort[tb.dataset.sid])render();else awSortieren(tb)},true);
+{const r0=render;render=function(...a){const x=r0.apply(this,a);try{document.querySelectorAll('#main table.awt[data-sid]').forEach(awSortieren)}catch(e){}return x}}
+queueMicrotask(()=>Object.assign(ACT,{awza:el=>awZSetzen(el.dataset.s,p=>{p.a=el.dataset.a;if(p.a==='f'){const Z=awZ(el.dataset.s);p.von=p.von||Z.von;p.bis=p.bis||Z.bis}}),awzx:el=>{delete UI.awPs[el.dataset.s];render()}}));
+{const st=document.createElement('style');st.textContent=`table.awt>thead>tr:first-child>th{cursor:pointer;user-select:none;white-space:nowrap}table.awt th.so-a::after{content:' ▲';font-size:9px}table.awt th.so-d::after{content:' ▼';font-size:9px}
+table.awt tr.sumz td{font-weight:700;background:rgba(127,127,127,.08);border-bottom:2px solid var(--line)}
+.aw6kopf{flex-wrap:wrap;gap:8px 12px}.awz{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}.awz select,.awz input{width:auto;min-width:0;margin:0}.awz .seg button{padding:5px 10px}
+details.aw6{background:var(--card);border:1px solid var(--line);border-radius:8px;margin:0 0 10px}details.aw6>summary{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:10px 14px;cursor:pointer;font-weight:600}
+details.aw6>summary .akz{font-weight:400;color:var(--mut,#666);margin-left:auto}.aw6t{font-weight:400;font-size:12px;padding:1px 8px;border-radius:10px;background:rgba(127,127,127,.12)}.aw6t.abw{background:#fff4ce;color:#835c00}
+details.aw6>.akb{padding:0 14px 12px}.aw6z{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:4px 0 10px}
+.aw6s{max-height:max(300px,calc(100vh - 230px));max-height:max(300px,calc(100dvh - 230px));overflow:auto;overscroll-behavior:contain}.aw6s table.awt>thead{position:sticky;top:0;z-index:2;background:var(--card)}.aw6s table.awt>thead th{background:var(--card)}
+.aw6s table.awt>thead tr.sumz td{background:var(--card);box-shadow:inset 0 0 0 999px rgba(127,127,127,.08)}.aw6h{font-size:14px;margin:12px 0 6px}.aw6h:first-child{margin-top:0}
+@media(max-width:760px){.aw6s{max-height:max(260px,calc(100dvh - 200px))}details.aw6>summary .akz{margin-left:0;width:100%}.aw6kopf h1{width:100%}}`;document.head.append(st)}
 start();
 </script>
 </body>

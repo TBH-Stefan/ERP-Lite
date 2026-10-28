@@ -9553,7 +9553,8 @@ function nsSetzen(){const b=document.body,N=$('nav');let k=$('#nsk');if(!N)retur
 {const r0=render;render=function(...a){const x=r0.apply(this,a);nsSetzen();return x}}
 window.addEventListener('resize',()=>{if(document.body.classList.contains('loaded'))nsSetzen()});
 {const z=()=>document.body.classList.contains('ns68z'),bleibt=()=>!!document.querySelector('.mpop')||document.activeElement?.closest?.('nav')&&document.activeElement.matches('input,select,textarea');
-  document.addEventListener('mouseover',e=>{if(!z()||e.target.closest?.('#nbg'))return;if(e.target.closest?.('nav')){clearTimeout(NS_T);if(!NS_SP&&!document.body.classList.contains('ns68o'))NS_T=setTimeout(()=>nsAuf(1),200)}
+  document.addEventListener('mouseover',e=>{if(!z()||e.target.closest?.('#nbg'))return;if(e.target.closest?.('nav')){clearTimeout(NS_T);if(!NS_SP&&!document.body.classList.contains('ns68o')&&!e.target.closest('a.logo')) // Logo = Startseite, klappt nicht auf
+      NS_T=setTimeout(()=>nsAuf(1),200)}
     else if(!e.target.closest?.('#nferg,.mpop')){NS_SP=0;clearTimeout(NS_T);if(document.body.classList.contains('ns68o'))NS_T=setTimeout(()=>{if(!bleibt())nsAuf(0)},350)}});
   document.documentElement.addEventListener('mouseleave',()=>{clearTimeout(NS_T);if(z()&&!bleibt())NS_T=setTimeout(()=>nsAuf(0),300)});
   document.addEventListener('pointerdown',e=>{if(z()&&document.body.classList.contains('ns68o')&&!e.target.closest?.('nav,#nferg,.mpop,.modal'))nsAuf(0)},true);

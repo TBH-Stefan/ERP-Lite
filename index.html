@@ -10048,50 +10048,68 @@ const kKl=t=>t.art==='einsatz'?'es':t.art==='o365'?'ol':'tm',kUhr=(t,d)=>t.ganzt
   kUhrB=(t,d)=>t.ganztag?'ganztägig':`${kUhr(t,d)}–${(t.bis||'').slice(0,10)===d?t.bis.slice(11,16):'…'}`,
   kZk=z=>`${fmtQ(z.stunden)} h ${auftragKurz(z.auftragId)}`,
   kCls=(d,mon,I)=>{const f=kFt(d),w=kWd(d);return[w>4?'we':'',f?'ft-'+f.a:'',d===isoD()?'heute':'',d===kU().t?'sel':'',mon&&d.slice(0,7)!==mon?'aus':'',I.z[d]?.length&&(w===6||f?.a==='f')?'kwarn':''].filter(Boolean).join(' ')};
-function kZelle(d,I,max){const T=I.t[d]||[],Z=I.z[d]||[],L=T.slice(0,max).map(t=>`<div class="ke ${kKl(t)}">${t.ganztag?'':esc(kUhr(t,d))+' '}${esc(t.titel)}</div>`);
-  if(T.length>max)L.push(`<div class="ke mehr">+${T.length-max} weitere</div>`);if(Z.length)L.push(`<div class="ke zt">🕒 ${fmtQ(kH(Z))} h</div>`);return L.join('')}
-function kalMon(I,a,b,mon){let h=`<div class="kal km"><div class="kh">KW</div>${KAL_WT.map((w,i)=>`<div class="kh${i>4?' we':''}">${w}</div>`).join('')}`;
-  for(let w=a;w<=b;w=kPlus(w,7)){const D=[0,1,2,3,4,5,6].map(i=>kPlus(w,i)),hs=kZ()?sum(D,d=>kH(I.z[d]||[])):0,so=kZ()&&kSoll(w)!=null?sum(D,kSoll):null;
+/* Outlook-Stil (Wunsch Anwender 29.10.2026): Farben je Mitarbeiter KAL_FB (Outlook-Kalenderfarben, Wahl S().kal.farben {maId:Farbe}, sonst nach Reihenfolge), ohne Mitarbeiter KAL_FA je Art; Zeiten gestreift; am PC festes Fenster (.kalw.kalpc, kalFit()), Bildlauf nur im Stundenraster .kwb (KAL_SY, Beginn S().kal.start); Termine direkt im Raster anlegen (Klick/Ziehen), verschieben und verlängern (Pointer-Events, data-zieh), im Monat auf einen anderen Tag ziehen, Doppelklick = neu; Einstellungen über ⚙ (ACT.kalein). */
+const KAL_FB=[['#4F6BED','Blau'],['#038387','Petrol'],['#C239B3','Magenta'],['#498205','Grün'],['#986F0B','Gold'],['#D13438','Rot'],['#00B7C3','Türkis'],['#E3008C','Pink'],['#5C2E91','Lila'],['#004E8C','Dunkelblau']],KAL_FA={tm:'#0078D4',es:'#CA5010',zt:'#69797E',ol:'#8764B8'},KAL_PX=48;
+let KAL_SY=null,KAL_NC=0;
+function kFarbe(x,art){const m=x?.maIds?.[0]||x?.maId;if(m&&erw('mitarbeiter')){const f=kalS().farben?.[m];if(f)return f;const i=maL().findIndex(y=>y.id===m);if(i>=0)return KAL_FB[i%KAL_FB.length][0]}return KAL_FA[art]||KAL_FA.tm}
+const kZtxt=z=>[z.von&&z.bis?z.von.slice(11,16)+'–'+z.bis.slice(11,16):'',fmtQ(z.stunden)+' h',auftragLabel(z.auftragId),z.tarif,z.maId?maName(z.maId):'',z.text].filter(Boolean).join(' · '),
+  kZieh=t=>kT()&&t.art!=='o365';
+function kZelle(d,I,max){const T=I.t[d]||[],Z=I.z[d]||[],L=T.slice(0,max).map(t=>`<div class="ke ${kKl(t)}" style="--c:${kFarbe(t,kKl(t))}" data-act="kted" data-id="${t.id}"${kZieh(t)?` data-zieh="${t.id}"`:''} title="${esc(t.titel)}">${t.ganztag?'':`<span class="kez">${esc(kUhr(t,d))}</span> `}${esc(t.titel)}</div>`);
+  if(T.length>max)L.push(`<div class="ke mehr">+${T.length-max} weitere</div>`);
+  if(Z.length){const g={};for(const z of Z)(g[z.maId||'']||(g[z.maId||'']=[])).push(z);for(const k in g)L.push(`<div class="ke zt" style="--c:${kFarbe({maId:k},'zt')}" title="${esc(k?maName(k):'erfasste Zeit')}">🕒 ${fmtQ(kH(g[k]))} h${k&&erw('mitarbeiter')?' '+esc(maName(k).split(' ')[0]):''}</div>`)}
+  return L.join('')}
+function kalMon(I,a,b,mon,max){let n=0,h='';
+  for(let w=a;w<=b;w=kPlus(w,7)){n++;const D=[0,1,2,3,4,5,6].map(i=>kPlus(w,i)),hs=kZ()?sum(D,d=>kH(I.z[d]||[])):0,so=kZ()&&kSoll(w)!=null?sum(D,kSoll):null;
     h+=`<div class="kw">${kKW(w)}${hs?`<small>${fmtQ(hs)} h</small>`:''}${so!=null?`<small class="mut">/ ${fmtQ(so)}</small>`:''}</div>`+D.map(d=>{const f=kFt(d);
-      return`<div class="kt ${kCls(d,mon,I)}" data-act="ktag" data-d="${d}"><div class="kn"><b>${+d.slice(8)}</b>${f?`<span class="kft">${esc(f.n)}</span>`:''}</div>${kZelle(d,I,3)}</div>`}).join('')}
-  return h+'</div>'}
-function kalWoche(I,a,D0){const D=D0||[0,1,2,3,4,5,6].map(i=>kPlus(a,i)),jn=new Date(),jetzt=jn.getHours()*60+jn.getMinutes(),uhr=x=>{const m=/T(\d\d):(\d\d)/.exec(x||'');return m?+m[1]*60+ +m[2]:null},B={},PX=40;let h0=420,h1=1020;
+      return`<div class="kt ${kCls(d,mon,I)}" data-act="ktag" data-d="${d}"><div class="kn"><b>${+d.slice(8)===1?+d.slice(8)+'. '+MONATE[+d.slice(5,7)-1].slice(0,3):+d.slice(8)}</b>${f?`<span class="kft">${esc(f.n)}</span>`:''}</div>${kZelle(d,I,max)}</div>`}).join('')}
+  return`<div class="kal km" style="--w:${n}"><div class="kh">KW</div>${KAL_WTL.slice(1).concat(KAL_WTL[0]).map((w,i)=>`<div class="kh${i>4?' we':''}">${kmpH()?KAL_WT[i]:w}</div>`).join('')}${h}</div>`}
+function kalRaster(I,D){const uhr=x=>{const m=/T(\d\d):(\d\d)/.exec(x||'');return m?+m[1]*60+ +m[2]:null},B={},PX=KAL_PX,jn=new Date(),jetzt=jn.getHours()*60+jn.getMinutes();
   for(const d of D){const L=[];
     for(const t of I.t[d]||[])if(!t.ganztag){const v=(t.von||'').slice(0,10)===d?uhr(t.von)??0:0;let e=(t.bis||'').slice(0,10)===d?uhr(t.bis):1440;if(e==null||e<=v)e=Math.min(1440,v+30);L.push({v,e,t})}
     for(const z of I.z[d]||[])if(z.von&&z.bis){const v=uhr(z.von)??0;let e=z.bis.slice(0,10)===d?uhr(z.bis):1440;if(e<=v)e=Math.min(1440,v+15);L.push({v,e,z})}
-    L.sort((p,q)=>p.v-q.v);const sp=[];for(const x of L){let i=sp.findIndex(s=>s<=x.v);if(i<0){i=sp.length;sp.push(0)}sp[i]=x.e;x.i=i;h0=Math.min(h0,Math.floor(x.v/60)*60);h1=Math.max(h1,Math.ceil(x.e/60)*60)}
-    let G=[],ge=-1;const fertig=()=>{const n=Math.max(1,...G.map(x=>x.i+1));G.forEach(x=>x.n=n);G=[]};for(const x of L){if(x.v>=ge)fertig();G.push(x);ge=Math.max(ge,x.e)}fertig();B[d]=L}
-  const top=m=>(m-h0)/60*PX,H=top(h1);
-  return`<div class="kal kwo${D.length===1?' kwo1':''}"><div class="kwk"></div>${D.map(d=>{const f=kFt(d),Z=I.z[d]||[];return`<div class="kwk ${kCls(d,'',I)}" data-act="ktag" data-d="${d}"><b>${KAL_WT[kWd(d)]} ${dAT(d).slice(0,6)}</b>${f?`<span class="kft">${esc(f.n)}</span>`:''}${Z.length?`<small>${fmtQ(kH(Z))} h</small>`:''}</div>`}).join('')}
-    <div class="kwa mut">ganzt.</div>${D.map(d=>`<div class="kwa ${kCls(d,'',I)}">${(I.t[d]||[]).filter(t=>t.ganztag).map(t=>`<div class="ke ${kKl(t)}" data-act="kted" data-id="${t.id}">${esc(t.titel)}</div>`).join('')}${(I.z[d]||[]).filter(z=>!(z.von&&z.bis)).map(z=>`<div class="ke zt" data-act="kzt" data-id="${z.id}">${esc(kZk(z))}</div>`).join('')}</div>`).join('')}
-    <div class="kwz" style="height:${H}px">${Array.from({length:(h1-h0)/60},(_,i)=>`<span style="top:${i*PX}px">${String(h0/60+i).padStart(2,'0')}:00</span>`).join('')}</div>${D.map(d=>`<div class="kws ${kCls(d,'',I)}" style="height:${H}px">${d===isoD()&&jetzt>=h0&&jetzt<=h1?`<i class="kjetzt" style="top:${top(jetzt)}px"></i>`:''}${B[d].map(x=>`<div class="kb ${x.z?'zt':kKl(x.t)}" style="top:${top(x.v)}px;height:${Math.max(18,top(x.e)-top(x.v)-2)}px;left:${x.i/x.n*100}%;width:${100/x.n}%" data-act="${x.z?'kzt':'kted'}" data-id="${(x.z||x.t).id}" title="${esc(x.z?kZk(x.z):x.t.titel)}">${esc(x.z?kZk(x.z):kUhr(x.t,d)+' '+x.t.titel)}</div>`).join('')}</div>`).join('')}</div>`}
+    L.sort((p,q)=>p.v-q.v||q.e-p.e);const sp=[];for(const x of L){let i=sp.findIndex(s=>s<=x.v);if(i<0){i=sp.length;sp.push(0)}sp[i]=x.e;x.i=i}
+    let G=[],ge=-1;const fertig=()=>{const n=Math.max(1,...G.map(x=>x.i+1));G.forEach(x=>x.n=n);G=[]};for(const x of L){if(x.v>=ge)fertig();G.push(x);ge=Math.max(ge,x.e)}fertig();B[d]=L} // Überschneidungen nebeneinander (je Gruppe)
+  const blk=(x,d)=>{const t=x.t,z=x.z,art=z?'zt':kKl(t),h=Math.max(16,(x.e-x.v)/60*PX-2),zh=t&&kZieh(t)&&(t.von||'').slice(0,10)===d&&(t.bis||'').slice(0,10)===d;
+    return`<div class="kb ${art}${h<34?' kbkz':''}" style="--c:${kFarbe(z||t,art)};top:${x.v/60*PX}px;height:${h}px;left:calc(${x.i/x.n*100}% + 1px);width:calc(${100/x.n}% - 3px)" data-act="${z?'kzt':'kted'}" data-id="${(z||t).id}"${zh?` data-zieh="${t.id}"`:''} title="${esc(z?kZtxt(z):[t.titel,kUhrB(t,d),t.ort].filter(Boolean).join(' · '))}"><b>${esc(z?auftragKurz(z.auftragId):t.titel)}</b> <span>${esc(z?[fmtQ(z.stunden)+' h',z.maId?maName(z.maId):''].filter(Boolean).join(' · '):[kUhrB(t,d),t.ort,(t.maIds||[]).map(maName).filter(Boolean).join(', ')].filter(Boolean).join(' · '))}</span>${zh?'<i class="kbr"></i>':''}</div>`};
+  const kopf=D.map(d=>{const f=kFt(d),Z=I.z[d]||[];return`<div class="kwk ${kCls(d,'',I)}" data-act="ktag" data-d="${d}"><b>${+d.slice(8)}</b> <span class="kwt">${KAL_WTL[kD(d).getDay()].slice(0,kmpH()||D.length>5?2:10)}</span>${f?`<span class="kft">${esc(f.n)}</span>`:''}${Z.length?`<small>${fmtQ(kH(Z))} h</small>`:''}</div>`}).join(''),
+    gz=D.map(d=>`<div class="kwa ${kCls(d,'',I)}" data-gz="${d}">${(I.t[d]||[]).filter(t=>t.ganztag).map(t=>`<div class="ke ${kKl(t)}" style="--c:${kFarbe(t,kKl(t))}" data-act="kted" data-id="${t.id}">${esc(t.titel)}</div>`).join('')}${(I.z[d]||[]).filter(z=>!(z.von&&z.bis)).map(z=>`<div class="ke zt" style="--c:${kFarbe(z,'zt')}" data-act="kzt" data-id="${z.id}" title="${esc(kZtxt(z))}">${esc(kZk(z))}</div>`).join('')}</div>`).join(''),
+    zl=Array.from({length:23},(_,i)=>`<span style="top:${(i+1)*PX}px">${String(i+1).padStart(2,'0')}:00</span>`).join('');
+  return`<div class="kal kwo" style="--n:${D.length}"><div class="kwh"><div class="kwk kwx"></div>${kopf}<div class="kwa kwx">ganztägig</div>${gz}</div>
+    <div class="kwb"><div class="kwg" style="height:${24*PX}px"><div class="kwz">${zl}</div>${D.map(d=>`<div class="kws ${kCls(d,'',I)}" data-d="${d}">${d===isoD()?`<i class="kjetzt" style="top:${jetzt/60*PX}px"></i>`:''}${B[d].map(x=>blk(x,d)).join('')}</div>`).join('')}</div></div></div>`}
 function kTagKarte(d,I){const f=kFt(d),T=I.t[d]||[],Z=I.z[d]||[],so=kZ()?kSoll(d):null,w=kWd(d);
   return`<div class="card ktk" data-d="${d}"><div class="bar"><h2 style="margin:0">${KAL_WTL[kD(d).getDay()]}, ${dAT(d)}</h2>${f?tag(esc(f.n),f.a==='f'?'warn':''):''}<span class="sp"></span>${kU().s!=='t'?`<button data-act="ktagv" data-d="${d}">Tag</button>`:''}${kT()?`<button data-act="ktneu" data-d="${d}">+ Termin</button>`:''}${kZ()?`<button data-act="kzneu" data-d="${d}">+ Zeit</button>`:''}</div>
-  ${T.map(t=>`<div class="kl" data-act="kted" data-id="${t.id}"><span class="kli ${kKl(t)}"></span><span class="klz">${esc(kUhrB(t,d))}</span><span class="klt"><b>${esc(t.titel)}</b><small>${esc([t.art==='einsatz'?'Arbeitseinsatz':'',t.ort,t.auftragId?auftragKurz(t.auftragId):'',(t.maIds||[]).map(maName).filter(Boolean).join(', ')].filter(Boolean).join(' · '))}</small></span></div>`).join('')}
-  ${Z.map(z=>`<div class="kl" data-act="kzt" data-id="${z.id}"><span class="kli zt"></span><span class="klz">${z.von&&z.bis?z.von.slice(11,16)+'–'+z.bis.slice(11,16):fmtQ(z.stunden)+' h'}</span><span class="klt"><b>${esc(auftragKurz(z.auftragId))}</b><small>${esc([z.von&&z.bis?fmtQ(z.stunden)+' h':'',z.tarif,z.maId?maName(z.maId):'',z.text].filter(Boolean).join(' · '))}</small></span></div>`).join('')}
+  ${T.map(t=>`<div class="kl" data-act="kted" data-id="${t.id}"><span class="kli" style="background:${kFarbe(t,kKl(t))}"></span><span class="klz">${esc(kUhrB(t,d))}</span><span class="klt"><b>${esc(t.titel)}</b><small>${esc([t.art==='einsatz'?'Arbeitseinsatz':t.art==='o365'?'Outlook':'',t.ort,t.auftragId?auftragKurz(t.auftragId):'',(t.maIds||[]).map(maName).filter(Boolean).join(', ')].filter(Boolean).join(' · '))}</small></span></div>`).join('')}
+  ${Z.map(z=>`<div class="kl" data-act="kzt" data-id="${z.id}"><span class="kli kzs" style="background:${kFarbe(z,'zt')}"></span><span class="klz">${z.von&&z.bis?z.von.slice(11,16)+'–'+z.bis.slice(11,16):fmtQ(z.stunden)+' h'}</span><span class="klt"><b>${esc(auftragKurz(z.auftragId))}</b><small>${esc([z.von&&z.bis?fmtQ(z.stunden)+' h':'',z.tarif,z.maId?maName(z.maId):'',z.text].filter(Boolean).join(' · '))}</small></span></div>`).join('')}
   ${!T.length&&!Z.length?'<p class="mut" style="margin:6px 0 0">Keine Einträge.</p>':''}${Z.length||so?`<p style="margin:8px 0 0">${Z.length?`<b>Summe ${fmtQ(kH(Z))} h</b>`:''}${so!=null?` · Soll ${fmtQ(so)} h`:''}${Z.length&&(w===6||f?.a==='f')?' '+tag('Arbeit am '+(f?.a==='f'?'Feiertag':'Sonntag'),'warn'):''}</p>`:''}</div>`}
+function kLegende(){const ks=kalS(),M=erw('mitarbeiter')&&(kZ()||kT())?maAkt():[],x=(c,l,k='')=>`<span><i class="kli${k}" style="background:${c}"></i>${esc(l)}</span>`;
+  return`<p class="kleg">${x('rgba(209,52,56,.35)','Feiertag')}${ks.land?x('rgba(152,111,11,.35)','Landesfeiertag'):''}${kT()?x(KAL_FA.tm,'Termin')+x(KAL_FA.es,'Arbeitseinsatz'):''}${kZ()?x(KAL_FA.zt,'erfasste Zeit',' kzs'):''}${typeof kO==='function'&&kO()?x(KAL_FA.ol,'Outlook'):''}${M.map(m=>x(kFarbe({maId:m.id}),m.name)).join('')}</p>`}
 V.kalender=()=>{if(!erw('kalender'))return`<h1>Kalender</h1><div class="card"><p style="margin:0">Der Kalender ist ausgeschaltet (Einstellungen → Erweiterungen → „Kalender mit Feiertagen“).</p></div>`;
-  const u=kU(),s=u.s,d=u.d,mon=d.slice(0,7),m1=mon+'-01',mE=kPlus(kPlus(m1,32).slice(0,8)+'01',-1),ks=kalS(),M=erw('mitarbeiter')&&(kZ()||kT())?maAkt():[];
-  let a,b,ti;if(s==='t'){a=b=d;ti=`${KAL_WTL[kD(d).getDay()]}, ${dAT(d)}`}else if(s==='w'){a=kMo(d);b=kPlus(a,6);ti=`KW ${kKW(a)} · ${dAT(a).slice(0,6)}–${dAT(b)}`}else{a=s==='m'?kMo(m1):m1;b=s==='m'?kPlus(kMo(mE),6):mE;ti=`${MONATE[+mon.slice(5)-1]} ${mon.slice(0,4)}`}
-  const I=kIdx(a,b),tk=u.t>=a&&u.t<=b?kTagKarte(u.t,I):'';
-  const inh=s==='t'?kStreifen(d)+kalWoche(I,d,[d])+kTagKarte(d,I):s==='m'?kalMon(I,a,b,mon)+tk:s==='w'?(kmpH()?Array.from({length:7},(_,i)=>kTagKarte(kPlus(a,i),I)).join(''):kalWoche(I,a)+tk):(()=>{let h='';for(let x=a;x<=b;x=kPlus(x,1))if(I.t[x]||I.z[x]||kFt(x))h+=kTagKarte(x,I);return h||'<div class="card"><p class="mut" style="margin:0">Keine Einträge in diesem Monat.</p></div>'})();
-  return`<div class="bar kalbar"><h1 style="margin:0">Kalender</h1><span class="sp"></span>${kT()?`<button class="p" data-act="ktneu" data-d="${u.t}">+ Termin</button>`:''}</div>
-  <div class="bar kalnav"><button data-act="kalnav" data-x="-1" title="zurück">◀</button><button data-act="kalnav" data-x="0">Heute</button><button data-act="kalnav" data-x="1" title="weiter">▶</button><b class="kalti">${ti}</b><span class="sp"></span>
-  ${M.length?`<select class="kalma" onchange="kU().ma=this.value;render()"><option value="">Alle Mitarbeiter</option>${M.map(m=>opt(m.id,m.name,u.ma)).join('')}</select>`:''}<span class="kals">${[['t','Tag'],['w','Woche'],['m','Monat'],['l','Liste']].map(([k,l])=>`<button class="${s===k?'p':''}" data-act="kalsicht" data-s="${k}">${l}</button>`).join('')}</span></div>
-  ${inh}<p class="mut kleg"><span><i class="kli ft-f"></i> Feiertag</span>${ks.land?'<span><i class="kli ft-l"></i> Landesfeiertag</span>':''}${ks.halb?'<span><i class="kli ft-h"></i> halber Tag</span>':''}${kT()?'<span><i class="kli tm"></i> Termin</span><span><i class="kli es"></i> Arbeitseinsatz</span>':''}${kZ()?'<span><i class="kli zt"></i> erfasste Zeit</span>':''}</p>
-  <details class="card kalein"><summary><b>Einstellungen Kalender</b></summary><div class="row"><label class="w2">Landesfeiertag (Bundesland)<select data-o="s" data-f="kal.land">${KAL_LAND.map(([v,t])=>opt(v,t,ks.land)).join('')}</select></label><label class="w2">24.12. und 31.12.<select data-o="s" data-f="kal.halb" data-t="b">${opt('true','halber Tag',String(ks.halb))}${opt('false','normaler Arbeitstag',String(ks.halb))}</select></label></div>${kT()?'<p class="mut" style="margin:6px 0 0">Outlook (Microsoft 365): Abgleich der Termine ist vorbereitet, aber noch nicht verbunden.</p>':''}</details>`};
+  const u=kU(),H=kmpH();if(H&&u.s==='a')u.s='w';const s=u.s,d=u.d,mon=d.slice(0,7),m1=mon+'-01',mE=kPlus(kPlus(m1,32).slice(0,8)+'01',-1),M=erw('mitarbeiter')&&(kZ()||kT())?maAkt():[];
+  let a,b,ti,D=null;
+  if(s==='t'){a=b=d;D=[d];ti=`${KAL_WTL[kD(d).getDay()]}, ${+d.slice(8)}. ${MONATE[+d.slice(5,7)-1]} ${d.slice(0,4)}`}
+  else if(s==='w'||s==='a'){a=kMo(d);b=kPlus(a,s==='a'?4:6);D=Array.from({length:s==='a'?5:7},(_,i)=>kPlus(a,i));ti=`KW ${kKW(a)} · ${dAT(a).slice(0,6)}–${dAT(b)}`}
+  else{a=s==='m'?kMo(m1):m1;b=s==='m'?kPlus(kMo(mE),6):mE;ti=`${MONATE[+mon.slice(5)-1]} ${mon.slice(0,4)}`}
+  const I=kIdx(a,b);let inh,seite='';
+  if(s==='m'){inh=kalMon(I,a,b,mon,H?3:4);seite=u.t>=a&&u.t<=b?kTagKarte(u.t,I):''}
+  else if(D&&!(H&&s==='w')){inh=(H&&s==='t'?kStreifen(d):'')+kalRaster(I,D);if(H)seite=kTagKarte(d,I)}
+  else if(D)inh=D.map(x=>kTagKarte(x,I)).join('');
+  else{inh='';for(let x=a;x<=b;x=kPlus(x,1))if(I.t[x]||I.z[x]||kFt(x))inh+=kTagKarte(x,I);inh=`<div class="kliste">${inh||'<div class="card"><p class="mut" style="margin:0">Keine Einträge in diesem Monat.</p></div>'}</div>`}
+  const V5=[['t','Tag'],...(H?[]:[['a','Arbeits­woche']]),['w','Woche'],['m','Monat'],['l','Liste']];
+  return`<div class="kalw${H?'':' kalpc'}"><div class="kbar kalnav"><h1 class="kalh">Kalender</h1>${kT()?`<button class="p" data-act="ktneu" data-d="${u.t}">+ Neuer Termin</button>`:''}<button data-act="kalnav" data-x="0">Heute</button><span class="kalpf"><button class="kalbt" data-act="kalnav" data-x="-1" title="zurück" aria-label="zurück">‹</button><button class="kalbt" data-act="kalnav" data-x="1" title="weiter" aria-label="weiter">›</button></span><b class="kalti">${ti}</b><span class="sp"></span>
+    ${M.length?`<select class="kalma" onchange="kU().ma=this.value;render()"><option value="">Alle Mitarbeiter</option>${M.map(m=>opt(m.id,m.name,u.ma)).join('')}</select>`:''}<span class="kals">${V5.map(([k,l])=>`<button class="${s===k?'on':''}" data-act="kalsicht" data-s="${k}">${l}</button>`).join('')}</span><button class="kalbt kzr" data-act="kalein" title="Einstellungen Kalender" aria-label="Einstellungen Kalender">⚙</button></div>
+    <div class="kalb"><div class="kalc">${inh}${kLegende()}</div>${seite&&!H?`<aside class="kalsp">${seite}</aside>`:''}</div>${H?seite:''}</div>`};
 {const m=MODULE.find(x=>x.k==='auftraege'),v0=V.kalender;V.kalender=(...a)=>!m||mod(m.k)?v0(...a):modAusHTML(m)}
 function kStreifen(d){const a=kMo(d),D=[0,1,2,3,4,5,6].map(i=>kPlus(a,i)),I=kIdx(a,D[6]); // Wochenleiste der Tagesansicht wie am iPhone (Tag antippen, Punkt = Einträge)
-  return`<div class="kstr">${D.map((x,i)=>`<button type="button" class="${x===d?'ksel':''}${x===isoD()?' kheu':''}${kFt(x)?.a==='f'?' kft1':''}" data-act="ktag" data-d="${x}"><small>${KAL_WT[i]}</small><span class="kd">${+x.slice(8)}</span><span class="kpk${I.t[x]||I.z[x]?' ja':''}"></span></button>`).join('')}</div>`}
+  return`<div class="kstr">${D.map((x,i)=>`<button type="button" class="${x===d?'ksel':''}${x===isoD()?' kheu':''}${kFt(x)?.a==='f'?' kft1':''}" data-act="ktag" data-d="${x}"><small>${KAL_WT[i]}</small><span class="kd">${+x.slice(8)}</span><span class="kalpk${I.t[x]||I.z[x]?' ja':''}"></span></button>`).join('')}</div>`}
 {let x0=null,y0=0;document.addEventListener('touchstart',e=>{const t=e.touches[0];x0=e.touches.length===1&&t.clientX>30&&e.target.closest?.('#main .kal,#main .kstr')?t.clientX:null;y0=t.clientY},{passive:true}); // Wischen links/rechts = blättern (nicht am Rand: Zurück-Geste P40)
   document.addEventListener('touchend',e=>{if(x0==null)return;const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;x0=null;if(Math.abs(dx)>60&&Math.abs(dx)>2*Math.abs(dy)&&/^#\/?kalender/.test(location.hash)&&!document.querySelector('.modal'))ACT.kalnav({dataset:{x:dx<0?1:-1}})},{passive:true})}
 function ktWerte(o){const g=o.ganz==='1',d=o.d||isoD(),e=o.e&&o.e>d?o.e:d;return{ganztag:g,datum:d,von:g?d:d+'T'+(o.v||'00:00'),bis:g?e:e+'T'+(o.b||o.v||'00:00')}}
-async function ktDialog(t,d0){const neu=!t,A=auftragsListe(),M=erw('mitarbeiter')?maAkt():[],v=t?.von||'',b=t?.bis||'',d1=(v||d0||isoD()).slice(0,10);
+async function ktDialog(t,d0,vg){const neu=!t,A=auftragsListe(),M=erw('mitarbeiter')?maAkt():[],v=t?.von||'',b=t?.bis||'',d1=(v||d0||isoD()).slice(0,10);
   const o=await formDialog({titel:neu?'Neuer Termin':'Termin bearbeiten',ok:neu?'Anlegen':'Speichern',extra:neu?'':'Löschen',felder:[
     {k:'titel',l:'Titel',wert:t?.titel||'',pflicht:true,max:120,cls:'w2'},
-    {k:'art',l:'Art',opts:[['termin','Termin'],['einsatz','Arbeitseinsatz']],wert:t?.art||'termin',neu:1},{k:'ganz',l:'Dauer',opts:[['0','mit Uhrzeit'],['1','ganztägig']],wert:t?.ganztag?'1':'0'},
-    {k:'d',l:'Beginn',typ:'date',wert:d1,neu:1,cls:'w05'},{k:'v',l:'Uhrzeit',typ:'time',wert:v.slice(11,16)||'08:00',cls:'w05'},
-    {k:'e',l:'Ende',typ:'date',wert:(b||d1).slice(0,10),neu:1,cls:'w05'},{k:'b',l:'Uhrzeit',typ:'time',wert:b.slice(11,16)||'09:00',cls:'w05'},
+    {k:'art',l:'Art',opts:[['termin','Termin'],['einsatz','Arbeitseinsatz']],wert:t?.art||'termin',neu:1},{k:'ganz',l:'Dauer',opts:[['0','mit Uhrzeit'],['1','ganztägig']],wert:t?.ganztag||(!t&&vg?.g)?'1':'0'},
+    {k:'d',l:'Beginn',typ:'date',wert:d1,neu:1,cls:'w05'},{k:'v',l:'Uhrzeit',typ:'time',wert:v.slice(11,16)||vg?.v||'08:00',cls:'w05'},
+    {k:'e',l:'Ende',typ:'date',wert:(b||d1).slice(0,10),neu:1,cls:'w05'},{k:'b',l:'Uhrzeit',typ:'time',wert:b.slice(11,16)||vg?.b||'09:00',cls:'w05'},
     {k:'ort',l:'Ort',wert:t?.ort||'',neu:1,cls:'w2'},
     {k:'aid',l:'Auftrag',opts:[['','– ohne –'],...A.map(x=>[x.id,auftragKurz(x.id)])],wert:t?.auftragId||'',neu:1,cls:'w2'},
     ...(M.length?[{k:'ma',l:'Mitarbeiter',opts:[['','– keiner –'],...M.map(m=>[m.id,m.name])],wert:t?.maIds?.[0]||'',neu:1,cls:'w2'}]:[]),
@@ -10102,51 +10120,102 @@ async function ktDialog(t,d0){const neu=!t,A=auftragsListe(),M=erw('mitarbeiter'
   const n=t||{id:uid(),erstellt:new Date().toISOString()};Object.assign(n,{art:o.art==='einsatz'?'einsatz':'termin',titel:String(o.titel||'').trim(),...ktWerte(o),ort:String(o.ort||'').trim(),notiz:String(o.notiz||'').trim(),auftragId:o.aid||'',maIds:o.ma?[o.ma]:(M.length?[]:t?.maIds||[])});
   for(const k of['ganztag','ort','notiz','auftragId'])if(!n[k])delete n[k];if(!n.maIds.length)delete n.maIds; // leere Felder nicht anlegen
   if(neu)(DB.termine||(DB.termine=[])).push(n);log(neu?'Termin angelegt':'Termin geändert',`${dAT(n.datum)} ${n.titel}`);commit();if(typeof kO==='function'&&kO()&&o.ol!=='0')kolSchreiben(n); // Outlook (Teil 4)
-  const u=kU();u.t=n.datum;if(u.s!=='w'&&n.datum.slice(0,7)!==u.d.slice(0,7))u.d=n.datum;render()}
+  const u=kU();u.t=n.datum;if(!['w','a','t'].includes(u.s)&&n.datum.slice(0,7)!==u.d.slice(0,7))u.d=n.datum;render()}
+function kVerschieben(t,von,bis){Object.assign(t,{von,bis,datum:von.slice(0,10)});log('Termin verschoben',`${dAT(t.datum)} ${t.titel}`);commit();if(t.o365?.id&&typeof kO==='function'&&kO())kolSchreiben(t);render()}
+const kHm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'),kMin=(col,y)=>Math.max(0,Math.min(1425,Math.floor((y-col.getBoundingClientRect().top)/KAL_PX*4)*15));
+{let Z=null;const am=()=>/^#\/?kalender/.test(location.hash)&&kT(); // Ziehen mit Maus/Stift: neu (Zeitraum aufziehen), verschieben, Ende ziehen; im Monat auf einen anderen Tag
+  document.addEventListener('pointerdown',e=>{if(e.button!==0||e.pointerType==='touch'||!am())return;const kb=e.target.closest?.('[data-zieh]'),col=e.target.closest?.('.kws');
+    if(kb){const t=tmL().find(x=>x.id===kb.dataset.zieh);if(t)Z={art:kb.classList.contains('kb')?(e.target.classList.contains('kbr')?'gr':'zv'):'mv',el:kb,t,x0:e.clientX,y0:e.clientY};return}
+    if(col&&!e.target.closest('.kb')){const m=kMin(col,e.clientY);Z={art:'neu',col,m0:m,m1:m+30,x0:e.clientX,y0:e.clientY}}});
+  document.addEventListener('pointermove',e=>{if(!Z)return;if(!Z.an){if(Math.hypot(e.clientX-Z.x0,e.clientY-Z.y0)<5)return;Z.an=1;document.body.classList.add('kzieh')}e.preventDefault();
+    if(Z.art==='neu'){Z.m1=Math.max(Z.m0+15,kMin(Z.col,e.clientY)+15);if(!Z.g){Z.g=document.createElement('div');Z.g.className='kb kgh';Z.col.appendChild(Z.g)}Z.g.style.cssText=`top:${Z.m0/60*KAL_PX}px;height:${(Z.m1-Z.m0)/60*KAL_PX-2}px;left:1px;width:calc(100% - 3px)`;Z.g.textContent=kHm(Z.m0)+'–'+kHm(Z.m1);return}
+    Z.el.classList.add('kzg');
+    if(Z.art==='mv'){const c=document.elementFromPoint(e.clientX,e.clientY)?.closest('.kt');document.querySelectorAll('.kt.kziel').forEach(x=>x.classList.remove('kziel'));if(c)c.classList.add('kziel');Z.ziel=c?.dataset.d;return}
+    const t=Z.t,v=+t.von.slice(11,13)*60+ +t.von.slice(14,16),b=+t.bis.slice(11,13)*60+ +t.bis.slice(14,16),dm=Math.round((e.clientY-Z.y0)/KAL_PX*4)*15;
+    if(Z.art==='gr'){Z.nv=v;Z.nb=Math.max(v+15,Math.min(1440,b+dm))}else{const L=b-v;Z.nv=Math.max(0,Math.min(1440-L,v+dm));Z.nb=Z.nv+L;const c=document.elementFromPoint(e.clientX,e.clientY)?.closest('.kws');if(c&&c!==Z.el.parentNode)c.appendChild(Z.el)}
+    Z.tag=Z.el.parentNode?.dataset.d;Object.assign(Z.el.style,{top:Z.nv/60*KAL_PX+'px',height:(Z.nb-Z.nv)/60*KAL_PX-2+'px',left:'1px',width:'calc(100% - 3px)'});const s=Z.el.querySelector('span');if(s)s.textContent=kHm(Z.nv)+'–'+kHm(Z.nb)},{passive:false});
+  document.addEventListener('pointerup',()=>{const z=Z;Z=null;if(!z)return;document.body.classList.remove('kzieh');document.querySelectorAll('.kt.kziel').forEach(x=>x.classList.remove('kziel'));z.g?.remove();if(!z.an)return;KAL_NC=Date.now();
+    if(z.art==='neu')return ktDialog(null,z.col.dataset.d,{v:kHm(z.m0),b:kHm(Math.min(z.m1,1439))});const t=z.t;
+    if(z.art==='mv'){if(!z.ziel||z.ziel===t.von.slice(0,10))return render();const n=Math.round((kD(z.ziel)-kD(t.von.slice(0,10)))/864e5);return kVerschieben(t,kPlus(t.von.slice(0,10),n)+t.von.slice(10),kPlus(t.bis.slice(0,10),n)+t.bis.slice(10))}
+    const d=z.tag||t.von.slice(0,10);kVerschieben(t,d+'T'+kHm(z.nv),d+'T'+kHm(Math.min(z.nb,1439)))});
+  document.addEventListener('click',e=>{if(!/^#\/?kalender/.test(location.hash))return;if(Date.now()-KAL_NC<400&&e.target.closest('.kalw')){e.stopPropagation();e.preventDefault();return} // Klick nach dem Ziehen verschlucken
+    if(!kT()||e.target.closest('.kb,.ke'))return;const col=e.target.closest('.kws'),gz=e.target.closest('.kwa[data-gz]');
+    if(col){e.stopPropagation();const m=kMin(col,e.clientY);ktDialog(null,col.dataset.d,{v:kHm(m),b:kHm(Math.min(m+60,1439))})}else if(gz){e.stopPropagation();ktDialog(null,gz.dataset.gz,{g:1})}},true);
+  document.addEventListener('dblclick',e=>{const c=e.target.closest?.('.km .kt');if(c&&kT()&&!e.target.closest('.ke'))ktDialog(null,c.dataset.d,{g:1})});
+  document.addEventListener('scroll',e=>{if(e.target.classList?.contains('kwb'))KAL_SY=e.target.scrollTop},true)}
+function kalFit(){const w=document.querySelector('.kalw.kalpc'),B=document.body.classList,Hc=document.documentElement.classList,sb=document.querySelector('.kalw .kwb');
+  if(sb){if(KAL_SY==null)KAL_SY=(kalS().start??7)*KAL_PX;sb.scrollTop=KAL_SY}
+  if(!w){B.remove('kal69fix');Hc.remove('kal69fix');return}B.add('kal69fix');Hc.add('kal69fix');scrollTo(0,0);w.style.height=Math.max(380,Math.floor(innerHeight-w.getBoundingClientRect().top-12))+'px';if(sb)sb.scrollTop=KAL_SY}
+addEventListener('resize',()=>{if(document.querySelector('.kalw'))kalFit()});
 queueMicrotask(()=>Object.assign(ACT,{
-  kalnav:el=>{const u=kU(),x=+el.dataset.x;if(!x)u.d=u.t=isoD();else if(u.s==='t')u.d=u.t=kPlus(u.d,x);else if(u.s==='w')u.d=u.t=kPlus(u.d,7*x);else{const m=kD(u.d.slice(0,8)+'01');m.setMonth(m.getMonth()+x);u.d=isoD(m);u.t=isoD().slice(0,7)===u.d.slice(0,7)?isoD():u.d}render()},
+  kalnav:el=>{const u=kU(),x=+el.dataset.x;if(!x)u.d=u.t=isoD();else if(u.s==='t')u.d=u.t=kPlus(u.d,x);else if(u.s==='w'||u.s==='a')u.d=u.t=kPlus(u.d,7*x);else{const m=kD(u.d.slice(0,8)+'01');m.setMonth(m.getMonth()+x);u.d=isoD(m);u.t=isoD().slice(0,7)===u.d.slice(0,7)?isoD():u.d}render()},
   kalsicht:el=>{const u=kU();u.s=el.dataset.s;lsSet('erp-kalS',u.s);u.d=u.t;render()},
   ktagv:el=>{const u=kU();u.s='t';lsSet('erp-kalS','t');u.d=u.t=el.dataset.d;render();scrollTo(0,0)},
-  ktag:el=>{const u=kU();u.t=el.dataset.d;if(u.s==='t')u.d=u.t;if(u.s!=='w'&&u.t.slice(0,7)!==u.d.slice(0,7))u.d=u.t;render();if(kmpH())setTimeout(()=>$('.ktk')?.scrollIntoView({block:'nearest',behavior:'smooth'}),30)},
+  ktag:el=>{const u=kU();u.t=el.dataset.d;if(u.s==='t')u.d=u.t;if(!['w','a','t'].includes(u.s)&&u.t.slice(0,7)!==u.d.slice(0,7))u.d=u.t;render();if(kmpH())setTimeout(()=>$('.ktk')?.scrollIntoView({block:'nearest',behavior:'smooth'}),30)},
   ktneu:el=>ktDialog(null,el.dataset.d),
   kted:el=>{const t=tmL().find(x=>x.id===el.dataset.id);if(t)ktDialog(t)},
   kzt:el=>{const z=(DB.zeiten||[]).find(x=>x.id===el.dataset.id);if(!z)return;if(z.berichtId)return go('bericht/'+z.berichtId);if(!z.belegId&&ACT.ztbear&&erw('zeitStempel'))return ACT.ztbear(el);go('zeiten')},
-  kzneu:el=>{const d=el.dataset.d;go('zeiten');setTimeout(()=>{const e=$('#zt-d');if(e){e.value=d;e.dispatchEvent(new Event('input',{bubbles:true}))}$('#zt-h')?.focus()},60)}}));
-document.addEventListener('change',e=>{if(e.target.matches?.('select[data-f^="kal."]'))setTimeout(render)}); // Bundesland/halber Tag sofort zeigen
+  kzneu:el=>{const d=el.dataset.d;go('zeiten');setTimeout(()=>{const e=$('#zt-d');if(e){e.value=d;e.dispatchEvent(new Event('input',{bubbles:true}))}$('#zt-h')?.focus()},60)},
+  kalein:async()=>{const s=kalS(),M=erw('mitarbeiter')?maAkt():[],ol=typeof kO==='function'&&kO();
+    const o=await formDialog({titel:'Einstellungen Kalender',ok:'Übernehmen',extra:ol?'Outlook neu laden':'',felder:[
+      {k:'land',l:'Landesfeiertag (Bundesland)',opts:KAL_LAND,wert:s.land,cls:'w2'},{k:'halb',l:'24.12. und 31.12.',opts:[['1','halber Tag'],['0','normaler Arbeitstag']],wert:s.halb?'1':'0',neu:1,cls:'w2'},
+      {k:'start',l:'Stundenraster zeigt zuerst',opts:[5,6,7,8,9].map(h=>[String(h),h+':00 Uhr']),wert:String(s.start??7),neu:1,cls:'w2'},
+      ...(M.length?[{typ:'abschnitt',l:'Farben der Mitarbeiter'},...M.map((m,i)=>({k:'f_'+m.id,l:esc(m.name),opts:[['','automatisch ('+KAL_FB[Math.max(0,maL().indexOf(m))%KAL_FB.length][1]+')'],...KAL_FB.map(([c,n])=>[c,n])],wert:s.farben?.[m.id]||'',neu:i%2===0?1:0,cls:'w05'}))]:[]),
+      ...(ol&&typeof kolInfoTxt==='function'?[{typ:'hinweis',l:kolInfoTxt()}]:[])]});
+    if(o==='extra')return ACT.kolneu?.();if(!o)return;const f={};for(const m of M)if(o['f_'+m.id])f[m.id]=o['f_'+m.id];
+    const k={...(S().kal||{}),land:o.land,halb:o.halb==='1',start:+o.start||7,farben:f};if(!Object.keys(f).length)delete k.farben;S().kal=k;KAL_SY=null;persist();render()}}));
 {const i=SF.findIndex(x=>x.k==='erfassen');SF.splice(i<0?SF.length:i+1,0,{k:'kalender',ic:'📅',l:'Kalender',nur:()=>erw('kalender')})}
 {const i=SF67.findIndex(x=>x.h==='zeiten');SF67.splice(i<0?SF67.length:i+1,0,{h:'kalender',n:'kalender',ic:'📅',l:'Kalender'})}
 {const a0=sfAus;sfAus=async k=>k==='kalender'?go('kalender'):a0(k)}
-{const r0=render;render=function(...a){const x=r0.apply(this,a);document.body.classList.toggle('kal69',!!DB&&erw('kalender'));return x}}
+{const r0=render;render=function(...a){const x=r0.apply(this,a);document.body.classList.toggle('kal69',!!DB&&erw('kalender'));kalFit();requestAnimationFrame(kalFit);return x}}
 {const st=document.createElement('style');st.textContent=`body:not(.kal69) nav a.navkal{display:none!important}
-.kalnav{flex-wrap:wrap;gap:6px;margin:8px 0}.kalti{font-size:16px;margin-left:6px;white-space:nowrap}.kals{display:inline-flex}.kals button{border-radius:0;margin:0}.kals button:first-child{border-radius:6px 0 0 6px}.kals button:last-child{border-radius:0 6px 6px 0}
-.kal{display:grid;grid-template-columns:40px repeat(7,minmax(0,1fr));background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:0 0 12px}
-.kal .kh{font-size:12px;font-weight:600;color:var(--mut);padding:6px;text-align:center;border-bottom:1px solid var(--line)}
-.kal .kw{font-size:11px;color:var(--mut);padding:6px 2px;text-align:center;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}.kal .kw small{font-size:10px;white-space:nowrap}
-.kal .kt{min-height:92px;padding:4px 5px;border-top:1px solid var(--line);border-left:1px solid var(--line);cursor:pointer;overflow:hidden;min-width:0}
-.kal .kt:hover{background:rgba(31,95,191,.05)}.kal .we{background:rgba(127,127,127,.06)}.kal .aus{opacity:.45}
-.kal .ft-f{background:rgba(180,35,24,.08)}.kal .ft-l{background:rgba(154,91,0,.07)}.kal .ft-h{background:rgba(154,91,0,.05)}
-.kal .kn{display:flex;align-items:baseline;gap:4px;min-width:0}.kal .kn b{font-size:13px;flex:none}.kal .heute .kn b{background:var(--acc);color:#fff;border-radius:10px;padding:0 6px}
-.kal .sel{box-shadow:inset 0 0 0 2px var(--acc)}.kal .kwarn{box-shadow:inset 0 -3px 0 var(--warn)}.kal .sel.kwarn{box-shadow:inset 0 0 0 2px var(--acc),inset 0 -5px 0 var(--warn)}
-.kft{font-size:10.5px;color:var(--err);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.ft-l .kft,.ft-h .kft{color:var(--warn)}
-.ke{font-size:11.5px;line-height:1.35;padding:1px 5px;margin-top:2px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid}
-.ke.tm,.kb.tm{background:rgba(31,95,191,.12);border-color:var(--acc)}.ke.es,.kb.es{background:rgba(30,122,70,.13);border-color:var(--ok)}.ke.zt,.kb.zt{background:rgba(127,127,127,.12);border-color:var(--mut)}.ke.mehr{border:0;color:var(--mut)}
-.kwo{grid-template-columns:48px repeat(7,minmax(0,1fr))}.kwo .kwk{padding:6px;border-left:1px solid var(--line);border-bottom:1px solid var(--line);font-size:12px;display:flex;flex-direction:column;gap:1px;min-width:0;cursor:pointer}.kwo .kwk:first-child{border-left:0;cursor:default}
-.kwo .kwk small{color:var(--mut)}.kwo .kwa{border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:2px 3px;min-height:24px;min-width:0;font-size:11px}.kwo .kwa.mut{border-left:0;padding-top:6px;text-align:center}
-.kwz{position:relative}.kwz span{position:absolute;right:6px;font-size:10.5px;color:var(--mut);transform:translateY(-1px)}
-.kws{position:relative;border-left:1px solid var(--line);background-image:repeating-linear-gradient(to bottom,var(--line) 0 1px,transparent 1px 40px);min-width:0}
-.kb{position:absolute;box-sizing:border-box;font-size:11px;line-height:1.3;padding:2px 4px;border-radius:4px;border-left:3px solid;overflow:hidden;cursor:pointer;color:var(--ink)}
+html.kal69fix,body.kal69fix{overflow:hidden}body.kal69fix main{padding-bottom:0!important}
+.kalw{display:flex;flex-direction:column;min-height:0}.kalpc .kalb{flex:1;min-height:0}.kalpc .kalc{min-height:0}
+.kbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 10px}.kbar .kalh{font-size:20px;margin:0 10px 0 0}.kalti{font-size:17px;font-weight:600;margin-left:4px;white-space:nowrap}
+.kalpf{display:inline-flex;flex:none}.kbar>button,.kals{flex:none}.kalbt{border:0!important;background:none!important;box-shadow:none!important;min-width:32px;height:32px;padding:0 4px!important;border-radius:4px;font-size:22px;line-height:1;color:var(--ink)}.kalbt:hover{background:rgba(127,127,127,.12)!important}.kzr{font-size:18px}
+.kals{display:inline-flex;gap:2px}.kals button{border:0;background:none;box-shadow:none;border-radius:4px;padding:6px 8px;color:var(--ink)}.kals button:hover{background:rgba(127,127,127,.1)}.kals button.on{color:var(--acc);font-weight:600;box-shadow:inset 0 -2px 0 var(--acc);border-radius:0}
+.kalma{max-width:170px}
+.kalb{display:flex;gap:12px;min-height:0}.kalc{flex:1;min-width:0;display:flex;flex-direction:column}.kalsp{flex:none;width:300px;overflow:auto}.kalsp .ktk{margin:0}
+.kal{background:var(--card);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:0}
+.km{display:grid;grid-template-columns:34px repeat(7,minmax(0,1fr))}.kalpc .km{flex:1;min-height:0;grid-template-rows:auto repeat(var(--w),minmax(0,1fr))}
+.km .kh{font-size:12px;color:var(--mut);padding:6px 8px;border-bottom:1px solid var(--line)}
+.km .kw{font-size:11px;color:var(--mut);padding:6px 2px;text-align:center;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}.km .kw small{font-size:10px;white-space:nowrap}
+.km .kt{min-height:96px;padding:4px 6px;border-top:1px solid var(--line);border-left:1px solid var(--line);overflow:hidden;min-width:0}.kalpc .km .kt{min-height:0}
+.km .kt:hover{background:rgba(0,120,212,.04)}.kal .we{background-color:rgba(127,127,127,.05)}.km .aus{color:var(--mut)}.km .aus .ke{opacity:.6}
+.kal .ft-f{background-color:rgba(209,52,56,.07)}.kal .ft-l,.kal .ft-h{background-color:rgba(152,111,11,.07)}
+.km .kn{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:2px}.km .kn b{font-size:12.5px;font-weight:600;flex:none;padding:0 2px}.km .heute .kn b{background:var(--acc);color:#fff;border-radius:12px;padding:1px 7px}
+.km .sel{background-color:rgba(0,120,212,.09)}.kal .kwarn{box-shadow:inset 0 -3px 0 var(--warn)}.kt.kziel{outline:2px dashed var(--acc);outline-offset:-3px}
+.kft{font-size:11px;color:#c50f1f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.ft-l .kft,.ft-h .kft{color:#8a6100}
+.ke{font-size:12px;line-height:1.4;padding:1px 6px;margin-top:2px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid var(--c);background-color:color-mix(in srgb,var(--c) 18%,var(--card));color:var(--ink);cursor:pointer}
+.ke .kez{color:var(--mut)}.ke.mehr{border:0;background:none;color:var(--mut);padding-left:2px}.ke[data-zieh]{cursor:grab}
+.zt{background-image:repeating-linear-gradient(135deg,transparent 0 5px,rgba(255,255,255,.4) 5px 8px)}
+.kwo{display:flex;flex-direction:column}.kalpc .kwo{flex:1;min-height:0}
+.kwh,.kwg{display:grid;grid-template-columns:52px repeat(var(--n),minmax(0,1fr))}.kwh{overflow:hidden;scrollbar-gutter:stable;border-bottom:1px solid var(--line)}
+.kwk{padding:6px 8px 4px;border-left:1px solid var(--line);cursor:pointer;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px}.kwk.kwx{border-left:0;cursor:default}
+.kwk b{font-size:20px;font-weight:600;line-height:1.2}.kwk .kwt{color:var(--mut);font-size:13px}.kwk.heute b,.kwk.heute .kwt{color:var(--acc)}.kwk.heute{box-shadow:inset 0 3px 0 var(--acc)}
+.kwk .kft{flex-basis:100%}.kwk small{flex-basis:100%;color:var(--mut);font-size:11px}
+.kwa{border-left:1px solid var(--line);border-top:1px solid var(--line);min-height:26px;padding:2px 3px;min-width:0}.kwa.kwx{border-left:0;font-size:11px;color:var(--mut);text-align:right;padding:6px 6px 0 0}.kwa .ke{margin:0 0 2px}
+.kwb{overflow-y:auto;scrollbar-gutter:stable;min-height:0;overscroll-behavior:contain}.kalpc .kwb{flex:1}
+.kwg{position:relative}.kwz{position:relative}.kwz span{position:absolute;right:6px;font-size:11px;color:var(--mut);transform:translateY(-50%)}
+.kws{position:relative;border-left:1px solid var(--line);background-image:repeating-linear-gradient(to bottom,var(--line) 0 1px,transparent 1px 24px,rgba(127,127,127,.13) 24px 25px,transparent 25px 48px);min-width:0}
+.kb{position:absolute;box-sizing:border-box;font-size:12px;line-height:1.3;padding:3px 6px;border-radius:4px;border-left:4px solid var(--c);background-color:color-mix(in srgb,var(--c) 20%,var(--card));color:var(--ink);overflow:hidden;cursor:pointer;z-index:1}
+.kb b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kb span{color:var(--mut);font-size:11.5px}.kb.kbkz{white-space:nowrap;padding-top:1px}.kb.kbkz b{display:inline}
+.kb:hover{box-shadow:0 1px 5px rgba(0,0,0,.22)}.kb[data-zieh]{cursor:grab}.kbr{position:absolute;left:0;right:0;bottom:0;height:7px;cursor:ns-resize}
+.kzg{pointer-events:none;opacity:.88;box-shadow:0 6px 16px rgba(0,0,0,.28);z-index:5}.kgh{--c:var(--acc);border:1px dashed var(--acc);border-left-width:4px;pointer-events:none;z-index:4;font-weight:600}
+body.kzieh{user-select:none}body.kzieh *{cursor:grabbing!important}
+.kjetzt{position:absolute;left:0;right:0;border-top:2px solid #c50f1f;z-index:3;pointer-events:none}.kjetzt::before{content:'';position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:#c50f1f}
+.kstr{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin:0 0 10px;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 4px}.kstr button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:2px 0;border:0;background:none;box-shadow:none;min-width:0;color:var(--ink)}
+.kstr small{font-size:11px;color:var(--mut)}.kstr .kd{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px}.kstr .ksel .kd{background:var(--ink);color:var(--card)}.kstr .kheu .kd{color:var(--acc)}.kstr .kheu.ksel .kd{background:var(--acc);color:#fff}.kstr .kft1 small{color:#c50f1f}
+.kstr .kalpk{display:block;flex:none;width:6px;max-width:6px;height:6px;padding:0!important;box-sizing:border-box;border-radius:50%;background:transparent}.kstr .kalpk.ja{background:var(--mut)}
 .ktk .kl{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line);cursor:pointer}.ktk .kl:first-of-type{border-top:0}
-.kli{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none;margin-top:4px;background:var(--mut)}.kli.tm{background:var(--acc)}.kli.es{background:var(--ok)}.kli.ft-f{background:rgba(180,35,24,.35)}.kli.ft-l,.kli.ft-h{background:rgba(154,91,0,.3)}
+.kli{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none;margin-top:4px;background:var(--mut)}.kli.kzs{background-image:repeating-linear-gradient(135deg,transparent 0 2px,rgba(255,255,255,.55) 2px 4px)}
 .klz{flex:none;width:92px;font-size:13px;color:var(--mut)}.klt{min-width:0;display:flex;flex-direction:column}.klt small{color:var(--mut);overflow-wrap:anywhere}
-.kleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px}.kleg span{display:inline-flex;align-items:center;gap:5px}.kleg .kli{margin:0}
-.kal.kwo1{grid-template-columns:48px minmax(0,1fr)}.kal.kwo1 .sel{box-shadow:none}.kjetzt{position:absolute;left:0;right:0;border-top:2px solid var(--err);z-index:2;pointer-events:none}.kjetzt::before{content:'';position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--err)}
-.kstr{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin:0 0 10px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 4px}.kstr button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:2px 0;border:0;background:none;box-shadow:none;min-width:0;color:var(--ink)}
-.kstr small{font-size:11px;color:var(--mut)}.kstr .kd{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px}.kstr .ksel .kd{background:var(--ink);color:var(--card)}.kstr .kheu .kd{color:var(--err)}.kstr .kheu.ksel .kd{background:var(--err);color:#fff}.kstr .kft1 small{color:var(--err)}
-.kstr .kpk{display:block;flex:none;width:6px;max-width:6px;height:6px;padding:0!important;box-sizing:border-box;border-radius:50%;background:transparent}.kstr .kpk.ja{background:var(--mut)}
-.kalein summary{cursor:pointer}.kalein .row{margin-top:8px}
-@media(max-width:760px){.kal{grid-template-columns:26px repeat(7,minmax(0,1fr))}.kal .kh{padding:5px 0}.kal .kw{font-size:10px;padding:4px 0}.kal .kw small{display:none}
-  .kal .kt{min-height:52px;padding:3px 2px}.kal .kn{justify-content:center}.kal .kft{display:none}.kal .ke{font-size:0;height:4px;padding:0;margin:3px 1px 0;border-left:0;background:var(--acc)}.kal .ke.es{background:var(--ok)}.kal .ke.zt{background:var(--mut)}.kal .ke.mehr{display:none}
-  .kalti{flex-basis:100%;order:-1;margin:0}.klz{width:auto;font-size:12px;white-space:nowrap}}`;document.head.appendChild(st)}
+.kleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--mut);margin:8px 0 0}.kleg span{display:inline-flex;align-items:center;gap:5px}.kleg .kli{margin:0}
+.kstr+.kwo .kwk{display:none}.kliste{overflow:auto}.kalpc .kliste{flex:1;min-height:0}
+@media(max-width:760px){.km{grid-template-columns:26px repeat(7,minmax(0,1fr))}.km .kh{padding:5px 0;text-align:center}.km .kw{font-size:10px;padding:4px 0}.km .kw small{display:none}
+  .km .kt{min-height:52px;padding:3px 2px}.km .kn{justify-content:center}.km .kft{display:none}.km .ke{font-size:0;height:4px;padding:0;margin:3px 1px 0;border:0;background:var(--c)}.km .ke.mehr{display:none}
+  .kbar .kalh{flex:1}.kalti{flex-basis:100%;order:5;margin:0}.kals{order:6}.kals button{padding:6px 8px}.klz{width:auto;font-size:12px;white-space:nowrap}
+  .kwb{max-height:calc(100dvh - 330px)}.kwk b{font-size:17px}}`;document.head.appendChild(st)}
 /* Kalender: Outlook (P69 Teil 4, erw.kalO365, Standard aus, nur mit Microsoft-Anmeldung): eigener Token kolTok() (Scope KOLSCOPE Calendars.ReadWrite, einmalige Zustimmung über AUTH.login, wie mailToken()), Lesen des Standardkalenders je sichtbarem Zeitraum über /me/calendarView (Zeitzone W. Europe, Cache KOL {schlüssel:{ts,L}} 5 min, nur im Speicher, nichts in erp-daten.json) → im Kalender als art 'o365' (Klasse ol, Klick öffnet Outlook im Web); Termine aus dem ERP: kolSchreiben(t) legt sie an (POST /me/events) bzw. ändert sie (PATCH), t.o365 {id,changeKey,stand}; kolWeg(t) löscht sie in Outlook. Mit Outlook verknüpfte Termine erscheinen nur einmal. */
 erwPlus({k:'kalO365',std:false,p:'Kalender (P69)',l:'Kalender: mit Outlook (Microsoft 365) verbinden',info:'Zeigt die Termine aus dem Outlook-Kalender (Microsoft 365) im Kalender und trägt Termine aus dem ERP auch in Outlook ein (Ändern und Löschen werden übernommen). Nur mit Anmeldung bei Microsoft (OneDrive); beim ersten Mal ist eine einmalige Zustimmung „Kalender lesen und schreiben“ nötig. Braucht „Kalender mit Feiertagen“.'});
 EB_K.kalO365=EB_K.kalender;MOD_SW.kalO365='auftraege';{const m=MODULE.find(x=>x.k==='auftraege');if(m)m.sw+=' kalO365'}
@@ -10179,18 +10248,12 @@ async function kolSchreiben(t){if(!kO())return;let tok=await kolTok();
   if(!j){alert('Der Termin konnte nicht in Outlook eingetragen werden. '+(KOL_F||''));return}
   const x=tmL().find(y=>y.id===t.id);if(!x)return;x.o365={id:j.id||t.o365?.id,changeKey:j.changeKey||'',stand:new Date().toISOString()};commit();for(const k in KOL)delete KOL[k];render()}
 async function kolWeg(t){if(!kO()||!t.o365?.id||!confirm('Den Termin auch in Outlook löschen?'))return;if(!await kolApi('/events/'+encodeURIComponent(t.o365.id),{method:'DELETE'}))alert('In Outlook konnte der Termin nicht gelöscht werden. '+(KOL_F||''));for(const k in KOL)delete KOL[k]}
-function kolInfo(){if(!kO())return'';if(!AUTH.tok()?.refresh)return'<p class="mut" style="margin:6px 0 0">Outlook: nur mit Anmeldung bei Microsoft (OneDrive).</p>';
-  return`<p class="mut" style="margin:6px 0 0">Outlook (Standardkalender): ${KOL_F==='zustimmung'?'Zustimmung fehlt.':KOL_F?esc(KOL_F):'verbunden.'} <button type="button" data-act="kolneu">${KOL_F==='zustimmung'?'Zustimmen …':'Neu laden'}</button></p>`}
-{const v0=V.kalender;V.kalender=(...x)=>{let h=v0(...x);if(!kO())return h;
-  h=h.replace('<p class="mut" style="margin:6px 0 0">Outlook (Microsoft 365): Abgleich der Termine ist vorbereitet, aber noch nicht verbunden.</p>','').replace('</div></details>',`</div>${kolInfo()}</details>`);
-  if(KOL_F&&KOL_F!=='zustimmung')h=h.replace('<div class="bar kalnav">',`<p class="hint">${esc(KOL_F)} <a href="javascript:void 0" data-act="kolneu">Erneut versuchen</a></p><div class="bar kalnav">`);
-  else if(KOL_F==='zustimmung')h=h.replace('<div class="bar kalnav">','<p class="hint">Outlook ist eingeschaltet, aber noch nicht freigegeben. <a href="javascript:void 0" data-act="kolneu">Jetzt zustimmen</a></p><div class="bar kalnav">');
-  return h}}
+function kolInfoTxt(){return!AUTH.tok()?.refresh?'Outlook: nur mit Anmeldung bei Microsoft (OneDrive).':'Outlook (Standardkalender): '+(KOL_F==='zustimmung'?'Zustimmung fehlt.':KOL_F?esc(KOL_F):'verbunden.')}
+{const v0=V.kalender;V.kalender=(...x)=>{const h=v0(...x);if(!kO()||!KOL_F)return h;return h.replace('<div class="kbar kalnav">',`<p class="hint">${KOL_F==='zustimmung'?'Outlook ist eingeschaltet, aber noch nicht freigegeben.':esc(KOL_F)} <a href="javascript:void 0" data-act="kolneu">${KOL_F==='zustimmung'?'Jetzt zustimmen':'Erneut versuchen'}</a></p><div class="kbar kalnav">`)}}
 queueMicrotask(()=>Object.assign(ACT,{
   kolneu:async()=>{if(KOL_F==='zustimmung'&&!(await kolTok())){if(confirm('Für Outlook ist eine einmalige Zustimmung („Kalender lesen und schreiben“) bei Microsoft nötig.\nJetzt anmelden und zustimmen?'))AUTH.login(' Calendars.ReadWrite');return}KOL_F='';for(const k in KOL)delete KOL[k];render()},
   kolo:el=>{const e=KOL_M[el.dataset.id];if(e?.link)window.open(e.link,'_blank','noopener')}}));
 queueMicrotask(()=>{const k0=ACT.kted;ACT.kted=el=>String(el.dataset.id||'').startsWith('o:')?ACT.kolo(el):k0(el)}); // Outlook-Termine: Klick öffnet Outlook im Web
-{const s=document.createElement('style');s.textContent=`.ke.ol,.kb.ol{background:rgba(120,70,180,.13);border-color:#7a4bb4}.kli.ol{background:#7a4bb4}`;document.head.appendChild(s)}
 start();
 </script>
 </body>

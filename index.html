@@ -10044,7 +10044,7 @@ function kIdx(a,b){const z={},t={},ma=kU().ma;
     for(let d=v>a?v:a,i=0;d<=e&&d<=b&&i<62;d=kPlus(d,1),i++)(t[d]||(t[d]=[])).push(x)}
   for(const k in t)t[k].sort((p,q)=>(p.ganztag?'':p.von||'').localeCompare(q.ganztag?'':q.von||''));
   for(const k in z)z[k].sort((p,q)=>(p.von||'').localeCompare(q.von||''));return{z,t}}
-const kKl=t=>t.art==='einsatz'?'es':'tm',kUhr=(t,d)=>t.ganztag?'':(t.von||'').slice(0,10)===d?t.von.slice(11,16):'…',
+const kKl=t=>t.art==='einsatz'?'es':t.art==='o365'?'ol':'tm',kUhr=(t,d)=>t.ganztag?'':(t.von||'').slice(0,10)===d?t.von.slice(11,16):'…',
   kUhrB=(t,d)=>t.ganztag?'ganztägig':`${kUhr(t,d)}–${(t.bis||'').slice(0,10)===d?t.bis.slice(11,16):'…'}`,
   kZk=z=>`${fmtQ(z.stunden)} h ${auftragKurz(z.auftragId)}`,
   kCls=(d,mon,I)=>{const f=kFt(d),w=kWd(d);return[w>4?'we':'',f?'ft-'+f.a:'',d===isoD()?'heute':'',d===kU().t?'sel':'',mon&&d.slice(0,7)!==mon?'aus':'',I.z[d]?.length&&(w===6||f?.a==='f')?'kwarn':''].filter(Boolean).join(' ')};
@@ -10095,13 +10095,14 @@ async function ktDialog(t,d0){const neu=!t,A=auftragsListe(),M=erw('mitarbeiter'
     {k:'ort',l:'Ort',wert:t?.ort||'',neu:1,cls:'w2'},
     {k:'aid',l:'Auftrag',opts:[['','– ohne –'],...A.map(x=>[x.id,auftragKurz(x.id)])],wert:t?.auftragId||'',neu:1,cls:'w2'},
     ...(M.length?[{k:'ma',l:'Mitarbeiter',opts:[['','– keiner –'],...M.map(m=>[m.id,m.name])],wert:t?.maIds?.[0]||'',neu:1,cls:'w2'}]:[]),
-    {k:'notiz',l:'Notiz',wert:t?.notiz||'',neu:1,cls:'w2'}],
+    {k:'notiz',l:'Notiz',wert:t?.notiz||'',neu:1,cls:'w2'},...(typeof kO==='function'&&kO()?[{k:'ol',l:'Outlook',opts:[['1','auch in Outlook eintragen'],['0','nur im ERP']],wert:t&&!t.o365?'0':'1',neu:1,cls:'w2'}]:[])],
     ein:d=>{const f=()=>{const g=d.querySelector('[data-k="ganz"]')?.value==='1';d.querySelectorAll('[data-k="v"],[data-k="b"]').forEach(e=>{const l=e.closest('label');if(l)l.style.display=g?'none':''})};setTimeout(f);return f},
     pruef:o=>{if(o.e&&o.e<o.d){alert('Das Ende liegt vor dem Beginn.');return false}const x=ktWerte(o);if(o.ganz!=='1'&&x.bis<x.von){alert('Das Ende liegt vor dem Beginn.');return false}}});
-  if(o==='extra'){if(confirm(`Termin „${t.titel}“ löschen?`)){wegwerfen('termine',[t]);render()}return}if(!o)return;
+  if(o==='extra'){if(confirm(`Termin „${t.titel}“ löschen?`)){if(t.o365?.id&&typeof kolWeg==='function')await kolWeg(t);wegwerfen('termine',[t]);render()}return}if(!o)return;
   const n=t||{id:uid(),erstellt:new Date().toISOString()};Object.assign(n,{art:o.art==='einsatz'?'einsatz':'termin',titel:String(o.titel||'').trim(),...ktWerte(o),ort:String(o.ort||'').trim(),notiz:String(o.notiz||'').trim(),auftragId:o.aid||'',maIds:o.ma?[o.ma]:(M.length?[]:t?.maIds||[])});
   for(const k of['ganztag','ort','notiz','auftragId'])if(!n[k])delete n[k];if(!n.maIds.length)delete n.maIds; // leere Felder nicht anlegen
-  if(neu)(DB.termine||(DB.termine=[])).push(n);log(neu?'Termin angelegt':'Termin geändert',`${dAT(n.datum)} ${n.titel}`);commit();const u=kU();u.t=n.datum;if(u.s!=='w'&&n.datum.slice(0,7)!==u.d.slice(0,7))u.d=n.datum;render()}
+  if(neu)(DB.termine||(DB.termine=[])).push(n);log(neu?'Termin angelegt':'Termin geändert',`${dAT(n.datum)} ${n.titel}`);commit();if(typeof kO==='function'&&kO()&&o.ol!=='0')kolSchreiben(n); // Outlook (Teil 4)
+  const u=kU();u.t=n.datum;if(u.s!=='w'&&n.datum.slice(0,7)!==u.d.slice(0,7))u.d=n.datum;render()}
 queueMicrotask(()=>Object.assign(ACT,{
   kalnav:el=>{const u=kU(),x=+el.dataset.x;if(!x)u.d=u.t=isoD();else if(u.s==='t')u.d=u.t=kPlus(u.d,x);else if(u.s==='w')u.d=u.t=kPlus(u.d,7*x);else{const m=kD(u.d.slice(0,8)+'01');m.setMonth(m.getMonth()+x);u.d=isoD(m);u.t=isoD().slice(0,7)===u.d.slice(0,7)?isoD():u.d}render()},
   kalsicht:el=>{const u=kU();u.s=el.dataset.s;lsSet('erp-kalS',u.s);u.d=u.t;render()},
@@ -10146,6 +10147,50 @@ document.addEventListener('change',e=>{if(e.target.matches?.('select[data-f^="ka
 @media(max-width:760px){.kal{grid-template-columns:26px repeat(7,minmax(0,1fr))}.kal .kh{padding:5px 0}.kal .kw{font-size:10px;padding:4px 0}.kal .kw small{display:none}
   .kal .kt{min-height:52px;padding:3px 2px}.kal .kn{justify-content:center}.kal .kft{display:none}.kal .ke{font-size:0;height:4px;padding:0;margin:3px 1px 0;border-left:0;background:var(--acc)}.kal .ke.es{background:var(--ok)}.kal .ke.zt{background:var(--mut)}.kal .ke.mehr{display:none}
   .kalti{flex-basis:100%;order:-1;margin:0}.klz{width:auto;font-size:12px;white-space:nowrap}}`;document.head.appendChild(st)}
+/* Kalender: Outlook (P69 Teil 4, erw.kalO365, Standard aus, nur mit Microsoft-Anmeldung): eigener Token kolTok() (Scope KOLSCOPE Calendars.ReadWrite, einmalige Zustimmung über AUTH.login, wie mailToken()), Lesen des Standardkalenders je sichtbarem Zeitraum über /me/calendarView (Zeitzone W. Europe, Cache KOL {schlüssel:{ts,L}} 5 min, nur im Speicher, nichts in erp-daten.json) → im Kalender als art 'o365' (Klasse ol, Klick öffnet Outlook im Web); Termine aus dem ERP: kolSchreiben(t) legt sie an (POST /me/events) bzw. ändert sie (PATCH), t.o365 {id,changeKey,stand}; kolWeg(t) löscht sie in Outlook. Mit Outlook verknüpfte Termine erscheinen nur einmal. */
+erwPlus({k:'kalO365',std:false,p:'Kalender (P69)',l:'Kalender: mit Outlook (Microsoft 365) verbinden',info:'Zeigt die Termine aus dem Outlook-Kalender (Microsoft 365) im Kalender und trägt Termine aus dem ERP auch in Outlook ein (Ändern und Löschen werden übernommen). Nur mit Anmeldung bei Microsoft (OneDrive); beim ersten Mal ist eine einmalige Zustimmung „Kalender lesen und schreiben“ nötig. Braucht „Kalender mit Feiertagen“.'});
+EB_K.kalO365=EB_K.kalender;MOD_SW.kalO365='auftraege';{const m=MODULE.find(x=>x.k==='auftraege');if(m)m.sw+=' kalO365'}
+const KOLSCOPE='https://graph.microsoft.com/Calendars.ReadWrite offline_access',KOL={},KOL_M={},KOL_TZ='W. Europe Standard Time',kO=()=>erw('kalender')&&erw('kalO365');let KOL_F='';
+async function kolTok(){const t=AUTH.tok();if(!t?.refresh)return null;let m=null;try{m=JSON.parse(lsGet('erp-tok-kal')||'null')}catch(e){}
+  if(m&&Date.now()<m.exp)return m.access;
+  const c=odCfg(),r=await fetch(`https://login.microsoftonline.com/${encodeURIComponent(c.tenant)}/oauth2/v2.0/token`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({client_id:c.clientId,grant_type:'refresh_token',refresh_token:t.refresh,scope:KOLSCOPE})}).catch(()=>null);
+  const j=await r?.json().catch(()=>({}));if(!r?.ok)return null;
+  if(j.refresh_token)AUTH.setTok({...t,refresh:j.refresh_token});lsSet('erp-tok-kal',JSON.stringify({access:j.access_token,exp:Date.now()+((+j.expires_in||3600)-120)*1000}));return j.access_token}
+async function kolApi(pfad,o={}){const tok=await kolTok();if(!tok){KOL_F='zustimmung';return null}
+  const r=await fetch('https://graph.microsoft.com/v1.0/me'+pfad,{...o,headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json',Prefer:`outlook.timezone="${KOL_TZ}"`,...(o.headers||{})}}).catch(()=>null);
+  if(!r){KOL_F='Keine Verbindung zu Microsoft.';return null}if(!r.ok){KOL_F=`Outlook meldet Fehler ${r.status}.`;return null}KOL_F='';return r.status===204?{}:r.json().catch(()=>({}))}
+function kolL(a,b){if(!kO()||!AUTH.tok()?.refresh)return[];const k=a+'|'+b,c=KOL[k];
+  if(!c||Date.now()-c.ts>3e5&&!c.lauf){const n={ts:Date.now(),L:c?.L||[],lauf:1};KOL[k]=n; // im Hintergrund laden, danach neu zeichnen
+    (async()=>{const L=[];let u=`/calendarView?startDateTime=${a}T00:00:00&endDateTime=${kPlus(b,1)}T00:00:00&$top=250&$select=id,subject,start,end,isAllDay,location,webLink,bodyPreview`,f=0;
+      while(u&&f<8){const j=await kolApi(u);if(!j){n.lauf=0;if(KOL_F)rnd();return}L.push(...(j.value||[]));u=j['@odata.nextLink']?.replace('https://graph.microsoft.com/v1.0/me','');f++}
+      n.L=L.map(e=>{const g=!!e.isAllDay,v=(e.start?.dateTime||'').slice(0,16),x=(e.end?.dateTime||'').slice(0,16);return{id:'o:'+e.id,oid:e.id,art:'o365',titel:e.subject||'(ohne Titel)',ganztag:g||undefined,datum:v.slice(0,10),von:g?v.slice(0,10):v,bis:g?kPlus(x.slice(0,10),-1):x,ort:e.location?.displayName||'',notiz:e.bodyPreview||'',link:e.webLink||''}});
+      n.L.forEach(e=>KOL_M[e.id]=e);n.ts=Date.now();n.lauf=0;rnd()})()}
+  return KOL[k].L;function rnd(){if(/^#\/?kalender/.test(location.hash)&&!document.querySelector('.modal'))render()}}
+{const i0=kIdx;kIdx=(a,b)=>{const I=i0(a,b);if(!kO())return I;const mit=new Set(tmL().map(t=>t.o365?.id).filter(Boolean));
+  for(const x of kolL(a,b)){if(mit.has(x.oid))continue;const v=x.von.slice(0,10),e=x.bis.slice(0,10)>v?x.bis.slice(0,10):v;if(e<a||v>b)continue;for(let d=v>a?v:a,i=0;d<=e&&d<=b&&i<62;d=kPlus(d,1),i++)(I.t[d]||(I.t[d]=[])).push(x)}
+  for(const k in I.t)I.t[k].sort((p,q)=>(p.ganztag?'':p.von||'').localeCompare(q.ganztag?'':q.von||''));return I}}
+function kolKoerper(t){const g=!!t.ganztag,z=(d,h)=>({dateTime:`${d}T${h}:00`,timeZone:KOL_TZ});
+  return{subject:t.titel,body:{contentType:'text',content:[t.notiz,t.auftragId?'Auftrag: '+auftragKurz(t.auftragId):'',(t.maIds||[]).map(maName).filter(Boolean).join(', ')].filter(Boolean).join('\n')},
+    isAllDay:g,start:g?z(t.von.slice(0,10),'00:00'):z(t.von.slice(0,10),t.von.slice(11,16)),end:g?z(kPlus(t.bis.slice(0,10),1),'00:00'):z(t.bis.slice(0,10),t.bis.slice(11,16)),location:{displayName:t.ort||''}}}
+async function kolSchreiben(t){if(!kO())return;let tok=await kolTok();
+  if(!tok){if(confirm('Für Outlook ist eine einmalige Zustimmung („Kalender lesen und schreiben“) bei Microsoft nötig.\nJetzt anmelden und zustimmen?\n\nDanach den Termin bitte noch einmal speichern.'))AUTH.login(' Calendars.ReadWrite');return}
+  const j=t.o365?.id?await kolApi('/events/'+encodeURIComponent(t.o365.id),{method:'PATCH',body:JSON.stringify(kolKoerper(t))}):await kolApi('/events',{method:'POST',body:JSON.stringify(kolKoerper(t))});
+  if(!j){alert('Der Termin konnte nicht in Outlook eingetragen werden. '+(KOL_F||''));return}
+  const x=tmL().find(y=>y.id===t.id);if(!x)return;x.o365={id:j.id||t.o365?.id,changeKey:j.changeKey||'',stand:new Date().toISOString()};commit();for(const k in KOL)delete KOL[k];render()}
+async function kolWeg(t){if(!kO()||!t.o365?.id||!confirm('Den Termin auch in Outlook löschen?'))return;if(!await kolApi('/events/'+encodeURIComponent(t.o365.id),{method:'DELETE'}))alert('In Outlook konnte der Termin nicht gelöscht werden. '+(KOL_F||''));for(const k in KOL)delete KOL[k]}
+function kolInfo(){if(!kO())return'';if(!AUTH.tok()?.refresh)return'<p class="mut" style="margin:6px 0 0">Outlook: nur mit Anmeldung bei Microsoft (OneDrive).</p>';
+  return`<p class="mut" style="margin:6px 0 0">Outlook (Standardkalender): ${KOL_F==='zustimmung'?'Zustimmung fehlt.':KOL_F?esc(KOL_F):'verbunden.'} <button type="button" data-act="kolneu">${KOL_F==='zustimmung'?'Zustimmen …':'Neu laden'}</button></p>`}
+{const v0=V.kalender;V.kalender=(...x)=>{let h=v0(...x);if(!kO())return h;
+  h=h.replace('<p class="mut" style="margin:6px 0 0">Outlook (Microsoft 365): Abgleich der Termine ist vorbereitet, aber noch nicht verbunden.</p>','').replace('</div></details>',`</div>${kolInfo()}</details>`);
+  if(KOL_F&&KOL_F!=='zustimmung')h=h.replace('<div class="bar kalnav">',`<p class="hint">${esc(KOL_F)} <a href="javascript:void 0" data-act="kolneu">Erneut versuchen</a></p><div class="bar kalnav">`);
+  else if(KOL_F==='zustimmung')h=h.replace('<div class="bar kalnav">','<p class="hint">Outlook ist eingeschaltet, aber noch nicht freigegeben. <a href="javascript:void 0" data-act="kolneu">Jetzt zustimmen</a></p><div class="bar kalnav">');
+  return h}}
+queueMicrotask(()=>Object.assign(ACT,{
+  kolneu:async()=>{if(KOL_F==='zustimmung'&&!(await kolTok())){if(confirm('Für Outlook ist eine einmalige Zustimmung („Kalender lesen und schreiben“) bei Microsoft nötig.\nJetzt anmelden und zustimmen?'))AUTH.login(' Calendars.ReadWrite');return}KOL_F='';for(const k in KOL)delete KOL[k];render()},
+  kolo:el=>{const e=KOL_M[el.dataset.id];if(e?.link)window.open(e.link,'_blank','noopener')}}));
+queueMicrotask(()=>{const k0=ACT.kted;ACT.kted=el=>String(el.dataset.id||'').startsWith('o:')?ACT.kolo(el):k0(el)}); // Outlook-Termine: Klick öffnet Outlook im Web
+{const s=document.createElement('style');s.textContent=`.ke.ol,.kb.ol{background:rgba(120,70,180,.13);border-color:#7a4bb4}.kli.ol{background:#7a4bb4}`;document.head.appendChild(s)}
 start();
 </script>
 </body>
